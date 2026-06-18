@@ -1,6 +1,8 @@
 import React from 'react';
 import { BentoGrid } from '../components/dashboard/BentoGrid';
-import { WidgetWrapper } from '../components/dashboard/WidgetWrapper';
+import { NetWorthWidget } from '../components/dashboard/widgets/NetWorthWidget';
+import { AssetsWidget } from '../components/dashboard/widgets/AssetsWidget';
+import { DebtsWidget } from '../components/dashboard/widgets/DebtsWidget';
 
 export const Dashboard: React.FC = () => {
   return (
@@ -11,16 +13,9 @@ export const Dashboard: React.FC = () => {
       </div>
       
       <BentoGrid>
-        <WidgetWrapper title="Placeholder Widget 1">
-          <div className="h-48 flex items-center justify-center text-text-secondary border-2 border-dashed border-border rounded-lg">
-            Widget Content
-          </div>
-        </WidgetWrapper>
-        <WidgetWrapper title="Placeholder Widget 2">
-          <div className="h-48 flex items-center justify-center text-text-secondary border-2 border-dashed border-border rounded-lg">
-            Widget Content
-          </div>
-        </WidgetWrapper>
+        <NetWorthWidget />
+        <AssetsWidget />
+        <DebtsWidget />
       </BentoGrid>
     </div>
   );
