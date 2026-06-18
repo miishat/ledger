@@ -64,7 +64,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01: Build data entry forms and local state schema for budgeting.
+- [x] 03-01: Build data entry forms and local state schema for budgeting.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation & Theming | 0/2 | Not started | - |
 | 2. Master Dashboard & Layout | 2/2 | Complete   | 2026-06-18 |
-| 3. Budgeting Module | 0/2 | Not started | - |
+| 3. Budgeting Module | 1/2 | In Progress|  |
 | 4. Investment Tracker | 0/1 | Not started | - |
 | 5. Future Projections | 0/1 | Not started | - |
 | 6. Total Comp Calculator | 0/2 | Not started | - |
