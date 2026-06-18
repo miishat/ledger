@@ -1,90 +1,55 @@
 # Phase 1: Foundation & Theming - Context
 
-**Gathered:** 2026-06-18
 **Status:** Ready for planning
+**Source:** Derived from PROJECT.md and REQUIREMENTS.md
 
 <domain>
 ## Phase Boundary
 
-Establish Vite project, global routing, PWA shell, and dual-theme switching architecture.
-
+Establish the foundational Vite project, configure the PWA shell, set up global routing, and build the dual-theme switching architecture (Tactical Monospace and Geometric Abstraction).
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Global Navigation Layout
-- **D-01:** Navigation adapts to device. Desktop/Tablet: Fixed Left Sidebar. Mobile: Bottom Tab Bar for primary modules, top header/slide-out for secondary settings & theme toggle.
-- **D-02:** Mobile Bottom Tab Bar overflow: Show top 4 modules as tabs, put the rest in a 'More' menu.
-- **D-03:** Top Header behavior: Hide on scroll down, reappear on scroll up.
-- **D-04:** Routing library: TanStack Router.
+### Tech Stack
+- Frontend framework: React (Vite SPA)
+- Styling: Tailwind CSS
+- Animation: Framer Motion
+- Global State: Zustand
 
-### Theme Storage & Implementation
-- **D-05:** Theme/Global State Management: Zustand global store with persist middleware.
-- **D-06:** Theme CSS/DOM implementation: CSS variables attached to `[data-theme='...']` attributes on the `<html>` element.
-- **D-07:** Theme toggle transition: Hard cut (no smooth cross-fade) to keep the 'tactical' snappy feel.
-- **D-08:** Default theme: Always default to the Tactical Monospace theme on first load (do not use OS preference).
+### Theming System
+- Strict dual themes: Tactical Monospace vs Geometric Abstraction.
+- Managed via Tailwind CSS variables.
+- Toggle must be instant with no page reloads.
 
-### PWA Configuration & Offline Strategy
-- **D-09:** Caching strategy: Cache all static assets aggressively for a fully offline local-first experience.
-- **D-10:** Update prompting: Show a non-intrusive toast notification with a 'Refresh' button.
-- **D-11:** Manifest icons: Generate automatically during build using `vite-plugin-pwa` assets generator.
-- **D-12:** iOS Installation: Detect iOS Safari and show a custom 'Install Guide' modal (Share -> Add to Home Screen).
+### PWA Configuration
+- Local-first architecture using LocalStorage.
+- Offline support via Vite PWA plugin.
 
-### Codebase Directory Structure
-- **D-13:** Folder architecture: Feature-based architecture (`src/features/...`).
-- **D-14:** Shared components: `src/components/ui/`.
-- **D-15:** File naming: PascalCase for React components (e.g., `BentoGrid.tsx`).
-
-### Tailwind Configuration & Styling Rules
-- **D-16:** Tailwind usage: Strict utility classes directly in JSX.
-- **D-17:** Class merging: Use `tailwind-merge` combined with `clsx` (e.g., a `cn` utility).
-- **D-18:** Color definition: HSL variables in global CSS mapped in `tailwind.config.js`.
-- **D-19:** Font loading: Use Fontsource npm packages to self-host the fonts.
-
-### the agent's Discretion
-None — we discussed all primary structural and stylistic choices.
-
+### Routing & Navigation
+- Global navigation using `react-router-dom`.
+- Shell layout features a Sidebar/Top bar to toggle between modules.
 </decisions>
 
 <canonical_refs>
 ## Canonical References
 
-**Downstream agents MUST read these before planning or implementing.**
-
-No external specs — requirements fully captured in decisions above
-
+- `c:\Users\misha\ledger\.planning\PROJECT.md` — High-level architecture and vision
+- `c:\Users\misha\ledger\.planning\REQUIREMENTS.md` — Feature requirements and phase boundaries
 </canonical_refs>
-
-<code_context>
-## Existing Code Insights
-
-### Reusable Assets
-- None (greenfield phase)
-
-### Established Patterns
-- None (greenfield phase)
-
-### Integration Points
-- None (greenfield phase)
-
-</code_context>
 
 <specifics>
 ## Specific Ideas
 
-No specific requirements — open to standard approaches
-
+- Avoid Bootstrap-style generic templates. Use high-contrast, premium "engineering command center" design language.
+- Fonts: Consider using `JetBrains Mono`/`Fira Code` for Tactical, and `Inter`/`Outfit` for Geometric.
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
-
+- User authentication and cloud sync (Deferred to v2).
+- Live Bank Sync (Plaid).
+- Backend databases.
 </deferred>
-
----
-
-*Phase: 01-Foundation & Theming*
-*Context gathered: 2026-06-18*
