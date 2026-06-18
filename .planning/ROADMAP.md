@@ -6,7 +6,7 @@ Building a highly scalable, cross-platform financial dashboard web app featuring
 
 ## Phases
 
-- [ ] **Phase 1: Foundation & Theming** - Vite, Tailwind, Framer Motion setup, routing, and dual-theme (Tactical/Geometric) system.
+- [x] **Phase 1: Foundation & Theming** - Vite, Tailwind, Framer Motion setup, routing, and dual-theme (Tactical/Geometric) system. (completed 2026-06-18)
 - [x] **Phase 2: Master Dashboard & Layout** - Bento Grid layout and high-level Net Worth aggregation widgets. (completed 2026-06-18)
 - [x] **Phase 3: Budgeting Module** - Cash flow, income, and categorized expense tracking. (completed 2026-06-18)
 - [ ] **Phase 4: Investment Tracker** - "Investment Plan vs. Actual" Recharts visualizations.
@@ -30,8 +30,8 @@ Building a highly scalable, cross-platform financial dashboard web app featuring
 
 Plans:
 
-- [ ] 01-01: Initialize Vite app, Tailwind, and Framer Motion foundation.
-- [ ] 01-02: Implement dual-theme system, global nav, and PWA configuration.
+- [x] 01-01: Initialize Vite app, Tailwind, and Framer Motion foundation.
+- [x] 01-02: Implement dual-theme system, global nav, and PWA configuration.
 
 ### Phase 2: Master Dashboard & Layout
 
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Theming | 0/2 | Not started | - |
+| 1. Foundation & Theming | 2/2 | Complete   | 2026-06-18 |
 | 2. Master Dashboard & Layout | 2/2 | Complete   | 2026-06-18 |
 | 3. Budgeting Module | 2/2 | Complete   | 2026-06-18 |
 | 4. Investment Tracker | 0/1 | Not started | - |

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { useBudgetStore, STANDARD_CATEGORIES, TransactionType } from '../../store/useBudgetStore';
+import { useBudgetStore, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../store/useBudgetStore';
+import type { TransactionType } from '../../store/useBudgetStore';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
 
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState<string>('');
-  const [category, setCategory] = useState<string>(STANDARD_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
 
@@ -33,11 +34,13 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
     // Reset form
     setType('expense');
     setAmount('');
-    setCategory(STANDARD_CATEGORIES[0]);
+    setCategory(EXPENSE_CATEGORIES[0]);
     setDate(new Date().toISOString().split('T')[0]);
     setDescription('');
     onClose();
   };
+
+  const currentCategories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -63,7 +66,10 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
                   ? 'bg-[var(--color-accent)] text-white'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => setType('expense')}
+              onClick={() => {
+                setType('expense');
+                setCategory(EXPENSE_CATEGORIES[0]);
+              }}
             >
               Expense
             </button>
@@ -74,7 +80,10 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
                   ? 'bg-[var(--color-accent)] text-white'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => setType('income')}
+              onClick={() => {
+                setType('income');
+                setCategory(INCOME_CATEGORIES[0]);
+              }}
             >
               Income
             </button>
@@ -104,7 +113,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
               onChange={(e) => setCategory(e.target.value)}
               className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
             >
-              {STANDARD_CATEGORIES.map((cat) => (
+              {currentCategories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>

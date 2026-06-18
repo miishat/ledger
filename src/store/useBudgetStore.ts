@@ -2,18 +2,22 @@ import { create } from 'zustand';
 
 export type TransactionType = 'income' | 'expense';
 
-export const STANDARD_CATEGORIES = [
+export const EXPENSE_CATEGORIES = [
   'Housing',
   'Food',
   'Transport',
   'Utilities',
   'Entertainment',
+  'Other',
+] as const;
+
+export const INCOME_CATEGORIES = [
   'Salary',
   'Investment',
   'Other',
 ] as const;
 
-export type Category = typeof STANDARD_CATEGORIES[number] | string;
+export type Category = typeof EXPENSE_CATEGORIES[number] | typeof INCOME_CATEGORIES[number] | string;
 
 export interface Transaction {
   id: string;
