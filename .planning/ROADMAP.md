@@ -9,7 +9,7 @@ Building a highly scalable, cross-platform financial dashboard web app featuring
 - [x] **Phase 1: Foundation & Theming** - Vite, Tailwind, Framer Motion setup, routing, and dual-theme (Tactical/Geometric) system. (completed 2026-06-18)
 - [x] **Phase 2: Master Dashboard & Layout** - Bento Grid layout and high-level Net Worth aggregation widgets. (completed 2026-06-18)
 - [x] **Phase 3: Budgeting Module** - Cash flow, income, and categorized expense tracking. (completed 2026-06-18)
-- [ ] **Phase 4: Investment Tracker** - "Investment Plan vs. Actual" Recharts visualizations.
+- [x] **Phase 4: Investment Tracker** - "Investment Plan vs. Actual" Recharts visualizations. (completed 2026-06-18)
 - [ ] **Phase 5: Future Projections** - Forecasting tools for savings rates and compounding interest.
 - [ ] **Phase 6: Total Compensation Calculator** - Base, bonus, and RSU/Options vesting tracker.
 
@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: Implement Investment Tracker Recharts with dynamic Tailwind variable styling.
+- [x] 04-01: Implement Investment Tracker Recharts with dynamic Tailwind variable styling.
 
 ### Phase 5: Future Projections
 
@@ -129,6 +129,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation & Theming | 2/2 | Complete   | 2026-06-18 |
 | 2. Master Dashboard & Layout | 2/2 | Complete   | 2026-06-18 |
 | 3. Budgeting Module | 2/2 | Complete   | 2026-06-18 |
-| 4. Investment Tracker | 0/1 | Not started | - |
+| 4. Investment Tracker | 1/1 | Complete   | 2026-06-18 |
 | 5. Future Projections | 0/1 | Not started | - |
 | 6. Total Comp Calculator | 0/2 | Not started | - |
