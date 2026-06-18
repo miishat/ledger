@@ -1,39 +1,36 @@
-# Phase 03: Budgeting Module - Research
+# Phase 3: Budgeting Module - Research
 
-## Domain Knowledge
-To implement the budgeting module, we need to handle tracking cash flow, income, and categorized expenses within the application. The phase relies heavily on the React (Vite SPA) stack, utilizing Tailwind CSS for styling and Zustand for state management. We also need to integrate with the Bento Grid layout from Phase 2.
+## Architecture and Current State
 
-## Component Structure & Integration
-- **State Management:** A new `useBudgetStore.ts` utilizing Zustand needs to be created to manage budgeting state, avoiding bloating the existing `useDashboardStore.ts`.
-- **Layout:** The budgeting widgets will be integrated into the main Dashboard layout grid built in Phase 2. They should be wrapped using the same `WidgetWrapper` component.
-- **Widgets Needed:**
-  - `CashFlowWidget.tsx` (BUDGET-01): Monthly cash flow tracking widget.
-  - `IncomeWidget.tsx` (BUDGET-02): Income tracking widget.
-  - `ExpenseWidget.tsx` (BUDGET-03): Categorized expense tracking widget.
-- **Modals:** A dedicated modal component (e.g., `TransactionModal.tsx`) will be required for the entry of income and expenses as decided in `03-CONTEXT.md` (Decision D-01).
+### Component Structure
+The project uses `WidgetWrapper` (in `src/components/dashboard/WidgetWrapper.tsx`) to encapsulate widgets. These wrappers provide consistent padding, a title, and a context menu button.
+Widgets created so far (`AssetsWidget`, `DebtsWidget`, `NetWorthWidget`) reside in `src/components/dashboard/widgets/` and render their own specific data by reading from `useDashboardStore`.
 
-## Data Schema & State Strategy
-- **Categorization:** Following Decision D-02, a fixed set of standard categories should be implemented (e.g., Housing, Food, Transport, Utilities, Entertainment, Healthcare).
-- **Timeframe:** Based on Decision D-03, the state needs a mechanism to filter entries by the current calendar month.
-- **Transaction Model:**
-  ```typescript
-  export type TransactionType = 'income' | 'expense';
-  export type TransactionCategory = 'Housing' | 'Food' | 'Transport' | 'Utilities' | 'Entertainment' | 'Healthcare' | 'Other' | 'Salary' | 'Bonus' | 'Investment';
-  
-  export interface Transaction {
-    id: string;
-    amount: number;
-    type: TransactionType;
-    category: TransactionCategory;
-    date: string; // ISO date string
-    description?: string;
-  }
-  ```
+### State Management
+The project uses `zustand` for state management. Currently, `src/store/useDashboardStore.ts` holds `DashboardState` (`netWorth`, `totalAssets`, `totalDebts`, etc.).
+For the Budgeting Module, we will need to expand this store (or create a dedicated `useBudgetStore`) to manage:
+- A list of categorized expenses (e.g., `id`, `amount`, `category`, `date`, `description`)
+- A list of income entries
+- Derived values: `monthlyCashFlow`, `totalIncome`, `totalExpenses`
 
-## UI/UX Considerations
-- Strict adherence to the dual-theme system (Tactical Monospace and Geometric Abstraction) using CSS variables.
-- Maintain a premium "engineering command center" design language for the widgets and the data entry modal.
+### Phase Requirements & Decisions
+- **BUDGET-01**: Monthly cash flow tracking widget.
+- **BUDGET-02**: Income tracking widget.
+- **BUDGET-03**: Categorized expense tracking widget.
+- **D-01**: Use a dedicated modal overlay for entering income and expenses to keep widgets clean and read-only.
+- **D-02**: Use fixed standard categories (Housing, Food, Transport, etc.).
+- **D-03**: Default to tracking calendar month.
 
 ## Validation Architecture
-- **Unit Tests:** Test the Zustand store `useBudgetStore.ts` for correct aggregation of cash flow, income, and expenses for a given month.
-- **Integration Tests:** Ensure widgets render correctly with empty states and populated states. Test the form modal for correct data submission.
+
+### 1. Data Entry Validation (D-01)
+- The modal overlay must correctly capture `amount`, `category` (from a fixed list), and `date`.
+- Modals must be capable of dispatching to the Zustand store.
+
+### 2. State & Calculation Validation (BUDGET-01, BUDGET-02, BUDGET-03)
+- The `zustand` store must correctly aggregate total income and total expenses for the current month.
+- Cash flow must be calculated as `totalIncome - totalExpenses`.
+
+### 3. UI Validation
+- The three new widgets must be implemented using `WidgetWrapper` and integrated into the existing `BentoGrid` or main dashboard layout.
+- The UI must reflect the "Tactical Monospace and Geometric Abstraction" dual-theme rules.
