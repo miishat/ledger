@@ -1,5 +1,5 @@
 import React from 'react';
-import { WidgetWrapper } from '../WidgetWrapper';
+import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../../store/useBudgetStore';
 
 export const IncomeWidget: React.FC = () => {
