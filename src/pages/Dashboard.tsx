@@ -8,6 +8,7 @@ import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { CashFlowWidget } from '../components/budget/CashFlowWidget';
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { InvestmentTrackerWidget } from '../components/investments/InvestmentTrackerWidget';
+import { ProjectionWidget } from '../components/investments/ProjectionWidget';
 
 export const Dashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +36,7 @@ export const Dashboard: React.FC = () => {
         <IncomeWidget />
         <ExpenseWidget />
         <DebtsWidget />
+        <ProjectionWidget />
       </BentoGrid>
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
