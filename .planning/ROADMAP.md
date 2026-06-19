@@ -122,6 +122,10 @@ Plans:
 
 - [ ] 06-02: Build equity (RSU/Options) vesting schedule calculator and charts.
 
+**Gap Closure** *(from 06-UAT.md)*
+
+- [ ] 06-04: Add RSU/equity input fields to the Compare offer form so the RSU (Annual) comparison row reflects real numbers instead of $0.
+
 ## Progress
 
 **Execution Order:**
