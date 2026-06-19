@@ -46,7 +46,7 @@ export const Compensation: React.FC = () => {
                     type="number"
                     value={primaryPackage.companyCurrentPrice || ''}
                     onChange={(e) => setPrimaryPackage({ companyCurrentPrice: Number(e.target.value) || 0 })}
-                    className="w-20 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0"
                   />
                 </div>
               </div>

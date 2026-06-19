@@ -15,22 +15,51 @@ import {
 export function EquityVestingWidget() {
   const { primaryPackage, timeMode } = useCompensationStore()
 
+  const COLORS = ['var(--color-accent)', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981']
+
   const CustomEquityTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const vestEntry = payload.find((p: any) => p.dataKey === 'vestValue');
-      if (!vestEntry) return null;
+      const barPayloads = payload.filter((p: any) => p.dataKey !== 'cumulativeVested' && p.dataKey !== 'vestValue');
+      const cumPayload = payload.find((p: any) => p.dataKey === 'cumulativeVested');
+      
+      if (barPayloads.length === 0) return null;
+      
+      const totalVest = barPayloads.reduce((sum: number, p: any) => sum + p.value, 0);
+
       return (
-        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md">
+        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md min-w-[200px]">
           <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
-          <div className="flex justify-between items-center gap-4 text-[13px]">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: vestEntry.color }} />
-              <span className="text-[var(--color-text-secondary)]">{vestEntry.name}</span>
-            </div>
-            <span className="text-[var(--color-text-primary)] font-medium">
-              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(vestEntry.value)}
+          
+          <div className="flex flex-col gap-1 mb-2">
+            {barPayloads.map((p: any, i: number) => {
+              if (p.value === 0) return null;
+              return (
+                <div key={i} className="flex justify-between items-center gap-4 text-[13px]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
+                    <span className="text-[var(--color-text-secondary)]">{p.name}</span>
+                  </div>
+                  <span className="text-[var(--color-text-primary)] font-medium">
+                    {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(p.value)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-between items-center gap-4 text-[13px] pt-2 border-t border-[var(--color-border)]">
+            <span className="text-[var(--color-text-primary)] font-semibold">Total Vesting</span>
+            <span className="text-[var(--color-text-primary)] font-bold">
+              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalVest)}
             </span>
           </div>
+
+          {cumPayload && (
+            <div className="flex justify-between items-center gap-4 text-[13px] mt-1 text-[var(--color-text-secondary)]">
+              <span>Cumulative</span>
+              <span>{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(cumPayload.value)}</span>
+            </div>
+          )}
         </div>
       );
     }
@@ -71,10 +100,11 @@ export function EquityVestingWidget() {
     }
   });
 
-  const allEvents: VestEvent[] = []
+  const allEvents: (VestEvent & { grantName: string, grantId: string })[] = []
   primaryPackage.rsuGrants.forEach(grant => {
     const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice)
-    allEvents.push(...events)
+    const taggedEvents = events.map(e => ({ ...e, grantName: grant.grantName, grantId: grant.id }))
+    allEvents.push(...taggedEvents)
   })
 
   // Calculate cumulative vested before the window starts
@@ -82,19 +112,26 @@ export function EquityVestingWidget() {
   let cumulativeVested = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
 
   const chartData = displayMonths.map(dm => {
-    const eventsThisMonth = allEvents.filter(e => {
-      if (!e.date) return false;
-      const eventDate = new Date(e.date);
-      return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
-    })
-    const vestValue = eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
-    cumulativeVested += vestValue;
+    const dataRow: any = { monthLabel: dm.label, vestValue: 0 }
+    let totalVestThisMonth = 0
 
-    return {
-      monthLabel: dm.label,
-      vestValue,
-      cumulativeVested
-    }
+    primaryPackage.rsuGrants.forEach((grant) => {
+      const grantKey = grant.id
+      const eventsThisMonth = allEvents.filter(e => {
+        if (!e.date || e.grantId !== grant.id) return false;
+        const eventDate = new Date(e.date);
+        return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
+      })
+      const vestValue = eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
+      dataRow[grantKey] = vestValue
+      totalVestThisMonth += vestValue
+    })
+
+    cumulativeVested += totalVestThisMonth;
+    dataRow.vestValue = totalVestThisMonth;
+    dataRow.cumulativeVested = cumulativeVested;
+
+    return dataRow;
   })
 
 
@@ -127,14 +164,17 @@ export function EquityVestingWidget() {
                 tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} 
               />
               <Tooltip content={<CustomEquityTooltip />} />
-              <Bar 
-                yAxisId="left" 
-                dataKey="vestValue" 
-                name="Vest Event" 
-                fill="var(--color-accent)" 
-                opacity={0.8} 
-                radius={[3, 3, 0, 0]} 
-              />
+              {primaryPackage.rsuGrants.map((grant, index) => (
+                <Bar 
+                  key={grant.id}
+                  yAxisId="left" 
+                  dataKey={grant.id} 
+                  name={grant.grantName} 
+                  stackId="a"
+                  fill={COLORS[index % COLORS.length]} 
+                  opacity={0.8} 
+                />
+              ))}
               <Line 
                 yAxisId="right" 
                 type="monotone" 
