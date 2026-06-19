@@ -58,30 +58,41 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
   const today = new Date();
   const targetYear = today.getFullYear();
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const monthlyData = months.map((m, i) => {
+  const currentMonth = today.getMonth();
+
+  const displayMonths = Array.from({ length: 12 }).map((_, i) => {
+    if (timeMode === 'current-year') {
+      return {
+        label: new Date(targetYear, i, 1).toLocaleString('default', { month: 'short' }),
+        monthIndex: i,
+        year: targetYear
+      }
+    } else {
+      const date = new Date(targetYear, currentMonth + i, 1);
+      return {
+        label: date.toLocaleString('default', { month: 'short' }),
+        monthIndex: date.getMonth(),
+        year: date.getFullYear()
+      }
+    }
+  });
+
+  const monthlyData = displayMonths.map((dm) => {
     let rsuThisMonth = 0
     primaryPackage.rsuGrants.forEach(grant => {
       const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice || 0)
       const eventsThisMonth = events.filter((e: any) => {
-        if (!e.date) return e.monthIndex === i + 1; // fallback
+        if (!e.date) return false;
         const eventDate = new Date(e.date);
-        
-        if (timeMode === 'current-year') {
-           return eventDate.getMonth() === i && eventDate.getFullYear() === targetYear;
-        } else {
-           const nextYear = new Date(today);
-           nextYear.setFullYear(targetYear + 1);
-           return eventDate.getMonth() === i && eventDate >= today && eventDate <= nextYear;
-        }
+        return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
       })
       rsuThisMonth += eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
     })
 
     return {
-      month: m,
+      month: dm.label,
       baseSalary: baseValue / 12,
-      bonus: i === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, // Paid in selected month
+      bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, 
       espp: esppValue / 12,
       rrsp: rrspValue / 12,
       rsu: rsuThisMonth,
@@ -171,7 +182,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <Tooltip 
-                formatter={(v: any) => [new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v), '']} 
+                formatter={(v: any, name: any) => [new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v), name]} 
                 contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)' }}
                 itemStyle={{ color: 'var(--color-text-primary)' }}
               />
