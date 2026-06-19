@@ -28,6 +28,7 @@
 ### Total Compensation Calculator (COMP)
 - [ ] [COMP-01] Base salary, cash bonuses, employer-paid benefits breakdown
 - [ ] [COMP-02] Customizable equity tracker for RSUs/Options vesting schedules
+- [ ] [COMP-03] Time-based Total Compensation Modes (Current Year vs Next 1 Year), filtering RSU vestings
 
 ## v2 Requirements (Deferred)
 - [ ] User authentication and cloud sync
