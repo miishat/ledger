@@ -20,7 +20,6 @@ export function EquityVestingWidget() {
   const CustomEquityTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const barPayloads = payload.filter((p: any) => p.dataKey !== 'cumulativeVested' && p.dataKey !== 'vestValue');
-      const cumPayload = payload.find((p: any) => p.dataKey === 'cumulativeVested');
       
       if (barPayloads.length === 0) return null;
       
@@ -53,13 +52,6 @@ export function EquityVestingWidget() {
               {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalVest)}
             </span>
           </div>
-
-          {cumPayload && (
-            <div className="flex justify-between items-center gap-4 text-[13px] mt-1 text-[var(--color-text-secondary)]">
-              <span>Cumulative</span>
-              <span>{new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(cumPayload.value)}</span>
-            </div>
-          )}
         </div>
       );
     }
