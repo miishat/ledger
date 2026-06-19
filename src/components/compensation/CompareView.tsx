@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
-import { 
-  useCompensationStore, 
-  calcTotalComp, 
+import {
+  useCompensationStore,
+  calcTotalComp,
   calcAnnualBaseSalary,
-  calcAnnualBonus, 
-  calcAnnualESPP, 
-  calcAnnualRRSP, 
-  calcAnnualRSU 
+  calcAnnualBonus,
+  calcAnnualESPP,
+  calcAnnualRRSP,
+  calcAnnualRSU
 } from '../../store/useCompensationStore'
+import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 
 export function CompareView() {
   const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
@@ -24,6 +25,44 @@ export function CompareView() {
   const [compareEsppLockInEndDate, setCompareEsppLockInEndDate] = useState('')
   const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState('0')
   const [compareRrspMatchCap, setCompareRrspMatchCap] = useState('0')
+
+  // RSU / Equity grants for the compare offer
+  const [compareRsuGrants, setCompareRsuGrants] = useState<RSUGrant[]>([])
+  const [rsuGrantName, setRsuGrantName] = useState('')
+  const [rsuGrantShares, setRsuGrantShares] = useState('')
+  const [rsuGrantPrice, setRsuGrantPrice] = useState('100')
+  const [rsuStartDate, setRsuStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [rsuPreset, setRsuPreset] = useState<VestingPreset>('4yr-1yr-cliff')
+  const [rsuTotalMonths, setRsuTotalMonths] = useState('48')
+  const [rsuCliffMonths, setRsuCliffMonths] = useState('12')
+  const [rsuFrequency, setRsuFrequency] = useState<VestingFrequency>('monthly')
+
+  const addCompareRsuGrant = () => {
+    if (!rsuGrantName || !rsuGrantShares || !rsuGrantPrice) return
+
+    const vestingSchedule: VestingSchedule = {
+      preset: rsuPreset,
+      totalVestMonths: rsuPreset === 'custom' ? Number(rsuTotalMonths) : (rsuPreset === '4yr-1yr-cliff' ? 48 : 36),
+      cliffMonths: rsuPreset === 'custom' ? Number(rsuCliffMonths) : (rsuPreset === '4yr-1yr-cliff' ? 12 : 0),
+      frequency: rsuFrequency
+    }
+
+    setCompareRsuGrants(prev => [...prev, {
+      id: crypto.randomUUID(),
+      grantName: rsuGrantName,
+      grantShares: Number(rsuGrantShares),
+      grantPrice: Number(rsuGrantPrice),
+      grantStartDate: rsuStartDate,
+      vestingSchedule
+    }])
+
+    setRsuGrantName('')
+    setRsuGrantShares('')
+  }
+
+  const removeCompareRsuGrant = (id: string) => {
+    setCompareRsuGrants(prev => prev.filter(g => g.id !== id))
+  }
 
   const handleCalculate = () => {
     setComparePackage({
