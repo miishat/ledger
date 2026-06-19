@@ -5,8 +5,6 @@ import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
 import { AccountCategoryWidget } from '../components/dashboard/AccountCategoryWidget';
-import { CSVUploader } from '../components/budget/CSVUploader';
-import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
 
 export const Dashboard: React.FC = () => {
   return (
@@ -16,11 +14,9 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold">Master Dashboard</h1>
           <p className="text-text-secondary">Overview of your financial universe</p>
         </div>
-        <CSVUploader />
       </div>
       
       <BentoGrid>
-        <TriageInboxWidget />
         <NetWorthWidget />
         <MonthlySummaryWidget />
         
