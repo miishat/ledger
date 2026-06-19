@@ -20,6 +20,7 @@ interface BudgetState {
   addTransaction: (transaction: Transaction) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
+  clearAllTransactions: () => void;
 
   addCategory: (category: Category) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
@@ -63,6 +64,7 @@ export const useBudgetStore = create<BudgetState>()(
           delete newTransactions[id];
           return { transactions: newTransactions };
         }),
+      clearAllTransactions: () => set({ transactions: {} }),
 
       addCategory: (category) =>
         set((state) => ({

@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
+import { Trash2 } from 'lucide-react';
 
 export const TransactionListWidget: React.FC = () => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
+  const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
+  const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
@@ -13,7 +16,21 @@ export const TransactionListWidget: React.FC = () => {
 
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]">
-      <h2 className="text-[18px] font-semibold text-text-primary mb-4">All Transactions</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
+        {txList.length > 0 && (
+          <button 
+            onClick={() => {
+              if (window.confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
+                clearAllTransactions();
+              }
+            }}
+            className="text-[14px] text-red-500 hover:text-red-400 transition-colors border border-red-500/30 hover:bg-red-500/10 px-3 py-1 rounded-md"
+          >
+            Clear All
+          </button>
+        )}
+      </div>
       {txList.length === 0 ? (
         <p className="text-text-secondary text-[14px] flex-grow flex items-center justify-center">
           No transactions yet. Import a CSV or add one manually to see it here.
@@ -27,13 +44,14 @@ export const TransactionListWidget: React.FC = () => {
                 <th className="pb-2 font-medium">Description</th>
                 <th className="pb-2 font-medium">Category</th>
                 <th className="pb-2 font-medium text-right">Amount</th>
+                <th className="pb-2 font-medium w-10"></th>
               </tr>
             </thead>
             <tbody>
               {txList.map(tx => (
                 <tr 
                   key={tx.id} 
-                  className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors cursor-pointer"
+                  className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
                   onClick={() => setEditingTransaction(tx)}
                 >
                   <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
@@ -45,6 +63,17 @@ export const TransactionListWidget: React.FC = () => {
                   </td>
                   <td className={`py-3 text-[14px] font-medium text-right ${tx.type === 'income' ? 'text-accent' : 'text-text-primary'}`}>
                     {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                  </td>
+                  <td className="py-3 text-right">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTransaction(tx.id);
+                      }}
+                      className="p-1.5 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
