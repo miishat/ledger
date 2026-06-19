@@ -33,3 +33,4 @@ See: .planning/PROJECT.md (updated 2026-06-17)
 | Phase 03 P03-01 | 5 min | 2 tasks | 2 files |
 | Phase 03 P03-02 | 5 min | 3 tasks | 4 files |
 | Phase 06 P06-01 | 2 min | 4 tasks | 4 files |
+| Phase 06 P06-02 | 3 min | 3 tasks | 3 files |
