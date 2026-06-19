@@ -15,6 +15,28 @@ import {
 export function EquityVestingWidget() {
   const { primaryPackage, timeMode } = useCompensationStore()
 
+  const CustomEquityTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const vestEntry = payload.find((p: any) => p.dataKey === 'vestValue');
+      if (!vestEntry) return null;
+      return (
+        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md">
+          <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
+          <div className="flex justify-between items-center gap-4 text-[13px]">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: vestEntry.color }} />
+              <span className="text-[var(--color-text-secondary)]">{vestEntry.name}</span>
+            </div>
+            <span className="text-[var(--color-text-primary)] font-medium">
+              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(vestEntry.value)}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (primaryPackage.rsuGrants.length === 0) {
     return (
       <WidgetWrapper title="Equity Vesting Schedule">
@@ -104,10 +126,7 @@ export function EquityVestingWidget() {
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 
                 tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} 
               />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px' }} 
-                formatter={(v: any, name: any) => [`$${Number(v).toLocaleString()}`, name]} 
-              />
+              <Tooltip content={<CustomEquityTooltip />} />
               <Bar 
                 yAxisId="left" 
                 dataKey="vestValue" 

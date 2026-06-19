@@ -108,6 +108,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           </button>
         </div>
 
+        <div className="p-4 border-b border-[var(--color-border)]">
+          <div className="flex flex-col gap-2">
+            <label className={labelClass}>Company Current Stock Price ($)</label>
+            <input
+              type="number"
+              value={companyCurrentPrice}
+              onChange={(e) => setCompanyCurrentPrice(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
         <div className="flex border-b border-[var(--color-border)] px-4 pt-2 gap-4">
           <button
             type="button"
@@ -135,15 +147,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
           {activeTab === 'base' && (
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2 border-b border-[var(--color-border)] pb-4 mb-2">
-                <label className={labelClass}>Company Current Stock Price ($)</label>
-                <input
-                  type="number"
-                  value={companyCurrentPrice}
-                  onChange={(e) => setCompanyCurrentPrice(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
 
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>Base Salary ($)</label>
