@@ -5,9 +5,11 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 export const MonthlySummaryWidget: React.FC = () => {
   const transactions = useBudgetStore((state) => state.transactions);
   
+  const transactionsList = Object.values(transactions);
+  
   const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
   
-  const thisMonthTransactions = transactions.filter(t => t.date.startsWith(currentMonth));
+  const thisMonthTransactions = transactionsList.filter(t => t.date.startsWith(currentMonth));
   
   const totalIncome = thisMonthTransactions
     .filter(t => t.type === 'income')

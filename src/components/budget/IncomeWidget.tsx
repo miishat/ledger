@@ -5,9 +5,11 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 export const IncomeWidget: React.FC = () => {
   const transactions = useBudgetStore((state) => state.transactions);
   
+  const transactionsList = Object.values(transactions);
+  
   const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
   
-  const totalIncome = transactions
+  const totalIncome = transactionsList
     .filter(t => t.type === 'income' && t.date.startsWith(currentMonth))
     .reduce((sum, t) => sum + t.amount, 0);
 

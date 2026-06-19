@@ -5,15 +5,18 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 export const ExpenseWidget: React.FC = () => {
   const transactions = useBudgetStore((state) => state.transactions);
   
+  const transactionsList = Object.values(transactions);
+  
   const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
   
-  const expensesThisMonth = transactions.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth));
+  const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth));
   
   const totalExpense = expensesThisMonth.reduce((sum, t) => sum + t.amount, 0);
   
   // Group by category
   const expensesByCategory = expensesThisMonth.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
+    const catName = t.categoryId || 'Uncategorized';
+    acc[catName] = (acc[catName] || 0) + t.amount;
     return acc;
   }, {} as Record<string, number>);
   

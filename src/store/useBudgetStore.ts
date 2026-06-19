@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import {
+import type {
   BudgetingParadigm,
   Category,
   CategoryGroup,

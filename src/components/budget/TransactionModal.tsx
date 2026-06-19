@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { useBudgetStore, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../store/useBudgetStore';
-import type { TransactionType } from '../../store/useBudgetStore';
+import { useBudgetStore } from '../../store/useBudgetStore';
+
+export type TransactionType = 'expense' | 'income';
+
+export const EXPENSE_CATEGORIES = [
+  'Housing', 'Food', 'Transportation', 'Utilities', 
+  'Insurance', 'Medical', 'Saving', 'Personal'
+];
+
+export const INCOME_CATEGORIES = [
+  'Salary', 'Bonus', 'Interest', 'Gift', 'Other'
+];
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -24,9 +34,10 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
     if (!amount || isNaN(Number(amount))) return;
 
     addTransaction({
+      id: crypto.randomUUID(),
       type,
       amount: Number(amount),
-      category,
+      categoryId: category,
       date,
       description
     });
