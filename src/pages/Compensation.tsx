@@ -6,7 +6,7 @@ import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
 
 export const Compensation: React.FC = () => {
-  const { primaryPackage, setPrimaryPackage, compareMode, toggleCompareMode } = useCompensationStore()
+  const { primaryPackage, setPrimaryPackage, compareMode, toggleCompareMode, timeMode } = useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const totalComp = calcTotalComp(primaryPackage)
@@ -51,9 +51,11 @@ export const Compensation: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Blended Base Salary</span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">
+                  {timeMode === 'current-year' ? 'Blended Base Salary' : 'Current Base Salary'}
+                </span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  ${calcAnnualBaseSalary(primaryPackage, 'current-year').toLocaleString()}
+                  ${calcAnnualBaseSalary(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
