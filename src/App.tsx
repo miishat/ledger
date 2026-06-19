@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import { useThemeStore } from './store/useThemeStore'
 import { Layout } from './components/Layout'
 
@@ -25,7 +25,7 @@ function App() {
   }, [theme])
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
@@ -35,7 +35,7 @@ function App() {
           <Route path="compensation" element={<Compensation />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
