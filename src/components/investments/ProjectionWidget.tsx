@@ -51,7 +51,7 @@ export const ProjectionWidget: React.FC = () => {
 
       <div className="flex-1 w-full mt-4">
         <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-          <ComposedChart data={history} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <ComposedChart data={history} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="colorInterest" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.8}/>
@@ -60,7 +60,7 @@ export const ProjectionWidget: React.FC = () => {
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.5} />
             <XAxis dataKey="year" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={formatCurrency} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis width={65} tickFormatter={formatCurrency} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
               formatter={(value: any) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value))}
               contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }}
