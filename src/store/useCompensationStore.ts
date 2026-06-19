@@ -76,18 +76,16 @@ export function getBaseSalaryForMonth(pkg: CompensationPackage, year: number, mo
 }
 
 export function calcAnnualBaseSalary(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
+  if (timeMode === 'next-1-year') {
+    return pkg.baseSalary;
+  }
+
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
   
   let totalBase = 0;
   for (let i = 0; i < 12; i++) {
-    if (timeMode === 'current-year') {
-      totalBase += getBaseSalaryForMonth(pkg, currentYear, i) / 12;
-    } else {
-      const date = new Date(currentYear, currentMonth + i, 1);
-      totalBase += getBaseSalaryForMonth(pkg, date.getFullYear(), date.getMonth()) / 12;
-    }
+    totalBase += getBaseSalaryForMonth(pkg, currentYear, i) / 12;
   }
   return totalBase;
 }

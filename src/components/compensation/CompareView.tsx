@@ -3,6 +3,7 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { 
   useCompensationStore, 
   calcTotalComp, 
+  calcAnnualBaseSalary,
   calcAnnualBonus, 
   calcAnnualESPP, 
   calcAnnualRRSP, 
@@ -10,7 +11,7 @@ import {
 } from '../../store/useCompensationStore'
 
 export function CompareView() {
-  const { primaryPackage, comparePackage, setComparePackage } = useCompensationStore()
+  const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
 
   const [compareName] = useState('Compare Offer')
   const [compareBaseSalary, setCompareBaseSalary] = useState('')
@@ -143,66 +144,66 @@ export function CompareView() {
 
               <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
                 <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">Base Salary</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${primaryPackage.baseSalary.toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${comparePackage.baseSalary.toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBaseSalary(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBaseSalary(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={comparePackage.baseSalary - primaryPackage.baseSalary > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : comparePackage.baseSalary - primaryPackage.baseSalary < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {comparePackage.baseSalary - primaryPackage.baseSalary > 0 ? `+$${Math.abs(comparePackage.baseSalary - primaryPackage.baseSalary).toLocaleString()} more` : comparePackage.baseSalary - primaryPackage.baseSalary < 0 ? `−$${Math.abs(comparePackage.baseSalary - primaryPackage.baseSalary).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
                 <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">Annual Bonus</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(primaryPackage).toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(comparePackage).toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage) > 0 ? `+$${Math.abs(calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage)).toLocaleString()} more` : calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage) < 0 ? `−$${Math.abs(calcAnnualBonus(comparePackage) - calcAnnualBonus(primaryPackage)).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
                 <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">ESPP Benefit</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(primaryPackage).toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(comparePackage).toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage) > 0 ? `+$${Math.abs(calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage)).toLocaleString()} more` : calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage) < 0 ? `−$${Math.abs(calcAnnualESPP(comparePackage) - calcAnnualESPP(primaryPackage)).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
                 <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">RRSP Match</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(primaryPackage).toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(comparePackage).toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage) > 0 ? `+$${Math.abs(calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage)).toLocaleString()} more` : calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage) < 0 ? `−$${Math.abs(calcAnnualRRSP(comparePackage) - calcAnnualRRSP(primaryPackage)).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
                 <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">RSU (Annual)</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(primaryPackage).toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(comparePackage).toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage) > 0 ? `+$${Math.abs(calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage)).toLocaleString()} more` : calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage) < 0 ? `−$${Math.abs(calcAnnualRSU(comparePackage) - calcAnnualRSU(primaryPackage)).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-3">
                 <div className="w-1/4"><span className="text-[14px] font-semibold text-[var(--color-text-primary)]">Total Compensation</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(primaryPackage).toLocaleString()}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(comparePackage).toLocaleString()}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 <div className="w-1/4 flex justify-end">
-                  <span className={calcTotalComp(comparePackage) - calcTotalComp(primaryPackage) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcTotalComp(comparePackage) - calcTotalComp(primaryPackage) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcTotalComp(comparePackage) - calcTotalComp(primaryPackage) > 0 ? `+$${Math.abs(calcTotalComp(comparePackage) - calcTotalComp(primaryPackage)).toLocaleString()} more` : calcTotalComp(comparePackage) - calcTotalComp(primaryPackage) < 0 ? `−$${Math.abs(calcTotalComp(comparePackage) - calcTotalComp(primaryPackage)).toLocaleString()} less` : "Equivalent"}
+                  <span className={calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) > 0 ? "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium" : calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) < 0 ? "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
+                    {calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
                   </span>
                 </div>
               </div>

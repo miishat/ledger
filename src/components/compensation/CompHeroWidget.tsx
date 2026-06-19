@@ -120,7 +120,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
     return {
       month: dm.label,
-      baseSalary: getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12,
+      baseSalary: timeMode === 'current-year' ? getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12 : primaryPackage.baseSalary / 12,
       bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, 
       espp: esppValue / 12,
       rrsp: rrspValue / 12,
