@@ -2,14 +2,18 @@ import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 
-export const ExpenseWidget: React.FC = () => {
+interface ExpenseWidgetProps {
+  selectedMonth: string; // YYYY-MM
+}
+
+export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   
   const transactionsList = Object.values(transactions);
   
-  const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+  const transactionsList = Object.values(transactions);
   
-  const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth));
+  const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth));
   
   const totalExpense = expensesThisMonth.reduce((sum, t) => sum + t.amount, 0);
   

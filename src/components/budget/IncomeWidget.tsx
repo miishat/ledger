@@ -2,15 +2,19 @@ import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 
-export const IncomeWidget: React.FC = () => {
+interface IncomeWidgetProps {
+  selectedMonth: string; // YYYY-MM
+}
+
+export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   
   const transactionsList = Object.values(transactions);
   
-  const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+  const transactionsList = Object.values(transactions);
   
   const totalIncome = transactionsList
-    .filter(t => t.type === 'income' && t.date.startsWith(currentMonth))
+    .filter(t => t.type === 'income' && t.date.startsWith(selectedMonth))
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (

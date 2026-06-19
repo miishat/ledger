@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { TransactionModal } from './TransactionModal';
+import type { Transaction } from '../../types/budget';
 
 export const TransactionListWidget: React.FC = () => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
+
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const txList = Object.values(transactions).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -27,7 +31,11 @@ export const TransactionListWidget: React.FC = () => {
             </thead>
             <tbody>
               {txList.map(tx => (
-                <tr key={tx.id} className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors">
+                <tr 
+                  key={tx.id} 
+                  className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors cursor-pointer"
+                  onClick={() => setEditingTransaction(tx)}
+                >
                   <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
                   <td className="py-3 text-[14px]">{tx.description}</td>
                   <td className="py-3 text-[14px]">
@@ -44,6 +52,12 @@ export const TransactionListWidget: React.FC = () => {
           </table>
         </div>
       )}
+
+      <TransactionModal 
+        isOpen={!!editingTransaction} 
+        onClose={() => setEditingTransaction(null)} 
+        initialTransaction={editingTransaction} 
+      />
     </div>
   );
 };

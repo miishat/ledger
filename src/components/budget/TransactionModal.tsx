@@ -2,30 +2,48 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 
+import type { Transaction } from '../../types/budget';
+
 export type TransactionType = 'expense' | 'income';
-
-export const EXPENSE_CATEGORIES = [
-  'Housing', 'Food', 'Transportation', 'Utilities', 
-  'Insurance', 'Medical', 'Saving', 'Personal'
-];
-
-export const INCOME_CATEGORIES = [
-  'Salary', 'Bonus', 'Interest', 'Gift', 'Other'
-];
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTransaction?: Transaction | null;
 }
 
-export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
+export function TransactionModal({ isOpen, onClose, initialTransaction }: TransactionModalProps) {
   const addTransaction = useBudgetStore((state) => state.addTransaction);
+  const updateTransaction = useBudgetStore((state) => state.updateTransaction);
+  const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
+  const categories = useBudgetStore((state) => state.categories);
+
+  const categoryList = Object.values(categories);
+  const expenseCategories = categoryList.filter(c => true); // We'll just show all categories for now, or filter by group
+  // Actually, let's just use all categories from the store
+
 
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState<string>('');
-  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
+
+  React.useEffect(() => {
+    if (initialTransaction) {
+      setType(initialTransaction.type);
+      setAmount(initialTransaction.amount.toString());
+      setCategory(initialTransaction.categoryId || '');
+      setDate(initialTransaction.date);
+      setDescription(initialTransaction.description || '');
+    } else {
+      setType('expense');
+      setAmount('');
+      setCategory(categoryList.length > 0 ? categoryList[0].id : '');
+      setDate(new Date().toISOString().split('T')[0]);
+      setDescription('');
+    }
+  }, [initialTransaction, isOpen, categories]);
 
   if (!isOpen) return null;
 
@@ -33,31 +51,48 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
     e.preventDefault();
     if (!amount || isNaN(Number(amount))) return;
 
-    addTransaction({
-      id: crypto.randomUUID(),
-      type,
-      amount: Number(amount),
-      categoryId: category,
-      date,
-      description
-    });
+    if (initialTransaction) {
+      updateTransaction(initialTransaction.id, {
+        type,
+        amount: Number(amount),
+        categoryId: category,
+        date,
+        description
+      });
+    } else {
+      addTransaction({
+        id: crypto.randomUUID(),
+        type,
+        amount: Number(amount),
+        categoryId: category,
+        date,
+        description
+      });
+    }
 
     // Reset form
     setType('expense');
     setAmount('');
-    setCategory(EXPENSE_CATEGORIES[0]);
+    setCategory(categoryList.length > 0 ? categoryList[0].id : '');
     setDate(new Date().toISOString().split('T')[0]);
     setDescription('');
     onClose();
   };
 
-  const currentCategories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const handleDelete = () => {
+    if (initialTransaction) {
+      deleteTransaction(initialTransaction.id);
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-          <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Add Transaction</h2>
+          <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">
+            {initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
+          </h2>
           <button
             onClick={onClose}
             className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
@@ -77,10 +112,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
                   ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => {
-                setType('expense');
-                setCategory(EXPENSE_CATEGORIES[0]);
-              }}
+              onClick={() => setType('expense')}
             >
               Expense
             </button>
@@ -91,10 +123,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
                   ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => {
-                setType('income');
-                setCategory(INCOME_CATEGORIES[0]);
-              }}
+              onClick={() => setType('income')}
             >
               Income
             </button>
@@ -124,9 +153,10 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
               onChange={(e) => setCategory(e.target.value)}
               className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
             >
-              {currentCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              <option value="">Uncategorized</option>
+              {categoryList.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -158,12 +188,21 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
             />
           </div>
 
-          <div className="pt-2 mt-2 border-t border-[var(--color-border)]">
+          <div className="pt-2 mt-2 border-t border-[var(--color-border)] flex gap-2">
+            {initialTransaction && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-4 py-3 bg-red-500/10 text-red-500 rounded-md text-[14px] font-medium hover:bg-red-500/20 transition-colors"
+              >
+                Delete
+              </button>
+            )}
             <button
               type="submit"
-              className="w-full py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              className="flex-1 py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
-              Add Transaction
+              {initialTransaction ? 'Save Changes' : 'Add Transaction'}
             </button>
           </div>
         </form>

@@ -6,13 +6,23 @@ import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
+import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
+
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
+
+  const shiftMonth = (delta: number) => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const date = new Date(year, month - 1 + delta, 1);
+    setSelectedMonth(date.toISOString().substring(0, 7));
+  };
+  
+  const formattedMonth = new Date(`${selectedMonth}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   React.useEffect(() => {
     if (Object.keys(categories).length === 0) {
@@ -29,7 +39,12 @@ export const Budgeting: React.FC = () => {
             Manage your income, track expenses, and view your cash flow.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <div className="flex items-center gap-2 bg-bg-secondary rounded-md px-2 py-1 border border-border">
+            <button onClick={() => shiftMonth(-1)} className="p-1 hover:text-accent transition-colors">&lt;</button>
+            <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
+            <button onClick={() => shiftMonth(1)} className="p-1 hover:text-accent transition-colors">&gt;</button>
+          </div>
           <CSVUploader />
           <button
             onClick={() => setIsModalOpen(true)}
@@ -41,14 +56,16 @@ export const Budgeting: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <IncomeWidget />
-        <ExpenseWidget />
-        <MonthlySummaryWidget />
+        <IncomeWidget selectedMonth={selectedMonth} />
+        <ExpenseWidget selectedMonth={selectedMonth} />
+        <MonthlySummaryWidget selectedMonth={selectedMonth} />
       </div>
 
       <TriageInboxWidget />
 
       <TransactionListWidget />
+
+      <CategoryManagerWidget />
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
