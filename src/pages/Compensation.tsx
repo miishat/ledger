@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
+import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
+import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp } from '../store/useCompensationStore'
 
 export const Compensation: React.FC = () => {
-  const { primaryPackage } = useCompensationStore()
+  const { primaryPackage, compareMode, toggleCompareMode } = useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const totalComp = calcTotalComp(primaryPackage)
@@ -70,6 +72,24 @@ export const Compensation: React.FC = () => {
           )}
         </div>
       </div>
+
+      {isPopulated && (
+        <>
+          <EquityVestingWidget />
+          
+          <div className="flex justify-end">
+            <button
+              id="compare-toggle-btn"
+              onClick={toggleCompareMode}
+              className="px-4 py-2 border border-[var(--color-border)] rounded-md text-[14px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-accent)] transition-colors"
+            >
+              Compare Another Offer
+            </button>
+          </div>
+          
+          {compareMode && <CompareView />}
+        </>
+      )}
 
       <CompensationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
