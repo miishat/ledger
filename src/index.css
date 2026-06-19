@@ -22,6 +22,8 @@
   --text-secondary: #4b5563;
   --accent: #3b82f6;
   --border-color: #e5e7eb;
+  --calendar-icon-filter: none;
+  color-scheme: light;
 }
 
 [data-theme='tactical'] {
@@ -32,6 +34,7 @@
   --text-secondary: #94a3b8;
   --accent: #10b981;
   --border-color: #334155;
+  --calendar-icon-filter: invert(1);
   
   /* Force mono font for the entire app in Tactical mode */
   font-family: var(--font-mono);
@@ -49,4 +52,16 @@ html, body {
 /* Ensure default font is applied when not in tactical mode */
 html:not([data-theme='tactical']) {
   font-family: var(--font-sans);
+}
+
+/* Make native select options match the theme */
+option {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Invert calendar icon in dark themes */
+::-webkit-calendar-picker-indicator {
+  filter: var(--calendar-icon-filter);
+  cursor: pointer;
 }

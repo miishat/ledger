@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Trash2 } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import type { VestingPreset, VestingFrequency, PastSalary } from '../../store/useCompensationStore'
 
@@ -9,9 +9,7 @@ interface CompensationModalProps {
 }
 
 export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
-  const { primaryPackage, setPrimaryPackage, addRSUGrant } = useCompensationStore()
-
-  const [activeTab, setActiveTab] = useState<'base' | 'equity' | 'benefits'>('base')
+  const { primaryPackage, setPrimaryPackage, addRSUGrant, removeRSUGrant } = useCompensationStore()
 
   // Global Stock Price
   const [companyCurrentPrice, setCompanyCurrentPrice] = useState((primaryPackage.companyCurrentPrice || 100).toString())
@@ -118,8 +116,8 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const labelClass = "text-[12px] font-medium leading-none text-[var(--color-text-secondary)]"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden max-h-[90vh] overflow-y-auto flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Edit Compensation Package</h2>
           <button
@@ -131,46 +129,24 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           </button>
         </div>
 
-        <div className="p-4 border-b border-[var(--color-border)]">
-          <div className="flex flex-col gap-2">
-            <label className={labelClass}>Company Current Stock Price ($)</label>
-            <input
-              type="number"
-              value={companyCurrentPrice}
-              onChange={(e) => setCompanyCurrentPrice(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-4 flex flex-col gap-8">
+          {/* Stock Section */}
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Company Current Stock Price ($)</label>
+              <input
+                type="number"
+                value={companyCurrentPrice}
+                onChange={(e) => setCompanyCurrentPrice(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </section>
 
-        <div className="flex border-b border-[var(--color-border)] px-4 pt-2 gap-4">
-          <button
-            type="button"
-            className={`pb-2 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'base' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)]' : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-            onClick={() => setActiveTab('base')}
-          >
-            Base & Cash
-          </button>
-          <button
-            type="button"
-            className={`pb-2 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'equity' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)]' : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-            onClick={() => setActiveTab('equity')}
-          >
-            Equity
-          </button>
-          <button
-            type="button"
-            className={`pb-2 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'benefits' ? 'border-[var(--color-accent)] text-[var(--color-text-primary)]' : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-            onClick={() => setActiveTab('benefits')}
-          >
-            Benefits
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
-          {activeTab === 'base' && (
+          {/* Base & Cash Section */}
+          <section className="flex flex-col gap-4">
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">Base & Cash</h3>
             <div className="flex flex-col gap-4">
-
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>Current Base Salary ($)</label>
                 <input
@@ -268,9 +244,11 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 </select>
               </div>
             </div>
-          )}
+          </section>
 
-          {activeTab === 'equity' && (
+          {/* Equity Section */}
+          <section className="flex flex-col gap-4">
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">Equity Grants</h3>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>RSU Grant Name</label>
@@ -386,21 +364,23 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 <div className="mt-4 flex flex-col gap-2">
                   <label className={labelClass}>Current Grants</label>
                   <div className="flex flex-col gap-2">
-                    {primaryPackage.rsuGrants.map(g => {
-                      const shares = g.grantShares || 0;
-                      return (
-                        <div key={g.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
-                          <span className="text-[14px]">{g.grantName} ({shares.toLocaleString()} shares)</span>
-                        </div>
-                      )
-                    })}
+                    {primaryPackage.rsuGrants.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
+                        <span className="text-[14px]">{g.grantName} ({g.grantShares.toLocaleString()} shares)</span>
+                        <button type="button" onClick={() => removeRSUGrant(g.id)} className="text-red-500 hover:text-red-700">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-          )}
+          </section>
 
-          {activeTab === 'benefits' && (
+          {/* Benefits Section */}
+          <section className="flex flex-col gap-4">
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">Benefits</h3>
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
@@ -450,7 +430,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 />
               </div>
             </div>
-          )}
+          </section>
 
           <div className="pt-2 mt-2 border-t border-[var(--color-border)]">
             <button
