@@ -81,3 +81,9 @@ None. No new network endpoints, auth paths, or trust-boundary surface introduced
 
 - `9ca922d` feat(06-04): add compare RSU grant state and add/remove handlers
 - `ac8ba7b` feat(06-04): render compare RSU input section and wire grants into setComparePackage
+
+## Self-Check: PASSED
+
+- FOUND: src/components/compensation/CompareView.tsx
+- FOUND: .planning/phases/06-total-compensation-calculator/06-04-SUMMARY.md
+- FOUND commits: 9ca922d, ac8ba7b
