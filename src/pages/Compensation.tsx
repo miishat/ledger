@@ -6,7 +6,7 @@ import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp } from '../store/useCompensationStore'
 
 export const Compensation: React.FC = () => {
-  const { primaryPackage, compareMode, toggleCompareMode } = useCompensationStore()
+  const { primaryPackage, setPrimaryPackage, compareMode, toggleCompareMode } = useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const totalComp = calcTotalComp(primaryPackage)
@@ -38,6 +38,18 @@ export const Compensation: React.FC = () => {
           <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Package Details</h2>
           {isPopulated ? (
             <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
+                <span className="text-[14px] text-[var(--color-text-secondary)]">Current Stock Price</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
+                  <input
+                    type="number"
+                    value={primaryPackage.companyCurrentPrice || ''}
+                    onChange={(e) => setPrimaryPackage({ companyCurrentPrice: Number(e.target.value) || 0 })}
+                    className="w-20 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
                 <span className="text-[14px] text-[var(--color-text-secondary)]">Base Salary</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
