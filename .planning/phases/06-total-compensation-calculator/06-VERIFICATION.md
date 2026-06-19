@@ -1,7 +1,9 @@
 ---
 phase: 06-total-compensation-calculator
-verified: 2026-06-19T19:30:00Z
-status: human_needed
+verified: 2026-06-19T20:05:00Z
+status: verified
+human_verification_result: passed
+human_verified: 2026-06-19T20:00:00Z
 score: 7/7 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
@@ -91,9 +93,11 @@ No orphaned requirements: REQUIREMENTS.md maps exactly COMP-01/02/03 to this mod
 
 None. All six phase source files scanned clean for TBD/FIXME/XXX/HACK/PLACEHOLDER and stub patterns. The previously hardcoded `rsuGrants: []` is confirmed removed.
 
-### Human Verification Required
+### Human Verification — ✓ PASSED (UAT Test 3, 2026-06-19)
 
-#### 1. Compare-offer RSU add/remove and rendered delta (closes UAT Test 3)
+The human re-test below was confirmed passing in the running app via `/gsd-verify-work 06` (UAT Test 3 → pass). All 7 truths are now fully verified.
+
+#### 1. Compare-offer RSU add/remove and rendered delta (closes UAT Test 3) — ✓ PASSED
 
 **Test:** On `/compensation`, enter a primary package (base salary + RSU grant), click "Compare Another Offer", add one or more RSU grants in the compare form (name, shares, price, start date, vesting preset), remove one, then click "Calculate Comparison".
 **Expected:** The compare grant list updates live on add/remove; after Calculate, the "RSU (Annual)" compare-offer cell shows a non-$0 value and the delta badge shows a real +/- difference (not "Equivalent"/$0).
