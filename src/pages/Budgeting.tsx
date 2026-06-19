@@ -5,6 +5,7 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
+import { TransactionListWidget } from '../components/budget/TransactionListWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -47,11 +48,7 @@ export const Budgeting: React.FC = () => {
 
       <TriageInboxWidget />
 
-      <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex items-center justify-center min-h-[300px]">
-        <p className="text-text-secondary text-[14px]">
-          More detailed budgeting views and historical charts will go here in the future.
-        </p>
-      </div>
+      <TransactionListWidget />
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
