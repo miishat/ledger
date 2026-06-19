@@ -113,10 +113,13 @@ Plans:
   2. User can define and track RSU/Options vesting schedules.
 
 **Plans**: 2 plans
-
 Plans:
+**Wave 1**
 
 - [ ] 06-01: Build base comp and cash bonus tracker.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 06-02: Build equity (RSU/Options) vesting schedule calculator and charts.
 
 ## Progress
