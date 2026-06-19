@@ -11,7 +11,7 @@ Building a highly scalable, cross-platform financial dashboard web app featuring
 - [x] **Phase 3: Budgeting Module** - Cash flow, income, and categorized expense tracking. (completed 2026-06-18)
 - [x] **Phase 4: Investment Tracker** - "Investment Plan vs. Actual" Recharts visualizations. (completed 2026-06-18)
 - [x] **Phase 5: Future Projections** - Forecasting tools for savings rates and compounding interest. (completed 2026-06-18)
-- [ ] **Phase 6: Total Compensation Calculator** - Base, bonus, and RSU/Options vesting tracker.
+- [x] **Phase 6: Total Compensation Calculator** - Base, bonus, and RSU/Options vesting tracker. (completed 2026-06-19)
 
 ## Phase Details
 
@@ -112,19 +112,25 @@ Plans:
   1. User can enter base salary, bonuses, and benefits.
   2. User can define and track RSU/Options vesting schedules.
 
-**Plans**: 2 plans
+**Plans**: 4/4 plans complete
 Plans:
+
+- [x] 06-01-PLAN.md
+- [x] 06-02-PLAN.md
+- [x] 06-03-PLAN.md
+- [x] 06-04-PLAN.md
+
 **Wave 1**
 
-- [ ] 06-01: Build base comp and cash bonus tracker.
+- [x] 06-01: Build base comp and cash bonus tracker.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02: Build equity (RSU/Options) vesting schedule calculator and charts.
+- [x] 06-02: Build equity (RSU/Options) vesting schedule calculator and charts.
 
 **Gap Closure** *(from 06-UAT.md)*
 
-- [ ] 06-04: Add RSU/equity input fields to the Compare offer form so the RSU (Annual) comparison row reflects real numbers instead of $0.
+- [x] 06-04: Add RSU/equity input fields to the Compare offer form so the RSU (Annual) comparison row reflects real numbers instead of $0.
 
 ## Progress
 
@@ -138,4 +144,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Budgeting Module | 2/2 | Complete   | 2026-06-18 |
 | 4. Investment Tracker | 1/1 | Complete   | 2026-06-18 |
 | 5. Future Projections | 1/1 | Complete   | 2026-06-18 |
-| 6. Total Comp Calculator | 0/2 | Not started | - |
+| 6. Total Comp Calculator | 4/4 | Complete   | 2026-06-19 |
