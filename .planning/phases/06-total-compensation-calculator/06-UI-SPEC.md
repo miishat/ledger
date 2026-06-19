@@ -108,6 +108,8 @@ Accent reserved for:
 | Hero label | "Total Annual Compensation" |
 | Monthly toggle label | "Monthly Cash Flow View" |
 | Annualized toggle label | "Annualized Breakdown" |
+| Time mode toggle: Current Year | "Current Year" |
+| Time mode toggle: Next 1 Year | "Next 1 Year" |
 | Compare delta positive | "+$XX,XXX more" |
 | Compare delta negative | "−$XX,XXX less" |
 | Compare delta neutral | "Equivalent" |
@@ -154,6 +156,13 @@ The **annualized total compensation hero number** (Display type, 28px bold) is t
 - Default: Annualized breakdown (donut chart + component cards)
 - Toggle: Monthly cash flow timeline (when each component pays out)
 - Toggle mechanism: Segmented control (2 options), same pattern as existing Recharts view toggles
+
+### Time-Based Toggle
+- Modes:
+  - **Current Year:** Jan 1 to Dec 31 of the current calendar year.
+  - **Next 1 Year:** Today's date to exactly 12 months from today.
+- Toggle mechanism: Segmented control placed prominently near the Total Compensation Hero.
+- Behavior: Filters RSU vestings so only those falling within the selected time window are included in the Total Compensation sum. Multi-year forecasting is intentionally ignored.
 
 ### Data Entry Flow
 1. User clicks "Add Compensation Package" (empty state) or "Edit Package" (populated state)
