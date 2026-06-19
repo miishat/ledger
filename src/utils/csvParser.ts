@@ -34,7 +34,7 @@ export const PARSERS: BankParserConfig[] = [
   {
     name: 'Account Activity (Headerless)',
     // It's headerless, so PapaParse gives us an array of strings for each row
-    detect: (headers, firstRow) => {
+    detect: (_headers, firstRow) => {
       // If it's headerless, firstRow is an array
       if (!Array.isArray(firstRow)) return false;
       // Check if first element is a date like MM/DD/YYYY
@@ -66,7 +66,10 @@ export const PARSERS: BankParserConfig[] = [
         return null;
       }
 
-      return { date, amount, description: row[1]?.trim() || 'Unknown', type, originalRowData: row };
+      // Convert array row to Record<string, string> to satisfy TriageTransaction types
+      const originalRowData = Object.fromEntries(row.map((val, i) => [String(i), val]));
+
+      return { date, amount, description: row[1]?.trim() || 'Unknown', type, originalRowData };
     }
   },
   {
