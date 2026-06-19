@@ -19,10 +19,10 @@ interface CompHeroWidgetProps {
 
 const COMP_COLORS = {
   baseSalary: 'var(--color-accent)',
-  cashBonus: '#3b82f6', // blue-500
+  cashBonus: '#10b981', // emerald-500
   espp: '#f59e0b', // amber-500
   rrsp: '#8b5cf6', // violet-500
-  rsu: '#06b6d4', // cyan-500
+  rsu: '#ec4899', // pink-500
 }
 
 export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
@@ -79,10 +79,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
   const pieData = [
     { name: 'Base Salary', value: baseValue, color: COMP_COLORS.baseSalary },
-    { name: 'Cash Bonus', value: bonusValue, color: COMP_COLORS.cashBonus },
-    { name: 'ESPP Benefit', value: esppValue, color: COMP_COLORS.espp },
-    { name: 'RRSP Match', value: rrspValue, color: COMP_COLORS.rrsp },
-    { name: 'RSU (1st Yr)', value: rsuValue, color: COMP_COLORS.rsu },
+    { name: 'Bonus', value: bonusValue, color: COMP_COLORS.cashBonus },
+    { name: 'Equity (RSU)', value: rsuValue, color: COMP_COLORS.rsu },
+    { name: 'ESPP', value: esppValue, color: COMP_COLORS.espp },
+    { name: 'RRSP', value: rrspValue, color: COMP_COLORS.rrsp },
   ].filter(d => d.value > 0)
 
   const today = new Date();
