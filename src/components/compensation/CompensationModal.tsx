@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
-import type { VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency, PastSalary } from '../../store/useCompensationStore'
 
 interface CompensationModalProps {
   isOpen: boolean
@@ -18,8 +18,11 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary.toString())
-  const [previousBaseSalary, setPreviousBaseSalary] = useState((primaryPackage.previousBaseSalary || '').toString())
-  const [salaryChangeMonth, setSalaryChangeMonth] = useState((primaryPackage.salaryChangeMonth || '').toString())
+  const [pastSalaryChanges, setPastSalaryChanges] = useState<PastSalary[]>(
+    primaryPackage.pastSalaryChanges?.length > 0 
+      ? primaryPackage.pastSalaryChanges 
+      : [{ id: crypto.randomUUID(), salary: 0, changeMonth: 0 }]
+  )
   const [cashBonusPercent, setCashBonusPercent] = useState(primaryPackage.cashBonusPercent.toString())
   const [cashBonusMonth, setCashBonusMonth] = useState((primaryPackage.cashBonusMonth || 12).toString())
 
@@ -75,14 +78,30 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     setRsuGrantShares('')
   }
 
+  const addPastSalaryChange = () => {
+    setPastSalaryChanges(prev => [...prev, { id: crypto.randomUUID(), salary: 0, changeMonth: 0 }])
+  }
+
+  const removePastSalaryChange = (id: string) => {
+    setPastSalaryChanges(prev => prev.filter(p => p.id !== id))
+  }
+
+  const handlePastSalaryChange = (id: string, field: 'salary' | 'changeMonth', value: string) => {
+    setPastSalaryChanges(prev => prev.map(p => {
+      if (p.id === id) {
+        return { ...p, [field]: Number(value) || 0 }
+      }
+      return p
+    }))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     setPrimaryPackage({
       companyCurrentPrice: Number(companyCurrentPrice) || 0,
       baseSalary: Number(baseSalary) || 0,
-      previousBaseSalary: previousBaseSalary ? Number(previousBaseSalary) : undefined,
-      salaryChangeMonth: salaryChangeMonth ? Number(salaryChangeMonth) : undefined,
+      pastSalaryChanges: pastSalaryChanges.filter(c => c.salary > 0 && c.changeMonth > 0),
       cashBonusPercent: Number(cashBonusPercent) || 0,
       cashBonusMonth: Number(cashBonusMonth) || 12,
       esppContributionPercent: Number(esppContributionPercent) || 0,
@@ -162,39 +181,60 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Previous Base Salary ($)</label>
-                  <input
-                    type="number"
-                    value={previousBaseSalary}
-                    onChange={(e) => setPreviousBaseSalary(e.target.value)}
-                    placeholder="Optional"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Month of Salary Change</label>
-                  <select
-                    value={salaryChangeMonth}
-                    onChange={(e) => setSalaryChangeMonth(e.target.value)}
-                    className={inputClass}
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <label className={labelClass}>Past Salary Changes</label>
+                  <button
+                    type="button"
+                    onClick={addPastSalaryChange}
+                    className="flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:opacity-80 transition-opacity"
                   >
-                    <option value="">None</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                  </select>
+                    <Plus size={14} /> Add Change
+                  </button>
                 </div>
+                {pastSalaryChanges.map((change) => (
+                  <div key={change.id} className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end bg-[var(--color-bg-secondary)] p-3 rounded-lg border border-[var(--color-border)]">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Previous Salary ($)</label>
+                      <input
+                        type="number"
+                        value={change.salary || ''}
+                        onChange={(e) => handlePastSalaryChange(change.id, 'salary', e.target.value)}
+                        placeholder="Optional"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Change Month</label>
+                      <select
+                        value={change.changeMonth || ''}
+                        onChange={(e) => handlePastSalaryChange(change.id, 'changeMonth', e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">None</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePastSalaryChange(change.id)}
+                      className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors h-[38px] flex items-center justify-center border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div className="flex flex-col gap-2 pt-2 border-t border-[var(--color-border)]">

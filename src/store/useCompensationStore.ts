@@ -21,13 +21,18 @@ export interface RSUGrant {
   grantStartDate: string
 }
 
+export interface PastSalary {
+  id: string;
+  salary: number;
+  changeMonth: number;
+}
+
 export interface CompensationPackage {
   id: string
   name: string
   companyCurrentPrice: number
   baseSalary: number
-  previousBaseSalary?: number
-  salaryChangeMonth?: number
+  pastSalaryChanges: PastSalary[]
   cashBonusPercent: number
   cashBonusMonth: number
   esppContributionPercent: number
@@ -47,21 +52,27 @@ export interface VestEvent {
 }
 
 export function getBaseSalaryForMonth(pkg: CompensationPackage, year: number, monthIndex: number): number {
-  if (!pkg.previousBaseSalary || !pkg.salaryChangeMonth) return pkg.baseSalary;
-  
   const currentYear = new Date().getFullYear();
+  if (year > currentYear) return pkg.baseSalary;
+  
+  const changes = (pkg.pastSalaryChanges || [])
+    .filter(c => c.salary > 0 && c.changeMonth >= 1 && c.changeMonth <= 12)
+    .sort((a, b) => a.changeMonth - b.changeMonth);
+    
+  if (changes.length === 0) return pkg.baseSalary;
+
   if (year < currentYear) {
-    return pkg.previousBaseSalary;
-  } else if (year > currentYear) {
-    return pkg.baseSalary;
-  } else {
-    // Current year: monthIndex is 0-11. salaryChangeMonth is 1-12.
-    if (monthIndex < pkg.salaryChangeMonth - 1) {
-      return pkg.previousBaseSalary;
-    } else {
-      return pkg.baseSalary;
+    return changes[0].salary;
+  }
+
+  // Current year
+  for (const change of changes) {
+    if (monthIndex < change.changeMonth - 1) {
+      return change.salary;
     }
   }
+  
+  return pkg.baseSalary;
 }
 
 export function calcAnnualBaseSalary(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
@@ -212,6 +223,7 @@ const defaultPrimaryPackage: CompensationPackage = {
   name: 'Current Offer',
   companyCurrentPrice: 100,
   baseSalary: 0,
+  pastSalaryChanges: [],
   cashBonusPercent: 0,
   cashBonusMonth: 12,
   esppContributionPercent: 0,

@@ -29,6 +29,7 @@ export function CompareView() {
       name: compareName,
       companyCurrentPrice: Number(compareCompanyCurrentPrice) || 0,
       baseSalary: Number(compareBaseSalary) || 0,
+      pastSalaryChanges: [],
       cashBonusPercent: Number(compareCashBonusPercent) || 0,
       cashBonusMonth: Number(compareCashBonusMonth) || 12,
       esppContributionPercent: Number(compareEsppContributionPercent) || 0,
