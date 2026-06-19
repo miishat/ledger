@@ -18,6 +18,8 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary.toString())
+  const [previousBaseSalary, setPreviousBaseSalary] = useState((primaryPackage.previousBaseSalary || '').toString())
+  const [salaryChangeMonth, setSalaryChangeMonth] = useState((primaryPackage.salaryChangeMonth || '').toString())
   const [cashBonusPercent, setCashBonusPercent] = useState(primaryPackage.cashBonusPercent.toString())
   const [cashBonusMonth, setCashBonusMonth] = useState((primaryPackage.cashBonusMonth || 12).toString())
 
@@ -79,6 +81,8 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     setPrimaryPackage({
       companyCurrentPrice: Number(companyCurrentPrice) || 0,
       baseSalary: Number(baseSalary) || 0,
+      previousBaseSalary: previousBaseSalary ? Number(previousBaseSalary) : undefined,
+      salaryChangeMonth: salaryChangeMonth ? Number(salaryChangeMonth) : undefined,
       cashBonusPercent: Number(cashBonusPercent) || 0,
       cashBonusMonth: Number(cashBonusMonth) || 12,
       esppContributionPercent: Number(esppContributionPercent) || 0,
@@ -149,7 +153,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             <div className="flex flex-col gap-4">
 
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>Base Salary ($)</label>
+                <label className={labelClass}>Current Base Salary ($)</label>
                 <input
                   type="number"
                   value={baseSalary}
@@ -157,7 +161,43 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   className={inputClass}
                 />
               </div>
-              <div className="flex flex-col gap-2">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>Previous Base Salary ($)</label>
+                  <input
+                    type="number"
+                    value={previousBaseSalary}
+                    onChange={(e) => setPreviousBaseSalary(e.target.value)}
+                    placeholder="Optional"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>Month of Salary Change</label>
+                  <select
+                    value={salaryChangeMonth}
+                    onChange={(e) => setSalaryChangeMonth(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">None</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 border-t border-[var(--color-border)]">
                 <label className={labelClass}>Cash Bonus (%)</label>
                 <input
                   type="number"

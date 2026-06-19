@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { useCompensationStore, calcTotalComp, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents } from '../../store/useCompensationStore'
+import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -71,10 +71,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     )
   }
 
-  const baseValue = primaryPackage.baseSalary
-  const bonusValue = calcAnnualBonus(primaryPackage)
-  const esppValue = calcAnnualESPP(primaryPackage)
-  const rrspValue = calcAnnualRRSP(primaryPackage)
+  const baseValue = calcAnnualBaseSalary(primaryPackage, timeMode)
+  const bonusValue = calcAnnualBonus(primaryPackage, timeMode)
+  const esppValue = calcAnnualESPP(primaryPackage, timeMode)
+  const rrspValue = calcAnnualRRSP(primaryPackage, timeMode)
   const rsuValue = calcAnnualRSU(primaryPackage, timeMode)
 
   const pieData = [
@@ -120,7 +120,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
     return {
       month: dm.label,
-      baseSalary: baseValue / 12,
+      baseSalary: getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12,
       bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, 
       espp: esppValue / 12,
       rrsp: rrspValue / 12,

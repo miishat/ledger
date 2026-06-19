@@ -3,7 +3,7 @@ import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
 import { CompareView } from '../components/compensation/CompareView'
-import { useCompensationStore, calcTotalComp } from '../store/useCompensationStore'
+import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
 
 export const Compensation: React.FC = () => {
   const { primaryPackage, setPrimaryPackage, compareMode, toggleCompareMode } = useCompensationStore()
@@ -51,9 +51,9 @@ export const Compensation: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Base Salary</span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">Blended Base Salary</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  ${primaryPackage.baseSalary.toLocaleString()}
+                  ${calcAnnualBaseSalary(primaryPackage, 'current-year').toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">

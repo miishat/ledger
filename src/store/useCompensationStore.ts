@@ -26,6 +26,8 @@ export interface CompensationPackage {
   name: string
   companyCurrentPrice: number
   baseSalary: number
+  previousBaseSalary?: number
+  salaryChangeMonth?: number
   cashBonusPercent: number
   cashBonusMonth: number
   esppContributionPercent: number
@@ -44,16 +46,51 @@ export interface VestEvent {
   cumulativeVested: number
 }
 
-export function calcAnnualBonus(pkg: CompensationPackage): number {
-  return pkg.baseSalary * (pkg.cashBonusPercent / 100)
+export function getBaseSalaryForMonth(pkg: CompensationPackage, year: number, monthIndex: number): number {
+  if (!pkg.previousBaseSalary || !pkg.salaryChangeMonth) return pkg.baseSalary;
+  
+  const currentYear = new Date().getFullYear();
+  if (year < currentYear) {
+    return pkg.previousBaseSalary;
+  } else if (year > currentYear) {
+    return pkg.baseSalary;
+  } else {
+    // Current year: monthIndex is 0-11. salaryChangeMonth is 1-12.
+    if (monthIndex < pkg.salaryChangeMonth - 1) {
+      return pkg.previousBaseSalary;
+    } else {
+      return pkg.baseSalary;
+    }
+  }
 }
 
-export function calcAnnualESPP(pkg: CompensationPackage): number {
+export function calcAnnualBaseSalary(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  
+  let totalBase = 0;
+  for (let i = 0; i < 12; i++) {
+    if (timeMode === 'current-year') {
+      totalBase += getBaseSalaryForMonth(pkg, currentYear, i) / 12;
+    } else {
+      const date = new Date(currentYear, currentMonth + i, 1);
+      totalBase += getBaseSalaryForMonth(pkg, date.getFullYear(), date.getMonth()) / 12;
+    }
+  }
+  return totalBase;
+}
+
+export function calcAnnualBonus(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
+  return calcAnnualBaseSalary(pkg, timeMode) * (pkg.cashBonusPercent / 100)
+}
+
+export function calcAnnualESPP(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
   const companyCurrentPrice = pkg.companyCurrentPrice || 0;
   const esppLockedInPrice = pkg.esppLockedInPrice || 0;
 
   if (pkg.esppContributionPercent === 0 || companyCurrentPrice === 0) return 0;
-  const contributionAmount = pkg.baseSalary * (pkg.esppContributionPercent / 100);
+  const contributionAmount = calcAnnualBaseSalary(pkg, timeMode) * (pkg.esppContributionPercent / 100);
   const purchasePrice = esppLockedInPrice * (1 - (pkg.esppDiscountPercent / 100));
   if (purchasePrice <= 0) return 0;
   const sharesBought = contributionAmount / purchasePrice;
@@ -61,8 +98,8 @@ export function calcAnnualESPP(pkg: CompensationPackage): number {
   return Math.max(0, currentValue - contributionAmount);
 }
 
-export function calcAnnualRRSP(pkg: CompensationPackage): number {
-  return Math.min(pkg.baseSalary * (pkg.rrspMatchPercent / 100), pkg.rrspMatchCap)
+export function calcAnnualRRSP(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
+  return Math.min(calcAnnualBaseSalary(pkg, timeMode) * (pkg.rrspMatchPercent / 100), pkg.rrspMatchCap)
 }
 
 export function calcAnnualRSU(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
@@ -91,10 +128,10 @@ export function calcAnnualRSU(pkg: CompensationPackage, timeMode: TimeMode = 'cu
 
 export function calcTotalComp(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
   return (
-    pkg.baseSalary +
-    calcAnnualBonus(pkg) +
-    calcAnnualESPP(pkg) +
-    calcAnnualRRSP(pkg) +
+    calcAnnualBaseSalary(pkg, timeMode) +
+    calcAnnualBonus(pkg, timeMode) +
+    calcAnnualESPP(pkg, timeMode) +
+    calcAnnualRRSP(pkg, timeMode) +
     calcAnnualRSU(pkg, timeMode)
   )
 }
