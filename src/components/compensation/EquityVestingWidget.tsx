@@ -106,7 +106,7 @@ export function EquityVestingWidget() {
               />
               <Tooltip 
                 contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px' }} 
-                formatter={(v: any) => [`$${Number(v).toLocaleString()}`, '']} 
+                formatter={(v: any, name: any) => [`$${Number(v).toLocaleString()}`, name]} 
               />
               <Bar 
                 yAxisId="left" 

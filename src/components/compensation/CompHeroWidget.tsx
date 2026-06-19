@@ -26,6 +26,35 @@ const COMP_COLORS = {
 }
 
 export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      return (
+        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md">
+          <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex justify-between items-center gap-4 text-[13px] mb-1">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+                <span className="text-[var(--color-text-secondary)]">{entry.name}</span>
+              </div>
+              <span className="text-[var(--color-text-primary)] font-medium">
+                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(entry.value)}
+              </span>
+            </div>
+          ))}
+          <div className="flex justify-between items-center gap-4 text-[13px] mt-2 pt-2 border-t border-[var(--color-border)]">
+            <span className="text-[var(--color-text-primary)] font-semibold">Total</span>
+            <span className="text-[var(--color-text-primary)] font-bold">
+              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(total)}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const { primaryPackage, timeMode, setTimeMode } = useCompensationStore()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
 
@@ -182,9 +211,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <Tooltip 
-                formatter={(v: any, name: any) => [new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v), name]} 
-                contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)' }}
-                itemStyle={{ color: 'var(--color-text-primary)' }}
+                content={<CustomTooltip />}
               />
               <Bar dataKey="baseSalary" stackId="a" fill={COMP_COLORS.baseSalary} name="Base Salary" />
               <Bar dataKey="bonus" stackId="a" fill={COMP_COLORS.cashBonus} name="Bonus" />
