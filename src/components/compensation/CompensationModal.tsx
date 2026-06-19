@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
-import type { VestingPreset, VestingFrequency, PastSalary } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
 
 interface CompensationModalProps {
   isOpen: boolean
@@ -9,7 +9,7 @@ interface CompensationModalProps {
 }
 
 export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
-  const { primaryPackage, setPrimaryPackage, addRSUGrant } = useCompensationStore()
+  const { primaryPackage, setPrimaryPackage, addRSUGrant, updateRSUGrant } = useCompensationStore()
 
   const [activeTab, setActiveTab] = useState<'base' | 'equity' | 'benefits'>('base')
 
@@ -42,38 +42,58 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const [rsuTotalMonths, setRsuTotalMonths] = useState('48')
   const [rsuCliffMonths, setRsuCliffMonths] = useState('12')
   const [rsuFrequency, setRsuFrequency] = useState<VestingFrequency>('monthly')
+  const [editRsuGrantId, setEditRsuGrantId] = useState<string | null>(null)
 
   if (!isOpen) return null
 
-  const handleAddRSU = () => {
-    if (!rsuGrantName || !rsuGrantShares) return
+  const handleSaveRSU = () => {
+    if (!rsuGrantName || !rsuGrantShares || !rsuGrantPrice) return
 
-    let total = parseInt(rsuTotalMonths, 10)
-    let cliff = parseInt(rsuCliffMonths, 10)
-    let freq = rsuFrequency
-
-    if (rsuPreset === '4yr-1yr-cliff') {
-      total = 48
-      cliff = 12
-    } else if (rsuPreset === '3yr-no-cliff') {
-      total = 36
-      cliff = 0
+    const schedule: VestingSchedule = {
+      preset: rsuPreset,
+      totalVestMonths: rsuPreset === 'custom' ? Number(rsuTotalMonths) : (rsuPreset === '4yr-1yr-cliff' ? 48 : 36),
+      cliffMonths: rsuPreset === 'custom' ? Number(rsuCliffMonths) : (rsuPreset === '4yr-1yr-cliff' ? 12 : 0),
+      frequency: rsuFrequency
     }
 
-    addRSUGrant({
-      id: crypto.randomUUID(),
-      grantName: rsuGrantName,
-      grantShares: Number(rsuGrantShares),
-      grantPrice: Number(rsuGrantPrice) || 1,
-      grantStartDate: rsuStartDate,
-      vestingSchedule: {
-        preset: rsuPreset,
-        totalVestMonths: total,
-        cliffMonths: cliff,
-        frequency: freq,
-      },
-    })
+    if (editRsuGrantId) {
+      updateRSUGrant(editRsuGrantId, {
+        grantName: rsuGrantName,
+        grantShares: Number(rsuGrantShares),
+        grantPrice: Number(rsuGrantPrice),
+        grantStartDate: rsuStartDate,
+        vestingSchedule: schedule
+      })
+      setEditRsuGrantId(null)
+    } else {
+      addRSUGrant({
+        id: crypto.randomUUID(),
+        grantName: rsuGrantName,
+        grantShares: Number(rsuGrantShares),
+        grantPrice: Number(rsuGrantPrice),
+        grantStartDate: rsuStartDate,
+        vestingSchedule: schedule
+      })
+    }
 
+    setRsuGrantName('')
+    setRsuGrantShares('')
+  }
+
+  const handleEditRSU = (grant: any) => {
+    setEditRsuGrantId(grant.id)
+    setRsuGrantName(grant.grantName)
+    setRsuGrantShares(grant.grantShares.toString())
+    setRsuGrantPrice(grant.grantPrice.toString())
+    setRsuStartDate(grant.grantStartDate || new Date().toISOString().split('T')[0])
+    setRsuPreset(grant.vestingSchedule.preset)
+    setRsuTotalMonths(grant.vestingSchedule.totalVestMonths.toString())
+    setRsuCliffMonths(grant.vestingSchedule.cliffMonths.toString())
+    setRsuFrequency(grant.vestingSchedule.frequency)
+  }
+
+  const handleCancelEditRSU = () => {
+    setEditRsuGrantId(null)
     setRsuGrantName('')
     setRsuGrantShares('')
   }
@@ -118,7 +138,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const labelClass = "text-[12px] font-medium leading-none text-[var(--color-text-secondary)]"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-fade-in">
       <div className="w-full max-w-2xl bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden max-h-[90vh] overflow-y-auto flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Edit Compensation Package</h2>
@@ -143,7 +163,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           </div>
         </div>
 
-        <div className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/50">
+        <div className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
           <div className="flex p-1 bg-[var(--color-border)] rounded-lg gap-1">
             <button
               type="button"
@@ -376,13 +396,24 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={handleAddRSU}
-                className="mt-2 w-full py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md text-[14px] font-medium hover:bg-[var(--color-bg-primary)] transition-colors"
-              >
-                Add RSU Grant
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveRSU}
+                  className="flex-1 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md text-[14px] font-medium hover:bg-[var(--color-bg-primary)] transition-colors"
+                >
+                  {editRsuGrantId ? 'Update RSU Grant' : 'Add RSU Grant'}
+                </button>
+                {editRsuGrantId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditRSU}
+                    className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-md text-[14px] font-medium hover:bg-red-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
 
               {primaryPackage.rsuGrants.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2">
@@ -393,6 +424,22 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                       return (
                         <div key={g.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
                           <span className="text-[14px]">{g.grantName} ({shares.toLocaleString()} shares)</span>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEditRSU(g)}
+                              className="text-[12px] text-[var(--color-accent)] hover:opacity-80 transition-opacity"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => useCompensationStore.getState().removeRSUGrant(g.id)}
+                              className="text-[12px] text-red-500 hover:opacity-80 transition-opacity"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       )
                     })}
