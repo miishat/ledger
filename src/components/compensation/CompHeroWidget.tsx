@@ -19,10 +19,10 @@ interface CompHeroWidgetProps {
 
 const COMP_COLORS = {
   baseSalary: 'var(--color-accent)',
-  cashBonus: '#10b981', // emerald-500
+  cashBonus: '#8b5cf6', // violet-500
   espp: '#f59e0b', // amber-500
-  rrsp: '#8b5cf6', // violet-500
-  rsu: '#ec4899', // pink-500
+  rrsp: '#ec4899', // pink-500
+  rsu: '#06b6d4', // cyan-500
 }
 
 export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
