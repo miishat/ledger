@@ -30,6 +30,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const [esppContributionPercent, setEsppContributionPercent] = useState(primaryPackage.esppContributionPercent.toString())
   const [esppDiscountPercent, setEsppDiscountPercent] = useState(primaryPackage.esppDiscountPercent.toString() || '15')
   const [esppLockedInPrice, setEsppLockedInPrice] = useState((primaryPackage.esppLockedInPrice || 100).toString())
+  const [esppLockInEndDate, setEsppLockInEndDate] = useState(primaryPackage.esppLockInEndDate || '')
   const [rrspMatchPercent, setRrspMatchPercent] = useState(primaryPackage.rrspMatchPercent.toString())
   const [rrspMatchCap, setRrspMatchCap] = useState(primaryPackage.rrspMatchCap.toString())
 
@@ -125,8 +126,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
       cashBonusPercent: Number(cashBonusPercent) || 0,
       cashBonusMonth: Number(cashBonusMonth) || 12,
       esppContributionPercent: Number(esppContributionPercent) || 0,
-      esppDiscountPercent: Number(esppDiscountPercent) || 15,
+      esppDiscountPercent: esppDiscountPercent === '' ? 15 : Number(esppDiscountPercent),
       esppLockedInPrice: Number(esppLockedInPrice) || 0,
+      esppLockInEndDate: esppLockInEndDate,
       rrspMatchPercent: Number(rrspMatchPercent) || 0,
       rrspMatchCap: Number(rrspMatchCap) || 0,
     })
@@ -471,14 +473,25 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className={labelClass}>ESPP Lock-In Price ($)</label>
-                <input
-                  type="number"
-                  value={esppLockedInPrice}
-                  onChange={(e) => setEsppLockedInPrice(e.target.value)}
-                  className={inputClass}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>ESPP Lock-In Price ($)</label>
+                  <input
+                    type="number"
+                    value={esppLockedInPrice}
+                    onChange={(e) => setEsppLockedInPrice(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>Lock-In End Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={esppLockInEndDate}
+                    onChange={(e) => setEsppLockInEndDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>RRSP Match (%)</label>
@@ -504,7 +517,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           <div className="pt-2 mt-2 border-t border-[var(--color-border)]">
             <button
               type="submit"
-              className="w-full py-3 bg-[var(--color-accent)] text-white rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              className="w-full py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               Save Compensation Package
             </button>

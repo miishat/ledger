@@ -18,7 +18,7 @@ export const Budgeting: React.FC = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-accent text-white px-4 py-2 rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+          className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
         >
           Add Transaction
         </button>

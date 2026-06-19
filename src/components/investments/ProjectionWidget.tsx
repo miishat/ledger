@@ -40,7 +40,7 @@ export const ProjectionWidget: React.FC = () => {
             onClick={() => setHorizon(years as 10 | 20 | 30)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               horizon === years
-                ? 'bg-accent text-bg-primary'
+                ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                 : 'bg-bg-secondary text-text-secondary hover:text-text-primary'
             }`}
           >

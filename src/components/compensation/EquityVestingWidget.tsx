@@ -26,7 +26,7 @@ export function EquityVestingWidget() {
       const totalVest = barPayloads.reduce((sum: number, p: any) => sum + p.value, 0);
 
       return (
-        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md min-w-[200px]">
+        <div className="themed-card rounded-lg p-3 min-w-[200px]" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
           <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
           
           <div className="flex flex-col gap-1 mb-2">
@@ -61,7 +61,7 @@ export function EquityVestingWidget() {
   if (primaryPackage.rsuGrants.length === 0) {
     return (
       <WidgetWrapper title="Equity Vesting Schedule">
-        <div className="flex flex-col items-center justify-center h-[280px] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-6">
+        <div className="flex flex-col items-center justify-center h-[280px] themed-card rounded-md p-6">
           <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">No RSU Grants Added</p>
           <p className="text-[14px] text-[var(--color-text-secondary)] mt-2 text-center">
             Add RSU details in the compensation modal to see your vesting timeline.
@@ -155,7 +155,10 @@ export function EquityVestingWidget() {
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 
                 tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} 
               />
-              <Tooltip content={<CustomEquityTooltip />} />
+              <Tooltip 
+                content={<CustomEquityTooltip />} 
+                cursor={{ fill: 'var(--color-border)' }} 
+              />
               {primaryPackage.rsuGrants.map((grant, index) => (
                 <Bar 
                   key={grant.id}

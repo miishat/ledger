@@ -21,6 +21,7 @@ export function CompareView() {
   const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState('0')
   const [compareEsppDiscountPercent, setCompareEsppDiscountPercent] = useState('15')
   const [compareEsppLockedInPrice, setCompareEsppLockedInPrice] = useState('100')
+  const [compareEsppLockInEndDate, setCompareEsppLockInEndDate] = useState('')
   const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState('0')
   const [compareRrspMatchCap, setCompareRrspMatchCap] = useState('0')
 
@@ -36,6 +37,7 @@ export function CompareView() {
       esppContributionPercent: Number(compareEsppContributionPercent) || 0,
       esppDiscountPercent: Number(compareEsppDiscountPercent) || 0,
       esppLockedInPrice: Number(compareEsppLockedInPrice) || 0,
+      esppLockInEndDate: compareEsppLockInEndDate,
       rrspMatchPercent: Number(compareRrspMatchPercent) || 0,
       rrspMatchCap: Number(compareRrspMatchCap) || 0,
       rsuGrants: []
@@ -99,9 +101,15 @@ export function CompareView() {
                 <input type="number" value={compareEsppDiscountPercent} onChange={(e) => setCompareEsppDiscountPercent(e.target.value)} className={inputClass} />
               </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>ESPP Lock-In Price ($)</label>
-              <input type="number" value={compareEsppLockedInPrice} onChange={(e) => setCompareEsppLockedInPrice(e.target.value)} className={inputClass} />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Lock-In Price ($)</label>
+                <input type="number" value={compareEsppLockedInPrice} onChange={(e) => setCompareEsppLockedInPrice(e.target.value)} className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Lock-In End Date</label>
+                <input type="date" value={compareEsppLockInEndDate} onChange={(e) => setCompareEsppLockInEndDate(e.target.value)} className={inputClass} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">

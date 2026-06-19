@@ -15,12 +15,12 @@ function App() {
   // Apply theme to html root element for Tailwind dark mode and global CSS variables
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'tactical') {
-      root.setAttribute('data-theme', 'tactical')
-      root.classList.add('dark')
-    } else {
-      root.removeAttribute('data-theme')
+    root.setAttribute('data-theme', theme)
+    
+    if (theme === 'geometric') {
       root.classList.remove('dark')
+    } else {
+      root.classList.add('dark')
     }
   }, [theme])
 

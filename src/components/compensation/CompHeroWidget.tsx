@@ -30,7 +30,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     if (active && payload && payload.length) {
       const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
       return (
-        <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-3 shadow-md">
+        <div className="themed-card rounded-lg p-3" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
           <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={`item-${index}`} className="flex justify-between items-center gap-4 text-[13px] mb-1">
@@ -62,7 +62,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
   if (totalComp === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center h-[320px] bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-border)] p-6 ${className}`}>
+      <div className={`flex flex-col items-center justify-center h-[320px] themed-card rounded-lg p-6 ${className}`}>
         <p className="text-[18px] font-semibold text-[var(--color-text-primary)]">No Compensation Data Yet</p>
         <p className="text-[14px] text-[var(--color-text-secondary)] mt-2 text-center max-w-sm">
           Enter your compensation details to see the breakdown.
@@ -81,7 +81,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     { name: 'Base Salary', value: baseValue, color: COMP_COLORS.baseSalary },
     { name: 'Bonus', value: bonusValue, color: COMP_COLORS.cashBonus },
     { name: 'Equity (RSU)', value: rsuValue, color: COMP_COLORS.rsu },
-    { name: 'ESPP', value: esppValue, color: COMP_COLORS.espp },
+    { name: 'ESPP Profit', value: esppValue, color: COMP_COLORS.espp },
     { name: 'RRSP', value: rrspValue, color: COMP_COLORS.rrsp },
   ].filter(d => d.value > 0)
 
@@ -129,7 +129,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   })
 
   return (
-    <div className={`bg-[var(--color-bg-secondary)] rounded-lg p-4 shadow-sm flex flex-col border border-[var(--color-border)] ${className}`}>
+    <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h3>
         <div className="flex items-center gap-3">
@@ -153,13 +153,13 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
             <button
               onClick={() => setView('annualized')}
-              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'annualized' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'annualized' ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
             >
               Annualized Breakdown
             </button>
             <button
               onClick={() => setView('monthly')}
-              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'monthly' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'monthly' ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
             >
               Monthly Cash Flow View
             </button>
@@ -188,9 +188,9 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => [
+                  formatter={(value: any, name: any) => [
                     new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value),
-                    ''
+                    name
                   ]}
                   contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)' }}
                   itemStyle={{ color: 'var(--color-text-primary)' }}
@@ -212,10 +212,11 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <Tooltip 
                 content={<CustomTooltip />}
+                cursor={{ fill: 'var(--color-border)' }}
               />
               <Bar dataKey="baseSalary" stackId="a" fill={COMP_COLORS.baseSalary} name="Base Salary" />
               <Bar dataKey="bonus" stackId="a" fill={COMP_COLORS.cashBonus} name="Bonus" />
-              <Bar dataKey="espp" stackId="a" fill={COMP_COLORS.espp} name="ESPP" />
+              <Bar dataKey="espp" stackId="a" fill={COMP_COLORS.espp} name="ESPP Profit" />
               <Bar dataKey="rrsp" stackId="a" fill={COMP_COLORS.rrsp} name="RRSP" />
               <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
             </BarChart>

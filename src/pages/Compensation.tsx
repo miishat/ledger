@@ -23,7 +23,7 @@ export const Compensation: React.FC = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+          className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
         >
           {isPopulated ? 'Edit Package' : 'Add Compensation Package'}
         </button>
@@ -34,7 +34,7 @@ export const Compensation: React.FC = () => {
           <CompHeroWidget className="h-full" />
         </div>
         
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-6 flex flex-col gap-4">
+        <div className="themed-card rounded-xl p-6 flex flex-col gap-4">
           <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Package Details</h2>
           {isPopulated ? (
             <div className="flex flex-col gap-3">
@@ -95,7 +95,7 @@ export const Compensation: React.FC = () => {
             <button
               id="compare-toggle-btn"
               onClick={toggleCompareMode}
-              className="px-4 py-2 border border-[var(--color-border)] rounded-md text-[14px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-accent)] transition-colors"
+              className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               Compare Another Offer
             </button>

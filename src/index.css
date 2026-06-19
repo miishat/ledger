@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
-
 
 @theme {
   --color-bg-primary: var(--bg-primary);
@@ -12,29 +11,135 @@
 
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Playfair Display', serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-space: 'Space Grotesk', sans-serif;
+  --font-lato: 'Lato', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --shadow-card: var(--card-shadow);
 }
 
 :root {
-  /* Geometric Abstraction (Default Light-ish Theme) */
+  /* Default/Fallback values matching Geometric Light */
   --bg-primary: #ffffff;
   --bg-secondary: #f3f4f6;
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --accent: #3b82f6;
   --border-color: #e5e7eb;
+  
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-display: 'Space Grotesk', sans-serif;
+  
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --card-blur: none;
+  
+  color-scheme: light;
+  --calendar-filter: invert(0);
+}
+
+[data-theme='geometric'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --accent: #3b82f6;
+  --border-color: #e5e7eb;
+  
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-display: 'Space Grotesk', sans-serif;
+  
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --card-blur: none;
+  
+  color-scheme: light;
+  --calendar-filter: invert(0);
 }
 
 [data-theme='tactical'] {
-  /* Tactical Monospace (Dark High-Contrast Theme) */
   --bg-primary: #0a0a0a;
   --bg-secondary: #171717;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --accent: #10b981;
-  --border-color: #334155;
+  --border-color: #27272a;
   
-  /* Force mono font for the entire app in Tactical mode */
-  font-family: var(--font-mono);
+  --font-family-body: 'JetBrains Mono', monospace;
+  --font-family-display: 'JetBrains Mono', monospace;
+  
+  --card-bg: #111111;
+  --card-border: #27272a;
+  --card-shadow: none;
+  --card-blur: none;
+  
+  color-scheme: dark;
+  --calendar-filter: invert(0.8) hue-rotate(180deg);
+}
+
+[data-theme='luxury'] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --accent: #d4a853;
+  --border-color: #1a1a1a;
+  
+  --font-family-body: 'Lato', sans-serif;
+  --font-family-display: 'Playfair Display', serif;
+  
+  --card-bg: #0a0a0a;
+  --card-border: #1a1a1a;
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  --card-blur: none;
+  
+  color-scheme: dark;
+  --calendar-filter: invert(0.8) hue-rotate(180deg);
+}
+
+[data-theme='aurora'] {
+  --bg-primary: #090d16;
+  --bg-secondary: #0f172a;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #34d399;
+  --border-color: #1e293b;
+  
+  --font-family-body: 'Poppins', sans-serif;
+  --font-family-display: 'Outfit', sans-serif;
+  
+  --card-bg: rgba(15, 23, 42, 0.75);
+  --card-border: rgba(30, 41, 59, 0.55);
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  --card-blur: none;
+  
+  color-scheme: dark;
+  --calendar-filter: invert(0.8) hue-rotate(180deg);
+}
+
+[data-theme='glass'] {
+  --bg-primary: #0b0910;
+  --bg-secondary: rgba(255, 255, 255, 0.04);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --accent: #22d3ee;
+  --border-color: rgba(255, 255, 255, 0.08);
+  
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-display: 'Plus Jakarta Sans', sans-serif;
+  
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --card-blur: blur(12px);
+  
   color-scheme: dark;
   --calendar-filter: invert(0.8) hue-rotate(180deg);
 }
@@ -44,13 +149,20 @@ html, body {
   padding: 0;
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
+  font-family: var(--font-family-body);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Ensure default font is applied when not in tactical mode */
-html:not([data-theme='tactical']) {
-  font-family: var(--font-sans);
-  --calendar-filter: invert(0);
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
+}
+
+.themed-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
 }
 
 select option {
@@ -61,4 +173,26 @@ select option {
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: var(--calendar-filter);
   cursor: pointer;
+}
+
+/* Animations for specialized backgrounds */
+@keyframes float-slow-1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(40px, -60px) scale(1.15); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes float-slow-2 {
+  0% { transform: translate(0px, 0px) scale(1.1); }
+  50% { transform: translate(-50px, 50px) scale(0.95); }
+  100% { transform: translate(0px, 0px) scale(1.1); }
+}
+
+.animate-float-1 {
+  animation: float-slow-1 18s infinite alternate ease-in-out;
+}
+
+.animate-float-2 {
+  animation: float-slow-2 22s infinite alternate ease-in-out;
 }

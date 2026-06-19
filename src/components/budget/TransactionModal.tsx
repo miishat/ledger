@@ -63,7 +63,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
               type="button"
               className={`flex-1 py-2 text-[14px] font-medium transition-colors ${
                 type === 'expense'
-                  ? 'bg-[var(--color-accent)] text-white'
+                  ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
               onClick={() => {
@@ -77,7 +77,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
               type="button"
               className={`flex-1 py-2 text-[14px] font-medium transition-colors ${
                 type === 'income'
-                  ? 'bg-[var(--color-accent)] text-white'
+                  ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
               onClick={() => {
@@ -150,7 +150,7 @@ export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
           <div className="pt-2 mt-2 border-t border-[var(--color-border)]">
             <button
               type="submit"
-              className="w-full py-3 bg-[var(--color-accent)] text-white rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              className="w-full py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               Add Transaction
             </button>

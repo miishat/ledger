@@ -38,6 +38,7 @@ export interface CompensationPackage {
   esppContributionPercent: number
   esppDiscountPercent: number
   esppLockedInPrice: number
+  esppLockInEndDate?: string
   rrspMatchPercent: number
   rrspMatchCap: number
   rsuGrants: RSUGrant[]
@@ -100,7 +101,17 @@ export function calcAnnualESPP(pkg: CompensationPackage, timeMode: TimeMode = 'c
 
   if (pkg.esppContributionPercent === 0 || companyCurrentPrice === 0) return 0;
   const contributionAmount = calcAnnualBaseSalary(pkg, timeMode) * (pkg.esppContributionPercent / 100);
-  const purchasePrice = esppLockedInPrice * (1 - (pkg.esppDiscountPercent / 100));
+  
+  let purchasePrice = 0;
+  const today = new Date();
+  const isLockInActive = esppLockedInPrice > 0 && (!pkg.esppLockInEndDate || new Date(pkg.esppLockInEndDate) >= today);
+
+  if (isLockInActive) {
+    purchasePrice = esppLockedInPrice;
+  } else {
+    purchasePrice = companyCurrentPrice * (1 - (pkg.esppDiscountPercent / 100));
+  }
+
   if (purchasePrice <= 0) return 0;
   const sharesBought = contributionAmount / purchasePrice;
   const currentValue = sharesBought * companyCurrentPrice;
