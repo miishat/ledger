@@ -57,7 +57,7 @@ export const InvestmentTrackerWidget: React.FC = () => {
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
                 itemStyle={{ color: 'var(--color-text-primary)' }}
-                formatter={(value: number | string) => [`$${Number(value).toLocaleString()}`, '']}
+                formatter={(value: any) => [`$${Number(value).toLocaleString()}`, '']}
                 labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}
               />
               <Area 

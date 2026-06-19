@@ -62,10 +62,7 @@ export const ProjectionWidget: React.FC = () => {
             <XAxis dataKey="year" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis tickFormatter={formatCurrency} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
-              formatter={(value: number | string) => {
-                if (typeof value !== 'number') return String(value);
-                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
-              }}
+              formatter={(value: any) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value))}
               contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }}
               itemStyle={{ color: 'var(--text-primary)' }}
             />

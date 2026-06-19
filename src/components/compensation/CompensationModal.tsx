@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
-import { useCompensationStore, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
+import { useCompensationStore } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 
 interface CompensationModalProps {
   isOpen: boolean

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   PieChart,
   Pie,
@@ -133,7 +133,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [
+                  formatter={(value: any) => [
                     new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value),
                     ''
                   ]}
@@ -156,7 +156,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <Tooltip 
-                formatter={(v: number) => [new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v), '']} 
+                formatter={(v: any) => [new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v), '']} 
                 contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)' }}
                 itemStyle={{ color: 'var(--color-text-primary)' }}
               />

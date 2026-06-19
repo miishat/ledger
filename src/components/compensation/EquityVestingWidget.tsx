@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
-import { useCompensationStore, VestingPreset, VestingFrequency, generateVestEvents } from '../../store/useCompensationStore'
+import { useCompensationStore, generateVestEvents } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 import {
   ComposedChart,
   Line,
@@ -32,6 +33,7 @@ export function EquityVestingWidget() {
 
   useEffect(() => {
     if (firstGrant) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPreset(firstGrant.vestingSchedule.preset)
       setCustomTotalMonths(firstGrant.vestingSchedule.totalVestMonths.toString())
       setCustomCliffMonths(firstGrant.vestingSchedule.cliffMonths.toString())
@@ -69,10 +71,9 @@ export function EquityVestingWidget() {
   const mergedEvents = Array.from(eventMap.values())
     .sort((a, b) => a.monthIndex - b.monthIndex)
 
-  let cumulative = 0
-  const chartData = mergedEvents.map(e => {
-    cumulative += e.vestValue
-    return { ...e, cumulativeVested: cumulative }
+  const chartData = mergedEvents.map((e, i, arr) => {
+    const cum = arr.slice(0, i + 1).reduce((sum, item) => sum + item.vestValue, 0)
+    return { ...e, cumulativeVested: cum }
   })
 
   // Find first cliff month > 0 across grants
@@ -157,7 +158,7 @@ export function EquityVestingWidget() {
               />
               <Tooltip 
                 contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px' }} 
-                formatter={(v: number) => [`$${Number(v).toLocaleString()}`, '']} 
+                formatter={(v: any) => [`$${Number(v).toLocaleString()}`, '']} 
               />
               {firstCliff && firstCliff > 0 && (
                 <ReferenceLine 

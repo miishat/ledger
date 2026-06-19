@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { 
   useCompensationStore, 
@@ -12,7 +12,7 @@ import {
 export function CompareView() {
   const { primaryPackage, comparePackage, setComparePackage } = useCompensationStore()
 
-  const [compareName, setCompareName] = useState('Compare Offer')
+  const [compareName] = useState('Compare Offer')
   const [compareBaseSalary, setCompareBaseSalary] = useState('')
   const [compareCashBonusPercent, setCompareCashBonusPercent] = useState('0')
   const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState('0')
@@ -37,41 +37,8 @@ export function CompareView() {
   const inputClass = "w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
   const labelClass = "text-[12px] font-medium leading-none text-[var(--color-text-secondary)]"
 
-  const renderDelta = (primary: number, compare: number, isTotal = false) => {
-    const delta = compare - primary
 
-    let badgeClass = "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"
-    let label = "Equivalent"
 
-    if (delta > 0) {
-      badgeClass = "text-green-600 bg-green-50 px-2 py-0.5 rounded text-[12px] font-medium"
-      label = `+$${Math.abs(delta).toLocaleString()} more`
-    } else if (delta < 0) {
-      badgeClass = "text-red-500 bg-red-50 px-2 py-0.5 rounded text-[12px] font-medium"
-      label = `−$${Math.abs(delta).toLocaleString()} less`
-    }
-
-    const valueClass = isTotal ? "text-[14px] font-bold text-[var(--color-text-primary)]" : "text-[14px] text-[var(--color-text-primary)]"
-
-    return (
-      <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)] last:border-b-0">
-        <div className="w-1/4">
-          <span className={isTotal ? "text-[14px] font-semibold text-[var(--color-text-primary)]" : "text-[14px] text-[var(--color-text-secondary)]"}>
-            {isTotal ? 'Total Compensation' : ''}
-          </span>
-        </div>
-        <div className="w-1/4 text-center">
-          <span className={valueClass}>${primary.toLocaleString()}</span>
-        </div>
-        <div className="w-1/4 text-center">
-          <span className={valueClass}>${compare.toLocaleString()}</span>
-        </div>
-        <div className="w-1/4 flex justify-end">
-          <span className={badgeClass}>{label}</span>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <WidgetWrapper title="Offer Comparison">
