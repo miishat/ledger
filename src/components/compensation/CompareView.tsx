@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
-import { 
-  useCompensationStore, 
-  calcTotalComp, 
+import {
+  useCompensationStore,
+  calcTotalComp,
   calcAnnualBaseSalary,
-  calcAnnualBonus, 
-  calcAnnualESPP, 
-  calcAnnualRRSP, 
-  calcAnnualRSU 
+  calcAnnualBonus,
+  calcAnnualESPP,
+  calcAnnualRRSP,
+  calcAnnualRSU
 } from '../../store/useCompensationStore'
+import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 
 export function CompareView() {
   const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
@@ -25,6 +26,44 @@ export function CompareView() {
   const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState('0')
   const [compareRrspMatchCap, setCompareRrspMatchCap] = useState('0')
 
+  // RSU / Equity grants for the compare offer
+  const [compareRsuGrants, setCompareRsuGrants] = useState<RSUGrant[]>([])
+  const [rsuGrantName, setRsuGrantName] = useState('')
+  const [rsuGrantShares, setRsuGrantShares] = useState('')
+  const [rsuGrantPrice, setRsuGrantPrice] = useState('100')
+  const [rsuStartDate, setRsuStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [rsuPreset, setRsuPreset] = useState<VestingPreset>('4yr-1yr-cliff')
+  const [rsuTotalMonths, setRsuTotalMonths] = useState('48')
+  const [rsuCliffMonths, setRsuCliffMonths] = useState('12')
+  const [rsuFrequency, setRsuFrequency] = useState<VestingFrequency>('monthly')
+
+  const addCompareRsuGrant = () => {
+    if (!rsuGrantName || !rsuGrantShares || !rsuGrantPrice) return
+
+    const vestingSchedule: VestingSchedule = {
+      preset: rsuPreset,
+      totalVestMonths: rsuPreset === 'custom' ? Number(rsuTotalMonths) : (rsuPreset === '4yr-1yr-cliff' ? 48 : 36),
+      cliffMonths: rsuPreset === 'custom' ? Number(rsuCliffMonths) : (rsuPreset === '4yr-1yr-cliff' ? 12 : 0),
+      frequency: rsuFrequency
+    }
+
+    setCompareRsuGrants(prev => [...prev, {
+      id: crypto.randomUUID(),
+      grantName: rsuGrantName,
+      grantShares: Number(rsuGrantShares),
+      grantPrice: Number(rsuGrantPrice),
+      grantStartDate: rsuStartDate,
+      vestingSchedule
+    }])
+
+    setRsuGrantName('')
+    setRsuGrantShares('')
+  }
+
+  const removeCompareRsuGrant = (id: string) => {
+    setCompareRsuGrants(prev => prev.filter(g => g.id !== id))
+  }
+
   const handleCalculate = () => {
     setComparePackage({
       id: 'compare',
@@ -40,7 +79,7 @@ export function CompareView() {
       esppLockInEndDate: compareEsppLockInEndDate,
       rrspMatchPercent: Number(compareRrspMatchPercent) || 0,
       rrspMatchCap: Number(compareRrspMatchCap) || 0,
-      rsuGrants: []
+      rsuGrants: compareRsuGrants
     })
   }
 
@@ -120,6 +159,84 @@ export function CompareView() {
                 <label className={labelClass}>Match Cap ($)</label>
                 <input type="number" value={compareRrspMatchCap} onChange={(e) => setCompareRrspMatchCap(e.target.value)} className={inputClass} />
               </div>
+            </div>
+
+            {/* RSU / Equity Grant */}
+            <div className="flex flex-col gap-2 pt-3 mt-1 border-t border-[var(--color-border)]">
+              <label className={labelClass}>RSU / Equity Grant</label>
+
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Grant Name</label>
+                <input type="text" value={rsuGrantName} onChange={(e) => setRsuGrantName(e.target.value)} className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Number of Shares</label>
+                <input type="number" value={rsuGrantShares} onChange={(e) => setRsuGrantShares(e.target.value)} className={inputClass} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass}>Grant Price ($)</label>
+                  <input type="number" value={rsuGrantPrice} onChange={(e) => setRsuGrantPrice(e.target.value)} className={inputClass} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass}>Grant Start Date</label>
+                  <input type="date" value={rsuStartDate} onChange={(e) => setRsuStartDate(e.target.value)} className={inputClass} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass}>Vesting</label>
+                  <select value={rsuPreset} onChange={(e) => setRsuPreset(e.target.value as VestingPreset)} className={inputClass}>
+                    <option value="4yr-1yr-cliff">4yr / 1yr cliff</option>
+                    <option value="3yr-no-cliff">3yr / no cliff</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass}>Frequency</label>
+                  <select value={rsuFrequency} onChange={(e) => setRsuFrequency(e.target.value as VestingFrequency)} className={inputClass}>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                  </select>
+                </div>
+              </div>
+              {rsuPreset === 'custom' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass}>Total Vest (months)</label>
+                    <input type="number" value={rsuTotalMonths} onChange={(e) => setRsuTotalMonths(e.target.value)} className={inputClass} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass}>Cliff (months)</label>
+                    <input type="number" value={rsuCliffMonths} onChange={(e) => setRsuCliffMonths(e.target.value)} className={inputClass} />
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={addCompareRsuGrant}
+                className="w-full py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md text-[14px] font-medium hover:bg-[var(--color-bg-primary)] transition-colors"
+              >
+                Add Grant
+              </button>
+
+              {compareRsuGrants.length > 0 && (
+                <div className="flex flex-col gap-2 mt-1">
+                  {compareRsuGrants.map(grant => (
+                    <div key={grant.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
+                      <span className="text-[14px] text-[var(--color-text-primary)]">{grant.grantName} ({grant.grantShares.toLocaleString()} shares)</span>
+                      <button
+                        type="button"
+                        onClick={() => removeCompareRsuGrant(grant.id)}
+                        className="text-[12px] text-red-500 hover:opacity-80 transition-opacity"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button
