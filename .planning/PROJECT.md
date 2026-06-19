@@ -29,6 +29,11 @@ A striking, uncompromising user experience that makes managing personal wealth f
 
 (None yet — define with `/gsd-new-milestone`)
 
+- [ ] **Budgeting Automation & Inbox (v1.1)**
+  - CSV Import & Parsing for major banks (RBC, Scotiabank, TD).
+  - Smart Categorization Engine (local memory).
+  - Flexible Budget Paradigms (Target-Based, Zero-Based, Ledger Custom).
+  - Visual Inbox for transaction triage.
 ### Out of Scope
 
 <!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->

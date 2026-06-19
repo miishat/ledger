@@ -6,6 +6,14 @@
 
 ## Phases
 
+<details open>
+<summary>🚧 v1.1 Budgeting Automation</summary>
+
+- [ ] Phase 7: Budgeting Paradigms & Architecture (0/0 plans)
+- [ ] Phase 8: CSV Import & Smart Triage Inbox (0/0 plans)
+
+</details>
+
 <details>
 <summary>✅ v1.0 MVP (Phases 1-6) — SHIPPED 2026-06-19</summary>
 
