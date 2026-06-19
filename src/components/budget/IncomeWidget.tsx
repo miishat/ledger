@@ -11,8 +11,6 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => 
   
   const transactionsList = Object.values(transactions);
   
-  const transactionsList = Object.values(transactions);
-  
   const totalIncome = transactionsList
     .filter(t => t.type === 'income' && t.date.startsWith(selectedMonth))
     .reduce((sum, t) => sum + t.amount, 0);

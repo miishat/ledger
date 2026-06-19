@@ -19,7 +19,6 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   const categories = useBudgetStore((state) => state.categories);
 
   const categoryList = Object.values(categories);
-  const expenseCategories = categoryList.filter(c => true); // We'll just show all categories for now, or filter by group
   // Actually, let's just use all categories from the store
 
 

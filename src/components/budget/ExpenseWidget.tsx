@@ -11,8 +11,6 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
   
   const transactionsList = Object.values(transactions);
   
-  const transactionsList = Object.values(transactions);
-  
   const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth));
   
   const totalExpense = expensesThisMonth.reduce((sum, t) => sum + t.amount, 0);
