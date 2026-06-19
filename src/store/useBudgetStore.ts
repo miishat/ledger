@@ -31,6 +31,8 @@ interface BudgetState {
 
   addReallocation: (reallocation: Reallocation) => void;
   deleteReallocation: (id: string) => void;
+
+  seedDefaults: () => void;
 }
 
 export const useBudgetStore = create<BudgetState>()(
@@ -108,6 +110,24 @@ export const useBudgetStore = create<BudgetState>()(
           delete newReallocations[id];
           return { reallocations: newReallocations };
         }),
+
+      seedDefaults: () => set((state) => {
+        if (Object.keys(state.categories).length > 0) return state; // Only seed if empty
+        return {
+          categoryGroups: {
+            'g-1': { id: 'g-1', name: 'Living Expenses' },
+            'g-2': { id: 'g-2', name: 'Income' },
+          },
+          categories: {
+            'c-1': { id: 'c-1', groupId: 'g-1', name: 'Food', targetAmount: 500 },
+            'c-2': { id: 'c-2', groupId: 'g-1', name: 'Transportation', targetAmount: 200 },
+            'c-3': { id: 'c-3', groupId: 'g-1', name: 'Utilities', targetAmount: 150 },
+            'c-4': { id: 'c-4', groupId: 'g-1', name: 'Housing', targetAmount: 1500 },
+            'c-5': { id: 'c-5', groupId: 'g-1', name: 'Personal', targetAmount: 300 },
+            'c-6': { id: 'c-6', groupId: 'g-2', name: 'Salary', targetAmount: 0 },
+          }
+        };
+      }),
     }),
     {
       name: 'ledger-budget',

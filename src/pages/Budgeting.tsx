@@ -5,9 +5,19 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
+import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const categories = useBudgetStore((state) => state.categories);
+  const seedDefaults = useBudgetStore((state) => state.seedDefaults);
+
+  React.useEffect(() => {
+    if (Object.keys(categories).length === 0) {
+      seedDefaults();
+    }
+  }, [categories, seedDefaults]);
 
   return (
     <div className="flex flex-col gap-6 w-full h-full p-6 animate-fade-in">
