@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useCompensationStore, generateVestEvents } from '../../store/useCompensationStore'
-import type { VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency, VestEvent } from '../../store/useCompensationStore'
 import {
   ComposedChart,
   Line,
@@ -15,7 +15,7 @@ import {
 } from 'recharts'
 
 export function EquityVestingWidget() {
-  const { primaryPackage, updateRSUGrant } = useCompensationStore()
+  const { primaryPackage, updateRSUGrant, timeMode } = useCompensationStore()
 
   const firstGrant = primaryPackage.rsuGrants[0]
   const [selectedPreset, setSelectedPreset] = useState<VestingPreset>(
@@ -55,24 +55,48 @@ export function EquityVestingWidget() {
   }
 
   // Merge events
-  const eventMap = new Map<number, { monthIndex: number, vestValue: number }>()
-  primaryPackage.rsuGrants.forEach((grant) => {
-    const events = generateVestEvents(grant)
-    events.forEach(e => {
-      const existing = eventMap.get(e.monthIndex)
-      if (existing) {
-        existing.vestValue += e.vestValue
-      } else {
-        eventMap.set(e.monthIndex, { monthIndex: e.monthIndex, vestValue: e.vestValue })
-      }
-    })
+  const eventMap = new Map<number, { monthIndex: number, vestValueInWindow: number, vestValueOutWindow: number }>()
+  const allEvents: VestEvent[] = []
+  
+  const today = new Date()
+  const targetYear = today.getFullYear()
+  
+  const isEventInWindow = (e: VestEvent) => {
+    if (!e.date) return e.monthIndex <= 12; // fallback
+    const eventDate = new Date(e.date);
+    if (timeMode === 'current-year') {
+      return eventDate.getFullYear() === targetYear;
+    } else {
+      const nextYear = new Date(today);
+      nextYear.setFullYear(targetYear + 1);
+      return eventDate >= today && eventDate <= nextYear;
+    }
+  }
+
+  primaryPackage.rsuGrants.forEach(grant => {
+    const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice)
+    allEvents.push(...events)
+  })
+  allEvents.forEach(e => {
+    const inWindow = isEventInWindow(e)
+    const existing = eventMap.get(e.monthIndex)
+    if (existing) {
+      if (inWindow) existing.vestValueInWindow += e.vestValue
+      else existing.vestValueOutWindow += e.vestValue
+    } else {
+      eventMap.set(e.monthIndex, { 
+        monthIndex: e.monthIndex, 
+        vestValueInWindow: inWindow ? e.vestValue : 0,
+        vestValueOutWindow: inWindow ? 0 : e.vestValue 
+      })
+    }
   })
 
   const mergedEvents = Array.from(eventMap.values())
     .sort((a, b) => a.monthIndex - b.monthIndex)
 
   const chartData = mergedEvents.map((e, i, arr) => {
-    const cum = arr.slice(0, i + 1).reduce((sum, item) => sum + item.vestValue, 0)
+    const cum = arr.slice(0, i + 1).reduce((sum, item) => sum + item.vestValueInWindow + item.vestValueOutWindow, 0)
     return { ...e, cumulativeVested: cum }
   })
 
@@ -171,10 +195,20 @@ export function EquityVestingWidget() {
               )}
               <Bar 
                 yAxisId="left" 
-                dataKey="vestValue" 
-                name="Vest Event" 
+                dataKey="vestValueOutWindow" 
+                name="Vest (Outside Window)" 
+                stackId="a"
                 fill="var(--color-accent)" 
-                opacity={0.6} 
+                opacity={0.2} 
+                radius={[0, 0, 0, 0]} 
+              />
+              <Bar 
+                yAxisId="left" 
+                dataKey="vestValueInWindow" 
+                name="Vest (In Window)" 
+                stackId="a"
+                fill="var(--color-accent)" 
+                opacity={0.8} 
                 radius={[3, 3, 0, 0]} 
               />
               <Line 

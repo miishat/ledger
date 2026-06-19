@@ -13,19 +13,25 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
   const [activeTab, setActiveTab] = useState<'base' | 'equity' | 'benefits'>('base')
 
+  // Global Stock Price
+  const [companyCurrentPrice, setCompanyCurrentPrice] = useState((primaryPackage.companyCurrentPrice || 100).toString())
+
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary.toString())
   const [cashBonusPercent, setCashBonusPercent] = useState(primaryPackage.cashBonusPercent.toString())
+  const [cashBonusMonth, setCashBonusMonth] = useState((primaryPackage.cashBonusMonth || 12).toString())
 
   // Benefits
   const [esppContributionPercent, setEsppContributionPercent] = useState(primaryPackage.esppContributionPercent.toString())
   const [esppDiscountPercent, setEsppDiscountPercent] = useState(primaryPackage.esppDiscountPercent.toString() || '15')
+  const [esppLockedInPrice, setEsppLockedInPrice] = useState((primaryPackage.esppLockedInPrice || 100).toString())
   const [rrspMatchPercent, setRrspMatchPercent] = useState(primaryPackage.rrspMatchPercent.toString())
   const [rrspMatchCap, setRrspMatchCap] = useState(primaryPackage.rrspMatchCap.toString())
 
   // Equity (RSU)
   const [rsuGrantName, setRsuGrantName] = useState('')
-  const [rsuTotalValue, setRsuTotalValue] = useState('')
+  const [rsuGrantShares, setRsuGrantShares] = useState('')
+  const [rsuGrantPrice, setRsuGrantPrice] = useState('100')
   const [rsuStartDate, setRsuStartDate] = useState(new Date().toISOString().split('T')[0])
   const [rsuPreset, setRsuPreset] = useState<VestingPreset>('4yr-1yr-cliff')
   const [rsuTotalMonths, setRsuTotalMonths] = useState('48')
@@ -35,7 +41,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   if (!isOpen) return null
 
   const handleAddRSU = () => {
-    if (!rsuGrantName || !rsuTotalValue) return
+    if (!rsuGrantName || !rsuGrantShares) return
 
     let total = parseInt(rsuTotalMonths, 10)
     let cliff = parseInt(rsuCliffMonths, 10)
@@ -44,17 +50,16 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     if (rsuPreset === '4yr-1yr-cliff') {
       total = 48
       cliff = 12
-      freq = 'monthly'
     } else if (rsuPreset === '3yr-no-cliff') {
       total = 36
       cliff = 0
-      freq = 'monthly'
     }
 
     addRSUGrant({
       id: crypto.randomUUID(),
       grantName: rsuGrantName,
-      totalGrantValue: Number(rsuTotalValue),
+      grantShares: Number(rsuGrantShares),
+      grantPrice: Number(rsuGrantPrice) || 1,
       grantStartDate: rsuStartDate,
       vestingSchedule: {
         preset: rsuPreset,
@@ -65,17 +70,20 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     })
 
     setRsuGrantName('')
-    setRsuTotalValue('')
+    setRsuGrantShares('')
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     setPrimaryPackage({
+      companyCurrentPrice: Number(companyCurrentPrice) || 0,
       baseSalary: Number(baseSalary) || 0,
       cashBonusPercent: Number(cashBonusPercent) || 0,
+      cashBonusMonth: Number(cashBonusMonth) || 12,
       esppContributionPercent: Number(esppContributionPercent) || 0,
       esppDiscountPercent: Number(esppDiscountPercent) || 15,
+      esppLockedInPrice: Number(esppLockedInPrice) || 0,
       rrspMatchPercent: Number(rrspMatchPercent) || 0,
       rrspMatchCap: Number(rrspMatchCap) || 0,
     })
@@ -127,6 +135,16 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
           {activeTab === 'base' && (
             <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 border-b border-[var(--color-border)] pb-4 mb-2">
+                <label className={labelClass}>Company Current Stock Price ($)</label>
+                <input
+                  type="number"
+                  value={companyCurrentPrice}
+                  onChange={(e) => setCompanyCurrentPrice(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>Base Salary ($)</label>
                 <input
@@ -145,6 +163,27 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   className={inputClass}
                 />
               </div>
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Bonus Payout Month</label>
+                <select
+                  value={cashBonusMonth}
+                  onChange={(e) => setCashBonusMonth(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
             </div>
           )}
 
@@ -160,26 +199,50 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>Total Grant Value ($)</label>
+                <label className={labelClass}>Number of Shares</label>
                 <input
                   type="number"
-                  value={rsuTotalValue}
-                  onChange={(e) => setRsuTotalValue(e.target.value)}
+                  value={rsuGrantShares}
+                  onChange={(e) => setRsuGrantShares(e.target.value)}
                   className={inputClass}
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className={labelClass}>Grant Start Date</label>
-                <input
-                  type="date"
-                  value={rsuStartDate}
-                  onChange={(e) => setRsuStartDate(e.target.value)}
-                  className={inputClass}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>Grant Price ($)</label>
+                  <input
+                    type="number"
+                    value={rsuGrantPrice}
+                    onChange={(e) => setRsuGrantPrice(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>Grant Start Date</label>
+                  <input
+                    type="date"
+                    value={rsuStartDate}
+                    onChange={(e) => setRsuStartDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
               </div>
               
               <div className="flex flex-col gap-2 mt-2">
-                <label className={labelClass}>Vesting Schedule</label>
+                <div className="flex justify-between items-center">
+                  <label className={labelClass}>Vesting Schedule</label>
+                  <div className="flex items-center gap-2">
+                    <label className={labelClass}>Frequency:</label>
+                    <select
+                      value={rsuFrequency}
+                      onChange={(e) => setRsuFrequency(e.target.value as VestingFrequency)}
+                      className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                    </select>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -206,7 +269,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
 
               {rsuPreset === 'custom' && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className={labelClass}>Total Vest (months)</label>
                     <input
@@ -225,17 +288,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                       className={inputClass}
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className={labelClass}>Frequency</label>
-                    <select
-                      value={rsuFrequency}
-                      onChange={(e) => setRsuFrequency(e.target.value as VestingFrequency)}
-                      className={inputClass}
-                    >
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                    </select>
-                  </div>
                 </div>
               )}
 
@@ -251,11 +303,14 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 <div className="mt-4 flex flex-col gap-2">
                   <label className={labelClass}>Current Grants</label>
                   <div className="flex flex-col gap-2">
-                    {primaryPackage.rsuGrants.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
-                        <span className="text-[14px]">{g.grantName} (${g.totalGrantValue.toLocaleString()})</span>
-                      </div>
-                    ))}
+                    {primaryPackage.rsuGrants.map(g => {
+                      const shares = g.grantShares || 0;
+                      return (
+                        <div key={g.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
+                          <span className="text-[14px]">{g.grantName} ({shares.toLocaleString()} shares)</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -264,21 +319,32 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
           {activeTab === 'benefits' && (
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className={labelClass}>ESPP Contribution (%)</label>
-                <input
-                  type="number"
-                  value={esppContributionPercent}
-                  onChange={(e) => setEsppContributionPercent(e.target.value)}
-                  className={inputClass}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>ESPP Contribution (%)</label>
+                  <input
+                    type="number"
+                    value={esppContributionPercent}
+                    onChange={(e) => setEsppContributionPercent(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelClass}>ESPP Discount (%)</label>
+                  <input
+                    type="number"
+                    value={esppDiscountPercent}
+                    onChange={(e) => setEsppDiscountPercent(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>ESPP Discount (%)</label>
+                <label className={labelClass}>ESPP Lock-In Price ($)</label>
                 <input
                   type="number"
-                  value={esppDiscountPercent}
-                  onChange={(e) => setEsppDiscountPercent(e.target.value)}
+                  value={esppLockedInPrice}
+                  onChange={(e) => setEsppLockedInPrice(e.target.value)}
                   className={inputClass}
                 />
               </div>

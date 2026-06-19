@@ -35,6 +35,7 @@
   
   /* Force mono font for the entire app in Tactical mode */
   font-family: var(--font-mono);
+  color-scheme: dark;
 }
 
 html, body {

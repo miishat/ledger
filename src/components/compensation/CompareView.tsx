@@ -14,9 +14,12 @@ export function CompareView() {
 
   const [compareName] = useState('Compare Offer')
   const [compareBaseSalary, setCompareBaseSalary] = useState('')
+  const [compareCompanyCurrentPrice, setCompareCompanyCurrentPrice] = useState('100')
   const [compareCashBonusPercent, setCompareCashBonusPercent] = useState('0')
+  const [compareCashBonusMonth, setCompareCashBonusMonth] = useState('12')
   const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState('0')
   const [compareEsppDiscountPercent, setCompareEsppDiscountPercent] = useState('15')
+  const [compareEsppLockedInPrice, setCompareEsppLockedInPrice] = useState('100')
   const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState('0')
   const [compareRrspMatchCap, setCompareRrspMatchCap] = useState('0')
 
@@ -24,10 +27,13 @@ export function CompareView() {
     setComparePackage({
       id: 'compare',
       name: compareName,
+      companyCurrentPrice: Number(compareCompanyCurrentPrice) || 0,
       baseSalary: Number(compareBaseSalary) || 0,
       cashBonusPercent: Number(compareCashBonusPercent) || 0,
+      cashBonusMonth: Number(compareCashBonusMonth) || 12,
       esppContributionPercent: Number(compareEsppContributionPercent) || 0,
       esppDiscountPercent: Number(compareEsppDiscountPercent) || 0,
+      esppLockedInPrice: Number(compareEsppLockedInPrice) || 0,
       rrspMatchPercent: Number(compareRrspMatchPercent) || 0,
       rrspMatchCap: Number(compareRrspMatchCap) || 0,
       rsuGrants: []
@@ -49,13 +55,37 @@ export function CompareView() {
           <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Compare Another Offer</h3>
           
           <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-3 mb-1">
+              <label className={labelClass}>Company Stock Price ($)</label>
+              <input type="number" value={compareCompanyCurrentPrice} onChange={(e) => setCompareCompanyCurrentPrice(e.target.value)} className={inputClass} />
+            </div>
+
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Base Salary ($)</label>
               <input type="number" value={compareBaseSalary} onChange={(e) => setCompareBaseSalary(e.target.value)} className={inputClass} />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Cash Bonus (%)</label>
-              <input type="number" value={compareCashBonusPercent} onChange={(e) => setCompareCashBonusPercent(e.target.value)} className={inputClass} />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Cash Bonus (%)</label>
+                <input type="number" value={compareCashBonusPercent} onChange={(e) => setCompareCashBonusPercent(e.target.value)} className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelClass}>Bonus Month</label>
+                <select value={compareCashBonusMonth} onChange={(e) => setCompareCashBonusMonth(e.target.value)} className={inputClass}>
+                  <option value="1">Jan</option>
+                  <option value="2">Feb</option>
+                  <option value="3">Mar</option>
+                  <option value="4">Apr</option>
+                  <option value="5">May</option>
+                  <option value="6">Jun</option>
+                  <option value="7">Jul</option>
+                  <option value="8">Aug</option>
+                  <option value="9">Sep</option>
+                  <option value="10">Oct</option>
+                  <option value="11">Nov</option>
+                  <option value="12">Dec</option>
+                </select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
@@ -66,6 +96,10 @@ export function CompareView() {
                 <label className={labelClass}>Discount (%)</label>
                 <input type="number" value={compareEsppDiscountPercent} onChange={(e) => setCompareEsppDiscountPercent(e.target.value)} className={inputClass} />
               </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass}>ESPP Lock-In Price ($)</label>
+              <input type="number" value={compareEsppLockedInPrice} onChange={(e) => setCompareEsppLockedInPrice(e.target.value)} className={inputClass} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">

@@ -5,9 +5,9 @@ import { Layout } from './components/Layout'
 
 import { Dashboard } from './pages/Dashboard'
 import { Budgeting } from './pages/Budgeting'
-const Investments = () => <div className="p-4"><h2 className="text-2xl font-bold">Investment Tracker</h2></div>
-const Projections = () => <div className="p-4"><h2 className="text-2xl font-bold">Future Projections</h2></div>
-const Compensation = () => <div className="p-4"><h2 className="text-2xl font-bold">Total Compensation</h2></div>
+import { Investments } from './pages/Investments'
+import { Projections } from './pages/Projections'
+import { Compensation } from './pages/Compensation'
 
 function App() {
   const { theme } = useThemeStore()

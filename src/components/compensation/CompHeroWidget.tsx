@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { useCompensationStore, calcTotalComp, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU } from '../../store/useCompensationStore'
+import { useCompensationStore, calcTotalComp, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents } from '../../store/useCompensationStore'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -19,17 +19,17 @@ interface CompHeroWidgetProps {
 
 const COMP_COLORS = {
   baseSalary: 'var(--color-accent)',
-  cashBonus: '#10b981', // emerald-500
+  cashBonus: '#3b82f6', // blue-500
   espp: '#f59e0b', // amber-500
   rrsp: '#8b5cf6', // violet-500
   rsu: '#06b6d4', // cyan-500
 }
 
 export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
-  const { primaryPackage } = useCompensationStore()
+  const { primaryPackage, timeMode, setTimeMode } = useCompensationStore()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
 
-  const totalComp = calcTotalComp(primaryPackage)
+  const totalComp = calcTotalComp(primaryPackage, timeMode)
 
   if (totalComp === 0) {
     return (
@@ -46,7 +46,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   const bonusValue = calcAnnualBonus(primaryPackage)
   const esppValue = calcAnnualESPP(primaryPackage)
   const rrspValue = calcAnnualRRSP(primaryPackage)
-  const rsuValue = calcAnnualRSU(primaryPackage)
+  const rsuValue = calcAnnualRSU(primaryPackage, timeMode)
 
   const pieData = [
     { name: 'Base Salary', value: baseValue, color: COMP_COLORS.baseSalary },
@@ -56,38 +56,32 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     { name: 'RSU (1st Yr)', value: rsuValue, color: COMP_COLORS.rsu },
   ].filter(d => d.value > 0)
 
+  const today = new Date();
+  const targetYear = today.getFullYear();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const monthlyData = months.map((m, i) => {
-    // Determine RSU vest for this month (month index 1 to 12)
-    // generateVestEvents gives events with monthIndex. We sum them.
-    // For simplicity, we just distribute RSU evenly for the first year if no specific grant logic per month is needed for the hero chart,
-    // wait, the spec says: "rsu: vest events in that month"
-    // So let's calculate RSU exactly
     let rsuThisMonth = 0
     primaryPackage.rsuGrants.forEach(grant => {
-      // Assuming grantStartDate is effectively month 0. monthIndex 1..12 correspond to Jan..Dec of first year.
-      // We will just use the monthIndex (1-12) for the 12 months.
-      const { vestingSchedule, totalGrantValue } = grant
-      const { cliffMonths, totalVestMonths, frequency } = vestingSchedule
-      const freqMonths = frequency === 'quarterly' ? 3 : 1
-      
-      const isCliffMonth = i + 1 === cliffMonths
-      if (isCliffMonth) {
-        rsuThisMonth += totalGrantValue * (cliffMonths / totalVestMonths)
-      } else if (i + 1 > cliffMonths && (i + 1 - cliffMonths) % freqMonths === 0) {
-        const postCliffMonths = totalVestMonths - cliffMonths
-        const postCliffValue = cliffMonths > 0 
-          ? totalGrantValue * ((totalVestMonths - cliffMonths) / totalVestMonths)
-          : totalGrantValue
-        const vestCount = Math.floor(postCliffMonths / freqMonths)
-        rsuThisMonth += vestCount > 0 ? postCliffValue / vestCount : 0
-      }
+      const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice || 0)
+      const eventsThisMonth = events.filter((e: any) => {
+        if (!e.date) return e.monthIndex === i + 1; // fallback
+        const eventDate = new Date(e.date);
+        
+        if (timeMode === 'current-year') {
+           return eventDate.getMonth() === i && eventDate.getFullYear() === targetYear;
+        } else {
+           const nextYear = new Date(today);
+           nextYear.setFullYear(targetYear + 1);
+           return eventDate.getMonth() === i && eventDate >= today && eventDate <= nextYear;
+        }
+      })
+      rsuThisMonth += eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
     })
 
     return {
       month: m,
       baseSalary: baseValue / 12,
-      bonus: i === 11 ? bonusValue : 0, // Paid in December
+      bonus: i === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, // Paid in selected month
       espp: esppValue / 12,
       rrsp: rrspValue / 12,
       rsu: rsuThisMonth,
@@ -96,37 +90,58 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
 
   return (
     <div className={`bg-[var(--color-bg-secondary)] rounded-lg p-4 shadow-sm flex flex-col border border-[var(--color-border)] ${className}`}>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h3>
-        <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
-          <button
-            onClick={() => setView('annualized')}
-            className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'annualized' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-          >
-            Annualized Breakdown
-          </button>
-          <button
-            onClick={() => setView('monthly')}
-            className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'monthly' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-          >
-            Monthly Cash Flow View
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Time Mode Toggle */}
+          <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
+            <button
+              onClick={() => setTimeMode('current-year')}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${timeMode === 'current-year' ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              Current Year
+            </button>
+            <button
+              onClick={() => setTimeMode('next-1-year')}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${timeMode === 'next-1-year' ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              Next 1 Year
+            </button>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
+            <button
+              onClick={() => setView('annualized')}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'annualized' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              Annualized Breakdown
+            </button>
+            <button
+              onClick={() => setView('monthly')}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${view === 'monthly' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              Monthly Cash Flow View
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="relative w-full h-[280px]">
+      <div className="relative w-full h-[400px]">
         {view === 'annualized' ? (
           <>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={80}
-                  outerRadius={110}
+                  innerRadius={110}
+                  outerRadius={135}
                   paddingAngle={3}
                   dataKey="value"
+                  label={({ name, percent }) => (percent || 0) > 0 ? `${name} ${((percent || 0) * 100).toFixed(0)}%` : ''}
+                  labelLine={true}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
@@ -143,7 +158,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[28px] font-semibold text-[var(--color-text-primary)]">
+              <span className="text-[24px] font-semibold text-[var(--color-text-primary)]">
                 {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalComp)}
               </span>
               <span className="text-[12px] text-[var(--color-text-secondary)]">Total Annual Compensation</span>

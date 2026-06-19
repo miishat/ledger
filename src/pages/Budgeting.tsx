@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
-import { CashFlowWidget } from '../components/budget/CashFlowWidget';
+import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
+import { TransactionModal } from '../components/budget/TransactionModal';
 
 export const Budgeting: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-6 w-full h-full p-6 animate-fade-in">
       <header className="flex justify-between items-center">
@@ -13,12 +16,18 @@ export const Budgeting: React.FC = () => {
             Manage your income, track expenses, and view your cash flow.
           </p>
         </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-accent text-white px-4 py-2 rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+        >
+          Add Transaction
+        </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <IncomeWidget />
         <ExpenseWidget />
-        <CashFlowWidget />
+        <MonthlySummaryWidget />
       </div>
 
       <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex items-center justify-center min-h-[300px]">
@@ -26,6 +35,8 @@ export const Budgeting: React.FC = () => {
           More detailed budgeting views and historical charts will go here in the future.
         </p>
       </div>
+
+      <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };
