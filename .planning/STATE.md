@@ -34,3 +34,9 @@ See: .planning/PROJECT.md (updated 2026-06-17)
 | Phase 03 P03-02 | 5 min | 3 tasks | 4 files |
 | Phase 06 P06-01 | 2 min | 4 tasks | 4 files |
 | Phase 06 P06-02 | 3 min | 3 tasks | 3 files |
+
+## Quick Tasks Completed
+
+| Date | Slug | Description |
+|------|------|-------------|
+| 2026-06-19 | deploy-system | Added GitHub Actions deployment workflow for GitHub Pages |
