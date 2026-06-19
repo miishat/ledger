@@ -18,6 +18,12 @@ export const Investments: React.FC = () => {
           <InvestmentTrackerWidget />
         </div>
       </div>
+
+      <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex items-center justify-center min-h-[300px]">
+        <p className="text-text-secondary text-[14px]">
+          More detailed investment views and historical charts will go here in the future.
+        </p>
+      </div>
     </div>
   );
 };

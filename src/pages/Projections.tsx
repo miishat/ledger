@@ -18,6 +18,12 @@ export const Projections: React.FC = () => {
           <ProjectionWidget />
         </div>
       </div>
+
+      <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex items-center justify-center min-h-[300px]">
+        <p className="text-text-secondary text-[14px]">
+          More detailed projection scenarios and charts will go here in the future.
+        </p>
+      </div>
     </div>
   );
 };

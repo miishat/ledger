@@ -40,3 +40,4 @@ See: .planning/PROJECT.md (updated 2026-06-17)
 | Date | Slug | Description |
 |------|------|-------------|
 | 2026-06-19 | deploy-system | Added GitHub Actions deployment workflow for GitHub Pages |
+| 2026-06-19 | future-notice | Added coming soon notices to Investments and Projections pages |
