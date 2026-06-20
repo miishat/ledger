@@ -138,9 +138,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           else if (progressPercentage > 85) progressColor = 'bg-orange-500';
 
                           return (
-                            <div className="flex flex-col items-end w-24">
-                              <span className={`text-[12px] font-medium ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
-                                ${actualSpend.toFixed(0)} spent
+                            <div className="flex flex-col items-end min-w-[100px]">
+                              <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
+                                ${actualSpend.toFixed(0)} spent {isOverBudget && `($${(actualSpend - cat.targetAmount).toFixed(0)} over)`}
                               </span>
                               {cat.targetAmount > 0 && (
                                 <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">

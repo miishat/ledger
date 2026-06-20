@@ -19,7 +19,11 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
 
   const txList = Object.values(transactions)
     .filter(tx => tx.date.startsWith(selectedMonth))
-    .filter(tx => selectedCategoryId === '' || tx.categoryId === selectedCategoryId)
+    .filter(tx => {
+      if (selectedCategoryId === '') return true;
+      if (selectedCategoryId === 'uncategorized') return !tx.categoryId;
+      return tx.categoryId === selectedCategoryId;
+    })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
@@ -33,6 +37,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
             className="bg-bg-primary border border-border rounded px-2 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-accent cursor-pointer shadow-sm"
           >
             <option value="">All Categories</option>
+            <option value="uncategorized">Uncategorized</option>
             {Object.values(categories).map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -57,7 +62,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
           No transactions yet. Import a CSV or add one manually to see it here.
         </p>
       ) : (
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px] pr-2">
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border text-[12px] text-text-secondary">
