@@ -117,16 +117,35 @@ export const useBudgetStore = create<BudgetState>()(
         if (Object.keys(state.categories).length > 0) return state; // Only seed if empty
         return {
           categoryGroups: {
-            'g-1': { id: 'g-1', name: 'Living Expenses' },
             'g-2': { id: 'g-2', name: 'Income' },
+            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing' },
+            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment' },
+            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities' },
+            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping' },
+            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food' }
           },
           categories: {
-            'c-1': { id: 'c-1', groupId: 'g-1', name: 'Food', targetAmount: 500 },
-            'c-2': { id: 'c-2', groupId: 'g-1', name: 'Transportation', targetAmount: 200 },
-            'c-3': { id: 'c-3', groupId: 'g-1', name: 'Utilities', targetAmount: 150 },
-            'c-4': { id: 'c-4', groupId: 'g-1', name: 'Housing', targetAmount: 1500 },
-            'c-5': { id: 'c-5', groupId: 'g-1', name: 'Personal', targetAmount: 300 },
             'c-6': { id: 'c-6', groupId: 'g-2', name: 'Salary', targetAmount: 0 },
+            '9bdce21b-f12a-42a8-b064-94ebc94fea6b': { id: '9bdce21b-f12a-42a8-b064-94ebc94fea6b', groupId: 'g-2', name: 'ESPP', targetAmount: 0 },
+            'f8624fe3-2323-4e21-b103-11b8a0cad757': { id: 'f8624fe3-2323-4e21-b103-11b8a0cad757', groupId: 'g-2', name: 'RSU', targetAmount: 0 },
+            '4ecbc8dd-b2cd-44bb-ad66-1f5a9f1dbbb9': { id: '4ecbc8dd-b2cd-44bb-ad66-1f5a9f1dbbb9', groupId: 'g-2', name: 'Bonus', targetAmount: 0 },
+            
+            'b409bff3-0cba-443d-a6e0-827ada469528': { id: 'b409bff3-0cba-443d-a6e0-827ada469528', groupId: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Rent', targetAmount: 1021 },
+            '9bfed7b1-b6aa-4950-af5b-afbc4087ba52': { id: '9bfed7b1-b6aa-4950-af5b-afbc4087ba52', groupId: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Utilities', targetAmount: 200 },
+            
+            '4e3699b4-5077-4617-81af-c5bbc228878f': { id: '4e3699b4-5077-4617-81af-c5bbc228878f', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Night Out', targetAmount: 0 },
+            '51d01f29-9a0e-4032-89f1-63c6e33c8752': { id: '51d01f29-9a0e-4032-89f1-63c6e33c8752', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Dining', targetAmount: 0 },
+            
+            '7a9e68b5-da77-4754-9f28-3a37c65c01db': { id: '7a9e68b5-da77-4754-9f28-3a37c65c01db', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Phone Bill', targetAmount: 0 },
+            'ad76c6c1-7747-4083-b070-6f1d284ae644': { id: 'ad76c6c1-7747-4083-b070-6f1d284ae644', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Subscriptions', targetAmount: 0 },
+            '6fbd8ccd-c8f2-4fd9-b96e-63ccfc0b84df': { id: '6fbd8ccd-c8f2-4fd9-b96e-63ccfc0b84df', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Transportation', targetAmount: 0 },
+            '607e9771-8a54-489e-b1db-460cb03dabe9': { id: '607e9771-8a54-489e-b1db-460cb03dabe9', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Gym Membership', targetAmount: 0 },
+            
+            '9b6ce3c5-4946-4378-84e6-0b2020b27c30': { id: '9b6ce3c5-4946-4378-84e6-0b2020b27c30', groupId: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Personal', targetAmount: 0 },
+            '879ced4f-74e6-4a46-8092-010ed24d0263': { id: '879ced4f-74e6-4a46-8092-010ed24d0263', groupId: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Gifts', targetAmount: 0 },
+            
+            '41d4eb7f-f576-4d1c-97b6-efdc7315df4f': { id: '41d4eb7f-f576-4d1c-97b6-efdc7315df4f', groupId: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Groceries', targetAmount: 0 },
+            'dc2dbe26-3f1c-4e76-b0ad-a3e6d5ce5ea0': { id: 'dc2dbe26-3f1c-4e76-b0ad-a3e6d5ce5ea0', groupId: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Takeout', targetAmount: 0 }
           }
         };
       }),
