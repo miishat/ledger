@@ -88,6 +88,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           const isIncomeGroup = group.name.toLowerCase().includes('income') || group.name.toLowerCase().includes('earn');
           const groupCats = catList.filter(c => c.groupId === group.id);
           const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
+          const groupEarned = groupCats.reduce((sum, cat) => {
+            return sum + thisMonthIncome.filter(t => t.categoryId === cat.id).reduce((s, t) => s + t.amount, 0);
+          }, 0);
           
           return (
             <div key={group.id} className="border border-border/50 rounded-lg p-4 bg-bg-primary/30 relative">
@@ -95,7 +98,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                 <div className="flex items-center gap-2">
                   <h3 className="text-[14px] font-semibold text-text-primary">{group.name}</h3>
                   <span className="text-[12px] font-medium text-text-secondary bg-bg-secondary px-2 rounded-full border border-border">
-                    ${groupTotal.toFixed(0)}
+                    {isIncomeGroup ? `$${groupEarned.toFixed(0)} earned` : `$${groupTotal.toFixed(0)}`}
                   </span>
                 </div>
                 {groupCats.length === 0 && (
@@ -135,6 +138,23 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           const actualAmount = (isIncomeGroup ? thisMonthIncome : thisMonthExpenses)
                             .filter(t => t.categoryId === cat.id)
                             .reduce((sum, t) => sum + t.amount, 0);
+
+                          if (isIncomeGroup) {
+                            return (
+                              <div className="flex items-center gap-4 w-full justify-end">
+                                <span className="text-[13px] font-medium text-text-primary">
+                                  ${actualAmount.toFixed(0)} earned
+                                </span>
+                                <button 
+                                  onClick={() => deleteCategory(cat.id)}
+                                  className="p-1 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            );
+                          }
+
                           const isOverBudget = !isIncomeGroup && actualAmount > cat.targetAmount && cat.targetAmount > 0;
                           const progressPercentage = cat.targetAmount > 0 ? Math.min((actualAmount / cat.targetAmount) * 100, 100) : 0;
                           
@@ -147,31 +167,33 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           }
 
                           return (
-                            <div className="flex flex-col items-end min-w-[100px]">
-                              <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
-                                ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - cat.targetAmount).toFixed(0)} over)`}
-                              </span>
-                              {cat.targetAmount > 0 && (
-                                <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
-                                  <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
-                                </div>
-                              )}
-                            </div>
+                            <>
+                              <div className="flex flex-col items-end min-w-[100px]">
+                                <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
+                                  ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - cat.targetAmount).toFixed(0)} over)`}
+                                </span>
+                                {cat.targetAmount > 0 && (
+                                  <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
+                                    <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[13px] text-text-secondary ml-2">target: $</span>
+                              <input
+                                type="number"
+                                value={cat.targetAmount}
+                                onChange={(e) => updateCategory(cat.id, { targetAmount: Number(e.target.value) })}
+                                className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
+                              />
+                              <button 
+                                onClick={() => deleteCategory(cat.id)}
+                                className="p-1 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
                           );
                         })()}
-                        <span className="text-[13px] text-text-secondary ml-2">target: $</span>
-                        <input
-                          type="number"
-                          value={cat.targetAmount}
-                          onChange={(e) => updateCategory(cat.id, { targetAmount: Number(e.target.value) })}
-                          className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
-                        />
-                        <button 
-                          onClick={() => deleteCategory(cat.id)}
-                          className="p-1 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 size={14} />
-                        </button>
                       </div>
                     </div>
                   ))

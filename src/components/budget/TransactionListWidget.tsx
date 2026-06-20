@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2 } from 'lucide-react';
 
 interface TransactionListWidgetProps {
   selectedMonth: string;
@@ -16,6 +16,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const txList = Object.values(transactions)
     .filter(tx => tx.date.startsWith(selectedMonth))
@@ -26,8 +27,12 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  const wrapperClass = isExpanded 
+    ? "fixed inset-4 z-50 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col shadow-2xl animate-fade-in"
+    : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]";
+
   return (
-    <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]">
+    <div className={wrapperClass}>
       <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex items-center gap-3">
@@ -55,6 +60,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
               <Trash2 size={14} /> Clear All
             </button>
           )}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1.5 text-text-secondary hover:text-text-primary transition-colors bg-bg-primary rounded border border-border shadow-sm ml-2"
+            title={isExpanded ? "Minimize" : "Expand to Full Screen"}
+          >
+            {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
         </div>
       </div>
       {txList.length === 0 ? (
@@ -62,7 +74,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
           No transactions yet. Import a CSV or add one manually to see it here.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : ''}`}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border text-[12px] text-text-secondary">
