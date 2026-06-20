@@ -8,6 +8,7 @@ interface ExpenseWidgetProps {
 
 export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) => {
   const transactions = useBudgetStore((state) => state.transactions);
+  const categories = useBudgetStore((state) => state.categories);
   
   const transactionsList = Object.values(transactions);
   
@@ -17,7 +18,10 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
   
   // Group by category
   const expensesByCategory = expensesThisMonth.reduce((acc, t) => {
-    const catName = t.categoryId || 'Uncategorized';
+    let catName = 'Uncategorized';
+    if (t.categoryId) {
+      catName = categories[t.categoryId]?.name || t.categoryId;
+    }
     acc[catName] = (acc[catName] || 0) + t.amount;
     return acc;
   }, {} as Record<string, number>);
