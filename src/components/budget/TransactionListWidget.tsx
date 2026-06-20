@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2, Filter } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 interface TransactionListWidgetProps {
   selectedMonth: string;
@@ -24,42 +24,40 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
 
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
+        <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex items-center gap-3">
-          <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
-          <div className="flex items-center gap-1 text-text-secondary">
-            <Filter size={14} />
-            <select 
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="bg-bg-primary border border-border rounded px-2 py-1 text-[13px] focus:outline-none focus:border-accent"
-            >
-              <option value="">All Categories</option>
-              {Object.values(categories).map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {txList.length > 0 && (
-          <button 
-            onClick={() => {
-              if (window.confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-                clearAllTransactions();
-              }
-            }}
-            className="text-[14px] text-red-500 hover:text-red-400 transition-colors border border-red-500/30 hover:bg-red-500/10 px-3 py-1 rounded-md"
+          <select 
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+            className="bg-bg-primary border border-border rounded px-2 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-accent cursor-pointer shadow-sm"
           >
-            Clear All
-          </button>
-        )}
+            <option value="">All Categories</option>
+            {Object.values(categories).map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          {txList.length > 0 && (
+            <button 
+              onClick={() => {
+                if (window.confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
+                  clearAllTransactions();
+                }
+              }}
+              className="text-[13px] text-red-500 hover:text-red-400 transition-colors border border-red-500/30 hover:bg-red-500/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
+              title="Clear All Transactions"
+            >
+              <Trash2 size={14} /> Clear All
+            </button>
+          )}
+        </div>
       </div>
       {txList.length === 0 ? (
         <p className="text-text-secondary text-[14px] flex-grow flex items-center justify-center">
           No transactions yet. Import a CSV or add one manually to see it here.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[600px] pr-2">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border text-[12px] text-text-secondary">

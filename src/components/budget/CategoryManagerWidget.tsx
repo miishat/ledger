@@ -131,21 +131,31 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             .filter(t => t.categoryId === cat.id)
                             .reduce((sum, t) => sum + t.amount, 0);
                           const isOverBudget = actualSpend > cat.targetAmount && cat.targetAmount > 0;
+                          const progressPercentage = cat.targetAmount > 0 ? Math.min((actualSpend / cat.targetAmount) * 100, 100) : 0;
+                          
+                          let progressColor = 'bg-[var(--color-accent)]';
+                          if (isOverBudget) progressColor = 'bg-red-500';
+                          else if (progressPercentage > 85) progressColor = 'bg-orange-500';
+
                           return (
-                            <div className="flex items-center gap-1 text-[13px] mr-2">
-                              <span className={`${isOverBudget ? 'text-red-500 font-medium' : 'text-text-secondary'}`}>
-                                ${actualSpend.toFixed(0)}
+                            <div className="flex flex-col items-end w-24">
+                              <span className={`text-[12px] font-medium ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
+                                ${actualSpend.toFixed(0)} spent
                               </span>
-                              <span className="text-text-secondary/50">/</span>
+                              {cat.targetAmount > 0 && (
+                                <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
+                                  <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
-                        <span className="text-[14px] text-text-secondary">$</span>
+                        <span className="text-[13px] text-text-secondary ml-2">budget: $</span>
                         <input
                           type="number"
                           value={cat.targetAmount}
                           onChange={(e) => updateCategory(cat.id, { targetAmount: Number(e.target.value) })}
-                          className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-[14px] text-right focus:outline-none focus:border-accent"
+                          className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
                         />
                         <button 
                           onClick={() => deleteCategory(cat.id)}
