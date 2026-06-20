@@ -55,6 +55,10 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
   const thisMonthExpenses = Object.values(transactions).filter(
     t => t.type === 'expense' && t.date.startsWith(selectedMonth)
   );
+  
+  const thisMonthIncome = Object.values(transactions).filter(
+    t => t.type === 'income' && t.date.startsWith(selectedMonth)
+  );
 
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col">
@@ -81,6 +85,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {groups.map(group => {
+          const isIncomeGroup = group.name.toLowerCase().includes('income') || group.name.toLowerCase().includes('earn');
           const groupCats = catList.filter(c => c.groupId === group.id);
           const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
           
@@ -127,20 +132,24 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                       </div>
                       <div className="flex items-center gap-2 flex-1 justify-end">
                         {(() => {
-                          const actualSpend = thisMonthExpenses
+                          const actualAmount = (isIncomeGroup ? thisMonthIncome : thisMonthExpenses)
                             .filter(t => t.categoryId === cat.id)
                             .reduce((sum, t) => sum + t.amount, 0);
-                          const isOverBudget = actualSpend > cat.targetAmount && cat.targetAmount > 0;
-                          const progressPercentage = cat.targetAmount > 0 ? Math.min((actualSpend / cat.targetAmount) * 100, 100) : 0;
+                          const isOverBudget = !isIncomeGroup && actualAmount > cat.targetAmount && cat.targetAmount > 0;
+                          const progressPercentage = cat.targetAmount > 0 ? Math.min((actualAmount / cat.targetAmount) * 100, 100) : 0;
                           
                           let progressColor = 'bg-[var(--color-accent)]';
-                          if (isOverBudget) progressColor = 'bg-red-500';
-                          else if (progressPercentage > 85) progressColor = 'bg-orange-500';
+                          if (!isIncomeGroup) {
+                            if (isOverBudget) progressColor = 'bg-red-500';
+                            else if (progressPercentage > 85) progressColor = 'bg-orange-500';
+                          } else {
+                            if (progressPercentage >= 100) progressColor = 'bg-green-500';
+                          }
 
                           return (
                             <div className="flex flex-col items-end min-w-[100px]">
                               <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
-                                ${actualSpend.toFixed(0)} spent {isOverBudget && `($${(actualSpend - cat.targetAmount).toFixed(0)} over)`}
+                                ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - cat.targetAmount).toFixed(0)} over)`}
                               </span>
                               {cat.targetAmount > 0 && (
                                 <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
@@ -150,7 +159,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             </div>
                           );
                         })()}
-                        <span className="text-[13px] text-text-secondary ml-2">budget: $</span>
+                        <span className="text-[13px] text-text-secondary ml-2">target: $</span>
                         <input
                           type="number"
                           value={cat.targetAmount}
