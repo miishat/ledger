@@ -83,7 +83,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="columns-1 md:columns-2 gap-6">
         {groups.map(group => {
           const isIncomeGroup = group.name.toLowerCase().includes('income') || group.name.toLowerCase().includes('earn');
           const groupCats = catList.filter(c => c.groupId === group.id);
@@ -93,7 +93,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           }, 0);
           
           return (
-            <div key={group.id} className="border border-border/50 rounded-lg p-4 bg-bg-primary/30 relative">
+            <div key={group.id} className="break-inside-avoid mb-6 border border-border/50 rounded-lg p-4 bg-bg-primary/30 relative">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-[14px] font-semibold text-text-primary">{group.name}</h3>
