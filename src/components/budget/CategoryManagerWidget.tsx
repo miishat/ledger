@@ -10,11 +10,14 @@ export const CategoryManagerWidget: React.FC = () => {
     categoryGroups,
     addCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    addCategoryGroup,
+    deleteCategoryGroup
   } = useBudgetStore();
 
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
 
   const groups = Object.values(categoryGroups);
   const catList = Object.values(categories);
@@ -30,6 +33,17 @@ export const CategoryManagerWidget: React.FC = () => {
       targetAmount: 0
     });
     setNewCatName('');
+  };
+
+  const handleAddGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName) return;
+
+    addCategoryGroup({
+      id: crypto.randomUUID(),
+      name: newGroupName
+    });
+    setNewGroupName('');
   };
 
   return (
@@ -59,15 +73,41 @@ export const CategoryManagerWidget: React.FC = () => {
         {groups.map(group => {
           const groupCats = catList.filter(c => c.groupId === group.id);
           return (
-            <div key={group.id} className="border border-border/50 rounded-lg p-4 bg-bg-primary/30">
-              <h3 className="text-[14px] font-semibold text-text-primary mb-3">{group.name}</h3>
+            <div key={group.id} className="border border-border/50 rounded-lg p-4 bg-bg-primary/30 relative">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[14px] font-semibold text-text-primary">{group.name}</h3>
+                {groupCats.length === 0 && (
+                  <button 
+                    onClick={() => deleteCategoryGroup(group.id)}
+                    className="p-1 text-text-secondary hover:text-red-500 transition-colors"
+                    title="Delete Empty Group"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
               <div className="flex flex-col gap-2">
                 {groupCats.length === 0 ? (
                   <p className="text-[12px] text-text-secondary italic">No categories.</p>
                 ) : (
                   groupCats.map(cat => (
-                    <div key={cat.id} className="flex items-center justify-between gap-2 group">
-                      <span className="text-[14px] text-text-secondary w-1/2 truncate">{cat.name}</span>
+                    <div key={cat.id} className="flex items-center justify-between gap-2 group border-b border-border/30 pb-2 mb-2 last:border-0 last:mb-0 last:pb-0">
+                      <div className="flex flex-col w-1/2">
+                        <input 
+                          type="text" 
+                          value={cat.name} 
+                          onChange={(e) => updateCategory(cat.id, { name: e.target.value })}
+                          className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none truncate w-full"
+                          placeholder="Category Name"
+                        />
+                        <select 
+                          value={cat.groupId}
+                          onChange={(e) => updateCategory(cat.id, { groupId: e.target.value })}
+                          className="text-[11px] text-text-secondary bg-transparent hover:text-text-primary focus:outline-none cursor-pointer w-full mt-0.5 appearance-none"
+                        >
+                          {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                      </div>
                       <div className="flex items-center gap-2 flex-1 justify-end">
                         <span className="text-[14px] text-text-secondary">$</span>
                         <input
@@ -121,6 +161,25 @@ export const CategoryManagerWidget: React.FC = () => {
           className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
         >
           <Plus size={16} /> Add
+        </button>
+      </form>
+
+      <form onSubmit={handleAddGroup} className="mt-4 flex items-end gap-3 border-t border-border pt-4">
+        <div className="flex flex-col gap-1 flex-1 max-w-[200px]">
+          <label className="text-[12px] text-text-secondary">New Category Group</label>
+          <input 
+            type="text" 
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="e.g. Discretionary"
+            className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+          />
+        </div>
+        <button 
+          type="submit"
+          className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
+        >
+          <Plus size={16} /> Add Group
         </button>
       </form>
     </div>
