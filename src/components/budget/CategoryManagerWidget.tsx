@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 
 export const CategoryManagerWidget: React.FC = () => {
   const {
@@ -18,6 +18,7 @@ export const CategoryManagerWidget: React.FC = () => {
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const groups = Object.values(categoryGroups);
   const catList = Object.values(categories);
@@ -72,10 +73,17 @@ export const CategoryManagerWidget: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {groups.map(group => {
           const groupCats = catList.filter(c => c.groupId === group.id);
+          const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
+          
           return (
             <div key={group.id} className="border border-border/50 rounded-lg p-4 bg-bg-primary/30 relative">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[14px] font-semibold text-text-primary">{group.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[14px] font-semibold text-text-primary">{group.name}</h3>
+                  <span className="text-[12px] font-medium text-text-secondary bg-bg-secondary px-2 rounded-full border border-border">
+                    ${groupTotal.toFixed(0)}
+                  </span>
+                </div>
                 {groupCats.length === 0 && (
                   <button 
                     onClick={() => deleteCategoryGroup(group.id)}
@@ -132,56 +140,70 @@ export const CategoryManagerWidget: React.FC = () => {
         })}
       </div>
 
-      <form onSubmit={handleAddCategory} className="mt-6 flex items-end gap-3 border-t border-border pt-6">
-        <div className="flex flex-col gap-1 flex-1 max-w-[200px]">
-          <label className="text-[12px] text-text-secondary">New Category Name</label>
-          <input 
-            type="text" 
-            value={newCatName}
-            onChange={(e) => setNewCatName(e.target.value)}
-            placeholder="e.g. Dining Out"
-            className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
-          />
-        </div>
-        <div className="flex flex-col gap-1 flex-1 max-w-[200px]">
-          <label className="text-[12px] text-text-secondary">Group</label>
-          <select 
-            value={newCatGroupId}
-            onChange={(e) => setNewCatGroupId(e.target.value)}
-            className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
-          >
-            <option value="">Select Group...</option>
-            {groups.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="mt-6 border-t border-border pt-4">
         <button 
-          type="submit"
-          className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
+          onClick={() => setIsAddOpen(!isAddOpen)}
+          className="flex items-center gap-2 text-[14px] font-medium text-text-secondary hover:text-text-primary transition-colors"
         >
-          <Plus size={16} /> Add
+          {isAddOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          Manage Categories & Groups
         </button>
-      </form>
+        
+        {isAddOpen && (
+          <div className="flex flex-col md:flex-row gap-8 mt-4 pt-4 border-t border-border/50">
+            <form onSubmit={handleAddCategory} className="flex items-end gap-3 flex-1">
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-[12px] text-text-secondary">New Category Name</label>
+                <input 
+                  type="text" 
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="e.g. Dining Out"
+                  className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-[12px] text-text-secondary">Group</label>
+                <select 
+                  value={newCatGroupId}
+                  onChange={(e) => setNewCatGroupId(e.target.value)}
+                  className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                >
+                  <option value="">Select Group...</option>
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button 
+                type="submit"
+                className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
+              >
+                <Plus size={16} /> Add
+              </button>
+            </form>
 
-      <form onSubmit={handleAddGroup} className="mt-4 flex items-end gap-3 border-t border-border pt-4">
-        <div className="flex flex-col gap-1 flex-1 max-w-[200px]">
-          <label className="text-[12px] text-text-secondary">New Category Group</label>
-          <input 
-            type="text" 
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="e.g. Discretionary"
-            className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
-          />
-        </div>
-        <button 
-          type="submit"
-          className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
-        >
-          <Plus size={16} /> Add Group
-        </button>
-      </form>
+            <form onSubmit={handleAddGroup} className="flex items-end gap-3 flex-1">
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-[12px] text-text-secondary">New Group</label>
+                <input 
+                  type="text" 
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="e.g. Discretionary"
+                  className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
+              >
+                <Plus size={16} /> Add Group
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
