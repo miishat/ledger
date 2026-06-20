@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
@@ -40,10 +41,22 @@ export const Budgeting: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-4 items-center">
-          <div className="flex items-center gap-2 bg-bg-secondary rounded-md px-2 py-1 border border-border">
-            <button onClick={() => shiftMonth(-1)} className="p-1 hover:text-accent transition-colors">&lt;</button>
+          <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
+            <button 
+              onClick={() => shiftMonth(-1)} 
+              className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+              aria-label="Previous Month"
+            >
+              <ChevronLeft size={16} />
+            </button>
             <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
-            <button onClick={() => shiftMonth(1)} className="p-1 hover:text-accent transition-colors">&gt;</button>
+            <button 
+              onClick={() => shiftMonth(1)} 
+              className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+              aria-label="Next Month"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
           <CSVUploader />
           <button
