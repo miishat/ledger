@@ -76,9 +76,9 @@ export const Budgeting: React.FC = () => {
 
       <TriageInboxWidget />
 
-      <TransactionListWidget />
-
       <CategoryManagerWidget />
+
+      <TransactionListWidget />
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
