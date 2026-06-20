@@ -8,6 +8,7 @@ export const TriageInboxWidget: React.FC = () => {
   const pendingTransactions = useTriageStore((state) => state.pendingTransactions);
   const updatePending = useTriageStore((state) => state.updatePending);
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
+  const approveAll = useTriageStore((state) => state.approveAll);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
   
   const categories = useBudgetStore((state) => state.categories);
@@ -19,7 +20,15 @@ export const TriageInboxWidget: React.FC = () => {
 
   return (
     <WidgetWrapper title={`Triage Inbox (${txList.length})`}>
-      <div className="flex flex-col gap-3 mt-4 max-h-[400px] overflow-y-auto pr-2">
+      <div className="flex justify-end mt-2">
+        <button
+          onClick={approveAll}
+          className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
+        >
+          <Check size={14} /> Accept All
+        </button>
+      </div>
+      <div className="flex flex-col gap-3 mt-3 max-h-[400px] overflow-y-auto pr-2">
         {txList.map(tx => (
           <div key={tx.id} className="flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
             <div className="flex justify-between items-start">

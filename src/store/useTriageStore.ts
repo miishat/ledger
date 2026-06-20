@@ -5,23 +5,35 @@ import { useBudgetStore } from './useBudgetStore';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
+  categoryRules: Record<string, string>;
   
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
   approveTransaction: (id: string) => void;
+  approveAll: () => void;
   rejectTransaction: (id: string) => void;
   clearAll: () => void;
+  learnRule: (description: string, categoryId: string) => void;
 }
 
 export const useTriageStore = create<TriageState>()(
   persist(
     (set, get) => ({
       pendingTransactions: {},
+      categoryRules: {},
+
+      learnRule: (description, categoryId) =>
+        set((state) => ({
+          categoryRules: { ...state.categoryRules, [description]: categoryId },
+        })),
 
       addPending: (transactions) =>
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           transactions.forEach((tx) => {
+            if (state.categoryRules[tx.description]) {
+              tx.categoryId = state.categoryRules[tx.description];
+            }
             newPending[tx.id] = tx;
           });
           return { pendingTransactions: newPending };
@@ -50,12 +62,40 @@ export const useTriageStore = create<TriageState>()(
           type: tx.type,
         });
 
+        // Learn the rule if a category is assigned
+        if (tx.categoryId) {
+          state.learnRule(tx.description, tx.categoryId);
+        }
+
         // Remove from triage
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           delete newPending[id];
           return { pendingTransactions: newPending };
         });
+      },
+
+      approveAll: () => {
+        const state = get();
+        const budgetState = useBudgetStore.getState();
+        const txs = Object.values(state.pendingTransactions);
+        
+        txs.forEach((tx) => {
+          budgetState.addTransaction({
+            id: tx.id,
+            date: tx.date,
+            amount: tx.amount,
+            categoryId: tx.categoryId || '',
+            description: tx.description,
+            type: tx.type,
+          });
+          
+          if (tx.categoryId) {
+            state.learnRule(tx.description, tx.categoryId);
+          }
+        });
+        
+        set({ pendingTransactions: {} });
       },
 
       rejectTransaction: (id) =>
