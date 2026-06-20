@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 
-export const CategoryManagerWidget: React.FC = () => {
+interface CategoryManagerWidgetProps {
+  selectedMonth: string;
+}
+
+export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ selectedMonth }) => {
   const {
+    transactions,
     paradigm,
     setParadigm,
     categories,
@@ -46,6 +51,10 @@ export const CategoryManagerWidget: React.FC = () => {
     });
     setNewGroupName('');
   };
+
+  const thisMonthExpenses = Object.values(transactions).filter(
+    t => t.type === 'expense' && t.date.startsWith(selectedMonth)
+  );
 
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col">
@@ -100,7 +109,7 @@ export const CategoryManagerWidget: React.FC = () => {
                 ) : (
                   groupCats.map(cat => (
                     <div key={cat.id} className="flex items-center justify-between gap-2 group border-b border-border/30 pb-2 mb-2 last:border-0 last:mb-0 last:pb-0">
-                      <div className="flex flex-col w-1/2">
+                      <div className="flex flex-col w-1/3">
                         <input 
                           type="text" 
                           value={cat.name} 
@@ -117,12 +126,26 @@ export const CategoryManagerWidget: React.FC = () => {
                         </select>
                       </div>
                       <div className="flex items-center gap-2 flex-1 justify-end">
+                        {(() => {
+                          const actualSpend = thisMonthExpenses
+                            .filter(t => t.categoryId === cat.id)
+                            .reduce((sum, t) => sum + t.amount, 0);
+                          const isOverBudget = actualSpend > cat.targetAmount && cat.targetAmount > 0;
+                          return (
+                            <div className="flex items-center gap-1 text-[13px] mr-2">
+                              <span className={`${isOverBudget ? 'text-red-500 font-medium' : 'text-text-secondary'}`}>
+                                ${actualSpend.toFixed(0)}
+                              </span>
+                              <span className="text-text-secondary/50">/</span>
+                            </div>
+                          );
+                        })()}
                         <span className="text-[14px] text-text-secondary">$</span>
                         <input
                           type="number"
                           value={cat.targetAmount}
                           onChange={(e) => updateCategory(cat.id, { targetAmount: Number(e.target.value) })}
-                          className="w-24 bg-bg-secondary border border-border rounded px-2 py-1 text-[14px] text-right focus:outline-none focus:border-accent"
+                          className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-[14px] text-right focus:outline-none focus:border-accent"
                         />
                         <button 
                           onClick={() => deleteCategory(cat.id)}

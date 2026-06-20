@@ -2,22 +2,45 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Filter } from 'lucide-react';
 
-export const TransactionListWidget: React.FC = () => {
+interface TransactionListWidgetProps {
+  selectedMonth: string;
+}
+
+export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ selectedMonth }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
   const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
-  const txList = Object.values(transactions).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const txList = Object.values(transactions)
+    .filter(tx => tx.date.startsWith(selectedMonth))
+    .filter(tx => selectedCategoryId === '' || tx.categoryId === selectedCategoryId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
+          <div className="flex items-center gap-1 text-text-secondary">
+            <Filter size={14} />
+            <select 
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="bg-bg-primary border border-border rounded px-2 py-1 text-[13px] focus:outline-none focus:border-accent"
+            >
+              <option value="">All Categories</option>
+              {Object.values(categories).map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         {txList.length > 0 && (
           <button 
             onClick={() => {
