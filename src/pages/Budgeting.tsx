@@ -32,7 +32,7 @@ export const Budgeting: React.FC = () => {
   }, [categories, seedDefaults]);
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full p-6 animate-fade-in">
+    <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Budgeting Module</h1>

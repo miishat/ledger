@@ -196,3 +196,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .animate-float-2 {
   animation: float-slow-2 22s infinite alternate ease-in-out;
 }
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-secondary);
+}
