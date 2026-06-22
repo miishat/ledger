@@ -106,17 +106,25 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     }
   });
 
+  const allEventsWithParsedDate = primaryPackage.rsuGrants.flatMap((grant) => {
+    const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice || 0);
+    return events.map((e: any) => {
+      const d = e.date ? new Date(e.date) : null;
+      return {
+        vestValue: e.vestValue,
+        month: d ? d.getMonth() : -1,
+        year: d ? d.getFullYear() : -1,
+      };
+    });
+  });
+
   const monthlyData = displayMonths.map((dm) => {
-    let rsuThisMonth = 0
-    primaryPackage.rsuGrants.forEach(grant => {
-      const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice || 0)
-      const eventsThisMonth = events.filter((e: any) => {
-        if (!e.date) return false;
-        const eventDate = new Date(e.date);
-        return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
-      })
-      rsuThisMonth += eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
-    })
+    let rsuThisMonth = 0;
+    allEventsWithParsedDate.forEach((e: any) => {
+      if (e.month === dm.monthIndex && e.year === dm.year) {
+        rsuThisMonth += e.vestValue;
+      }
+    });
 
     return {
       month: dm.label,

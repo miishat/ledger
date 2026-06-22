@@ -92,32 +92,41 @@ export function EquityVestingWidget() {
     }
   });
 
-  const allEvents: (VestEvent & { grantName: string, grantId: string })[] = []
+  const allEvents: (VestEvent & { grantName: string, grantId: string, parsedMonth: number, parsedYear: number, parsedDate: Date | null })[] = []
   primaryPackage.rsuGrants.forEach(grant => {
     const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice)
-    const taggedEvents = events.map(e => ({ ...e, grantName: grant.grantName, grantId: grant.id }))
+    const taggedEvents = events.map(e => {
+      const d = e.date ? new Date(e.date) : null;
+      return {
+        ...e,
+        grantName: grant.grantName,
+        grantId: grant.id,
+        parsedMonth: d ? d.getMonth() : -1,
+        parsedYear: d ? d.getFullYear() : -1,
+        parsedDate: d
+      }
+    })
     allEvents.push(...taggedEvents)
   })
 
   // Calculate cumulative vested before the window starts
   const windowStartDate = timeMode === 'current-year' ? new Date(targetYear, 0, 1) : new Date(targetYear, currentMonth, 1);
-  let cumulativeVested = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
+  let cumulativeVested = allEvents.filter(e => e.parsedDate && e.parsedDate < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
 
   const chartData = displayMonths.map(dm => {
     const dataRow: any = { monthLabel: dm.label, vestValue: 0 }
     let totalVestThisMonth = 0
 
     primaryPackage.rsuGrants.forEach((grant) => {
-      const grantKey = grant.id
-      const eventsThisMonth = allEvents.filter(e => {
-        if (!e.date || e.grantId !== grant.id) return false;
-        const eventDate = new Date(e.date);
-        return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
-      })
-      const vestValue = eventsThisMonth.reduce((sum, e) => sum + e.vestValue, 0)
-      dataRow[grantKey] = vestValue
-      totalVestThisMonth += vestValue
-    })
+      dataRow[grant.id] = 0;
+    });
+
+    allEvents.forEach((e) => {
+      if (e.parsedMonth === dm.monthIndex && e.parsedYear === dm.year) {
+        dataRow[e.grantId] += e.vestValue;
+        totalVestThisMonth += e.vestValue;
+      }
+    });
 
     cumulativeVested += totalVestThisMonth;
     dataRow.vestValue = totalVestThisMonth;
