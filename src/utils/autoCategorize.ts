@@ -18,15 +18,26 @@ const MATCH_RULES: Record<string, string> = {
   'payroll': 'Salary',
 };
 
+const categoryMapCache = new WeakMap<Record<string, Category>, Record<string, string>>();
+
 export function guessCategory(description: string, categories: Record<string, Category>): string | undefined {
   const lowerDesc = description.toLowerCase();
   
+  let categoryByName = categoryMapCache.get(categories);
+
   for (const [substring, categoryName] of Object.entries(MATCH_RULES)) {
     if (lowerDesc.includes(substring)) {
-      // Find the categoryId that matches this name
-      const category = Object.values(categories).find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-      if (category) {
-        return category.id;
+      if (!categoryByName) {
+        categoryByName = {};
+        for (const category of Object.values(categories)) {
+          categoryByName[category.name.toLowerCase()] = category.id;
+        }
+        categoryMapCache.set(categories, categoryByName);
+      }
+
+      const categoryId = categoryByName[categoryName.toLowerCase()];
+      if (categoryId) {
+        return categoryId;
       }
     }
   }
