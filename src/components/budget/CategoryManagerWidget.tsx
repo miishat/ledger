@@ -7,10 +7,10 @@ interface CategoryManagerWidgetProps {
 }
 
 export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ selectedMonth }) => {
-  const {
     transactions,
     paradigm,
     setParadigm,
+    reallocations,
     categories,
     categoryGroups,
     addCategory,
@@ -155,8 +155,13 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             );
                           }
 
-                          const isOverBudget = !isIncomeGroup && actualAmount > cat.targetAmount && cat.targetAmount > 0;
-                          const progressPercentage = cat.targetAmount > 0 ? Math.min((actualAmount / cat.targetAmount) * 100, 100) : 0;
+                          const monthReallocs = Object.values(reallocations).filter(r => r.date.startsWith(selectedMonth));
+                          const reallocsIn = monthReallocs.filter(r => r.toCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
+                          const reallocsOut = monthReallocs.filter(r => r.fromCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
+                          const effectiveTarget = cat.targetAmount + reallocsIn - reallocsOut;
+
+                          const isOverBudget = !isIncomeGroup && actualAmount > effectiveTarget && effectiveTarget > 0;
+                          const progressPercentage = effectiveTarget > 0 ? Math.min((actualAmount / effectiveTarget) * 100, 100) : 0;
                           
                           let progressColor = 'bg-[var(--color-accent)]';
                           if (!isIncomeGroup) {
@@ -170,9 +175,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             <>
                               <div className="flex flex-col items-end min-w-[100px]">
                                 <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
-                                  ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - cat.targetAmount).toFixed(0)} over)`}
+                                  ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - effectiveTarget).toFixed(0)} over)`}
                                 </span>
-                                {cat.targetAmount > 0 && (
+                                {effectiveTarget > 0 && (
                                   <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
                                     <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
                                   </div>

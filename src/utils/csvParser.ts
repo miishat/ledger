@@ -2,6 +2,12 @@ import Papa from 'papaparse';
 import { v4 as uuidv4 } from 'uuid';
 import type { TriageTransaction } from '../types/triage';
 
+export interface UnrecognizedCSVResult {
+  unrecognized: true;
+  headers: string[];
+  rows: any[];
+}
+
 export interface BankParserConfig {
   name: string;
   detect: (headers: string[], firstRow: any) => boolean;
@@ -114,7 +120,7 @@ export const PARSERS: BankParserConfig[] = [
   }
 ];
 
-export async function parseCSV(file: File): Promise<TriageTransaction[]> {
+export async function parseCSV(file: File): Promise<TriageTransaction[] | UnrecognizedCSVResult> {
   const text = await file.text();
   const firstLine = text.split('\n')[0].trim();
   
@@ -132,7 +138,11 @@ export async function parseCSV(file: File): Promise<TriageTransaction[]> {
         const parser = PARSERS.find(p => p.detect(headers, firstRow));
         
         if (!parser) {
-          reject(new Error(`Unrecognized CSV format. Headers found: ${headers.join(', ')}`));
+          resolve({
+            unrecognized: true,
+            headers: isHeaderless ? firstRow.map((_: any, i: number) => `Column ${i + 1}`) : headers,
+            rows: results.data
+          });
           return;
         }
 

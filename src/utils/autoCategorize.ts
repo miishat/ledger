@@ -1,32 +1,17 @@
 import type { Category } from '../types/budget';
 
-const MATCH_RULES: Record<string, string> = {
-  'trader joe': 'Food',
-  'whole foods': 'Food',
-  'safeway': 'Food',
-  'uber': 'Transportation',
-  'lyft': 'Transportation',
-  'pg&e': 'Utilities',
-  'comcast': 'Utilities',
-  'verizon': 'Utilities',
-  'rent': 'Housing',
-  'mortgage': 'Housing',
-  'netflix': 'Personal',
-  'spotify': 'Personal',
-  'amazon': 'Personal',
-  'salary': 'Salary',
-  'payroll': 'Salary',
-};
-
-export function guessCategory(description: string, categories: Record<string, Category>): string | undefined {
+export function guessCategory(
+  description: string, 
+  categories: Record<string, Category>, 
+  rules: Record<string, string>
+): string | undefined {
   const lowerDesc = description.toLowerCase();
   
-  for (const [substring, categoryName] of Object.entries(MATCH_RULES)) {
-    if (lowerDesc.includes(substring)) {
-      // Find the categoryId that matches this name
-      const category = Object.values(categories).find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-      if (category) {
-        return category.id;
+  for (const [substring, categoryId] of Object.entries(rules)) {
+    if (lowerDesc.includes(substring.toLowerCase())) {
+      // Find if categoryId still exists in categories
+      if (categories[categoryId]) {
+        return categoryId;
       }
     }
   }

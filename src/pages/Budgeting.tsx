@@ -6,6 +6,7 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
+import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
@@ -75,6 +76,8 @@ export const Budgeting: React.FC = () => {
       </div>
 
       <TriageInboxWidget />
+      
+      <CategorizationRulesWidget />
 
       <CategoryManagerWidget selectedMonth={selectedMonth} />
 

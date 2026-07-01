@@ -1,17 +1,38 @@
 import React, { useRef, useState } from 'react';
-import { Upload } from 'lucide-react';
-import { parseCSV } from '../../utils/csvParser';
+import { Upload, X } from 'lucide-react';
+import { parseCSV, UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { v4 as uuidv4 } from 'uuid';
+import type { TriageTransaction } from '../../types/triage';
 
 export const CSVUploader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  const [mappingData, setMappingData] = useState<UnrecognizedCSVResult | null>(null);
+  const [mapDate, setMapDate] = useState<string>('');
+  const [mapAmount, setMapAmount] = useState<string>('');
+  const [mapDesc, setMapDesc] = useState<string>('');
+
   const addPending = useTriageStore((state) => state.addPending);
+  const categoryRules = useTriageStore((state) => state.categoryRules);
   const categories = useBudgetStore((state) => state.categories);
+
+  const handleTransactions = (transactions: TriageTransaction[]) => {
+    // Auto-categorize
+    const categorized = transactions.map(tx => {
+      // NOTE: guessCategory will be updated to take categoryRules shortly.
+      const categoryId = guessCategory(tx.description, categories, categoryRules);
+      return {
+        ...tx,
+        categoryId
+      };
+    });
+    addPending(categorized);
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,28 +42,70 @@ export const CSVUploader: React.FC = () => {
     setError(null);
 
     try {
-      const transactions = await parseCSV(file);
+      const result = await parseCSV(file);
       
-      // Auto-categorize
-      const categorized = transactions.map(tx => {
-        const categoryId = guessCategory(tx.description, categories);
-        return {
-          ...tx,
-          categoryId
-        };
-      });
-
-      addPending(categorized);
-      
-      // Reset input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if ('unrecognized' in result && result.unrecognized) {
+        setMappingData(result as UnrecognizedCSVResult);
+      } else {
+        handleTransactions(result as TriageTransaction[]);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to parse CSV');
     } finally {
       setIsParsing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const handleMappingSubmit = () => {
+    if (!mappingData || !mapDate || !mapAmount || !mapDesc) return;
+    
+    const transactions: TriageTransaction[] = [];
+    
+    mappingData.rows.forEach(row => {
+      const getVal = (header: string) => {
+        const idx = mappingData.headers.indexOf(header);
+        return Array.isArray(row) ? row[idx] : row[header];
+      };
+
+      const dateRaw = getVal(mapDate);
+      const amountRawStr = getVal(mapAmount);
+      const descRaw = getVal(mapDesc);
+
+      if (!dateRaw || !amountRawStr) return;
+
+      const amountRaw = parseFloat(String(amountRawStr).replace(/[^0-9.-]+/g,""));
+      if (isNaN(amountRaw)) return;
+      
+      const type = amountRaw >= 0 ? 'income' : 'expense';
+      const amount = Math.abs(amountRaw);
+      
+      let date = String(dateRaw);
+      if (date && date.includes('/')) {
+        const parts = date.split('/');
+        if (parts.length === 3) {
+          const [m, d, y] = parts;
+          date = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+      }
+
+      transactions.push({
+        id: uuidv4(),
+        date,
+        amount,
+        description: String(descRaw || '').trim(),
+        type,
+        originalRowData: row
+      });
+    });
+
+    handleTransactions(transactions);
+    setMappingData(null);
+    setMapDate('');
+    setMapAmount('');
+    setMapDesc('');
   };
 
   return (
@@ -63,6 +126,50 @@ export const CSVUploader: React.FC = () => {
         {isParsing ? 'Parsing...' : 'Import CSV'}
       </button>
       {error && <span className="text-[12px] text-red-500 text-center">{error}</span>}
+
+      {mappingData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg w-[400px] border border-[var(--color-border)] shadow-xl flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Map CSV Columns</h2>
+              <button onClick={() => setMappingData(null)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"><X size={20} /></button>
+            </div>
+            <p className="text-[14px] text-[var(--color-text-secondary)]">We couldn't recognize this CSV format. Please select the correct columns.</p>
+            
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Date Column</label>
+                <select value={mapDate} onChange={e => setMapDate(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
+                  <option value="">Select...</option>
+                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Amount Column</label>
+                <select value={mapAmount} onChange={e => setMapAmount(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
+                  <option value="">Select...</option>
+                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Description Column</label>
+                <select value={mapDesc} onChange={e => setMapDesc(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
+                  <option value="">Select...</option>
+                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleMappingSubmit}
+              disabled={!mapDate || !mapAmount || !mapDesc}
+              className="mt-2 w-full py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md font-medium disabled:opacity-50 transition-opacity"
+            >
+              Import Transactions
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

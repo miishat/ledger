@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A highly scalable, cross-platform financial dashboard web app (PWA) that gives users deep, actionable insights into their financial health across net worth, budgeting, investments, future projections, and total compensation. It features a strict modular architecture with a high-density Bento Grid layout and an unapologetically premium dual-theme system (Tactical Monospace and Geometric Abstraction). Shipped as v1.0 MVP — local-first, manual-entry, no backend.
+A highly scalable, cross-platform financial dashboard web app (PWA) that gives users deep, actionable insights into their financial health across net worth, budgeting (with CSV import, smart triage, dynamic rules engine, and flexible paradigms), investments, future projections, and total compensation. It features a strict modular architecture with a high-density Bento Grid layout and an unapologetically premium dual-theme system (Tactical Monospace and Geometric Abstraction). Shipped as v1.0 MVP — local-first, no backend.
 
 ## Core Value
 
@@ -22,18 +22,16 @@ A striking, uncompromising user experience that makes managing personal wealth f
 - ✓ "Investment Plan vs. Actual" Tracker (Recharts) — v1.0
 - ✓ Future Projections visualization tool (compounding/savings) — v1.0
 - ✓ Total Compensation Calculator (base, bonus, RSU/Options vesting, time-based modes) — v1.0
+- ✓ CSV Import with bank-specific parsers and generic column mapper — v1.0
+- ✓ Smart Triage Inbox with approve/reject transaction flow — v1.0
+- ✓ Dynamic categorization Rules Engine with full CRUD UI — v1.0
+- ✓ Flexible Budgeting Paradigms (Target-Based, Zero-Based, Ledger Custom) with Effective Targets math — v1.0
 
 ### Active
 
 <!-- Current scope. Building toward these — next milestone. -->
 
 (None yet — define with `/gsd-new-milestone`)
-
-- [ ] **Budgeting Automation & Inbox (v1.1)**
-  - CSV Import & Parsing for major banks (RBC, Scotiabank, TD).
-  - Smart Categorization Engine (local memory).
-  - Flexible Budget Paradigms (Target-Based, Zero-Based, Ledger Custom).
-  - Visual Inbox for transaction triage.
 ### Out of Scope
 
 <!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
@@ -44,12 +42,12 @@ A striking, uncompromising user experience that makes managing personal wealth f
 
 ## Context
 
-- **Shipped:** v1.0 MVP on 2026-06-19 — 6 phases, 11 plans, ~3,700 LOC TypeScript/React across 3 days.
-- **Tech stack (as built):** React + Vite SPA, Tailwind CSS, Framer Motion, Zustand (with persist middleware), React Router, Recharts, vite-plugin-pwa. Deployed via GitHub Actions to GitHub Pages.
+- **Shipped:** v1.0 MVP on 2026-07-01 — 9 phases, 14 plans, ~5,200 LOC TypeScript/React across 2 weeks.
+- **Tech stack (as built):** React + Vite SPA, Tailwind CSS, Framer Motion, Zustand (with persist middleware), React Router, Recharts, PapaParse, vite-plugin-pwa. Deployed via GitHub Actions to GitHub Pages.
 - The app acts as a PWA with local-first persistence (LocalStorage / Zustand persist).
 - UI aesthetic is paramount: strictly no generic Bootstrap-style templates. The design language impresses power users with high-contrast, strictly structured aesthetics.
 - Architecture relies on a component-based model where widget cards accept only children, decoupling layout from widget logic entirely.
-- **Known state:** Investments and Projections pages carry "coming soon" notices for future enhancements; all core widgets are functional and verified.
+- **Known state:** All core modules are functional and verified. Investments and Projections pages carry "coming soon" notices for future enhancements.
 
 ## Constraints
 
@@ -89,4 +87,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-19 after v1.0 milestone*
+*Last updated: 2026-07-01 after v1.0 milestone completion (Phases 1-9)*

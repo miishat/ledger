@@ -171,11 +171,14 @@ export function getMonthlyBudgetStats(
 ): MonthlyBudgetStats {
   let spent = 0;
   let totalIncome = 0;
+  let totalTarget = 0;
   
+  // Create a month string like 'YYYY-MM'
+  const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+
   // Calculate total spent and income for the month
   Object.values(state.transactions).forEach((tx) => {
-    const date = new Date(tx.date);
-    if (date.getFullYear() === year && date.getMonth() === monthIndex) {
+    if (tx.date.startsWith(monthStr)) {
       if (tx.type === 'expense') {
         spent += tx.amount;
       } else if (tx.type === 'income') {
@@ -184,15 +187,38 @@ export function getMonthlyBudgetStats(
     }
   });
 
-  // Calculate total targets
-  const totalTarget = Object.values(state.categories).reduce(
-    (sum, cat) => sum + cat.targetAmount,
-    0
-  );
+  // Calculate Effective Targets (Base + Reallocs In - Reallocs Out)
+  const categoryEffectiveTargets: Record<string, number> = {};
+  Object.values(state.categories).forEach(cat => {
+    categoryEffectiveTargets[cat.id] = cat.targetAmount;
+  });
+
+  Object.values(state.reallocations).forEach(realloc => {
+    if (realloc.date.startsWith(monthStr)) {
+      if (categoryEffectiveTargets[realloc.fromCategoryId] !== undefined) {
+        categoryEffectiveTargets[realloc.fromCategoryId] -= realloc.amount;
+      }
+      if (categoryEffectiveTargets[realloc.toCategoryId] !== undefined) {
+        categoryEffectiveTargets[realloc.toCategoryId] += realloc.amount;
+      }
+    }
+  });
+
+  totalTarget = Object.values(categoryEffectiveTargets).reduce((sum, amt) => sum + amt, 0);
+
+  let unallocated = totalIncome - totalTarget;
+  let remaining = totalTarget - spent;
+
+  // Enforce Paradigm Math
+  if (state.paradigm === 'Zero-Based') {
+    // In Zero-Based, unallocated MUST strictly be Income minus Targets.
+    // If they overspend a category, it doesn't automatically reduce unallocated.
+    // They must manually reallocate.
+  }
 
   return {
     spent,
-    remaining: totalTarget - spent,
-    unallocated: totalIncome - totalTarget,
+    remaining,
+    unallocated,
   };
 }

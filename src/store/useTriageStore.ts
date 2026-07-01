@@ -14,6 +14,7 @@ interface TriageState {
   rejectTransaction: (id: string) => void;
   clearAll: () => void;
   learnRule: (description: string, categoryId: string) => void;
+  removeRule: (description: string) => void;
 }
 
 export const useTriageStore = create<TriageState>()(
@@ -27,13 +28,17 @@ export const useTriageStore = create<TriageState>()(
           categoryRules: { ...state.categoryRules, [description]: categoryId },
         })),
 
+      removeRule: (description) =>
+        set((state) => {
+          const newRules = { ...state.categoryRules };
+          delete newRules[description];
+          return { categoryRules: newRules };
+        }),
+
       addPending: (transactions) =>
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           transactions.forEach((tx) => {
-            if (state.categoryRules[tx.description]) {
-              tx.categoryId = state.categoryRules[tx.description];
-            }
             newPending[tx.id] = tx;
           });
           return { pendingTransactions: newPending };
