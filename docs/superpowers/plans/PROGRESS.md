@@ -8,8 +8,8 @@
 
 - **Current phase:** 4 — Planner (tools/calculators hub)
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e; 4a written in full (`2026-07-02-phase-4a-hub-and-core-calculators.md`, 8 tasks); 4b-4e planned JIT later
-- **Last completed task:** Phase 3 complete; Phase 4 umbrella + 4a plans written
-- **Next task:** Phase 4a, Task 1 — Planner store + backup key
+- **Last completed task:** Phase 4a, Task 1 — Planner store + backup key (commit 4c11b3c)
+- **Next task:** Phase 4a, Task 2 — Compound interest math module
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -50,3 +50,4 @@
 2026-07-02 P3.T6 conversion correctness tests — commit b557c4e (plan's ESPP×FX expectation was mathematically wrong; amended to FX-invariant, reviewer-verified)
 2026-07-02 P3.T7 CompensationModal ticker field — commit 52cb8ec (review clean)
 2026-07-02 P3.T8 phase gate — 71/71 tests, build OK, changed files lint clean (+0513003 pre-existing lint fix); live-verified at 375px in all themes: modal ticker field, price bar, refresh, manual set, CAD toggle ON/OFF with FX fallback, no overflow
+2026-07-02 P4a.T1 planner store (ledger-planner) + backup registration — commit 4c11b3c (review clean)

@@ -37,7 +37,7 @@
 - Consumes: nothing new.
 - Produces: `usePlannerStore` — `{ inputs: Record<string, ToolInputs>; setInput(tool: string, field: string, value: PlannerInputValue): void; resetTool(tool: string): void }`; hook `useToolInputs<T extends ToolInputs>(tool: string, defaults: T): T`; types `PlannerInputValue = number | string | boolean`, `ToolInputs = Record<string, PlannerInputValue>`. All later calculator tasks (here and in 4b–4e) persist through these.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/store/usePlannerStore.test.ts`:
 
@@ -91,12 +91,12 @@ Add to the first `describe('backup', ...)` block in `src/utils/backup.test.ts`, 
   })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/store/usePlannerStore.test.ts src/utils/backup.test.ts`
 Expected: usePlannerStore tests FAIL (cannot resolve `./usePlannerStore`); backup test FAILS (`ledger-planner` not in array).
 
-- [ ] **Step 3: Implement the store and register the backup key**
+- [x] **Step 3: Implement the store and register the backup key**
 
 Create `src/store/usePlannerStore.ts`:
 
@@ -156,12 +156,12 @@ export const BACKUP_KEYS: string[] = [
 ]
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/store/usePlannerStore.test.ts src/utils/backup.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/usePlannerStore.ts src/store/usePlannerStore.test.ts src/utils/backup.ts src/utils/backup.test.ts
