@@ -8,9 +8,9 @@
 
 - **Current phase:** 1 — Foundation: Save + PWA + Mobile base
 - **Phase plan:** `2026-07-02-phase-1-foundation.md` (written, ready)
-- **Last completed task:** none (fresh start)
-- **Next task:** Phase 1, Task 1 — Backup export/import core
-- **Status:** NOT STARTED
+- **Last completed task:** Phase 1, Task 1 — Backup export/import core (commit baf5f63)
+- **Next task:** Phase 1, Task 2 — Backup file I/O helpers (download / read)
+- **Status:** IN PROGRESS (branch `ledger-v2`)
 
 ## Phase checklist
 
@@ -26,3 +26,4 @@
 ## Log (append one line per completed task)
 
 <!-- e.g. "2026-07-02 P1.T1 backup core — commit abc1234" -->
+2026-07-02 P1.T1 backup export/import core — commit baf5f63 (review clean; + a4ed65a npm test script)

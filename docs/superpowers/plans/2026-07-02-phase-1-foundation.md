@@ -35,7 +35,7 @@
   - `buildBackup(): BackupEnvelope` — reads each registry key from localStorage (skips absent keys), JSON-parses each value into `data`.
   - `restoreBackup(envelope: BackupEnvelope): void` — validates `app === 'ledger'` and `version <= BACKUP_VERSION`, then writes each `data` entry back to localStorage as a JSON string. Throws `Error('Invalid Ledger backup file')` on a bad envelope.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/utils/backup.test.ts
@@ -72,12 +72,12 @@ describe('backup', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: FAIL — cannot resolve `./backup`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // src/utils/backup.ts
@@ -124,12 +124,12 @@ export function restoreBackup(envelope: BackupEnvelope): void {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/backup.ts src/utils/backup.test.ts
