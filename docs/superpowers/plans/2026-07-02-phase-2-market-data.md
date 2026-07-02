@@ -160,7 +160,7 @@ git commit -m "feat: market-data shared types and date-key helpers"
   - `class SingleFlight` with `run<T>(key: string, fn: () => Promise<T>): Promise<T>` — collapses concurrent calls for the same key into one in-flight promise.
   - `minInterval(key: string, ms: number, now?: number): boolean` — returns `true` if a call for `key` is allowed now (i.e. at least `ms` since the last allowed call), and records the timestamp; `false` otherwise. Module-level map keyed by `key`. `now` defaults to `Date.now()` (injectable for tests).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // src/services/marketData/cacheKey.test.ts
@@ -215,12 +215,12 @@ describe('minInterval', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- --run src/services/marketData/cacheKey.test.ts src/services/marketData/throttle.test.ts`
 Expected: FAIL — modules not found.
 
-- [ ] **Step 3: Write the implementations**
+- [x] **Step 3: Write the implementations**
 
 ```ts
 // src/services/marketData/cacheKey.ts
@@ -268,12 +268,12 @@ export function __resetMinInterval(): void {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- --run src/services/marketData/cacheKey.test.ts src/services/marketData/throttle.test.ts`
 Expected: PASS (cacheKey 3, throttle 3).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/cacheKey.ts src/services/marketData/cacheKey.test.ts src/services/marketData/throttle.ts src/services/marketData/throttle.test.ts
