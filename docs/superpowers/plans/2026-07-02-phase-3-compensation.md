@@ -43,7 +43,7 @@
   - New state field `useCadConversion: boolean` (default `false` — toggle off = current CAD-native behavior, matching the spec's "Toggle off = treat inputs as already-CAD (current behavior)").
   - New action `toggleCadConversion: () => void`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/store/useCompensationStore.test.ts
@@ -77,12 +77,12 @@ describe('useCompensationStore CAD conversion toggle', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/store/useCompensationStore.test.ts`
 Expected: FAIL — `useCadConversion` is `undefined`, `toggleCadConversion` is not a function.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 In `src/store/useCompensationStore.ts`, extend the `CompensationState` interface (around line 215-228):
 
@@ -126,12 +126,12 @@ In the `create<CompensationState>()(persist((set) => ({...` body, add the field 
 
 (insert `toggleCadConversion` alongside the other actions — exact placement anywhere in the object body is fine; keep it grouped with `setTimeMode`.)
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/store/useCompensationStore.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/useCompensationStore.ts src/store/useCompensationStore.test.ts
