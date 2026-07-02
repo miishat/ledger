@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
+import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -55,7 +56,8 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     return null;
   };
 
-  const { primaryPackage, timeMode, setTimeMode } = useCompensationStore()
+  const { timeMode, setTimeMode } = useCompensationStore()
+  const { pkg: primaryPackage } = useCompensationDisplay()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
 
   const totalComp = calcTotalComp(primaryPackage, timeMode)
