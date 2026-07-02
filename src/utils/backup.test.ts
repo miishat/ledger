@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText } from './backup'
+import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText, BACKUP_KEYS } from './backup'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -11,6 +11,10 @@ describe('backup', () => {
     expect(env.version).toBe(BACKUP_VERSION)
     expect(env.data['ledger-compensation']).toEqual({ a: 1 })
     expect('ledger-budget' in env.data).toBe(false)
+  })
+
+  it('registers the market-data store key', () => {
+    expect(BACKUP_KEYS).toContain('ledger-market-data')
   })
 
   it('round-trips: restore writes values back as JSON strings', () => {

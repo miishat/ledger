@@ -8,6 +8,7 @@ export const BACKUP_KEYS: string[] = [
   'ledger-compensation',
   'financial-dashboard-theme',
   'ledger-triage',
+  'ledger-market-data',
 ]
 
 export interface BackupEnvelope {
