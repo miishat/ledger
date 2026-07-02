@@ -791,7 +791,7 @@ git commit -m "feat: persisted market-data cache store + backup registration"
 3. On fetch failure OR when throttled with a cache hit, fall back to the **cached** value: return `{ source: 'cache', status: throttledOrError, stale: age > STALE_AFTER_MS }`.
 4. If there is neither override, nor a successful fetch, nor a cache entry → throw `Error('No market data available')` (consumers guard with manual entry — this is the only throw, and only when truly nothing exists).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/services/marketData/marketDataService.test.ts
@@ -877,12 +877,12 @@ describe('getHistoricalPrice', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/services/marketData/marketDataService.test.ts`
 Expected: FAIL — `./marketDataService` not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // src/services/marketData/marketDataService.ts
@@ -1019,7 +1019,7 @@ function fromFxCache(key: string, status: FetchStatus): Resolved<FxRate> {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/services/marketData/marketDataService.test.ts`
 Expected: PASS (8 tests). Note: `getFxRate('CAD','CAD')` fetches via the provider (which returns rate 1) — the mock throws only to prove the *live* path isn't reached differently; the real `fetchFxRate` short-circuits same-currency to 1. In the test, `from === to` still routes through the provider mock, so the mock for that test must NOT throw — adjust: the `same-currency` test sets a provider that throws to assert the facade uses the real short-circuit. If your facade routes same-currency through the provider, change that test's provider to `async () => ({ from:'CAD', to:'CAD', rate:1, date: todayKey(), asOf:new Date().toISOString() })`. Pick ONE: keep same-currency short-circuit in the facade (preferred — do not call provider), and set the test provider to throw as written. Implement the short-circuit in `getFxRate` BEFORE the `from === to || allowed` fetch block:
@@ -1033,7 +1033,7 @@ Expected: PASS (8 tests). Note: `getFxRate('CAD','CAD')` fetches via the provide
 
 Add that block right after the override check, and change the fetch guard to just `if (allowed)`. Re-run until PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/marketDataService.ts src/services/marketData/marketDataService.test.ts
