@@ -7,9 +7,9 @@
 ## Current position
 
 - **Current phase:** 4 — Planner (tools/calculators hub)
-- **Phase plan:** none yet — plan JIT (split into sub-plans if >12 tasks per master plan)
-- **Last completed task:** Phase 3 complete (Task 8 phase gate passed, live-verified)
-- **Next task:** Plan Phase 4 JIT, then execute its first task
+- **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e; 4a written in full (`2026-07-02-phase-4a-hub-and-core-calculators.md`, 8 tasks); 4b-4e planned JIT later
+- **Last completed task:** Phase 3 complete; Phase 4 umbrella + 4a plans written
+- **Next task:** Phase 4a, Task 1 — Planner store + backup key
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
