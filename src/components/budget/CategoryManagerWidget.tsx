@@ -7,6 +7,7 @@ interface CategoryManagerWidgetProps {
 }
 
 export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ selectedMonth }) => {
+  const {
     transactions,
     paradigm,
     setParadigm,

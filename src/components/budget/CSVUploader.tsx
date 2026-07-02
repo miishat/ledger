@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
-import { parseCSV, UnrecognizedCSVResult } from '../../utils/csvParser';
+import { parseCSV, type UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
