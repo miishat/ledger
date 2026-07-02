@@ -6,15 +6,17 @@
 
 ## Current position
 
-- **Current phase:** 1 — Foundation: Save + PWA + Mobile base
-- **Phase plan:** `2026-07-02-phase-1-foundation.md` (written, ready)
-- **Last completed task:** Phase 1, Task 5 — Mobile overflow guards (commit 0fe19c3)
-- **Next task:** Phase 1, Task 6 — Phase gate: verify, then close Phase 1
+- **Current phase:** 2 — Market Data Service
+- **Phase plan:** none yet — plan JIT (dispatch strong-model planning subagent per master plan step 2)
+- **Last completed task:** Phase 1 complete (Task 6 phase gate passed)
+- **Next task:** Plan Phase 2 JIT, then execute its Task 1
 - **Status:** IN PROGRESS (branch `ledger-v2`)
+
+**Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
 
 ## Phase checklist
 
-- [ ] Phase 1 — Foundation: Save + PWA + Mobile base
+- [x] Phase 1 — Foundation: Save + PWA + Mobile base (2026-07-02)
 - [ ] Phase 2 — Market Data Service *(plan JIT)*
 - [ ] Phase 3 — Compensation: live price + CAD toggle *(plan JIT)*
 - [ ] Phase 4 — Planner (tools/calculators hub) *(plan JIT; split if >12 tasks)*
@@ -31,3 +33,4 @@
 2026-07-02 P1.T3 backup UI in nav dock — commits 3fbe5a8 + 7cc061d (added --error token to all 6 themes; input reset fix)
 2026-07-02 P1.T4 PWA manifest + real icons — commits e85ed42 + cff1893 (sharp devDep; fixed pre-existing tsc blocker in T3 test)
 2026-07-02 P1.T5 mobile viewport-fit + overflow guards — commit 0fe19c3 (review clean)
+2026-07-02 P1.T6 phase gate — tests 12/12, build OK, branch files lint-clean (287 pre-existing v1.0 lint errors flagged), 375px no-overflow verified on all 5 routes in live preview, backup UI + error token verified live

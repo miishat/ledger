@@ -448,18 +448,18 @@ git commit -m "fix: mobile viewport-fit and prevent horizontal overflow"
 
 ### Task 6: Phase gate — verify, then close Phase 1
 
-- [ ] **Step 1: Full verification**
+- [x] **Step 1: Full verification**
 
 Run each and confirm clean:
 - `npm test` → all pass
 - `npm run build` → succeeds
 - `npm run lint` → no errors
 
-- [ ] **Step 2: Update PROGRESS.md**
+- [x] **Step 2: Update PROGRESS.md**
 
 Mark Phase 1 `- [x]`, set current phase to 2, next task to "plan Phase 2 JIT", append Log lines for P1.T1–T5.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md
