@@ -30,6 +30,7 @@ export interface PastSalary {
 export interface CompensationPackage {
   id: string
   name: string
+  companyTicker?: string
   companyCurrentPrice: number
   baseSalary: number
   pastSalaryChanges: PastSalary[]

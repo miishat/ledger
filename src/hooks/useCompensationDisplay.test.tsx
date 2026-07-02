@@ -1,0 +1,55 @@
+import { renderHook, waitFor, act } from '@testing-library/react'
+import { useCompensationDisplay } from './useCompensationDisplay'
+import { useCompensationStore } from '../store/useCompensationStore'
+import { useMarketDataStore } from '../store/useMarketDataStore'
+import { __setProviders, __resetProviders } from '../services/marketData/marketDataService'
+import { __resetMinInterval } from '../services/marketData/throttle'
+
+const initialCompState = useCompensationStore.getState()
+
+beforeEach(() => {
+  localStorage.clear()
+  useCompensationStore.setState(initialCompState, true)
+  useMarketDataStore.setState({ quotes: {}, historical: {}, fx: {}, overrides: {} })
+  __resetMinInterval()
+})
+afterEach(() => __resetProviders())
+
+describe('useCompensationDisplay', () => {
+  it('returns the raw CAD-native package when conversion is off (default)', async () => {
+    useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
+    __setProviders({
+      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
+    })
+    const { result } = renderHook(() => useCompensationDisplay())
+    await waitFor(() => expect(result.current.priceStatus).toBe('success'))
+    // conversion disabled -> pkg uses the store's raw companyCurrentPrice, not the live fetch
+    expect(result.current.pkg.companyCurrentPrice).toBe(100)
+  })
+
+  it('converts companyCurrentPrice to CAD using the live FX rate when conversion is on', async () => {
+    useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
+    useCompensationStore.getState().toggleCadConversion()
+    __setProviders({
+      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 100, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.35, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
+    })
+    const { result } = renderHook(() => useCompensationDisplay())
+    await waitFor(() => expect(result.current.fxStatus).toBe('success'))
+    await waitFor(() => expect(result.current.pkg.companyCurrentPrice).toBeCloseTo(135, 5))
+  })
+
+  it('setManualPrice sets a manual override reflected in rawPrice', async () => {
+    useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
+    __setProviders({
+      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
+    })
+    const { result } = renderHook(() => useCompensationDisplay())
+    await waitFor(() => expect(result.current.priceStatus).toBe('success'))
+    act(() => result.current.setManualPrice(250))
+    await waitFor(() => expect(result.current.priceSource).toBe('override'))
+    expect(result.current.rawPrice).toBe(250)
+  })
+})
