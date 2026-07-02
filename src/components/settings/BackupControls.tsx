@@ -1,9 +1,8 @@
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { backupToBlob, backupFilename, parseBackupText, restoreBackup } from '../../utils/backup'
 
 export const BackupControls: React.FC = () => {
-  const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleExport = () => {
@@ -18,13 +17,18 @@ export const BackupControls: React.FC = () => {
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null)
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      e.target.value = ''
+      return
+    }
     try {
       const env = parseBackupText(await file.text())
       restoreBackup(env)
       window.location.reload()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid Ledger backup file')
+    } finally {
+      e.target.value = ''
     }
   }
 
@@ -39,10 +43,10 @@ export const BackupControls: React.FC = () => {
         </button>
         <label className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors cursor-pointer">
           <Upload className="w-4 h-4" /> Import
-          <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="sr-only" />
+          <input type="file" accept="application/json" onChange={handleImport} className="sr-only" />
         </label>
       </div>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-error">{error}</p>}
     </div>
   )
 }
