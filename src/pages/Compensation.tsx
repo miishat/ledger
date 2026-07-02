@@ -1,20 +1,45 @@
 import React, { useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
 import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
+import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
 
 export const Compensation: React.FC = () => {
-  const { primaryPackage, setPrimaryPackage, compareMode, toggleCompareMode, timeMode } = useCompensationStore()
+  const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
+    useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [manualPriceDraft, setManualPriceDraft] = useState('')
 
-  const totalComp = calcTotalComp(primaryPackage)
+  const {
+    pkg,
+    rawPrice,
+    fxRate,
+    fxStatus,
+    priceStatus,
+    priceSource,
+    priceStale,
+    refreshPrice,
+    setManualPrice,
+  } = useCompensationDisplay()
+
+  const totalComp = calcTotalComp(pkg, timeMode)
   const isPopulated = totalComp > 0
+
+  const handleManualPriceSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const parsed = Number(manualPriceDraft)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setManualPrice(parsed)
+      setManualPriceDraft('')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 w-full h-full p-6 animate-fade-in">
-      <header className="flex justify-between items-center">
+      <header className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Total Compensation Calculator</h1>
           <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">
@@ -29,24 +54,76 @@ export const Compensation: React.FC = () => {
         </button>
       </header>
 
+      {isPopulated && (
+        <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[13px] text-[var(--color-text-secondary)]">
+              Stock price (USD): <span className="font-medium text-[var(--color-text-primary)]">${rawPrice.toFixed(2)}</span>
+              {priceSource && <span className="ml-1 text-[11px] uppercase text-[var(--color-text-secondary)]">({priceSource}{priceStale ? ', stale' : ''})</span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => refreshPrice(true)}
+              aria-label="Refresh price"
+              className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+            >
+              <RefreshCw size={14} className={priceStatus === 'loading' ? 'animate-spin' : ''} />
+              Refresh Price
+            </button>
+            <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
+              <input
+                type="number"
+                step="0.01"
+                value={manualPriceDraft}
+                onChange={(e) => setManualPriceDraft(e.target.value)}
+                placeholder="Manual price"
+                className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              />
+              <button
+                type="submit"
+                className="px-2 py-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+              >
+                Set
+              </button>
+            </form>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleCadConversion}
+            aria-pressed={useCadConversion}
+            className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
+              useCadConversion
+                ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
+                : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            {useCadConversion ? `Convert to CAD: ON (1 USD = ${fxRate.toFixed(4)} CAD${fxStatus === 'loading' ? ', updating…' : ''})` : 'Convert to CAD: OFF'}
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <CompHeroWidget className="h-full" />
         </div>
-        
+
         <div className="themed-card rounded-xl p-6 flex flex-col gap-4">
           <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Package Details</h2>
           {isPopulated ? (
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Current Stock Price</span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">
+                  Current Stock Price {useCadConversion ? '(CAD)' : '(USD)'}
+                </span>
                 <div className="flex items-center gap-1">
                   <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
                   <input
                     type="number"
-                    value={primaryPackage.companyCurrentPrice || ''}
+                    value={pkg.companyCurrentPrice || ''}
                     onChange={(e) => setPrimaryPackage({ companyCurrentPrice: Number(e.target.value) || 0 })}
-                    className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0"
+                    disabled={useCadConversion}
+                    className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0"
                   />
                 </div>
               </div>
@@ -55,25 +132,25 @@ export const Compensation: React.FC = () => {
                   {timeMode === 'current-year' ? 'Blended Base Salary' : 'Current Base Salary'}
                 </span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  ${calcAnnualBaseSalary(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  ${calcAnnualBaseSalary(pkg, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
                 <span className="text-[14px] text-[var(--color-text-secondary)]">Target Bonus</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {primaryPackage.cashBonusPercent}%
+                  {pkg.cashBonusPercent}%
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
                 <span className="text-[14px] text-[var(--color-text-secondary)]">RSU Grants</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {primaryPackage.rsuGrants.length} Active
+                  {pkg.rsuGrants.length} Active
                 </span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-[14px] text-[var(--color-text-secondary)]">Benefits Match</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {primaryPackage.rrspMatchPercent}% RRSP, {primaryPackage.esppContributionPercent}% ESPP
+                  {pkg.rrspMatchPercent}% RRSP, {pkg.esppContributionPercent}% ESPP
                 </span>
               </div>
             </div>
@@ -90,7 +167,7 @@ export const Compensation: React.FC = () => {
       {isPopulated && (
         <>
           <EquityVestingWidget />
-          
+
           <div className="flex justify-end">
             <button
               id="compare-toggle-btn"
@@ -100,7 +177,7 @@ export const Compensation: React.FC = () => {
               Compare Another Offer
             </button>
           </div>
-          
+
           {compareMode && <CompareView />}
         </>
       )}
