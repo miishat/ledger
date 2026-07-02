@@ -858,7 +858,7 @@ git commit -m "feat: CompHeroWidget and EquityVestingWidget read the CAD-convert
 - Consumes: `convertPackageToCad` from `./compensationFx`; `calcAnnualESPP`, `calcAnnualRSU`, `generateVestEvents` from `./useCompensationStore`.
 - Produces: no new exports — this task is pure test coverage proving the spec's "Done when" (ESPP, RRSP, RSU, total comp reflect live-converted values) holds end-to-end through the existing calc functions, without modifying those functions.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `src/store/compensationFx.test.ts`:
 
@@ -901,17 +901,17 @@ describe('convertPackageToCad feeding the existing calc functions', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails or passes**
+- [x] **Step 2: Run test to verify it fails or passes**
 
 Run: `npm test -- --run src/store/compensationFx.test.ts`
 Expected: Given Task 2's implementation is already correct, this SHOULD PASS immediately (it exercises existing, already-correct code). If it fails, the failure indicates a bug in `convertPackageToCad` (e.g. `esppLockedInPrice: 0` not converting because `0 * fxRate === 0` is a valid no-op — verify the ESPP calc naturally falls back to the discount-from-current-price path in that case, which it does per `calcAnnualESPP`'s `isLockInActive` check). If it fails, fix `convertPackageToCad` (not the calc functions) until it passes.
 
-- [ ] **Step 3: Run to confirm passing**
+- [x] **Step 3: Run to confirm passing**
 
 Run: `npm test -- --run src/store/compensationFx.test.ts`
 Expected: PASS (8 tests total in the file: 4 from Task 2 + 4 new).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/store/compensationFx.test.ts
