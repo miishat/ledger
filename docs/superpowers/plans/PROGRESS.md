@@ -7,9 +7,9 @@
 ## Current position
 
 - **Current phase:** 2 — Market Data Service
-- **Phase plan:** none yet — plan JIT (dispatch strong-model planning subagent per master plan step 2)
-- **Last completed task:** Phase 1 complete (Task 6 phase gate passed)
-- **Next task:** Plan Phase 2 JIT, then execute its Task 1
+- **Phase plan:** `2026-07-02-phase-2-market-data.md` (written by Opus planning subagent, 8 tasks)
+- **Last completed task:** Phase 1 complete; Phase 2 plan written
+- **Next task:** Phase 2, Task 1 — Shared types + date helpers
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
