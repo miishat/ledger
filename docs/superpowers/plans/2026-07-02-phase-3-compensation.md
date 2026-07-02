@@ -273,7 +273,7 @@ git commit -m "feat: pure USD->CAD conversion layer for compensation packages"
 
 **Note before writing:** `CompensationPackage` currently has no ticker/symbol field — `companyCurrentPrice` is a bare number the user types in. To wire live-price fetch (`useCurrentPrice(ticker)`) we need a ticker. Add `companyTicker?: string` to `CompensationPackage` in `useCompensationStore.ts` (optional, default `''`, backward compatible with existing persisted data — old entries simply have `companyTicker: undefined`). This is a small, additive field change; the calc functions are untouched since none of them read `companyTicker`.
 
-- [ ] **Step 1: Add `companyTicker` field to the store (prerequisite edit, not itself a full task — folded in here since the hook needs it)**
+- [x] **Step 1: Add `companyTicker` field to the store (prerequisite edit, not itself a full task — folded in here since the hook needs it)**
 
 In `src/store/useCompensationStore.ts`, add to `CompensationPackage` interface (after `companyCurrentPrice`):
 
@@ -302,7 +302,7 @@ No default needed (`defaultPrimaryPackage` simply omits it — optional field). 
 Run: `npm test -- --run src/store/useCompensationStore.test.ts`
 Expected: PASS (unchanged — optional field addition is non-breaking).
 
-- [ ] **Step 2: Write the failing test for the hook**
+- [x] **Step 2: Write the failing test for the hook**
 
 ```tsx
 // src/hooks/useCompensationDisplay.test.tsx
@@ -357,12 +357,12 @@ describe('useCompensationDisplay', () => {
 })
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm test -- --run src/hooks/useCompensationDisplay.test.tsx`
 Expected: FAIL — `./useCompensationDisplay` not found.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 ```ts
 // src/hooks/useCompensationDisplay.ts
@@ -414,12 +414,12 @@ export function useCompensationDisplay() {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- --run src/hooks/useCompensationDisplay.test.tsx`
 Expected: PASS (3 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/store/useCompensationStore.ts src/hooks/useCompensationDisplay.ts src/hooks/useCompensationDisplay.test.tsx
