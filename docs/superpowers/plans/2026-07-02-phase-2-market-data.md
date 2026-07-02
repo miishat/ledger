@@ -301,7 +301,7 @@ git commit -m "feat: market-data cache-key builders and throttle/single-flight u
 - Historical: from `chart.result[0]` read `timestamp[]` and `indicators.quote[0].close[]`; pick the last entry whose `toDateKey(timestamp*1000) <= date` and whose close is non-null.
 - Currency: map `meta.currency` to our `Currency` union; default `'USD'` if absent/unknown.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/services/marketData/providers/yahoo.test.ts
@@ -375,12 +375,12 @@ describe('fetchYahooHistorical', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/services/marketData/providers/yahoo.test.ts`
 Expected: FAIL — `./yahoo` not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // src/services/marketData/providers/yahoo.ts
@@ -458,12 +458,12 @@ export async function fetchYahooHistorical(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/services/marketData/providers/yahoo.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/providers/yahoo.ts src/services/marketData/providers/yahoo.test.ts
