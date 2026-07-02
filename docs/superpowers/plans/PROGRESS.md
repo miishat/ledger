@@ -7,9 +7,9 @@
 ## Current position
 
 - **Current phase:** 3 — Compensation: live price + CAD toggle
-- **Phase plan:** none yet — plan JIT (dispatch planning subagent per master plan step 2)
-- **Last completed task:** Phase 2 complete (Task 8 phase gate passed)
-- **Next task:** Plan Phase 3 JIT, then execute its Task 1
+- **Phase plan:** `2026-07-02-phase-3-compensation.md` (written JIT, 8 tasks)
+- **Last completed task:** Phase 2 complete; Phase 3 plan written
+- **Next task:** Phase 3, Task 1 — Store: add useCadConversion toggle
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
