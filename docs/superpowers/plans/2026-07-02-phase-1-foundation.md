@@ -238,7 +238,7 @@ git commit -m "feat: backup blob/filename/parse helpers"
 - Consumes: `backupToBlob`, `backupFilename`, `parseBackupText`, `restoreBackup` from Tasks 1-2.
 - Produces: `BackupControls` React component. Export button downloads the blob; Import button opens a hidden file input, reads the file, calls `parseBackupText` → `restoreBackup`, then `window.location.reload()`. On parse error, shows an inline error message (no crash).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/components/settings/BackupControls.test.tsx
@@ -265,12 +265,12 @@ describe('BackupControls', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/components/settings/BackupControls.test.tsx`
 Expected: FAIL — cannot resolve `./BackupControls`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```tsx
 // src/components/settings/BackupControls.tsx
@@ -340,12 +340,12 @@ And add the import near the top of `Layout.tsx`:
 import { BackupControls } from './settings/BackupControls'
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- src/components/settings/BackupControls.test.tsx`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Manual sanity + commit**
+- [x] **Step 5: Manual sanity + commit**
 
 Run `npm run dev`, click Export (a `ledger-backup-*.json` downloads), then Import that file (page reloads, data intact).
 
