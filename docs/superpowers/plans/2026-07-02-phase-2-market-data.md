@@ -1062,7 +1062,7 @@ git commit -m "feat: market-data service facade (cache-first, override, fallback
 - `setManual`/`clearManual` write the override through `useMarketDataStore` using `quoteKey(ticker, exchange)`, then trigger a refresh so `data.source` becomes `'override'`.
 - The `useMarketDataStore` is subscribed to reactively so an external override change re-resolves (subscribe in the effect dependency or re-run `refresh` on override change).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/services/marketData/useMarketData.test.tsx
@@ -1105,12 +1105,12 @@ describe('useCurrentPrice', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/services/marketData/useMarketData.test.tsx`
 Expected: FAIL — `./useMarketData` not found.
 
-- [ ] **Step 3: Write the hook and barrel**
+- [x] **Step 3: Write the hook and barrel**
 
 ```ts
 // src/services/marketData/useMarketData.ts
@@ -1191,12 +1191,12 @@ export { useCurrentPrice, useFxRate, useHistoricalPrice } from './useMarketData'
 export { quoteKey, historicalKey, fxKey } from './cacheKey'
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/services/marketData/useMarketData.test.tsx`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/useMarketData.ts src/services/marketData/useMarketData.test.tsx src/services/marketData/index.ts
@@ -1207,26 +1207,26 @@ git commit -m "feat: React hooks + barrel export for market-data consumers"
 
 ### Task 8: Phase gate — verify, then close Phase 2
 
-- [ ] **Step 1: Full verification (all Phase 2 tests + build + changed-file lint)**
+- [x] **Step 1: Full verification (all Phase 2 tests + build + changed-file lint)**
 
 Run each and confirm clean:
 - `npm test -- --run` → all tests pass (Phase 1 suite unchanged + new Phase 2 suites).
 - `npm run build` → succeeds (`tsc -b && vite build`; confirms the new modules typecheck).
 - `npx eslint src/services/marketData src/store/useMarketDataStore.ts src/utils/backup.ts` → no errors on files this phase changed. (Per PROGRESS.md, the repo has 287 pre-existing v1.0 lint errors; the gate is lint-clean on **changed files only**.)
 
-- [ ] **Step 2: Confirm the backup covers the new store**
+- [x] **Step 2: Confirm the backup covers the new store**
 
 Confirm `ledger-market-data` is in `BACKUP_KEYS` (grep) and the `backup.test.ts` registration test passes. This is the phase's backup-coverage gate.
 
-- [ ] **Step 3: Confirm offline resilience is real**
+- [x] **Step 3: Confirm offline resilience is real**
 
 Sanity-review the service test coverage: (a) override precedence, (b) live→cache fallback on fetch failure, (c) throttled reads serve cache, (d) same-currency FX = 1 with no fetch. These four are the spec's "Done when" (cached-or-live values, works offline via cache/manual). All are asserted in `marketDataService.test.ts` — confirm they pass.
 
-- [ ] **Step 4: Update PROGRESS.md**
+- [x] **Step 4: Update PROGRESS.md**
 
 Mark Phase 2 `- [x]` with today's date, set current phase to 3 (Compensation: live price + CAD toggle), next task to "plan Phase 3 JIT", and append Log lines P2.T1–P2.T7.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md

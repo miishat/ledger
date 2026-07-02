@@ -6,10 +6,10 @@
 
 ## Current position
 
-- **Current phase:** 2 — Market Data Service
-- **Phase plan:** `2026-07-02-phase-2-market-data.md` (written by Opus planning subagent, 8 tasks)
-- **Last completed task:** Phase 2, Task 6 — Service facade (commit c125e72)
-- **Next task:** Phase 2, Task 7 — React hook + barrel export
+- **Current phase:** 3 — Compensation: live price + CAD toggle
+- **Phase plan:** none yet — plan JIT (dispatch planning subagent per master plan step 2)
+- **Last completed task:** Phase 2 complete (Task 8 phase gate passed)
+- **Next task:** Plan Phase 3 JIT, then execute its Task 1
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -17,7 +17,7 @@
 ## Phase checklist
 
 - [x] Phase 1 — Foundation: Save + PWA + Mobile base (2026-07-02)
-- [ ] Phase 2 — Market Data Service *(plan JIT)*
+- [x] Phase 2 — Market Data Service (2026-07-02)
 - [ ] Phase 3 — Compensation: live price + CAD toggle *(plan JIT)*
 - [ ] Phase 4 — Planner (tools/calculators hub) *(plan JIT; split if >12 tasks)*
 - [ ] Phase 5a — Investments: Plan vs Actual *(plan JIT)*
@@ -40,3 +40,5 @@
 2026-07-02 P2.T4 Frankfurter FX adapter — commit 981ca4e (review clean; implementer cut off by session limit, tests verified by controller)
 2026-07-02 P2.T5 market-data cache store + backup registration — commit c8a7f53 (review clean)
 2026-07-02 P2.T6 market-data service facade — commit c125e72 (review clean; 2 triage notes for final review)
+2026-07-02 P2.T7 market-data hooks + barrel — commits 8d4ee0b + b831868 (review clean after unmount-guard/override-subscription fixes)
+2026-07-02 P2.T8 phase gate — commit 217757d fixed tsc vitest-globals types + set-state-in-effect lint; 51/51 tests, build OK, changed files lint clean, ledger-market-data in BACKUP_KEYS
