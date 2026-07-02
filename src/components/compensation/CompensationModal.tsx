@@ -15,6 +15,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
   // Global Stock Price
   const [companyCurrentPrice, setCompanyCurrentPrice] = useState((primaryPackage.companyCurrentPrice || 100).toString())
+  const [companyTicker, setCompanyTicker] = useState(primaryPackage.companyTicker || '')
 
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary.toString())
@@ -120,6 +121,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     e.preventDefault()
 
     setPrimaryPackage({
+      companyTicker: companyTicker.trim().toUpperCase(),
       companyCurrentPrice: Number(companyCurrentPrice) || 0,
       baseSalary: Number(baseSalary) || 0,
       pastSalaryChanges: pastSalaryChanges.filter(c => c.salary > 0 && c.changeMonth > 0),
@@ -153,7 +155,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           </button>
         </div>
 
-        <div className="p-4 border-b border-[var(--color-border)]">
+        <div className="p-4 border-b border-[var(--color-border)] flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label className={labelClass} htmlFor="company-ticker-input">Ticker (optional, for live price)</label>
+            <input
+              id="company-ticker-input"
+              type="text"
+              value={companyTicker}
+              onChange={(e) => setCompanyTicker(e.target.value)}
+              placeholder="e.g. AAPL"
+              className={inputClass}
+            />
+          </div>
           <div className="flex flex-col gap-2">
             <label className={labelClass}>Company Current Stock Price ($)</label>
             <input
