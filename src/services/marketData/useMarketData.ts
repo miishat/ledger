@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Currency, FetchStatus, FxRate, HistoricalPrice, Quote } from './types'
 import { getCurrentPrice, getFxRate, getHistoricalPrice, type Resolved } from './marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
@@ -8,16 +8,32 @@ export function useCurrentPrice(ticker: string, exchange?: string) {
   const [data, setData] = useState<Resolved<Quote>>()
   const [status, setStatus] = useState<FetchStatus>('idle')
   const [error, setError] = useState<string>()
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
-  const refresh = useCallback((force?: boolean) => {
+  const key = quoteKey(ticker, exchange)
+  const override = useMarketDataStore((s) => s.overrides[key])
+
+  const resolve = useCallback((active: () => boolean, force?: boolean) => {
     if (!ticker.trim()) { setStatus('idle'); return }
     setStatus('loading')
     getCurrentPrice(ticker, exchange, { force })
-      .then((r) => { setData(r); setStatus(r.status); setError(undefined) })
-      .catch((e) => { setStatus('error'); setError(e instanceof Error ? e.message : 'error') })
+      .then((r) => { if (active()) { setData(r); setStatus(r.status); setError(undefined) } })
+      .catch((e) => { if (active()) { setStatus('error'); setError(e instanceof Error ? e.message : 'error') } })
   }, [ticker, exchange])
 
-  useEffect(() => { let active = true; if (active) refresh(); return () => { active = false } }, [refresh])
+  useEffect(() => {
+    let active = true
+    resolve(() => active)
+    return () => { active = false }
+  }, [resolve, override])
+
+  const refresh = useCallback((force?: boolean) => {
+    resolve(() => mountedRef.current, force)
+  }, [resolve])
 
   const setManual = useCallback((price: number) => {
     useMarketDataStore.getState().setOverride(quoteKey(ticker, exchange), price)
@@ -36,15 +52,29 @@ export function useFxRate(from: Currency, to: Currency, date?: string) {
   const [data, setData] = useState<Resolved<FxRate>>()
   const [status, setStatus] = useState<FetchStatus>('idle')
   const [error, setError] = useState<string>()
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
-  const refresh = useCallback(() => {
+  const resolve = useCallback((active: () => boolean) => {
     setStatus('loading')
     getFxRate(from, to, date)
-      .then((r) => { setData(r); setStatus(r.status); setError(undefined) })
-      .catch((e) => { setStatus('error'); setError(e instanceof Error ? e.message : 'error') })
+      .then((r) => { if (active()) { setData(r); setStatus(r.status); setError(undefined) } })
+      .catch((e) => { if (active()) { setStatus('error'); setError(e instanceof Error ? e.message : 'error') } })
   }, [from, to, date])
 
-  useEffect(() => { refresh() }, [refresh])
+  useEffect(() => {
+    let active = true
+    resolve(() => active)
+    return () => { active = false }
+  }, [resolve])
+
+  const refresh = useCallback(() => {
+    resolve(() => mountedRef.current)
+  }, [resolve])
+
   return { data, status, error, refresh }
 }
 

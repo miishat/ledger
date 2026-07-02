@@ -34,4 +34,25 @@ describe('useCurrentPrice', () => {
     expect(result.current.status).toBe('idle')
     expect(result.current.data).toBeUndefined()
   })
+
+  it('ends in an error state when the provider rejects with no cache and no override', async () => {
+    __setProviders({ fetchYahooQuote: async () => { throw new Error('network down') } })
+    const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(result.current.error).toBeTruthy()
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('reacts to an override set externally via the store (not through setManual)', async () => {
+    __setProviders({ fetchYahooQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
+    const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
+    await waitFor(() => expect(result.current.data?.value.price).toBe(199))
+
+    act(() => {
+      useMarketDataStore.getState().setOverride('NASDAQ:AAPL', 321)
+    })
+
+    await waitFor(() => expect(result.current.data?.source).toBe('override'))
+    expect(result.current.data?.value.price).toBe(321)
+  })
 })
