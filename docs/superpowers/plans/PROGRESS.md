@@ -8,8 +8,8 @@
 
 - **Current phase:** 2 — Market Data Service
 - **Phase plan:** `2026-07-02-phase-2-market-data.md` (written by Opus planning subagent, 8 tasks)
-- **Last completed task:** Phase 2, Task 3 — Yahoo Finance provider adapter (commit e398bc2)
-- **Next task:** Phase 2, Task 4 — Frankfurter FX provider adapter
+- **Last completed task:** Phase 2, Task 4 — Frankfurter FX provider adapter (commit 981ca4e)
+- **Next task:** Phase 2, Task 5 — Persisted market-data cache store + backup registration
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -37,3 +37,4 @@
 2026-07-02 P2.T1 market-data types + date helpers — commit 577bff1 (review clean)
 2026-07-02 P2.T2 cache keys + throttle/single-flight — commits 1378107 + 96a5d21 (review clean after coverage additions)
 2026-07-02 P2.T3 Yahoo provider adapter — commit e398bc2 (review clean)
+2026-07-02 P2.T4 Frankfurter FX adapter — commit 981ca4e (review clean; implementer cut off by session limit, tests verified by controller)

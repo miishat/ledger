@@ -489,7 +489,7 @@ git commit -m "feat: Yahoo Finance provider adapter (quote + historical close)"
 - Historical: `${FRANKFURTER_BASE}/<YYYY-MM-DD>?from=USD&to=CAD` (Frankfurter returns the nearest prior business day; use the `date` field from the response as the effective date).
 - `date` field on the returned `FxRate` = the response's `date` (effective date), falling back to the requested/`todayKey()`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/services/marketData/providers/frankfurter.test.ts
@@ -541,12 +541,12 @@ describe('fetchFxRate', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/services/marketData/providers/frankfurter.test.ts`
 Expected: FAIL — `./frankfurter` not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // src/services/marketData/providers/frankfurter.ts
@@ -580,12 +580,12 @@ export async function fetchFxRate(from: Currency, to: Currency, date?: string): 
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/services/marketData/providers/frankfurter.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/providers/frankfurter.ts src/services/marketData/providers/frankfurter.test.ts
