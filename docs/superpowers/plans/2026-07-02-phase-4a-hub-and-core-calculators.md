@@ -501,7 +501,7 @@ git commit -m "feat: savings-goal solvers for any variable (target/contribution/
 - Consumes: nothing new.
 - Produces: `CalculatorField` props `{ label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; prefix?: string; suffix?: string }`; `ResultCard` props `{ label: string; value: string; highlight?: boolean }`; `formatMoney(n: number): string` (rounded, `$` + thousands separators). Used by Tasks 6–7 and all of 4b–4e.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/components/planner/CalculatorField.test.tsx`:
 
@@ -546,12 +546,12 @@ describe('formatMoney', () => {
 
 (`vi` is a Vitest global — available without import, same as `describe`/`it`.)
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/components/planner/CalculatorField.test.tsx`
 Expected: FAIL — cannot resolve `./CalculatorField`.
 
-- [ ] **Step 3: Implement all three files**
+- [x] **Step 3: Implement all three files**
 
 Create `src/components/planner/format.ts`:
 
@@ -633,12 +633,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ label, value, highlight 
 )
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/components/planner/CalculatorField.test.tsx`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/planner/CalculatorField.tsx src/components/planner/ResultCard.tsx src/components/planner/format.ts src/components/planner/CalculatorField.test.tsx
