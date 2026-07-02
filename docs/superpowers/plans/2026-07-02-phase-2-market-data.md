@@ -610,7 +610,7 @@ git commit -m "feat: Frankfurter FX provider adapter (latest + historical USD->C
   - `getQuote(ticker, exchange?): Cached<Quote> | undefined`, `getHistorical(ticker, exchange, dateKey): Cached<HistoricalPrice> | undefined`, `getFx(from, to, dateKey): Cached<FxRate> | undefined`.
   - `setOverride(key: string, price: number): void`, `clearOverride(key: string): void`, `getOverride(key: string): number | undefined`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/store/useMarketDataStore.test.ts
@@ -666,12 +666,12 @@ Add to `src/utils/backup.test.ts` (append a new `it` inside the first `describe(
 
 If `require` is unavailable in the ESM test context, instead import `BACKUP_KEYS` at the top of `backup.test.ts` (add it to the existing import) and assert `expect(BACKUP_KEYS).toContain('ledger-market-data')`.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- --run src/store/useMarketDataStore.test.ts src/utils/backup.test.ts`
 Expected: FAIL — store module not found; backup test fails (`ledger-market-data` not yet in `BACKUP_KEYS`).
 
-- [ ] **Step 3: Write the store and register the backup key**
+- [x] **Step 3: Write the store and register the backup key**
 
 ```ts
 // src/store/useMarketDataStore.ts
@@ -754,12 +754,12 @@ export const BACKUP_KEYS: string[] = [
 ]
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- --run src/store/useMarketDataStore.test.ts src/utils/backup.test.ts`
 Expected: PASS (store 4, backup all incl. new registration test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/useMarketDataStore.ts src/store/useMarketDataStore.test.ts src/utils/backup.ts src/utils/backup.test.ts
