@@ -217,6 +217,7 @@ interface CompensationState {
   comparePackage: CompensationPackage | null
   compareMode: boolean
   timeMode: TimeMode
+  useCadConversion: boolean
 
   setPrimaryPackage: (updates: Partial<CompensationPackage>) => void
   setComparePackage: (pkg: CompensationPackage | null) => void
@@ -225,6 +226,7 @@ interface CompensationState {
   addRSUGrant: (grant: RSUGrant) => void
   removeRSUGrant: (id: string) => void
   updateRSUGrant: (id: string, updates: Partial<RSUGrant>) => void
+  toggleCadConversion: () => void
 }
 
 const defaultPrimaryPackage: CompensationPackage = {
@@ -250,6 +252,7 @@ export const useCompensationStore = create<CompensationState>()(
       comparePackage: null,
       compareMode: false,
       timeMode: 'current-year',
+      useCadConversion: false,
 
       setPrimaryPackage: (updates) =>
         set((state) => ({
@@ -258,6 +261,7 @@ export const useCompensationStore = create<CompensationState>()(
       setComparePackage: (pkg) => set({ comparePackage: pkg }),
       toggleCompareMode: () => set((state) => ({ compareMode: !state.compareMode })),
       setTimeMode: (mode) => set({ timeMode: mode }),
+      toggleCadConversion: () => set((state) => ({ useCadConversion: !state.useCadConversion })),
       addRSUGrant: (grant) =>
         set((state) => ({
           primaryPackage: {
