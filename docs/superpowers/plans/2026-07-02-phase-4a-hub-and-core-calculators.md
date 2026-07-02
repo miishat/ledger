@@ -320,7 +320,7 @@ git commit -m "feat: pure compound-interest math (futureValue, growthSeries)"
 - Consumes: `futureValue` from `src/utils/finance/compound.ts` (Task 2).
 - Produces: `solveTarget(principal, annualRatePct, monthlyContribution, months): number`; `solveMonthlyContribution(target, principal, annualRatePct, months): number | null`; `solveMonths(target, principal, annualRatePct, monthlyContribution, maxMonths?): number | null`; `solveAnnualRate(target, principal, monthlyContribution, months): number | null` (all args `number`; `null` = unreachable). Used by Task 7.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/savingsGoal.test.ts`:
 
@@ -397,12 +397,12 @@ describe('solveAnnualRate', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/savingsGoal.test.ts`
 Expected: FAIL — cannot resolve `./savingsGoal`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/savingsGoal.ts`:
 
@@ -475,12 +475,12 @@ export function solveAnnualRate(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/savingsGoal.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/savingsGoal.ts src/utils/finance/savingsGoal.test.ts

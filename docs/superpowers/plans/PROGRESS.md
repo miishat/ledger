@@ -8,8 +8,8 @@
 
 - **Current phase:** 4 — Planner (tools/calculators hub)
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e; 4a written in full (`2026-07-02-phase-4a-hub-and-core-calculators.md`, 8 tasks); 4b-4e planned JIT later
-- **Last completed task:** Phase 4a, Task 2 — Compound interest math (commit 623f23a)
-- **Next task:** Phase 4a, Task 3 — Savings-goal solvers
+- **Last completed task:** Phase 4a, Task 3 — Savings-goal solvers (commit 04705ca)
+- **Next task:** Phase 4a, Task 4 — Shared calculator UI primitives
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -52,3 +52,4 @@
 2026-07-02 P3.T8 phase gate — 71/71 tests, build OK, changed files lint clean (+0513003 pre-existing lint fix); live-verified at 375px in all themes: modal ticker field, price bar, refresh, manual set, CAD toggle ON/OFF with FX fallback, no overflow
 2026-07-02 P4a.T1 planner store (ledger-planner) + backup registration — commit 4c11b3c (review clean)
 2026-07-02 P4a.T2 compound-interest math module — commit 623f23a (review clean, math independently verified)
+2026-07-02 P4a.T3 savings-goal solvers — commit 04705ca (review clean, math independently verified)
