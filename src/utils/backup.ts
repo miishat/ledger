@@ -17,6 +17,12 @@ export interface BackupEnvelope {
   data: Record<string, unknown>
 }
 
+function assertValidEnvelope(env: BackupEnvelope | null | undefined): asserts env is BackupEnvelope {
+  if (!env || env.app !== 'ledger' || typeof env.version !== 'number' || env.version > BACKUP_VERSION) {
+    throw new Error('Invalid Ledger backup file')
+  }
+}
+
 export function buildBackup(): BackupEnvelope {
   const data: Record<string, unknown> = {}
   for (const key of BACKUP_KEYS) {
@@ -32,9 +38,7 @@ export function buildBackup(): BackupEnvelope {
 }
 
 export function restoreBackup(envelope: BackupEnvelope): void {
-  if (!envelope || envelope.app !== 'ledger' || typeof envelope.version !== 'number' || envelope.version > BACKUP_VERSION) {
-    throw new Error('Invalid Ledger backup file')
-  }
+  assertValidEnvelope(envelope)
   for (const [key, value] of Object.entries(envelope.data ?? {})) {
     localStorage.setItem(key, JSON.stringify(value))
   }
@@ -56,8 +60,6 @@ export function parseBackupText(text: string): BackupEnvelope {
     throw new Error('Invalid Ledger backup file')
   }
   const env = obj as BackupEnvelope
-  if (!env || env.app !== 'ledger' || typeof env.version !== 'number' || env.version > BACKUP_VERSION) {
-    throw new Error('Invalid Ledger backup file')
-  }
+  assertValidEnvelope(env)
   return env
 }
