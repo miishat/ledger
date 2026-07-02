@@ -364,11 +364,11 @@ git commit -m "feat: backup export/import UI in nav dock"
 
 **Interfaces:** none (build/config task).
 
-- [ ] **Step 1: Add icon PNGs**
+- [x] **Step 1: Add icon PNGs**
 
 Generate three PNGs from the existing `public/favicon.svg` (or a solid-bg version of it) at 192×192, 512×512, and a 512×512 maskable variant with padding. Use whatever image tooling is available (e.g. `sharp` via `npx`, or an online-free equivalent run locally). Place them in `public/`. They must be non-empty valid PNGs of the correct dimensions.
 
-- [ ] **Step 2: Fix the manifest so icons resolve under `/ledger/`**
+- [x] **Step 2: Fix the manifest so icons resolve under `/ledger/`**
 
 In `vite.config.ts`, replace the `manifest` block with (note: icon `src` are RELATIVE — leading `/` resolves to the domain root and 404s on GitHub Pages Project Pages):
 
@@ -390,7 +390,7 @@ In `vite.config.ts`, replace the `manifest` block with (note: icon `src` are REL
       },
 ```
 
-- [ ] **Step 3: Build and verify the generated manifest**
+- [x] **Step 3: Build and verify the generated manifest**
 
 Run: `npm run build`
 Expected: build succeeds. Then confirm the emitted manifest references the icons and they exist in the build output:
@@ -398,7 +398,7 @@ Expected: build succeeds. Then confirm the emitted manifest references the icons
 Run: `ls dist/ | grep icon && cat dist/manifest.webmanifest`
 Expected: three `icon-*.png` present in `dist/`; manifest `icons[].src` are relative (no leading `/`); `start_url` and `scope` are `.`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add vite.config.ts public/icon-192x192.png public/icon-512x512.png public/icon-512x512-maskable.png
