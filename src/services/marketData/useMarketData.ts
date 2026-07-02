@@ -18,8 +18,11 @@ export function useCurrentPrice(ticker: string, exchange?: string) {
   const override = useMarketDataStore((s) => s.overrides[key])
 
   const resolve = useCallback((active: () => boolean, force?: boolean) => {
-    if (!ticker.trim()) { setStatus('idle'); return }
-    setStatus('loading')
+    if (!ticker.trim()) {
+      Promise.resolve().then(() => { if (active()) setStatus('idle') })
+      return
+    }
+    Promise.resolve().then(() => { if (active()) setStatus('loading') })
     getCurrentPrice(ticker, exchange, { force })
       .then((r) => { if (active()) { setData(r); setStatus(r.status); setError(undefined) } })
       .catch((e) => { if (active()) { setStatus('error'); setError(e instanceof Error ? e.message : 'error') } })
@@ -59,7 +62,7 @@ export function useFxRate(from: Currency, to: Currency, date?: string) {
   }, [])
 
   const resolve = useCallback((active: () => boolean) => {
-    setStatus('loading')
+    Promise.resolve().then(() => { if (active()) setStatus('loading') })
     getFxRate(from, to, date)
       .then((r) => { if (active()) { setData(r); setStatus(r.status); setError(undefined) } })
       .catch((e) => { if (active()) { setStatus('error'); setError(e instanceof Error ? e.message : 'error') } })
@@ -85,8 +88,11 @@ export function useHistoricalPrice(ticker: string, exchange: string | undefined,
 
   useEffect(() => {
     let active = true
-    if (!ticker.trim() || !date) { setStatus('idle'); return }
-    setStatus('loading')
+    if (!ticker.trim() || !date) {
+      Promise.resolve().then(() => { if (active) setStatus('idle') })
+      return () => { active = false }
+    }
+    Promise.resolve().then(() => { if (active) setStatus('loading') })
     getHistoricalPrice(ticker, exchange, date)
       .then((r) => { if (active) { setData(r); setStatus(r.status); setError(undefined) } })
       .catch((e) => { if (active) { setStatus('error'); setError(e instanceof Error ? e.message : 'error') } })
