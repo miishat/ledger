@@ -61,7 +61,7 @@ export const Layout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-8 relative z-10">
+      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
         <Outlet />
       </main>
     </div>
