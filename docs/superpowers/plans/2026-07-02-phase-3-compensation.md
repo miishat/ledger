@@ -438,7 +438,7 @@ git commit -m "feat: companyTicker field + useCompensationDisplay hook (live pri
 - Consumes: `useCompensationDisplay` from `../hooks/useCompensationDisplay`; `useCompensationStore` (`toggleCadConversion`, `useCadConversion`); existing `calcTotalComp`, `calcAnnualBaseSalary`.
 - Produces: page renders a "Live Price" control (ticker-aware refresh button + status label + manual-price input) and a "Convert to CAD" toggle switch in the header; both persist/react via the store and hook above. `totalComp`/`isPopulated` now derive from `pkg` (the hook's converted package) rather than raw `primaryPackage`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/pages/Compensation.test.tsx
@@ -479,12 +479,12 @@ describe('Compensation page - live price + CAD toggle', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/pages/Compensation.test.tsx`
 Expected: FAIL — no element with accessible name `/convert to cad/i` or `/refresh price/i`.
 
-- [ ] **Step 3: Modify the implementation**
+- [x] **Step 3: Modify the implementation**
 
 Replace the full contents of `src/pages/Compensation.tsx`:
 
@@ -681,17 +681,17 @@ export const Compensation: React.FC = () => {
 
 Note: when `useCadConversion` is on, the "Current Stock Price" input in the Package Details card is disabled (editing raw price while a converted value is displayed would be confusing) — the modal (Task 5) remains the place to edit the raw USD `companyCurrentPrice`/`esppLockedInPrice`/RSU `grantPrice` regardless of toggle state.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/pages/Compensation.test.tsx`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Run the full compensation test suite to check for regressions**
+- [x] **Step 5: Run the full compensation test suite to check for regressions**
 
 Run: `npm test -- --run src/pages/Compensation.test.tsx src/store/useCompensationStore.test.ts src/store/compensationFx.test.ts src/hooks/useCompensationDisplay.test.tsx`
 Expected: PASS (all).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/pages/Compensation.tsx src/pages/Compensation.test.tsx
