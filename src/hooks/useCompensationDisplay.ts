@@ -17,12 +17,9 @@ export function useCompensationDisplay() {
   const rawPrice = price.data?.value.price ?? primaryPackage.companyCurrentPrice
   const fxRate = fx.data?.value.rate ?? 1
 
-  // Use rawPrice only if conversion is enabled; otherwise use store price
-  const displayPrice = useCadConversion ? rawPrice : primaryPackage.companyCurrentPrice
-
   const basePkg = useMemo(
-    () => ({ ...primaryPackage, companyCurrentPrice: displayPrice }),
-    [primaryPackage, displayPrice],
+    () => ({ ...primaryPackage, companyCurrentPrice: rawPrice }),
+    [primaryPackage, rawPrice],
   )
 
   const pkg = useMemo(

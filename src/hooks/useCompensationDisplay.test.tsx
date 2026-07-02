@@ -16,7 +16,19 @@ beforeEach(() => {
 afterEach(() => __resetProviders())
 
 describe('useCompensationDisplay', () => {
-  it('returns the raw CAD-native package when conversion is off (default)', async () => {
+  it('falls back to the manual companyCurrentPrice when no live price is available and conversion is off', async () => {
+    useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
+    __setProviders({
+      fetchYahooQuote: async () => { throw new Error('no data') },
+      fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
+    })
+    const { result } = renderHook(() => useCompensationDisplay())
+    await waitFor(() => expect(result.current.priceStatus).toBe('error'))
+    // no live price resolved -> pkg falls back to the store's manual companyCurrentPrice
+    expect(result.current.pkg.companyCurrentPrice).toBe(100)
+  })
+
+  it('applies the live price even when CAD conversion is off (live price is independent of the toggle)', async () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     __setProviders({
       fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
@@ -24,8 +36,8 @@ describe('useCompensationDisplay', () => {
     })
     const { result } = renderHook(() => useCompensationDisplay())
     await waitFor(() => expect(result.current.priceStatus).toBe('success'))
-    // conversion disabled -> pkg uses the store's raw companyCurrentPrice, not the live fetch
-    expect(result.current.pkg.companyCurrentPrice).toBe(100)
+    // conversion disabled, but the live-resolved price should still be applied (no CAD conversion)
+    expect(result.current.pkg.companyCurrentPrice).toBe(150)
   })
 
   it('converts companyCurrentPrice to CAD using the live FX rate when conversion is on', async () => {
@@ -37,6 +49,7 @@ describe('useCompensationDisplay', () => {
     })
     const { result } = renderHook(() => useCompensationDisplay())
     await waitFor(() => expect(result.current.fxStatus).toBe('success'))
+    await waitFor(() => expect(result.current.priceStatus).toBe('success'))
     await waitFor(() => expect(result.current.pkg.companyCurrentPrice).toBeCloseTo(135, 5))
   })
 
