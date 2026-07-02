@@ -48,7 +48,7 @@
   - `toDateKey(d: Date | string): string` — normalizes a Date or ISO/date string to `YYYY-MM-DD` (UTC).
   - `todayKey(): string` — `toDateKey(new Date())`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/services/marketData/dateKey.test.ts
@@ -73,12 +73,12 @@ describe('toDateKey', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/services/marketData/dateKey.test.ts`
 Expected: FAIL — cannot resolve `./dateKey`.
 
-- [ ] **Step 3: Write the types and implementation**
+- [x] **Step 3: Write the types and implementation**
 
 ```ts
 // src/services/marketData/types.ts
@@ -129,12 +129,12 @@ export function todayKey(): string {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/services/marketData/dateKey.test.ts`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/services/marketData/types.ts src/services/marketData/dateKey.ts src/services/marketData/dateKey.test.ts

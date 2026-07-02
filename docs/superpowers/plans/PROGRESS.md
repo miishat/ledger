@@ -8,8 +8,8 @@
 
 - **Current phase:** 2 — Market Data Service
 - **Phase plan:** `2026-07-02-phase-2-market-data.md` (written by Opus planning subagent, 8 tasks)
-- **Last completed task:** Phase 1 complete; Phase 2 plan written
-- **Next task:** Phase 2, Task 1 — Shared types + date helpers
+- **Last completed task:** Phase 2, Task 1 — Shared types + date helpers (commit 577bff1)
+- **Next task:** Phase 2, Task 2 — Cache keys + throttle/de-dupe utility
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -34,3 +34,4 @@
 2026-07-02 P1.T4 PWA manifest + real icons — commits e85ed42 + cff1893 (sharp devDep; fixed pre-existing tsc blocker in T3 test)
 2026-07-02 P1.T5 mobile viewport-fit + overflow guards — commit 0fe19c3 (review clean)
 2026-07-02 P1.T6 phase gate — tests 12/12, build OK, branch files lint-clean (287 pre-existing v1.0 lint errors flagged), 375px no-overflow verified on all 5 routes in live preview, backup UI + error token verified live
+2026-07-02 P2.T1 market-data types + date helpers — commit 577bff1 (review clean)
