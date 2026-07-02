@@ -151,7 +151,7 @@ git commit -m "feat: add useCadConversion toggle to compensation store"
 - Produces:
   - `convertPackageToCad(pkg: CompensationPackage, fxRate: number, enabled: boolean): CompensationPackage` — pure function. When `enabled` is `false` or `fxRate` is not a finite positive number, returns `pkg` unchanged (same reference, no clone — cheap no-op). When `enabled` is `true` and `fxRate` is valid, returns a new object with `companyCurrentPrice: pkg.companyCurrentPrice * fxRate`, `esppLockedInPrice: pkg.esppLockedInPrice * fxRate`, and `rsuGrants: pkg.rsuGrants.map(g => ({ ...g, grantPrice: g.grantPrice * fxRate }))`. All other fields (`baseSalary`, `pastSalaryChanges`, percentages, dates, ids, names) pass through unchanged — those are already CAD-native inputs per the spec (only stock-price-denominated fields convert).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/store/compensationFx.test.ts
@@ -213,12 +213,12 @@ describe('convertPackageToCad', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/store/compensationFx.test.ts`
 Expected: FAIL — `./compensationFx` not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // src/store/compensationFx.ts
@@ -245,12 +245,12 @@ export function convertPackageToCad(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/store/compensationFx.test.ts`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/compensationFx.ts src/store/compensationFx.test.ts

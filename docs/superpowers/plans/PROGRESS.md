@@ -8,8 +8,8 @@
 
 - **Current phase:** 3 — Compensation: live price + CAD toggle
 - **Phase plan:** `2026-07-02-phase-3-compensation.md` (written JIT, 8 tasks)
-- **Last completed task:** Phase 3, Task 1 — useCadConversion toggle (commit 101d040)
-- **Next task:** Phase 3, Task 2 — Pure FX-conversion layer (convertPackageToCad)
+- **Last completed task:** Phase 3, Task 2 — convertPackageToCad layer (commit e5201c0)
+- **Next task:** Phase 3, Task 3 — useCompensationDisplay composition hook
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -43,3 +43,4 @@
 2026-07-02 P2.T7 market-data hooks + barrel — commits 8d4ee0b + b831868 (review clean after unmount-guard/override-subscription fixes)
 2026-07-02 P2.T8 phase gate — commit 217757d fixed tsc vitest-globals types + set-state-in-effect lint; 51/51 tests, build OK, changed files lint clean, ledger-market-data in BACKUP_KEYS
 2026-07-02 P3.T1 useCadConversion toggle in compensation store — commit 101d040 (review clean)
+2026-07-02 P3.T2 convertPackageToCad pure FX layer — commit e5201c0 (review clean)
