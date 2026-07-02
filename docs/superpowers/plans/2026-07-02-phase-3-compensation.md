@@ -712,7 +712,7 @@ git commit -m "feat: live price control + CAD toggle on Compensation page"
 - Consumes: `useCompensationDisplay` from `../../hooks/useCompensationDisplay` (new import in both widgets); existing `useCompensationStore` for `timeMode`/`setTimeMode`.
 - Produces: both widgets render totals/vest values computed from the **converted** package (`pkg`) instead of raw `primaryPackage`, so when CAD conversion is on, RSU vest values, ESPP profit, and the total-comp pie/bar all reflect FX-converted USD prices.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```tsx
 // src/components/compensation/CompHeroWidget.test.tsx
@@ -788,12 +788,12 @@ describe('EquityVestingWidget with CAD conversion', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- --run src/components/compensation/CompHeroWidget.test.tsx src/components/compensation/EquityVestingWidget.test.tsx`
 Expected: FAIL initially only if the widgets don't yet resolve/render with the hook wired — since both widgets currently compile and render fine off `primaryPackage`, these tests will actually PASS against the *old* code too (rendering doesn't yet prove conversion). To make the fail meaningful, first confirm intent then proceed to Step 3's implementation, and treat Step 2 as a structural check: run and confirm the suite executes (some assertions may trivially pass pre-change, which is acceptable here — the substantive regression protection comes from Task 6's calculation-level test). Proceed to Step 3 regardless.
 
-- [ ] **Step 3: Modify the implementations**
+- [x] **Step 3: Modify the implementations**
 
 In `src/components/compensation/CompHeroWidget.tsx`, change the data source. Replace:
 
@@ -835,12 +835,12 @@ and add the import:
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- --run src/components/compensation/CompHeroWidget.test.tsx src/components/compensation/EquityVestingWidget.test.tsx`
 Expected: PASS (1 test each).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/compensation/CompHeroWidget.tsx src/components/compensation/EquityVestingWidget.tsx src/components/compensation/CompHeroWidget.test.tsx src/components/compensation/EquityVestingWidget.test.tsx

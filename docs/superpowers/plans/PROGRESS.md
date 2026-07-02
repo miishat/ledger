@@ -8,8 +8,8 @@
 
 - **Current phase:** 3 — Compensation: live price + CAD toggle
 - **Phase plan:** `2026-07-02-phase-3-compensation.md` (written JIT, 8 tasks)
-- **Last completed task:** Phase 3, Task 4 — Compensation page wiring (commit de94b4c)
-- **Next task:** Phase 3, Task 5 — Wire CompHeroWidget + EquityVestingWidget
+- **Last completed task:** Phase 3, Task 5 — Widget wiring to converted package (commit 5259588)
+- **Next task:** Phase 3, Task 6 — Conversion correctness tests (RSU/ESPP scale with FX)
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -46,3 +46,4 @@
 2026-07-02 P3.T2 convertPackageToCad pure FX layer — commit e5201c0 (review clean)
 2026-07-02 P3.T3 useCompensationDisplay hook + companyTicker field — commits d9028e6 + 71aa856 (review caught live-price/CAD-toggle coupling; fixed)
 2026-07-02 P3.T4 Compensation page live-price bar + CAD toggle — commit de94b4c (review clean)
+2026-07-02 P3.T5 widgets read converted package — commit 5259588 (review clean)
