@@ -151,7 +151,7 @@ git commit -m "feat: backup export/import core with versioned envelope"
   - `backupFilename(): string` — e.g. `ledger-backup-2026-07-02.json` (date from today).
   - `parseBackupText(text: string): BackupEnvelope` — `JSON.parse` then `restoreBackup`-validate the shape (reuse validation by calling `restoreBackup` is NOT wanted here — only parse+validate, no write). Throws `Error('Invalid Ledger backup file')` on malformed JSON or bad envelope.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // append to src/utils/backup.test.ts
@@ -181,12 +181,12 @@ describe('backup file io', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: FAIL — `backupToBlob` / `parseBackupText` not exported.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // append to src/utils/backup.ts
@@ -213,12 +213,12 @@ export function parseBackupText(text: string): BackupEnvelope {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: PASS (all backup tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/backup.ts src/utils/backup.test.ts

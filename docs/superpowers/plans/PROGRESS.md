@@ -8,8 +8,8 @@
 
 - **Current phase:** 1 — Foundation: Save + PWA + Mobile base
 - **Phase plan:** `2026-07-02-phase-1-foundation.md` (written, ready)
-- **Last completed task:** Phase 1, Task 1 — Backup export/import core (commit baf5f63)
-- **Next task:** Phase 1, Task 2 — Backup file I/O helpers (download / read)
+- **Last completed task:** Phase 1, Task 2 — Backup file I/O helpers (commits 16ffd07, 7cfb265)
+- **Next task:** Phase 1, Task 3 — Backup UI (Export / Import) in the nav
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 ## Phase checklist
@@ -27,3 +27,4 @@
 
 <!-- e.g. "2026-07-02 P1.T1 backup core — commit abc1234" -->
 2026-07-02 P1.T1 backup export/import core — commit baf5f63 (review clean; + a4ed65a npm test script)
+2026-07-02 P1.T2 backup blob/filename/parse helpers — commits 16ffd07 + 7cfb265 (review clean after DRY fix)
