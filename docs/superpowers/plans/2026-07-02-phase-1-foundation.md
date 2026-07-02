@@ -415,7 +415,7 @@ git commit -m "fix: PWA manifest icon paths + add real app icons"
 
 **Interfaces:** none (layout hardening; full mobile reflow + bottom nav is Phase 7).
 
-- [ ] **Step 1: Harden the viewport meta**
+- [x] **Step 1: Harden the viewport meta**
 
 In `index.html`, replace the viewport meta with one that respects notches:
 
@@ -423,7 +423,7 @@ In `index.html`, replace the viewport meta with one that respects notches:
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 ```
 
-- [ ] **Step 2: Guard the main content from overflow**
+- [x] **Step 2: Guard the main content from overflow**
 
 In `src/components/Layout.tsx`, add `min-w-0` to the `<main>` so flex children can shrink instead of forcing horizontal scroll, and make its padding responsive:
 
@@ -433,11 +433,11 @@ Change `<main className="flex-1 overflow-auto p-8 relative z-10">` to:
       <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
 ```
 
-- [ ] **Step 3: Verify no horizontal overflow at 375px**
+- [x] **Step 3: Verify no horizontal overflow at 375px**
 
 Run: `npm run dev`, open DevTools device toolbar at 375px width, load each route. Expected: no horizontal scrollbar on the page body. (The sidebar remains full-width for now; the bottom-nav reflow is Phase 7 — do NOT build it here.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add index.html src/components/Layout.tsx
