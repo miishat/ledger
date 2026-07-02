@@ -182,7 +182,7 @@ git commit -m "feat: planner inputs store persisted as ledger-planner, registere
 
 Convention (document in a file-top comment): rates are **percent** (7 = 7%), compounding is monthly, contributions land at the end of each month.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/compound.test.ts`:
 
@@ -237,12 +237,12 @@ describe('growthSeries', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/compound.test.ts`
 Expected: FAIL — cannot resolve `./compound`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/compound.ts`:
 
@@ -296,12 +296,12 @@ export function growthSeries(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/compound.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/compound.ts src/utils/finance/compound.test.ts
