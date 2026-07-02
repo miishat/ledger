@@ -1,4 +1,39 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npx gsd-core *)",
+      "Read(.planning/*)",
+      "Write(.planning/*)",
+      "Read(STATE.md)",
+      "Write(STATE.md)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -q -m ' *)",
+      "Read(//c/Users/misha/.claude/**)",
+      "Read(//c//**)",
+      "Bash(ls -la ~/.claude/ 2>/dev/null | head -50)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('.claude/settings.json'\\)\\); print\\(d\\)\")",
+      "Bash(mkdir -p .claude/skills .claude/hooks)",
+      "Bash(cp -r 'C:\\\\Users\\\\misha\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\6.1.0/skills/.' .claude/skills/)",
+      "Bash(cp 'C:\\\\Users\\\\misha\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\6.1.0/hooks/session-start' .claude/hooks/superpowers-session-start)",
+      "Bash(chmod +x .claude/hooks/superpowers-session-start)",
+      "Bash(CLAUDE_PLUGIN_ROOT=1 bash .claude/hooks/superpowers-session-start)",
+      "Bash(echo \"---exit $?---\")",
+      "Bash(git check-ignore *)",
+      "Bash(rm .claude/settings.json)",
+      "Bash(python -c \"import json; json.load\\(open\\('.claude/settings.local.json'\\)\\); print\\('valid json'\\)\")"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(.secrets)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -14,6 +49,15 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/gsd-session-state.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CLAUDE_PLUGIN_ROOT=1 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/superpowers-session-start"
           }
         ]
       }
@@ -160,19 +204,5 @@
   },
   "worktree": {
     "baseRef": "head"
-  },
-  "permissions": {
-    "allow": [
-      "Bash(npx gsd-core *)",
-      "Read(.planning/*)",
-      "Write(.planning/*)",
-      "Read(STATE.md)",
-      "Write(STATE.md)"
-    ],
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)",
-      "Read(.secrets)"
-    ]
   }
 }
