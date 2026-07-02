@@ -39,3 +39,25 @@ export function restoreBackup(envelope: BackupEnvelope): void {
     localStorage.setItem(key, JSON.stringify(value))
   }
 }
+
+export function backupToBlob(): Blob {
+  return new Blob([JSON.stringify(buildBackup(), null, 2)], { type: 'application/json' })
+}
+
+export function backupFilename(): string {
+  return `ledger-backup-${new Date().toISOString().slice(0, 10)}.json`
+}
+
+export function parseBackupText(text: string): BackupEnvelope {
+  let obj: unknown
+  try {
+    obj = JSON.parse(text)
+  } catch {
+    throw new Error('Invalid Ledger backup file')
+  }
+  const env = obj as BackupEnvelope
+  if (!env || env.app !== 'ledger' || typeof env.version !== 'number' || env.version > BACKUP_VERSION) {
+    throw new Error('Invalid Ledger backup file')
+  }
+  return env
+}

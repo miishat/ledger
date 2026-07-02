@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope } from './backup'
+import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText } from './backup'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -27,5 +27,28 @@ describe('backup', () => {
       .toThrow('Invalid Ledger backup file')
     expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION + 1, exportedAt: '', data: {} }))
       .toThrow('Invalid Ledger backup file')
+  })
+})
+
+describe('backup file io', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('backupToBlob produces JSON blob', async () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ x: 2 }))
+    const blob = backupToBlob()
+    expect(blob.type).toBe('application/json')
+    const parsed = JSON.parse(await blob.text())
+    expect(parsed.data['ledger-budget']).toEqual({ x: 2 })
+  })
+
+  it('backupFilename is date-stamped', () => {
+    expect(backupFilename()).toMatch(/^ledger-backup-\d{4}-\d{2}-\d{2}\.json$/)
+  })
+
+  it('parseBackupText validates and returns the envelope', () => {
+    const good = JSON.stringify({ app: 'ledger', version: 1, exportedAt: '', data: {} })
+    expect(parseBackupText(good).app).toBe('ledger')
+    expect(() => parseBackupText('{not json')).toThrow('Invalid Ledger backup file')
+    expect(() => parseBackupText(JSON.stringify({ app: 'nope' }))).toThrow('Invalid Ledger backup file')
   })
 })
