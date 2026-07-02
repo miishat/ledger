@@ -6,10 +6,10 @@
 
 ## Current position
 
-- **Current phase:** 3 — Compensation: live price + CAD toggle
-- **Phase plan:** `2026-07-02-phase-3-compensation.md` (written JIT, 8 tasks)
-- **Last completed task:** Phase 3, Task 6 — Conversion correctness tests (commit b557c4e)
-- **Next task:** Phase 3, Task 7 — CompensationModal ticker field
+- **Current phase:** 4 — Planner (tools/calculators hub)
+- **Phase plan:** none yet — plan JIT (split into sub-plans if >12 tasks per master plan)
+- **Last completed task:** Phase 3 complete (Task 8 phase gate passed, live-verified)
+- **Next task:** Plan Phase 4 JIT, then execute its first task
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -18,7 +18,7 @@
 
 - [x] Phase 1 — Foundation: Save + PWA + Mobile base (2026-07-02)
 - [x] Phase 2 — Market Data Service (2026-07-02)
-- [ ] Phase 3 — Compensation: live price + CAD toggle *(plan JIT)*
+- [x] Phase 3 — Compensation: live price + CAD toggle (2026-07-02)
 - [ ] Phase 4 — Planner (tools/calculators hub) *(plan JIT; split if >12 tasks)*
 - [ ] Phase 5a — Investments: Plan vs Actual *(plan JIT)*
 - [ ] Phase 5b — Investments: Portfolio Viewer *(plan JIT)*
@@ -48,3 +48,5 @@
 2026-07-02 P3.T4 Compensation page live-price bar + CAD toggle — commit de94b4c (review clean)
 2026-07-02 P3.T5 widgets read converted package — commit 5259588 (review clean)
 2026-07-02 P3.T6 conversion correctness tests — commit b557c4e (plan's ESPP×FX expectation was mathematically wrong; amended to FX-invariant, reviewer-verified)
+2026-07-02 P3.T7 CompensationModal ticker field — commit 52cb8ec (review clean)
+2026-07-02 P3.T8 phase gate — 71/71 tests, build OK, changed files lint clean (+0513003 pre-existing lint fix); live-verified at 375px in all themes: modal ticker field, price bar, refresh, manual set, CAD toggle ON/OFF with FX fallback, no overflow

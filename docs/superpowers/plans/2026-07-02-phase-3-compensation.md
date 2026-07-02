@@ -930,7 +930,7 @@ git commit -m "test: verify RSU/ESPP calc functions scale correctly through the 
 - Consumes: `useCompensationStore` (`setPrimaryPackage`), `CompensationPackage.companyTicker` (added in Task 3).
 - Produces: modal gains a "Ticker (optional, for live price)" text input near the existing "Company Current Stock Price ($)" field; on submit, `companyTicker` (uppercased, trimmed) is saved via `setPrimaryPackage`. All existing fields/behavior unchanged — the modal continues to edit and persist raw USD/CAD-native values only (never the converted display package), matching the spec's "Preserve existing `useCompensationStore` functions and their semantics."
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/components/compensation/CompensationModal.test.tsx
@@ -956,12 +956,12 @@ describe('CompensationModal ticker field', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/components/compensation/CompensationModal.test.tsx`
 Expected: FAIL — no labeled element matching `/ticker/i`.
 
-- [ ] **Step 3: Modify the implementation**
+- [x] **Step 3: Modify the implementation**
 
 In `src/components/compensation/CompensationModal.tsx`, add state near the other top-level fields (after the `companyCurrentPrice` state declaration around line 17):
 
@@ -1017,12 +1017,12 @@ In `handleSubmit`, add `companyTicker` to the `setPrimaryPackage` call:
     })
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/components/compensation/CompensationModal.test.tsx`
 Expected: PASS (1 test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/compensation/CompensationModal.tsx src/components/compensation/CompensationModal.test.tsx
@@ -1033,22 +1033,22 @@ git commit -m "feat: add ticker field to CompensationModal for live-price lookup
 
 ### Task 8: Phase gate — verify, then close Phase 3
 
-- [ ] **Step 1: Full verification (all tests + build + changed-file lint)**
+- [x] **Step 1: Full verification (all tests + build + changed-file lint)**
 
 Run each and confirm clean:
 - `npm test -- --run` → all tests pass (Phase 1 + Phase 2 suites unchanged + new Phase 3 suites: `useCompensationStore.test.ts`, `compensationFx.test.ts`, `useCompensationDisplay.test.tsx`, `Compensation.test.tsx`, `CompHeroWidget.test.tsx`, `EquityVestingWidget.test.tsx`, `CompensationModal.test.tsx`).
 - `npm run build` → succeeds (`tsc -b && vite build`; confirms `companyTicker` field and new hook typecheck cleanly across all consumers).
 - `npx eslint src/store/useCompensationStore.ts src/store/compensationFx.ts src/hooks/useCompensationDisplay.ts src/pages/Compensation.tsx src/components/compensation/CompHeroWidget.tsx src/components/compensation/EquityVestingWidget.tsx src/components/compensation/CompensationModal.tsx` → no errors on files this phase changed (pre-existing v1.0 lint debt is out of scope per PROGRESS.md's noted exception). Pay particular attention to `react-hooks/set-state-in-effect` — `useCompensationDisplay` composes existing hooks (`useCurrentPrice`, `useFxRate`) and introduces no new raw `useEffect`, so this should be clean by construction; confirm it.
 
-- [ ] **Step 2: Confirm backup coverage is still correct**
+- [x] **Step 2: Confirm backup coverage is still correct**
 
 `useCadConversion` and `companyTicker` live inside the existing `ledger-compensation` persisted store — no new LocalStorage key was introduced. Confirm `git diff` for this phase touches no line in `src/utils/backup.ts` and that `BACKUP_KEYS` still contains `'ledger-compensation'` (grep). This is the phase's backup-coverage gate (nothing to add, but must verify nothing regressed).
 
-- [ ] **Step 3: Confirm offline resilience is real**
+- [x] **Step 3: Confirm offline resilience is real**
 
 Sanity-review: (a) with no ticker set, `useCompensationDisplay` falls back to the manually-entered `companyCurrentPrice` (Task 3's hook logic: `price.data?.value.price ?? primaryPackage.companyCurrentPrice`); (b) `setManualPrice`/manual price form in `Compensation.tsx` let the user override the live price at any time, online or offline (delegates to the market-data module's existing override plumbing, proven resilient in Phase 2); (c) toggling CAD conversion off at any time reverts to raw CAD-native package values exactly as v1.0 behaved (Task 2's `enabled === false` no-op branch, covered by `compensationFx.test.ts`). Confirm these three by re-reading the relevant tests, not just the code.
 
-- [ ] **Step 4: Manual verification — mobile viewport + both themes**
+- [x] **Step 4: Manual verification — mobile viewport + both themes**
 
 Using the dev server (`npm run dev` or the project's preview tooling):
 1. Navigate to `/compensation` with a populated package.
@@ -1058,11 +1058,11 @@ Using the dev server (`npm run dev` or the project's preview tooling):
 
 Record the outcome (pass/fail + any fixes made) in the PROGRESS.md log line for this task.
 
-- [ ] **Step 5: Update PROGRESS.md**
+- [x] **Step 5: Update PROGRESS.md**
 
 Mark Phase 3 `- [x]` with today's date, set current phase to 4 (Planner), next task to "plan Phase 4 JIT (split into sub-plans if >12 tasks per master plan)", and append Log lines P3.T1–P3.T8.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md
