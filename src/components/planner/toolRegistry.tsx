@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -10,6 +10,7 @@ import { CurrencyConverter } from './CurrencyConverter'
 import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
+import { TakeHomePayCalculator } from './TakeHomePayCalculator'
 
 export interface PlannerTool {
   id: string
@@ -86,6 +87,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Cumulative-cost crossover: when (if ever) buying beats renting.',
     icon: Building2,
     component: RentVsBuyCalculator,
+  },
+  {
+    id: 'take-home-pay',
+    name: 'Take-Home Pay',
+    description: 'Gross to net for any province — 2026 federal/provincial tax, CPP and EI.',
+    icon: Landmark,
+    component: TakeHomePayCalculator,
   },
 ]
 
