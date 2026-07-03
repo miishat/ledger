@@ -55,7 +55,7 @@ export const CompoundInterestCalculator: React.FC = () => {
             <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
             <Tooltip
-              formatter={(value: number, name: string) => [formatMoney(value), name]}
+              formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
               contentStyle={{
                 backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-color)',
