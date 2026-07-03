@@ -7,7 +7,9 @@
 ## Current position
 
 - **Current phase:** 4 — Planner (tools/calculators hub)
-- **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e; 4a written in full (`2026-07-02-phase-4a-hub-and-core-calculators.md`, 8 tasks); 4b-4e planned JIT later
+- **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
+- **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
+- **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
 - **Last completed task:** Phase 4a, Task 4 — Calculator UI primitives (commit 5d9c33d)
 - **Next task:** Phase 4a, Task 5 — Hub page, routes, tool registry (+ Projections rename)
 - **Status:** IN PROGRESS (branch `ledger-v2`)
@@ -19,11 +21,11 @@
 - [x] Phase 1 — Foundation: Save + PWA + Mobile base (2026-07-02)
 - [x] Phase 2 — Market Data Service (2026-07-02)
 - [x] Phase 3 — Compensation: live price + CAD toggle (2026-07-02)
-- [ ] Phase 4 — Planner (tools/calculators hub) *(plan JIT; split if >12 tasks)*
-- [ ] Phase 5a — Investments: Plan vs Actual *(plan JIT)*
-- [ ] Phase 5b — Investments: Portfolio Viewer *(plan JIT)*
-- [ ] Phase 6 — Budgeting enhancements *(plan JIT)*
-- [ ] Phase 7 — UI/UX 2026 refresh + Dashboard polish *(plan JIT)*
+- [ ] Phase 4 — Planner (tools/calculators hub) *(plans written: 4a-4e)*
+- [ ] Phase 5a — Investments: Plan vs Actual *(plan written)*
+- [ ] Phase 5b — Investments: Portfolio Viewer *(plan written)*
+- [ ] Phase 6 — Budgeting enhancements *(plan written)*
+- [ ] Phase 7 — UI/UX 2026 refresh + Dashboard polish *(plan written)*
 
 ## Log (append one line per completed task)
 
@@ -54,3 +56,4 @@
 2026-07-02 P4a.T2 compound-interest math module — commit 623f23a (review clean, math independently verified)
 2026-07-02 P4a.T3 savings-goal solvers — commit 04705ca (review clean, math independently verified)
 2026-07-02 P4a.T4 calculator UI primitives — commit 5d9c33d (review clean)
+2026-07-03 planning — wrote all remaining JIT plans in full: 4b, 4c, 4d (2026 CRA tables sourced + cited), 4e, 5a, 5b, 6, 7; minimal-test policy applied per user

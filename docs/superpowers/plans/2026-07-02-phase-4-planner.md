@@ -69,10 +69,12 @@ src/utils/finance/
 | # | File | Scope | Status |
 |---|------|-------|--------|
 | 4a | `2026-07-02-phase-4a-hub-and-core-calculators.md` | Hub scaffold + shared infra + Compound Interest + Savings Goal | **Written — execute first** |
-| 4b | `2026-07-02-phase-4b-savings-tools.md` | Emergency fund, Currency converter, Raise/inflation | stub — plan JIT |
-| 4c | `2026-07-02-phase-4c-debt-and-housing.md` | Debt payoff, Mortgage, Rent-vs-buy | stub — plan JIT |
-| 4d | `2026-07-02-phase-4d-canada-tax.md` | Take-home pay, Income tax estimator, RRSP-vs-TFSA | stub — plan JIT |
-| 4e | `2026-07-02-phase-4e-fire-forecaster.md` | Flagship Net-Worth / FIRE Forecaster (all tiers) | stub — plan JIT |
+| 4b | `2026-07-02-phase-4b-savings-tools.md` | Emergency fund, Currency converter, Raise/inflation | **Written (2026-07-03)** |
+| 4c | `2026-07-02-phase-4c-debt-and-housing.md` | Debt payoff, Mortgage, Rent-vs-buy | **Written (2026-07-03)** |
+| 4d | `2026-07-02-phase-4d-canada-tax.md` | Take-home pay, Income tax estimator, RRSP-vs-TFSA | **Written (2026-07-03; 2026 CRA tables sourced)** |
+| 4e | `2026-07-02-phase-4e-fire-forecaster.md` | Flagship Net-Worth / FIRE Forecaster (all tiers) | **Written (2026-07-03)** |
+
+> **Note (2026-07-03):** All sub-plans are now written in full — the stub sections below are superseded by the plan files and kept only as scope summaries. Later phases also have written plans: `2026-07-02-phase-5a-plan-vs-actual.md`, `2026-07-02-phase-5b-portfolio-viewer.md`, `2026-07-02-phase-6-budgeting-enhancements.md`, `2026-07-02-phase-7-uiux-refresh.md`. Per user direction (2026-07-03), testing in the new plans is minimal: pure math/store modules keep tests; UI components rely on the registry-driven hub test + manual gates.
 
 ### 4b — Savings tools (stub)
 
