@@ -1,8 +1,9 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { LineChart, TrendingUp } from 'lucide-react'
+import { LineChart, Target, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
+import { SavingsGoalCalculator } from './SavingsGoalCalculator'
 
 export interface PlannerTool {
   id: string
@@ -30,6 +31,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'See how a starting balance and monthly contributions grow over time.',
     icon: LineChart,
     component: CompoundInterestCalculator,
+  },
+  {
+    id: 'savings-goal',
+    name: 'Savings Goal',
+    description: 'Solve for any variable: contribution, time, required return, or final balance.',
+    icon: Target,
+    component: SavingsGoalCalculator,
   },
 ]
 
