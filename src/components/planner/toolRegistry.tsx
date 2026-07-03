@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Percent, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -11,6 +11,7 @@ import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { TakeHomePayCalculator } from './TakeHomePayCalculator'
+import { IncomeTaxEstimator } from './IncomeTaxEstimator'
 
 export interface PlannerTool {
   id: string
@@ -94,6 +95,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Gross to net for any province — 2026 federal/provincial tax, CPP and EI.',
     icon: Landmark,
     component: TakeHomePayCalculator,
+  },
+  {
+    id: 'income-tax',
+    name: 'Income Tax Estimator',
+    description: 'Marginal and effective 2026 tax rates by province, with bracket visualization.',
+    icon: Percent,
+    component: IncomeTaxEstimator,
   },
 ]
 
