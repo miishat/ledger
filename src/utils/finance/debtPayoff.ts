@@ -42,8 +42,15 @@ export function simulatePayoff(
       d.balance += interest
       totalInterest += interest
     }
-    // 2-3. Apply all available budget (minimum + extra) in strategy order.
+    // 2. Minimum payments — every live debt is guaranteed its minimum first.
     let budget = extraMonthly + totalMin
+    for (const d of live) {
+      if (d.balance <= 0) continue
+      const pay = Math.min(d.minPayment, d.balance, budget)
+      d.balance -= pay
+      budget -= pay
+    }
+    // 3. Remaining budget goes to the focus debt in strategy order.
     const order = [...live]
       .filter((d) => d.balance > 0)
       .sort((a, b) => (strategy === 'snowball' ? a.balance - b.balance : b.aprPct - a.aprPct))
