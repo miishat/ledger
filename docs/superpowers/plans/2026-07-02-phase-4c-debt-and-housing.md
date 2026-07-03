@@ -41,7 +41,7 @@
 
 Conventions (file-top comment): rates are PERCENT, monthly compounding (rate/12 — the US/consumer convention, not Canadian semi-annual mortgage compounding; note the simplification), payments at end of month, schedule stops when balance hits 0.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/amortization.test.ts`:
 
@@ -103,12 +103,12 @@ describe('amortizationSchedule', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/amortization.test.ts`
 Expected: FAIL — cannot resolve `./amortization`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/amortization.ts`:
 
@@ -167,12 +167,12 @@ export function scheduleTotalInterest(schedule: AmortizationPoint[]): number {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/amortization.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/amortization.ts src/utils/finance/amortization.test.ts
@@ -197,7 +197,7 @@ git commit -m "feat: amortization math (payment, inverse, schedule with extra pa
 
 Simulation rules (document in comment): each month every debt accrues `balance × apr/12/100`, then receives its min payment; the extra budget (extraMonthly + freed-up minimums of already-cleared debts) goes to the focus debt — lowest balance first (snowball) or highest APR first (avalanche), re-evaluated as debts clear.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/debtPayoff.test.ts`:
 
@@ -242,12 +242,12 @@ describe('simulatePayoff', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/debtPayoff.test.ts`
 Expected: FAIL — cannot resolve `./debtPayoff`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/debtPayoff.ts`:
 
@@ -329,12 +329,12 @@ export function simulatePayoff(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/debtPayoff.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/debtPayoff.ts src/utils/finance/debtPayoff.test.ts
@@ -353,7 +353,7 @@ git commit -m "feat: snowball/avalanche debt payoff simulation"
 - Consumes: `simulatePayoff`/`Debt`/`PayoffStrategy` (Task 2); 4a primitives + store. Tool id: `'debt-payoff'`.
 - Produces: `DebtPayoffCalculator: React.FC` registered as tool `debt-payoff`. Debt list persisted under field `debtsJson` (JSON string) in `usePlannerStore`.
 
-- [ ] **Step 1: Implement the component**
+- [x] **Step 1: Implement the component**
 
 Create `src/components/planner/DebtPayoffCalculator.tsx`:
 
@@ -492,7 +492,7 @@ export const DebtPayoffCalculator: React.FC = () => {
 
 (Note: `text-error` relies on the `--error` token added to all themes in Phase 1 — see P1.T3 in PROGRESS.md.)
 
-- [ ] **Step 2: Register the tool**
+- [x] **Step 2: Register the tool**
 
 In `toolRegistry.tsx`, add `CreditCard` to the lucide import and append:
 
@@ -510,12 +510,12 @@ import { DebtPayoffCalculator } from './DebtPayoffCalculator'
   },
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run src/pages/Planner.test.tsx` — PASS.
 Dev: add/remove/edit debts persists across reload (JSON round-trip); strategy toggle changes payoff order and the comparison card; both lines render.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/planner/DebtPayoffCalculator.tsx src/components/planner/toolRegistry.tsx
@@ -536,7 +536,7 @@ git commit -m "feat: debt payoff calculator — snowball vs avalanche with balan
 
 Affordability model (comment in component): max monthly housing budget = gross annual income × GDS% / 12 − monthly property tax − $150 heating (CMHC-style GDS, default 39%); mortgage principal = `principalFromPayment(budget, rate, years)`; max price = principal + down payment.
 
-- [ ] **Step 1: Implement the component**
+- [x] **Step 1: Implement the component**
 
 Create `src/components/planner/MortgageCalculator.tsx`:
 
@@ -653,7 +653,7 @@ export const MortgageCalculator: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Register the tool**
+- [x] **Step 2: Register the tool**
 
 In `toolRegistry.tsx`, add `Home` to the lucide import and append:
 
@@ -671,12 +671,12 @@ import { MortgageCalculator } from './MortgageCalculator'
   },
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run src/pages/Planner.test.tsx` — PASS.
 Dev: payment mode $600k/20%/4.5%/25y → payment ≈ $2,668; affordability mode responds to income; mode toggle persists.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/planner/MortgageCalculator.tsx src/components/planner/toolRegistry.tsx
@@ -702,7 +702,7 @@ git commit -m "feat: mortgage calculator with amortization chart and affordabili
 
 Model (document in comment): compares cumulative **unrecoverable costs**. Renting: rent (growing `rentIncreasePct`/yr). Buying: mortgage interest + property tax (`price × propertyTaxPct`/yr) + maintenance (`price × maintenancePct`/yr) + opportunity cost of the down payment (`down × opportunityPct`/yr). Principal payments are equity, not cost. Break-even = first year cumulative buy ≤ cumulative rent.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/rentVsBuy.test.ts`:
 
@@ -741,12 +741,12 @@ describe('rentVsBuy', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/rentVsBuy.test.ts`
 Expected: FAIL — cannot resolve `./rentVsBuy`.
 
-- [ ] **Step 3: Implement module and component**
+- [x] **Step 3: Implement module and component**
 
 Create `src/utils/finance/rentVsBuy.ts`:
 
@@ -902,12 +902,12 @@ import { RentVsBuyCalculator } from './RentVsBuyCalculator'
   },
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/rentVsBuy.test.ts src/pages/Planner.test.tsx`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/rentVsBuy.ts src/utils/finance/rentVsBuy.test.ts src/components/planner/RentVsBuyCalculator.tsx src/components/planner/toolRegistry.tsx
@@ -922,7 +922,7 @@ git commit -m "feat: rent-vs-buy calculator with break-even crossover chart"
 - Modify: `docs/superpowers/plans/PROGRESS.md`
 - Modify: `docs/superpowers/plans/2026-07-02-phase-4c-debt-and-housing.md` (check off boxes)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -932,7 +932,7 @@ npm run build
 
 Expected: all pass; changed files lint clean.
 
-- [ ] **Step 2: Manual acceptance — mobile + all 5 themes**
+- [x] **Step 2: Manual acceptance — mobile + all 5 themes**
 
 `npm run dev`, then:
 1. Hub shows the three new tiles; each opens with a working back link.
@@ -941,7 +941,7 @@ Expected: all pass; changed files lint clean.
 4. Rent-vs-buy: break-even card + crossover chart respond to rate/opportunity changes.
 5. All 5 themes on each tool; 375px viewport — debt rows wrap 2-col, charts stay in cards, no horizontal scroll.
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 Mark 4c complete (log line + next pointer = 4d), check off boxes here.
 
