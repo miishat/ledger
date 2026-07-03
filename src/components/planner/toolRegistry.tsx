@@ -1,11 +1,12 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, LineChart, ShieldCheck, Target, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { EmergencyFundCalculator } from './EmergencyFundCalculator'
 import { SavingsGoalCalculator } from './SavingsGoalCalculator'
 import { CurrencyConverter } from './CurrencyConverter'
+import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 
 export interface PlannerTool {
   id: string
@@ -54,6 +55,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'USD ⇄ CAD with live rates, historical lookup, and manual fallback.',
     icon: ArrowLeftRight,
     component: CurrencyConverter,
+  },
+  {
+    id: 'raise-inflation',
+    name: 'Raise vs Inflation',
+    description: 'Is my raise a real raise? Nominal vs inflation-adjusted.',
+    icon: TrendingDown,
+    component: RaiseInflationCalculator,
   },
 ]
 
