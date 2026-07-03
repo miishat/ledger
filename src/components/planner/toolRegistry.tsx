@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, CreditCard, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, CreditCard, Home, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -8,6 +8,7 @@ import { EmergencyFundCalculator } from './EmergencyFundCalculator'
 import { SavingsGoalCalculator } from './SavingsGoalCalculator'
 import { CurrencyConverter } from './CurrencyConverter'
 import { RaiseInflationCalculator } from './RaiseInflationCalculator'
+import { MortgageCalculator } from './MortgageCalculator'
 
 export interface PlannerTool {
   id: string
@@ -70,6 +71,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Snowball vs avalanche — payoff date, total interest, extra-payment impact.',
     icon: CreditCard,
     component: DebtPayoffCalculator,
+  },
+  {
+    id: 'mortgage',
+    name: 'Mortgage',
+    description: 'Payment, amortization curve, and how much house you can afford.',
+    icon: Home,
+    component: MortgageCalculator,
   },
 ]
 
