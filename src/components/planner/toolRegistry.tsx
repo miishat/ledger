@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Percent, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Percent, Scale, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -12,6 +12,7 @@ import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { TakeHomePayCalculator } from './TakeHomePayCalculator'
 import { IncomeTaxEstimator } from './IncomeTaxEstimator'
+import { RrspVsTfsaCalculator } from './RrspVsTfsaCalculator'
 
 export interface PlannerTool {
   id: string
@@ -102,6 +103,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Marginal and effective 2026 tax rates by province, with bracket visualization.',
     icon: Percent,
     component: IncomeTaxEstimator,
+  },
+  {
+    id: 'rrsp-vs-tfsa',
+    name: 'RRSP vs TFSA',
+    description: 'Which account wins for your marginal rate now vs in retirement.',
+    icon: Scale,
+    component: RrspVsTfsaCalculator,
   },
 ]
 
