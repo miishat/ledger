@@ -10,8 +10,8 @@
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 4a COMPLETE (Tasks 1–8; gate passed 2026-07-03, last code commit f79e7c7)
-- **Next task:** Execute Phase 4b — Savings tools (`2026-07-02-phase-4b-savings-tools.md`, already written) — start in a fresh session per 4a plan
+- **Last completed task:** Phase 4b, Task 1 — budget selectors (commit 76ab10d)
+- **Next task:** Phase 4b, Task 2 — Emergency Fund calculator
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -61,3 +61,4 @@
 2026-07-03 P4a.T6 Compound Interest calculator — commit dbfe728 (review clean; CalculatorField htmlFor/id a11y fix folded in, adjudicated OK)
 2026-07-03 P4a.T7 Savings Goal calculator (solve any variable) — commit a0ff23f (review clean)
 2026-07-03 P4a.T8 sub-phase gate — 112/112 tests, build OK after Recharts Tooltip typing fix (f79e7c7), changed files lint clean; live-verified: nav rename, /projections redirect, 3 tiles, invalid-id bounce, both calculators compute + persist across reload, all 4 solve-for modes, 5 themes on 3 routes (chart uses theme accent), 375px no-overflow/single-column tiles/2-col fields. Known: full-width sidebar squeezes 375px content (labels crowd) — Phase 7 reflow, logged since P1.
+2026-07-03 P4b.T1 pure budget selectors (monthly totals, rolling averages) — commit 76ab10d (review clean)
