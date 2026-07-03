@@ -14,7 +14,7 @@ export const Layout: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Budgeting', path: '/budget', icon: Wallet },
     { name: 'Investments', path: '/investments', icon: TrendingUp },
-    { name: 'Projections', path: '/projections', icon: PieChart },
+    { name: 'Planner', path: '/planner', icon: PieChart },
     { name: 'Compensation', path: '/compensation', icon: Calculator },
   ]
 

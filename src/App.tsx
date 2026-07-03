@@ -1,12 +1,13 @@
 import { useEffect } from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useThemeStore } from './store/useThemeStore'
 import { Layout } from './components/Layout'
 
 import { Dashboard } from './pages/Dashboard'
 import { Budgeting } from './pages/Budgeting'
 import { Investments } from './pages/Investments'
-import { Projections } from './pages/Projections'
+import { Planner } from './pages/Planner'
+import { PlannerTool } from './pages/PlannerTool'
 import { Compensation } from './pages/Compensation'
 
 function App() {
@@ -31,7 +32,9 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="budget" element={<Budgeting />} />
           <Route path="investments" element={<Investments />} />
-          <Route path="projections" element={<Projections />} />
+          <Route path="planner" element={<Planner />} />
+          <Route path="planner/:toolId" element={<PlannerTool />} />
+          <Route path="projections" element={<Navigate to="/planner" replace />} />
           <Route path="compensation" element={<Compensation />} />
         </Route>
       </Routes>
