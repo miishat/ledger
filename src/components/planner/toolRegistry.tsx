@@ -1,7 +1,7 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Percent, Scale, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
-import { ProjectionWidget } from '../investments/ProjectionWidget'
+import { ForecasterTool } from './forecaster/ForecasterTool'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
 import { EmergencyFundCalculator } from './EmergencyFundCalculator'
@@ -28,11 +28,10 @@ export interface PlannerTool {
 export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'forecaster',
-    name: 'Net-Worth Forecaster',
-    description:
-      'Project your future net worth from savings and market returns. (Full FIRE forecaster lands in Phase 4e.)',
+    name: 'Net-Worth / FIRE Forecaster',
+    description: 'Your history projected forward — scenarios, FIRE date, goals, Monte Carlo.',
     icon: TrendingUp,
-    component: ProjectionWidget,
+    component: ForecasterTool,
   },
   {
     id: 'compound-interest',
