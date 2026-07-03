@@ -1,10 +1,11 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { LineChart, ShieldCheck, Target, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, LineChart, ShieldCheck, Target, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { EmergencyFundCalculator } from './EmergencyFundCalculator'
 import { SavingsGoalCalculator } from './SavingsGoalCalculator'
+import { CurrencyConverter } from './CurrencyConverter'
 
 export interface PlannerTool {
   id: string
@@ -46,6 +47,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'How many months of expenses you have covered, and the gap to your target.',
     icon: ShieldCheck,
     component: EmergencyFundCalculator,
+  },
+  {
+    id: 'currency-converter',
+    name: 'Currency Converter',
+    description: 'USD ⇄ CAD with live rates, historical lookup, and manual fallback.',
+    icon: ArrowLeftRight,
+    component: CurrencyConverter,
   },
 ]
 
