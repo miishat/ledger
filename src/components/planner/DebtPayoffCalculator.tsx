@@ -116,7 +116,7 @@ export const DebtPayoffCalculator: React.FC = () => {
             <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
             <Tooltip
-              formatter={(value) => [formatMoney(value as number), '']}
+              formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
               contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
             />
             <Legend />
