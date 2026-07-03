@@ -84,3 +84,4 @@
 2026-07-03 P4e.T5 forecaster settings hook + auto-feed resolution + ListEditor — commit 0596119 (review clean)
 2026-07-03 P4e.T6 forecast chart (history + bands + stacked + goal markers) — commit 80329ae (review clean)
 2026-07-03 P4e.T7 FIRE forecaster tool page + registry swap (ProjectionWidget deleted) — commit a919c32 (review clean)
+2026-07-03 P4e.T8 Monte Carlo section (percentile fan + success probability) — commit 340589f (review clean)
