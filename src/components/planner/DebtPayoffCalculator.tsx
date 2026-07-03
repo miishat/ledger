@@ -53,7 +53,7 @@ export const DebtPayoffCalculator: React.FC = () => {
         <div className="flex items-center justify-between">
           <p className="text-[12px] uppercase tracking-wide text-text-secondary">Debts</p>
           <button
-            onClick={() => saveDebts([...debts, { id: `d${Date.now()}`, name: 'New debt', balance: 1000, aprPct: 10, minPayment: 50 }])}
+            onClick={() => saveDebts([...debts, { id: crypto.randomUUID(), name: 'New debt', balance: 1000, aprPct: 10, minPayment: 50 }])}
             className="flex items-center gap-1 text-[13px] text-text-secondary hover:text-accent transition-colors"
           >
             <Plus className="w-4 h-4" /> Add debt
