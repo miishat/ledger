@@ -37,6 +37,32 @@ describe('runMonteCarlo', () => {
       expect(b.p75).toBeLessThanOrEqual(b.p90)
     }
   })
+
+  it('records final partial-year band for fractional years', () => {
+    // Test case: years: 0.5 → months = 6. Without the fix, the partial year
+    // would not get recorded and bands would be empty. With the fix, we get
+    // exactly one band with the 6-month deterministic path.
+    // Expected 6-month balance (zero volatility):
+    // M1: 1000*1.01 + 100 = 1110
+    // M2: 1110*1.01 + 100 = 1221.1
+    // M3: 1221.1*1.01 + 100 = 1333.311
+    // M4: 1333.311*1.01 + 100 = 1446.644
+    // M5: 1446.644*1.01 + 100 = 1561.090
+    // M6: 1561.090*1.01 + 100 = 1677.301
+    const r = runMonteCarlo({
+      startBalance: 1000,
+      monthlySavings: 100,
+      years: 0.5,
+      meanReturnPct: 12,
+      stdDevPct: 0,
+      runs: 100,
+      seed: 42,
+    })
+    expect(r.bands).toHaveLength(1)
+    expect(r.bands[0].year).toBe(1)
+    expect(r.bands[0].p50).toBeGreaterThan(1670)
+    expect(r.bands[0].p50).toBeLessThan(1685)
+  })
 })
 
 describe('probabilityOfSuccess', () => {

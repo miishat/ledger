@@ -86,7 +86,7 @@ export function runMonteCarlo(config: MonteCarloConfig): MonteCarloResult {
       const contribution = config.monthlySavings * Math.pow(1 + stepUp / 100, yearsElapsed)
       const monthlyReturn = sdMonthly === 0 ? meanMonthly : meanMonthly + sdMonthly * gaussian()
       balance = balance * (1 + monthlyReturn) + contribution + (lumpsByMonth.get(m) ?? 0)
-      if (m % 12 === 0) yearly[m / 12 - 1].push(balance)
+      if (m % 12 === 0 || m === months) yearly[Math.ceil(m / 12) - 1].push(balance)
     }
     finalBalances.push(balance)
   }
