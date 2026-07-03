@@ -58,7 +58,7 @@
   - `takeHomePay(gross: number, province: Province): TakeHome` where `interface TakeHome { gross: number; federal: number; provincial: number; cpp: number; ei: number; net: number }`
   - `PROVINCIAL_TAX: Record<Province, { name: string; brackets: Bracket[]; bpa: number }>` and `FEDERAL_BRACKETS: Bracket[]` exported for the bracket visualization in Task 3.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/canadaTax.test.ts` (values hand-computed from the sourced tables; keep the derivations in comments so a reviewer can re-check):
 
@@ -146,12 +146,12 @@ describe('rates and take-home', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/canadaTax.test.ts`
 Expected: FAIL — cannot resolve `./canadaTax`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/canadaTax.ts`:
 
@@ -435,12 +435,12 @@ export function takeHomePay(gross: number, province: Province): TakeHome {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/canadaTax.test.ts`
 Expected: ALL PASS. If a hand-computed expectation disagrees with the implementation, re-derive the arithmetic by hand before changing either side (the tables are the authority).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/canadaTax.ts src/utils/finance/canadaTax.test.ts
@@ -459,7 +459,7 @@ git commit -m "feat: 2026 Canada tax module — sourced federal/provincial table
 - Consumes: `takeHomePay`, `PROVINCES`, `Province` (Task 1); `useToolInputs`/`usePlannerStore`, `CalculatorField`/`ResultCard`/`formatMoney` (4a). Tool id: `'take-home-pay'`.
 - Produces: `TakeHomePayCalculator: React.FC` registered as tool `take-home-pay`.
 
-- [ ] **Step 1: Implement the component**
+- [x] **Step 1: Implement the component**
 
 Create `src/components/planner/TakeHomePayCalculator.tsx`:
 
@@ -531,7 +531,7 @@ export const TakeHomePayCalculator: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Register the tool**
+- [x] **Step 2: Register the tool**
 
 In `src/components/planner/toolRegistry.tsx`, extend the lucide import with `Landmark` and append after the existing entries:
 
@@ -549,12 +549,12 @@ import { TakeHomePayCalculator } from './TakeHomePayCalculator'
   },
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run src/pages/Planner.test.tsx` (registry-driven hub test covers the new tile)
 Expected: PASS. Then `npm run dev`, open `#/planner/take-home-pay`, check $100k ON shows net ≈ $73,460 and edits persist across reload.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/planner/TakeHomePayCalculator.tsx src/components/planner/toolRegistry.tsx
@@ -573,7 +573,7 @@ git commit -m "feat: take-home pay calculator (2026, all provinces)"
 - Consumes: `totalIncomeTax`, `marginalRate`, `effectiveRate`, `FEDERAL_BRACKETS`, `PROVINCIAL_TAX`, `PROVINCES`, `Province`, `Bracket` (Task 1); 4a primitives + store. Tool id: `'income-tax'`.
 - Produces: `IncomeTaxEstimator: React.FC` registered as tool `income-tax`.
 
-- [ ] **Step 1: Implement the component**
+- [x] **Step 1: Implement the component**
 
 Create `src/components/planner/IncomeTaxEstimator.tsx`:
 
@@ -673,7 +673,7 @@ export const IncomeTaxEstimator: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Register the tool**
+- [x] **Step 2: Register the tool**
 
 In `toolRegistry.tsx`, add `Percent` to the lucide import and append:
 
@@ -691,12 +691,12 @@ import { IncomeTaxEstimator } from './IncomeTaxEstimator'
   },
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run src/pages/Planner.test.tsx`
 Expected: PASS. In dev: `#/planner/income-tax`, $100k ON shows marginal 31.48%, bars fill proportionally, province switch updates the lower bar.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/planner/IncomeTaxEstimator.tsx src/components/planner/toolRegistry.tsx
@@ -719,7 +719,7 @@ git commit -m "feat: income tax estimator with bracket visualization"
 
 The model (document in the module comment): a pre-tax dollar amount is available. RRSP: invest the full pre-tax amount (contribution is deductible), pay `marginalRetirePct` on withdrawal. TFSA: pay `marginalNowPct` first, invest the remainder, withdraw tax-free. With equal rates the two are identical — that's the classic result and the key test.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/rrspVsTfsa.test.ts`:
 
@@ -746,12 +746,12 @@ describe('compareRrspTfsa', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/rrspVsTfsa.test.ts`
 Expected: FAIL — cannot resolve `./rrspVsTfsa`.
 
-- [ ] **Step 3: Implement module and component**
+- [x] **Step 3: Implement module and component**
 
 Create `src/utils/finance/rrspVsTfsa.ts`:
 
@@ -874,12 +874,12 @@ import { RrspVsTfsaCalculator } from './RrspVsTfsaCalculator'
   },
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/rrspVsTfsa.test.ts src/pages/Planner.test.tsx`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/rrspVsTfsa.ts src/utils/finance/rrspVsTfsa.test.ts src/components/planner/RrspVsTfsaCalculator.tsx src/components/planner/toolRegistry.tsx
@@ -894,7 +894,7 @@ git commit -m "feat: RRSP-vs-TFSA optimizer driven by 2026 marginal rates"
 - Modify: `docs/superpowers/plans/PROGRESS.md`
 - Modify: `docs/superpowers/plans/2026-07-02-phase-4d-canada-tax.md` (check off boxes)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -904,7 +904,7 @@ npm run build
 
 Expected: all pass; lint clean on changed files (287 pre-existing v1.0 errors excluded per PROGRESS.md note).
 
-- [ ] **Step 2: Manual acceptance — mobile + all 5 themes**
+- [x] **Step 2: Manual acceptance — mobile + all 5 themes**
 
 `npm run dev`, then:
 1. Hub shows the three new tiles; each opens, back link works.
@@ -914,7 +914,7 @@ Expected: all pass; lint clean on changed files (287 pre-existing v1.0 errors ex
 5. Cycle all 5 themes on each calculator — bars and selects readable everywhere.
 6. 375px viewport: field grids wrap, bracket bars don't overflow, no horizontal scroll.
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 Mark 4d complete in PROGRESS.md (log line + next task pointer), check off this plan's boxes.
 
