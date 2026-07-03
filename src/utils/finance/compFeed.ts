@@ -27,8 +27,14 @@ export function compLumpSums(
   for (const grant of pkg.rsuGrants) {
     for (const event of generateVestEvents(grant, currentPrice)) {
       if (!event.date || event.vestValue <= 0) continue
-      const offset = monthOffset(now, new Date(event.date))
-      if (offset >= 1 && offset <= horizonMonths) {
+      const vestDate = new Date(event.date)
+      if (vestDate <= now) continue
+      // monthOffset truncates to whole calendar months, so a vest later this
+      // same month yields 0. It is still genuinely future, and buildForecast's
+      // first consulted step is month 1, so route same-month lumps there
+      // instead of dropping them.
+      const offset = Math.max(1, monthOffset(now, vestDate))
+      if (offset <= horizonMonths) {
         lumps.push({ month: offset, amount: event.vestValue, label: `RSU ${grant.grantName}` })
       }
     }
@@ -37,11 +43,24 @@ export function compLumpSums(
   // Annual cash bonus at its configured month.
   const bonus = calcAnnualBonus(pkg)
   if (bonus > 0) {
+    // Use the *end* of the bonus month as the "is it still ahead of now"
+    // probe: the store only tracks a bonus month, not an exact day, so any
+    // day within the current calendar month counts as still-future.
+    const bonusMonthEnd = new Date(now.getFullYear(), pkg.cashBonusMonth, 0, 23, 59, 59, 999)
     let bonusDate = new Date(now.getFullYear(), pkg.cashBonusMonth - 1, 1)
-    if (monthOffset(now, bonusDate) < 1) {
+    let firstOffset = monthOffset(now, bonusDate)
+    if (firstOffset < 0 || (firstOffset === 0 && bonusMonthEnd < now)) {
+      // Current year's bonus month has already passed — bump to next year.
       bonusDate = new Date(now.getFullYear() + 1, pkg.cashBonusMonth - 1, 1)
+      firstOffset = monthOffset(now, bonusDate)
+    } else if (firstOffset === 0) {
+      // Bonus month is the current calendar month and still ahead of (or on)
+      // now — genuinely future, but monthOffset truncates to 0. Route it to
+      // month 1, the forecaster's first consulted step, instead of dropping
+      // it or skipping straight to next year.
+      firstOffset = 1
     }
-    for (let offset = monthOffset(now, bonusDate); offset <= horizonMonths; offset += 12) {
+    for (let offset = firstOffset; offset <= horizonMonths; offset += 12) {
       lumps.push({ month: offset, amount: bonus, label: 'Bonus' })
     }
   }
