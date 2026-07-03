@@ -10,8 +10,8 @@
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 4c, Task 1 — amortization math (commit 0df4829)
-- **Next task:** Phase 4c, Task 2 — debt payoff simulation
+- **Last completed task:** Phase 4c, Task 2 — debt payoff simulation (commits 20961e1+00ca318)
+- **Next task:** Phase 4c, Task 3 — Debt Payoff calculator component
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -67,3 +67,4 @@
 2026-07-03 P4b.T4 Raise/Inflation calculator (Fisher real raise) — commit b652c99 (review clean)
 2026-07-03 P4b.T5 sub-phase gate — 120/120 tests, build OK, changed files lint clean; live-verified: 6 hub tiles, emergency-fund prefill/presets/progress/persistence, currency-converter manual-override fallback (offline path; live FX unverifiable in sandboxed preview) + swap + reload persistence, raise-inflation verdicts (1.94% / -1.92%), 5 themes x 3 tools, 375px no overflow
 2026-07-03 P4c.T1 amortization math (payment/inverse/schedule+extra) — commit 0df4829 (review clean, math hand-verified)
+2026-07-03 P4c.T2 debt payoff simulation (snowball/avalanche) — commits 20961e1+00ca318 (review caught min-payment starvation, fixed; PLAN AMENDMENT: brief's strategy-test fixture unsatisfiable, replaced with discriminating fixture, reviewer-verified)
