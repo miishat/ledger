@@ -10,8 +10,8 @@
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 4c, Task 3 — Debt Payoff calculator (commits ee0e9b1+3d45c39)
-- **Next task:** Phase 4c, Task 4 — Mortgage calculator (payment + affordability)
+- **Last completed task:** Phase 4c, Task 4 — Mortgage calculator (commit 8a431d2)
+- **Next task:** Phase 4c, Task 5 — Rent-vs-Buy (math + component)
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -69,3 +69,4 @@
 2026-07-03 P4c.T1 amortization math (payment/inverse/schedule+extra) — commit 0df4829 (review clean, math hand-verified)
 2026-07-03 P4c.T2 debt payoff simulation (snowball/avalanche) — commits 20961e1+00ca318 (review caught min-payment starvation, fixed; PLAN AMENDMENT: brief's strategy-test fixture unsatisfiable, replaced with discriminating fixture, reviewer-verified)
 2026-07-03 P4c.T3 Debt Payoff calculator (avalanche vs snowball + chart) — commits ee0e9b1+3d45c39 (review caught tooltip label regression in tsc fix; restored)
+2026-07-03 P4c.T4 Mortgage calculator (payment + affordability) — commit 8a431d2 (review clean)
