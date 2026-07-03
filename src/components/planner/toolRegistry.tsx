@@ -1,8 +1,9 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { LineChart, Target, TrendingUp } from 'lucide-react'
+import { LineChart, ShieldCheck, Target, TrendingUp } from 'lucide-react'
 import { ProjectionWidget } from '../investments/ProjectionWidget'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
+import { EmergencyFundCalculator } from './EmergencyFundCalculator'
 import { SavingsGoalCalculator } from './SavingsGoalCalculator'
 
 export interface PlannerTool {
@@ -38,6 +39,13 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Solve for any variable: contribution, time, required return, or final balance.',
     icon: Target,
     component: SavingsGoalCalculator,
+  },
+  {
+    id: 'emergency-fund',
+    name: 'Emergency Fund',
+    description: 'How many months of expenses you have covered, and the gap to your target.',
+    icon: ShieldCheck,
+    component: EmergencyFundCalculator,
   },
 ]
 
