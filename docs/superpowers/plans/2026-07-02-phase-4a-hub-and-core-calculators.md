@@ -662,7 +662,7 @@ git commit -m "feat: shared calculator UI primitives (CalculatorField, ResultCar
 - Consumes: `BentoGrid` from `src/components/dashboard/BentoGrid.tsx`; `ProjectionWidget` from `src/components/investments/ProjectionWidget.tsx` (kept as the interim "forecaster" tool until 4e replaces it).
 - Produces: `interface PlannerTool { id: string; name: string; description: string; icon: LucideIcon; component: React.ComponentType }`; `PLANNER_TOOLS: PlannerTool[]`; `getTool(id: string | undefined): PlannerTool | undefined`. Tasks 6–7 and all later sub-plans register calculators by appending to `PLANNER_TOOLS`. Routes: `/planner` (hub), `/planner/:toolId` (tool detail), `/projections` → redirect.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/pages/Planner.test.tsx`:
 
@@ -717,12 +717,12 @@ describe('PlannerTool route', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/pages/Planner.test.tsx`
 Expected: FAIL — cannot resolve `../components/planner/toolRegistry` / `./Planner` / `./PlannerTool`.
 
-- [ ] **Step 3: Implement registry and pages**
+- [x] **Step 3: Implement registry and pages**
 
 Create `src/components/planner/toolRegistry.tsx`:
 
@@ -858,12 +858,12 @@ Delete the old page:
 git rm src/pages/Projections.tsx
 ```
 
-- [ ] **Step 4: Run tests to verify they pass (and nothing else broke)**
+- [x] **Step 4: Run tests to verify they pass (and nothing else broke)**
 
 Run: `npx vitest run`
 Expected: Planner tests PASS; full suite PASS (nothing imported `Projections.tsx` except `App.tsx`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/planner/toolRegistry.tsx src/pages/Planner.tsx src/pages/PlannerTool.tsx src/pages/Planner.test.tsx src/App.tsx src/components/Layout.tsx
@@ -883,7 +883,7 @@ git commit -m "feat: Planner hub replaces Projections — tool registry, Bento t
 - Consumes: `useToolInputs`/`usePlannerStore` (Task 1), `growthSeries`/`futureValue` (Task 2), `CalculatorField`/`ResultCard`/`formatMoney` (Task 4), registry (Task 5). Tool id: `'compound-interest'`.
 - Produces: `CompoundInterestCalculator: React.FC` registered as tool `compound-interest`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/components/planner/CompoundInterestCalculator.test.tsx`:
 
@@ -934,12 +934,12 @@ describe('CompoundInterestCalculator', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/components/planner/CompoundInterestCalculator.test.tsx`
 Expected: FAIL — cannot resolve `./CompoundInterestCalculator`.
 
-- [ ] **Step 3: Implement the component and register it**
+- [x] **Step 3: Implement the component and register it**
 
 Create `src/components/planner/CompoundInterestCalculator.tsx`:
 
@@ -1035,12 +1035,12 @@ import { CompoundInterestCalculator } from './CompoundInterestCalculator'
   },
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/components/planner/CompoundInterestCalculator.test.tsx src/pages/Planner.test.tsx`
 Expected: ALL PASS (Planner hub test loops over the registry, so the new tile is covered automatically).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/planner/CompoundInterestCalculator.tsx src/components/planner/CompoundInterestCalculator.test.tsx src/components/planner/toolRegistry.tsx
@@ -1060,7 +1060,7 @@ git commit -m "feat: compound interest calculator with stacked contributions-vs-
 - Consumes: `useToolInputs`/`usePlannerStore` (Task 1), all four solvers from `src/utils/finance/savingsGoal.ts` (Task 3), `CalculatorField`/`ResultCard`/`formatMoney` (Task 4), registry (Task 5). Tool id: `'savings-goal'`.
 - Produces: `SavingsGoalCalculator: React.FC` registered as tool `savings-goal`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/components/planner/SavingsGoalCalculator.test.tsx`:
 
@@ -1113,12 +1113,12 @@ describe('SavingsGoalCalculator', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/components/planner/SavingsGoalCalculator.test.tsx`
 Expected: FAIL — cannot resolve `./SavingsGoalCalculator`.
 
-- [ ] **Step 3: Implement the component and register it**
+- [x] **Step 3: Implement the component and register it**
 
 Create `src/components/planner/SavingsGoalCalculator.tsx`:
 
@@ -1237,12 +1237,12 @@ import { SavingsGoalCalculator } from './SavingsGoalCalculator'
   },
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/components/planner/SavingsGoalCalculator.test.tsx src/pages/Planner.test.tsx`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/planner/SavingsGoalCalculator.tsx src/components/planner/SavingsGoalCalculator.test.tsx src/components/planner/toolRegistry.tsx
@@ -1261,7 +1261,7 @@ git commit -m "feat: savings goal calculator solving for any variable"
 - Consumes: everything above.
 - Produces: a verified, committed sub-phase. Do NOT start 4b in this session.
 
-- [ ] **Step 1: Run the full automated gate**
+- [x] **Step 1: Run the full automated gate**
 
 ```bash
 npx vitest run
@@ -1271,7 +1271,7 @@ npm run build
 
 Expected: all tests pass, zero lint errors, build succeeds. Fix anything that fails before proceeding (use superpowers:systematic-debugging if a failure is not obvious).
 
-- [ ] **Step 2: Manual acceptance — mobile + all 5 themes**
+- [x] **Step 2: Manual acceptance — mobile + all 5 themes**
 
 Run: `npm run dev`, open the app, then verify:
 
@@ -1284,11 +1284,11 @@ Run: `npm run dev`, open the app, then verify:
 
 Record any failures, fix, and re-run the relevant step.
 
-- [ ] **Step 3: Update PROGRESS.md**
+- [x] **Step 3: Update PROGRESS.md**
 
 In `docs/superpowers/plans/PROGRESS.md`: record Phase 4 in progress, sub-plan 4a complete (Tasks 1–8), last commit hash, and next action: "Plan Phase 4b JIT from the umbrella `2026-07-02-phase-4-planner.md` stub, then execute it."
 
-- [ ] **Step 4: Commit the gate**
+- [x] **Step 4: Commit the gate**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md docs/superpowers/plans/2026-07-02-phase-4a-hub-and-core-calculators.md
