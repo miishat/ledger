@@ -1,29 +1,67 @@
-import React from 'react';
-import { InvestmentTrackerWidget } from '../components/investments/InvestmentTrackerWidget';
+import React, { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { AnalysisCard } from '../components/investments/AnalysisCard'
+import { AnalysisModal } from '../components/investments/AnalysisModal'
+import { useAnalysisStore } from '../store/useAnalysisStore'
+import { useMarketDataStore } from '../store/useMarketDataStore'
+import { quoteKey } from '../services/marketData'
+import { currentValue, totalInvested } from '../utils/investments/analysisMetrics'
+import { formatMoney } from '../components/planner/format'
 
 export const Investments: React.FC = () => {
+  const analyses = useAnalysisStore((s) => s.analyses)
+  const quotes = useMarketDataStore((s) => s.quotes)
+  const overrides = useMarketDataStore((s) => s.overrides)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Header totals use override > cached > start price (cards fetch live).
+  const priceFor = (ticker: string, exchange: string | undefined, fallback: number) =>
+    overrides[quoteKey(ticker, exchange)] ?? quotes[quoteKey(ticker, exchange)]?.value.price ?? fallback
+
+  const plannedAll = analyses.reduce((s, a) => s + a.plannedAmount, 0)
+  const investedAll = analyses.reduce((s, a) => s + totalInvested(a.lots), 0)
+  const currentAll = analyses.reduce(
+    (s, a) => s + currentValue(a.lots, priceFor(a.ticker, a.exchange, a.startPrice)),
+    0,
+  )
+
   return (
-    <div className="flex flex-col gap-6 w-full h-full p-6 animate-fade-in">
-      <header className="flex justify-between items-center">
+    <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
+      <header className="flex justify-between items-center flex-wrap gap-3">
         <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Investment Tracker</h1>
+          <h1 className="text-[24px] font-semibold text-text-primary">Investments — Plan vs Actual</h1>
           <p className="text-[14px] text-text-secondary mt-1">
-            Compare your target vs actual investments over time.
+            Your decision journal: what you analyzed, what you actually did, and how both performed.
           </p>
         </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+        >
+          <Plus className="w-4 h-4" /> New analysis
+        </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2">
-          <InvestmentTrackerWidget />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total planned</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(plannedAll)}</p></div>
+        <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Actually invested</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(investedAll)} <span className="text-[13px] text-text-secondary">({formatMoney(investedAll - plannedAll)} vs plan)</span></p></div>
+        <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Current value</p><p className="text-[22px] font-semibold text-accent">{formatMoney(currentAll)}</p></div>
       </div>
 
-      <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex items-center justify-center min-h-[300px]">
-        <p className="text-text-secondary text-[14px]">
-          More detailed investment views and historical charts will go here in the future.
-        </p>
-      </div>
+      {analyses.length === 0 ? (
+        <div className="themed-card rounded-lg p-10 flex flex-col items-center gap-2">
+          <p className="text-text-primary text-[16px] font-medium">No analyses yet</p>
+          <p className="text-text-secondary text-[14px]">Record your first investment thesis — the start price auto-fills from the analysis date.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {analyses.map((a) => (
+            <AnalysisCard key={a.id} analysis={a} totals={{ plannedAll, currentAll }} />
+          ))}
+        </div>
+      )}
+
+      <AnalysisModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
-  );
-};
+  )
+}
