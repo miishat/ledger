@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
+import { BackupControls } from './settings/BackupControls'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 
 export const Layout: React.FC = () => {
@@ -13,7 +14,7 @@ export const Layout: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Budgeting', path: '/budget', icon: Wallet },
     { name: 'Investments', path: '/investments', icon: TrendingUp },
-    { name: 'Projections', path: '/projections', icon: PieChart },
+    { name: 'Planner', path: '/planner', icon: PieChart },
     { name: 'Compensation', path: '/compensation', icon: Calculator },
   ]
 
@@ -52,14 +53,15 @@ export const Layout: React.FC = () => {
           </div>
         </div>
 
-        {/* Theme Selector Dock */}
-        <div className="p-4 border-t border-border bg-bg-primary/20 flex justify-center pb-6">
+        {/* Backup + Theme Dock */}
+        <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
+          <BackupControls />
           <ThemeSelector />
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto p-8 relative z-10">
+      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
         <Outlet />
       </main>
     </div>

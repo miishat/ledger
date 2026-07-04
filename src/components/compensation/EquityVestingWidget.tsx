@@ -1,6 +1,7 @@
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useCompensationStore, generateVestEvents } from '../../store/useCompensationStore'
 import type { VestEvent } from '../../store/useCompensationStore'
+import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import {
   ComposedChart,
   Line,
@@ -13,7 +14,8 @@ import {
 } from 'recharts'
 
 export function EquityVestingWidget() {
-  const { primaryPackage, timeMode } = useCompensationStore()
+  const { timeMode } = useCompensationStore()
+  const { pkg: primaryPackage } = useCompensationDisplay()
 
   const COLORS = ['var(--color-accent)', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#ef4444']
 

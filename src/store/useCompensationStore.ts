@@ -30,6 +30,7 @@ export interface PastSalary {
 export interface CompensationPackage {
   id: string
   name: string
+  companyTicker?: string
   companyCurrentPrice: number
   baseSalary: number
   pastSalaryChanges: PastSalary[]
@@ -102,15 +103,12 @@ export function calcAnnualESPP(pkg: CompensationPackage, timeMode: TimeMode = 'c
   if (pkg.esppContributionPercent === 0 || companyCurrentPrice === 0) return 0;
   const contributionAmount = calcAnnualBaseSalary(pkg, timeMode) * (pkg.esppContributionPercent / 100);
   
-  let purchasePrice = 0;
   const today = new Date();
   const isLockInActive = esppLockedInPrice > 0 && (!pkg.esppLockInEndDate || new Date(pkg.esppLockInEndDate) >= today);
 
-  if (isLockInActive) {
-    purchasePrice = esppLockedInPrice;
-  } else {
-    purchasePrice = companyCurrentPrice * (1 - (pkg.esppDiscountPercent / 100));
-  }
+  const purchasePrice = isLockInActive
+    ? esppLockedInPrice
+    : companyCurrentPrice * (1 - (pkg.esppDiscountPercent / 100));
 
   if (purchasePrice <= 0) return 0;
   const sharesBought = contributionAmount / purchasePrice;
@@ -217,6 +215,7 @@ interface CompensationState {
   comparePackage: CompensationPackage | null
   compareMode: boolean
   timeMode: TimeMode
+  useCadConversion: boolean
 
   setPrimaryPackage: (updates: Partial<CompensationPackage>) => void
   setComparePackage: (pkg: CompensationPackage | null) => void
@@ -225,6 +224,7 @@ interface CompensationState {
   addRSUGrant: (grant: RSUGrant) => void
   removeRSUGrant: (id: string) => void
   updateRSUGrant: (id: string, updates: Partial<RSUGrant>) => void
+  toggleCadConversion: () => void
 }
 
 const defaultPrimaryPackage: CompensationPackage = {
@@ -250,6 +250,7 @@ export const useCompensationStore = create<CompensationState>()(
       comparePackage: null,
       compareMode: false,
       timeMode: 'current-year',
+      useCadConversion: false,
 
       setPrimaryPackage: (updates) =>
         set((state) => ({
@@ -258,6 +259,7 @@ export const useCompensationStore = create<CompensationState>()(
       setComparePackage: (pkg) => set({ comparePackage: pkg }),
       toggleCompareMode: () => set((state) => ({ compareMode: !state.compareMode })),
       setTimeMode: (mode) => set({ timeMode: mode }),
+      toggleCadConversion: () => set((state) => ({ useCadConversion: !state.useCadConversion })),
       addRSUGrant: (grant) =>
         set((state) => ({
           primaryPackage: {

@@ -35,7 +35,7 @@
   - `buildBackup(): BackupEnvelope` — reads each registry key from localStorage (skips absent keys), JSON-parses each value into `data`.
   - `restoreBackup(envelope: BackupEnvelope): void` — validates `app === 'ledger'` and `version <= BACKUP_VERSION`, then writes each `data` entry back to localStorage as a JSON string. Throws `Error('Invalid Ledger backup file')` on a bad envelope.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/utils/backup.test.ts
@@ -72,12 +72,12 @@ describe('backup', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: FAIL — cannot resolve `./backup`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // src/utils/backup.ts
@@ -124,12 +124,12 @@ export function restoreBackup(envelope: BackupEnvelope): void {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/backup.ts src/utils/backup.test.ts
@@ -151,7 +151,7 @@ git commit -m "feat: backup export/import core with versioned envelope"
   - `backupFilename(): string` — e.g. `ledger-backup-2026-07-02.json` (date from today).
   - `parseBackupText(text: string): BackupEnvelope` — `JSON.parse` then `restoreBackup`-validate the shape (reuse validation by calling `restoreBackup` is NOT wanted here — only parse+validate, no write). Throws `Error('Invalid Ledger backup file')` on malformed JSON or bad envelope.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // append to src/utils/backup.test.ts
@@ -181,12 +181,12 @@ describe('backup file io', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: FAIL — `backupToBlob` / `parseBackupText` not exported.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // append to src/utils/backup.ts
@@ -213,12 +213,12 @@ export function parseBackupText(text: string): BackupEnvelope {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/utils/backup.test.ts`
 Expected: PASS (all backup tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/backup.ts src/utils/backup.test.ts
@@ -238,7 +238,7 @@ git commit -m "feat: backup blob/filename/parse helpers"
 - Consumes: `backupToBlob`, `backupFilename`, `parseBackupText`, `restoreBackup` from Tasks 1-2.
 - Produces: `BackupControls` React component. Export button downloads the blob; Import button opens a hidden file input, reads the file, calls `parseBackupText` → `restoreBackup`, then `window.location.reload()`. On parse error, shows an inline error message (no crash).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/components/settings/BackupControls.test.tsx
@@ -265,12 +265,12 @@ describe('BackupControls', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/components/settings/BackupControls.test.tsx`
 Expected: FAIL — cannot resolve `./BackupControls`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```tsx
 // src/components/settings/BackupControls.tsx
@@ -340,12 +340,12 @@ And add the import near the top of `Layout.tsx`:
 import { BackupControls } from './settings/BackupControls'
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- src/components/settings/BackupControls.test.tsx`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Manual sanity + commit**
+- [x] **Step 5: Manual sanity + commit**
 
 Run `npm run dev`, click Export (a `ledger-backup-*.json` downloads), then Import that file (page reloads, data intact).
 
@@ -364,11 +364,11 @@ git commit -m "feat: backup export/import UI in nav dock"
 
 **Interfaces:** none (build/config task).
 
-- [ ] **Step 1: Add icon PNGs**
+- [x] **Step 1: Add icon PNGs**
 
 Generate three PNGs from the existing `public/favicon.svg` (or a solid-bg version of it) at 192×192, 512×512, and a 512×512 maskable variant with padding. Use whatever image tooling is available (e.g. `sharp` via `npx`, or an online-free equivalent run locally). Place them in `public/`. They must be non-empty valid PNGs of the correct dimensions.
 
-- [ ] **Step 2: Fix the manifest so icons resolve under `/ledger/`**
+- [x] **Step 2: Fix the manifest so icons resolve under `/ledger/`**
 
 In `vite.config.ts`, replace the `manifest` block with (note: icon `src` are RELATIVE — leading `/` resolves to the domain root and 404s on GitHub Pages Project Pages):
 
@@ -390,7 +390,7 @@ In `vite.config.ts`, replace the `manifest` block with (note: icon `src` are REL
       },
 ```
 
-- [ ] **Step 3: Build and verify the generated manifest**
+- [x] **Step 3: Build and verify the generated manifest**
 
 Run: `npm run build`
 Expected: build succeeds. Then confirm the emitted manifest references the icons and they exist in the build output:
@@ -398,7 +398,7 @@ Expected: build succeeds. Then confirm the emitted manifest references the icons
 Run: `ls dist/ | grep icon && cat dist/manifest.webmanifest`
 Expected: three `icon-*.png` present in `dist/`; manifest `icons[].src` are relative (no leading `/`); `start_url` and `scope` are `.`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add vite.config.ts public/icon-192x192.png public/icon-512x512.png public/icon-512x512-maskable.png
@@ -415,7 +415,7 @@ git commit -m "fix: PWA manifest icon paths + add real app icons"
 
 **Interfaces:** none (layout hardening; full mobile reflow + bottom nav is Phase 7).
 
-- [ ] **Step 1: Harden the viewport meta**
+- [x] **Step 1: Harden the viewport meta**
 
 In `index.html`, replace the viewport meta with one that respects notches:
 
@@ -423,7 +423,7 @@ In `index.html`, replace the viewport meta with one that respects notches:
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 ```
 
-- [ ] **Step 2: Guard the main content from overflow**
+- [x] **Step 2: Guard the main content from overflow**
 
 In `src/components/Layout.tsx`, add `min-w-0` to the `<main>` so flex children can shrink instead of forcing horizontal scroll, and make its padding responsive:
 
@@ -433,11 +433,11 @@ Change `<main className="flex-1 overflow-auto p-8 relative z-10">` to:
       <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
 ```
 
-- [ ] **Step 3: Verify no horizontal overflow at 375px**
+- [x] **Step 3: Verify no horizontal overflow at 375px**
 
 Run: `npm run dev`, open DevTools device toolbar at 375px width, load each route. Expected: no horizontal scrollbar on the page body. (The sidebar remains full-width for now; the bottom-nav reflow is Phase 7 — do NOT build it here.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add index.html src/components/Layout.tsx
@@ -448,18 +448,18 @@ git commit -m "fix: mobile viewport-fit and prevent horizontal overflow"
 
 ### Task 6: Phase gate — verify, then close Phase 1
 
-- [ ] **Step 1: Full verification**
+- [x] **Step 1: Full verification**
 
 Run each and confirm clean:
 - `npm test` → all pass
 - `npm run build` → succeeds
 - `npm run lint` → no errors
 
-- [ ] **Step 2: Update PROGRESS.md**
+- [x] **Step 2: Update PROGRESS.md**
 
 Mark Phase 1 `- [x]`, set current phase to 2, next task to "plan Phase 2 JIT", append Log lines for P1.T1–T5.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md
