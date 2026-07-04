@@ -17,7 +17,7 @@ export const PortfolioRollupWidget: React.FC = () => {
     return (
       <WidgetWrapper title="Portfolio">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/investments" className="text-accent hover:underline">Import a broker CSV</Link> to see your portfolio value here.
+          <Link to="/investments" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Import a broker CSV</Link> to see your portfolio value here.
         </p>
       </WidgetWrapper>
     )

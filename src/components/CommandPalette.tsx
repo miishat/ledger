@@ -56,7 +56,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <button
                 onClick={() => run(a.path)}
                 onMouseEnter={() => setSelected(i)}
-                className={`w-full text-left px-4 py-2.5 flex flex-col ${
+                className={`w-full text-left px-4 py-2.5 flex flex-col focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
                   i === clampedSelected ? 'bg-accent/10 text-accent' : 'text-text-primary'
                 }`}
               >

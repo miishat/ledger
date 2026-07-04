@@ -12,7 +12,7 @@ export const CompSnapshotWidget: React.FC = () => {
     return (
       <WidgetWrapper title="Compensation">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/compensation" className="text-accent hover:underline">Set up your package</Link> to see total comp and upcoming vests.
+          <Link to="/compensation" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Set up your package</Link> to see total comp and upcoming vests.
         </p>
       </WidgetWrapper>
     )

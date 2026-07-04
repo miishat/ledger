@@ -53,9 +53,10 @@ export const Layout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent font-semibold' 
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center px-4 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+                    isActive
+                      ? 'bg-accent/10 text-accent font-semibold'
                       : 'text-text-secondary hover:bg-bg-primary/50 hover:text-text-primary'
                   }`}
                 >
@@ -72,7 +73,7 @@ export const Layout: React.FC = () => {
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="flex items-center gap-2 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 hover:bg-bg-primary/50 hover:text-text-primary transition-colors"
+            className="flex items-center gap-2 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 hover:bg-bg-primary/50 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             aria-label="Open command palette"
           >
             <span>Jump to…</span>
@@ -90,7 +91,7 @@ export const Layout: React.FC = () => {
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="flex items-center gap-1.5 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 shrink-0"
+            className="flex items-center gap-1.5 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             aria-label="Open command palette"
           >
             <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
@@ -117,7 +118,7 @@ export const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors ${
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
                 isActive ? 'text-accent' : 'text-text-secondary'
               }`}
             >

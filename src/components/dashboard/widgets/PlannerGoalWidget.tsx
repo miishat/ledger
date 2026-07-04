@@ -22,7 +22,7 @@ export const PlannerGoalWidget: React.FC = () => {
     return (
       <WidgetWrapper title="Top goal">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/planner/forecaster" className="text-accent hover:underline">Add a goal in the Forecaster</Link> to track it here.
+          <Link to="/planner/forecaster" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Add a goal in the Forecaster</Link> to track it here.
         </p>
       </WidgetWrapper>
     )

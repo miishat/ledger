@@ -11,7 +11,7 @@ export const BudgetHealthWidget: React.FC = () => {
     return (
       <WidgetWrapper title="This month's budget">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/budget" className="text-accent hover:underline">Add transactions in Budgeting</Link> to see your monthly health here.
+          <Link to="/budget" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Add transactions in Budgeting</Link> to see your monthly health here.
         </p>
       </WidgetWrapper>
     )
