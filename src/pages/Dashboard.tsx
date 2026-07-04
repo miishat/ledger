@@ -5,6 +5,11 @@ import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
 import { AccountCategoryWidget } from '../components/dashboard/AccountCategoryWidget';
+import { NetWorthTrendWidget } from '../components/dashboard/widgets/NetWorthTrendWidget';
+import { PortfolioRollupWidget } from '../components/dashboard/widgets/PortfolioRollupWidget';
+import { CompSnapshotWidget } from '../components/dashboard/widgets/CompSnapshotWidget';
+import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealthWidget';
+import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
 
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -19,18 +24,25 @@ export const Dashboard: React.FC = () => {
       </div>
       
       <BentoGrid>
+        <NetWorthTrendWidget />
+
         <NetWorthWidget />
         <MonthlySummaryWidget selectedMonth={currentMonth} />
-        
+
         <AccountCategoryWidget title="Bank Accounts" type="bank" />
         <AccountCategoryWidget title="Investment Accounts" type="investment" />
-        
+
         <IncomeWidget selectedMonth={currentMonth} />
         <ExpenseWidget selectedMonth={currentMonth} />
-        
+
         <AccountCategoryWidget title="Receivables" type="receivable" />
         <AccountCategoryWidget title="Others" type="other" />
         <AccountCategoryWidget title="Debts & Liabilities" type="debt" />
+
+        <PortfolioRollupWidget />
+        <CompSnapshotWidget />
+        <BudgetHealthWidget />
+        <PlannerGoalWidget />
       </BentoGrid>
     </div>
   );
