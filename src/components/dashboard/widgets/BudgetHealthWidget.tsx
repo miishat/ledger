@@ -1,10 +1,22 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { useBudgetStore, getMonthlyBudgetStats } from '../../../store/useBudgetStore'
 import { formatMoney } from '../../planner/format'
 
 export const BudgetHealthWidget: React.FC = () => {
   const budgetState = useBudgetStore()
+
+  if (Object.keys(budgetState.transactions).length === 0) {
+    return (
+      <WidgetWrapper title="This month's budget">
+        <p className="text-[13px] text-text-secondary mt-2">
+          <Link to="/budget" className="text-accent hover:underline">Add transactions in Budgeting</Link> to see your monthly health here.
+        </p>
+      </WidgetWrapper>
+    )
+  }
+
   const now = new Date()
   const stats = getMonthlyBudgetStats(budgetState, now.getFullYear(), now.getMonth())
 
