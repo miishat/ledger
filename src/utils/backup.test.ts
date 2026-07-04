@@ -29,6 +29,10 @@ describe('backup', () => {
     expect(BACKUP_KEYS).toContain('ledger-portfolio')
   })
 
+  it('registers the dashboard layout key', () => {
+    expect(BACKUP_KEYS).toContain('ledger-dashboard-layout')
+  })
+
   it('round-trips: restore writes values back as JSON strings', () => {
     const env: BackupEnvelope = {
       version: BACKUP_VERSION, exportedAt: '2026-07-02T00:00:00Z', app: 'ledger',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
@@ -24,6 +24,15 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
   const fetchedPrice = hist.data?.value.close
   const effectivePrice = manualPrice ?? fetchedPrice ?? 0
 
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const canSave = ticker.trim() !== '' && plannedAmount > 0 && date !== '' && effectivePrice > 0
@@ -46,11 +55,11 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="New analysis">
       <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-[18px] font-semibold text-text-primary">New analysis</h2>
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent">
+          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
             <X className="w-5 h-5" />
           </button>
         </div>

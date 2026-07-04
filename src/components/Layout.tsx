@@ -1,14 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
+import { PageTransition } from './ui/PageTransition'
+import { CommandPalette } from './CommandPalette'
+import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -24,7 +39,7 @@ export const Layout: React.FC = () => {
       <ThemeBackground theme={theme} />
 
       {/* Sidebar Navigation */}
-      <nav className="w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex flex-col justify-between transition-all duration-300 z-10">
+      <nav className="hidden md:flex w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
         <div>
           <div className="p-6">
             <h1 className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</h1>
@@ -39,9 +54,10 @@ export const Layout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent font-semibold' 
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center px-4 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+                    isActive
+                      ? 'bg-accent/10 text-accent font-semibold'
                       : 'text-text-secondary hover:bg-bg-primary/50 hover:text-text-primary'
                   }`}
                 >
@@ -55,15 +71,68 @@ export const Layout: React.FC = () => {
 
         {/* Backup + Theme Dock */}
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-2 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 hover:bg-bg-primary/50 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            aria-label="Open command palette"
+          >
+            <span>Jump to…</span>
+            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
+          </button>
           <BackupControls />
           <ThemeSelector />
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
-        <Outlet />
+      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-20 md:pb-8 relative z-10">
+        {/* Mobile Backup + Theme row */}
+        <div className="md:hidden flex items-center justify-center flex-wrap gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-1.5 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            aria-label="Open command palette"
+          >
+            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
+          </button>
+          <BackupControls />
+          <ThemeSelector />
+        </div>
+        <ErrorBoundary key={location.pathname}>
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </ErrorBoundary>
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary/90 backdrop-blur-[var(--card-blur)] flex"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-label="Primary"
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = location.pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
+                isActive ? 'text-accent' : 'text-text-secondary'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {item.name}
+            </Link>
+          )
+        })}
+      </nav>
+
+      <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
 }

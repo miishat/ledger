@@ -6,12 +6,13 @@
 
 ## Current position
 
-- **Current phase:** 5b — Investments: Portfolio Viewer (next up)
+- **Current phase:** ALL PHASES COMPLETE — v2.0 milestone done (2026-07-04); awaiting merge/PR decision
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 5b, Task 3 — portfolio metrics (commit 4c01913)
-- **Next task:** Phase 5b, Task 4 — import UI with column mapper
+- **Last completed task:** FINAL WHOLE-BRANCH REVIEW passed after fixes — ErrorBoundary f68a328 + null-safe widget resolution 116f329 (review verdict: ready to merge)
+- **Next task:** none — awaiting user's merge/PR decision
+- **Deferred follow-ups (post-merge tickets):** geometric theme `--accent` (#3b82f6 on white = 3.68:1) fails WCAG AA for normal text — token-level design decision; delete-or-wire unused Skeleton primitive; theme-token the comp-chart hex color arrays (pre-existing v1.0); market-data cache eviction/TTL; wire clearManualPrice button in Compensation. (Former crash-class deferrals — malformed RSU, garbage backup import — are now contained by the app-level ErrorBoundary.)
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -23,9 +24,9 @@
 - [x] Phase 3 — Compensation: live price + CAD toggle (2026-07-02)
 - [x] Phase 4 — Planner (tools/calculators hub) — 12 tools + FIRE forecaster (2026-07-03)
 - [x] Phase 5a — Investments: Plan vs Actual (2026-07-03)
-- [ ] Phase 5b — Investments: Portfolio Viewer *(plan written)*
-- [ ] Phase 6 — Budgeting enhancements *(plan written)*
-- [ ] Phase 7 — UI/UX 2026 refresh + Dashboard polish *(plan written)*
+- [x] Phase 5b — Investments: Portfolio Viewer (2026-07-03)
+- [x] Phase 6 — Budgeting enhancements (2026-07-04)
+- [x] Phase 7 — UI/UX 2026 refresh + Dashboard polish (2026-07-04) — **v2.0 MILESTONE COMPLETE**
 
 ## Log (append one line per completed task)
 
@@ -95,3 +96,20 @@
 2026-07-03 P5b.T1 portfolio store (ledger-portfolio) + backup registration — commit f0650fd (review clean)
 2026-07-03 P5b.T2 portfolio CSV parsing (IBKR + Wealthsimple + generic mapper) — commit 8049cfa (review clean)
 2026-07-03 P5b.T3 portfolio valuation metrics (CAD normalization) — commit 4c01913 (review clean, math hand-verified)
+2026-07-03 P5b.T4 portfolio CSV import UI (auto-detect + column mapper) — commit f731d21 (review clean)
+2026-07-03 P5b.T5 holdings table + CAD totals + Investments tabs — commit cda106e (review clean)
+2026-07-03 P5b.T6 sub-phase gate — 199/199 tests, build OK, lint clean; live-verified: WS auto-detect + mapper paths (math hand-checked), override in fallback chain, replace/clear/persistence, journal intact, 5 themes, 375px table-in-card scroll. PHASE 5b COMPLETE.
+2026-07-03 P6.T1 recurring/subscription detection — commit 1a50e29 (review clean, logic hand-traced)
+2026-07-04 P6.T2 category stats + anomaly detection — commit 55f9e04 (review clean; thresholds + sign convention verified)
+2026-07-04 P6.T3 month-end cash-flow forecast — commit 6fd275d (review clean; projection semantics verified, loop bounded)
+2026-07-04 P6.T4 smart widgets: subscriptions/anomaly/forecast + Insights row — commit 4435c21 (review clean; interfaces + theme tokens verified)
+2026-07-04 P6.T5 Sankey income-flow widget — commit 1a629eb (review clean; custom node renderer deviation brief-anticipated, theme-vars only)
+2026-07-04 P6.T6 category sparklines + budget pace bars — commits 8622b9e+fe0bfcd (review caught UTC/local clock mix in pace check; fixed)
+2026-07-04 P6.T7 spending calendar heatmap — commit 1dacc9c (review clean; calendar + opacity math verified)
+2026-07-04 P6.T8 PHASE 6 GATE — 209/209 tests, build OK, changed files lint clean; live-verified: subscriptions $1,517/mo (rent+Netflix, grocery correctly rejected), anomalies 3.6×/2.3× with steady categories silent, forecast −2,125+5,000−1,517=1,358 with 4 pending rows, Sankey flows (July expense-only, June Salary→3 groups, empty month → empty state no crash), heatmap day totals hand-checked, pace bars over-pace correct at day 4/31, month selector drives all visuals; regression pass: CSV import → triage (2) → categorize+approve to store, rules UI, paradigm switch both ways, add-transaction modal, reload persistence; 5 themes verified via computed styles (accent/text vars propagate to heatmap/Sankey/sparklines); 375px no horizontal scroll (known pre-existing sidebar squeeze deferred to Phase 7). Preview screenshot tool timed out (harness) — verification DOM/computed-style based. PHASE 6 COMPLETE.
+2026-07-04 P7.T1 dashboard rollups + trend; mock store deleted — commits 6d8bfba+1452757 (review caught missing BudgetHealth empty state; fixed)
+2026-07-04 P7.T2 drag-to-reorder dashboard + ledger-dashboard-layout store — commits adce1d4+5ea660e (review flagged render-scoped registry + dragend; fixed)
+2026-07-04 P7.T3 mobile bottom tab navigation + safe-area — commit 281c13e (review clean; components reused not duplicated)
+2026-07-04 P7.T4 motion polish: AnimatedNumber/PageTransition/Skeleton — commit 6dac964 (review clean; CompHero skeleton validly skipped, lint adaptation drift-free)
+2026-07-04 P7.T5 command palette Ctrl/Cmd+K — commit 6cf52a9 (review clean; mobile-row overflow fix disclosed + adjudicated)
+2026-07-04 P7.T6 a11y pass + v2.0 MILESTONE GATE — commit 4ef7877 (a11y: 5 modals Escape+dialog role, ~12 focus-visible rings, sidebar aria-current; contrast AA verified computationally across 5 themes×4 routes except geometric accent-token defect, deferred). Gate: 215/215 tests, build OK, lint total unchanged (285 pre-existing); live-verified: all 5 rollups empty-state (fresh profile) AND populated (math hand-checked: remaining $280=1900−1620, portfolio 10×130, goal 83%), trend chart renders, layout order persists + resolves (stored-first/defaults-appended), ⌘K opens/filters/navigates/Escapes in all 5 themes, mobile: bottom bar + hidden sidebar + full-width main (375px sidebar squeeze FIXED — logged since P1) + 52px targets + no h-scroll on all 5 routes + forecaster + 2 calculators, mobile ⌘K/Backup/Theme row reachable. Sandbox limits (as all prior gates): offline toggle, Lighthouse, backup file round-trip (unit-tested incl. new layout key; UI present) not live-exercised; drag gesture verified via persisted-order path, not synthetic DnD. PHASE 7 + MILESTONE v2.0 COMPLETE.
