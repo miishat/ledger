@@ -12,6 +12,29 @@ import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealth
 import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 
+// Canonical default widget order/ids, hoisted to module scope so it is a stable
+// reference across renders (ids are what get persisted/reordered, not the elements).
+// NOTE: 'net-worth' = NetWorthTrendWidget (the trend chart) and 'trend' = NetWorthWidget
+// (the point-in-time figure). This naming looks swapped but is deliberate/historical —
+// these ids are persisted in stored layouts, so do NOT "fix" the pairing here, it would
+// orphan existing users' saved widget order.
+const DASHBOARD_WIDGET_IDS: string[] = [
+  'net-worth',
+  'trend',
+  'monthly-summary',
+  'bank',
+  'investment-accounts',
+  'income',
+  'expense',
+  'receivable',
+  'other',
+  'debt',
+  'portfolio',
+  'comp',
+  'budget-health',
+  'top-goal',
+];
+
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -19,6 +42,8 @@ export const Dashboard: React.FC = () => {
   const storedOrder = useDashboardLayoutStore((s) => s.order);
   const setOrder = useDashboardLayoutStore((s) => s.setOrder);
 
+  // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
+  // (recomputed each render), so the elements themselves cannot be hoisted alongside the ids.
   const DASHBOARD_WIDGETS: { id: string; element: React.ReactNode }[] = [
     { id: 'net-worth', element: <NetWorthTrendWidget /> },
     { id: 'trend', element: <NetWorthWidget /> },
@@ -36,7 +61,7 @@ export const Dashboard: React.FC = () => {
     { id: 'top-goal', element: <PlannerGoalWidget /> },
   ];
 
-  const defaultIds = DASHBOARD_WIDGETS.map((w) => w.id);
+  const defaultIds = DASHBOARD_WIDGET_IDS;
   const orderedIds = [
     ...storedOrder.filter((id) => defaultIds.includes(id)),
     ...defaultIds.filter((id) => !storedOrder.includes(id)),
@@ -67,6 +92,7 @@ export const Dashboard: React.FC = () => {
                 }
                 setDragId(null);
               }}
+              onDragEnd={() => setDragId(null)}
               className={`cursor-grab active:cursor-grabbing ${dragId === id ? 'opacity-50' : ''}`}
             >
               {w.element}
