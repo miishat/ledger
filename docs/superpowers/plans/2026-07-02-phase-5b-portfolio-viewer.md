@@ -40,7 +40,7 @@
   - `interface Holding { id: string; ticker: string; name?: string; exchange?: string; quantity: number; avgCost: number; currency: Currency }` (`avgCost` = per-share cost basis in the holding's currency)
   - `usePortfolioStore` — `{ holdings: Holding[]; importedAt: string | null; setHoldings(holdings: Holding[]): void; clearHoldings(): void }` (`setHoldings` replaces everything and stamps `importedAt`)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/store/usePortfolioStore.test.ts`:
 
@@ -90,12 +90,12 @@ Add to `src/utils/backup.test.ts`:
   })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/store/usePortfolioStore.test.ts src/utils/backup.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/store/usePortfolioStore.ts`:
 
@@ -137,12 +137,12 @@ export const usePortfolioStore = create<PortfolioState>()(
 
 Append `'ledger-portfolio'` to `BACKUP_KEYS` in `src/utils/backup.ts`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/store/usePortfolioStore.test.ts src/utils/backup.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/usePortfolioStore.ts src/store/usePortfolioStore.test.ts src/utils/backup.ts src/utils/backup.test.ts
@@ -173,7 +173,7 @@ Broker formats drift, so the two named parsers target the documented common expo
 - **IBKR** (portfolio/positions export): headers `Symbol, Quantity, Cost Basis, Currency` (optionally `Description`). `avgCost = Cost Basis / Quantity`.
 - **Wealthsimple** (holdings export): headers `Symbol, Name, Quantity, Book Value, Currency`. `avgCost = Book Value / Quantity`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/portfolioCsv.test.ts`:
 
@@ -231,12 +231,12 @@ describe('mapPortfolioRows', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/portfolioCsv.test.ts`
 Expected: FAIL — cannot resolve `./portfolioCsv`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/portfolioCsv.ts`:
 
@@ -358,12 +358,12 @@ export function mapPortfolioRows(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/portfolioCsv.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/portfolioCsv.ts src/utils/portfolioCsv.test.ts
@@ -388,7 +388,7 @@ git commit -m "feat: portfolio CSV parsing — IBKR + Wealthsimple + generic col
   - `interface PortfolioTotals { investedCad: number; valueCad: number; plCad: number; plPct: number | null }`
   - `portfolioTotals(rows: { holding: Holding; price: number }[], fxUsdCad: number): PortfolioTotals`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/investments/portfolioMetrics.test.ts`:
 
@@ -441,12 +441,12 @@ describe('portfolioTotals', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/investments/portfolioMetrics.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/investments/portfolioMetrics.ts`:
 
@@ -499,12 +499,12 @@ export function portfolioTotals(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/investments/portfolioMetrics.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/investments/portfolioMetrics.ts src/utils/investments/portfolioMetrics.test.ts
@@ -524,7 +524,7 @@ git commit -m "feat: portfolio valuation metrics with CAD normalization"
 
 Flow: pick file → recognized ⇒ `setHoldings` (ids stamped `h-${index}-${Date.now()}`) with a success note naming the parser count; unrecognized ⇒ inline mapper panel with four selects (ticker/quantity/total cost/currency-optional) over the detected headers + Import button.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/investments/PortfolioImport.tsx`:
 
@@ -646,12 +646,12 @@ export const PortfolioImport: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [x] **Step 2: Verify it compiles**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/investments/PortfolioImport.tsx
@@ -673,7 +673,7 @@ git commit -m "feat: portfolio CSV import UI with generic column mapper"
 
 Price plumbing (hooks can't run in loops): each `HoldingRow` calls `useCurrentPrice(holding.ticker, holding.exchange)` itself, renders its own cells, and reports its resolved price up via `onPrice(id, price)` **from the row's render-safe callback** — implemented as: `PortfolioView` keeps `const [prices, setPrices] = useState<Record<string, number>>({})`; `HoldingRow` invokes `onPrice` inside a `useEffect` watching the resolved price (allowed — it's a state *report*, not synchronous set-state-in-effect: guard with an equality check before calling so the lint rule and re-render loops are satisfied). Fallback price when nothing resolved yet: `holding.avgCost`.
 
-- [ ] **Step 1: Implement the row**
+- [x] **Step 1: Implement the row**
 
 Create `src/components/investments/HoldingRow.tsx`:
 
@@ -728,7 +728,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, total
 }
 ```
 
-- [ ] **Step 2: Implement the view**
+- [x] **Step 2: Implement the view**
 
 Create `src/components/investments/PortfolioView.tsx`:
 
@@ -811,7 +811,7 @@ export const PortfolioView: React.FC = () => {
 }
 ```
 
-- [ ] **Step 3: Add tabs to the Investments page**
+- [x] **Step 3: Add tabs to the Investments page**
 
 In `src/pages/Investments.tsx` (as rebuilt in 5a): add `const [tab, setTab] = useState<'journal' | 'portfolio'>('journal')`, a tab strip under the header, and render the existing journal content when `tab === 'journal'`, `<PortfolioView />` when `'portfolio'` (move the journal-specific totals + list + modal into the journal branch; the "New analysis" header button too):
 
@@ -841,12 +841,12 @@ import { PortfolioView } from '../components/investments/PortfolioView'
       )}
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `npx vitest run && npx tsc --noEmit && npm run build`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/investments/HoldingRow.tsx src/components/investments/PortfolioView.tsx src/pages/Investments.tsx
@@ -861,7 +861,7 @@ git commit -m "feat: portfolio viewer — holdings table, CAD totals, Investment
 - Modify: `docs/superpowers/plans/PROGRESS.md`
 - Modify: `docs/superpowers/plans/2026-07-02-phase-5b-portfolio-viewer.md` (check off boxes)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -869,7 +869,7 @@ npm run lint
 npm run build
 ```
 
-- [ ] **Step 2: Manual acceptance — the spec's 5b "Done when"**
+- [x] **Step 2: Manual acceptance — the spec's 5b "Done when"**
 
 *"User imports an IBKR or Wealthsimple CSV and sees a correct, multi-currency portfolio with live values and allocation."*
 
@@ -881,7 +881,7 @@ npm run build
 6. Journal tab is untouched (5a still works).
 7. All 5 themes + 375px viewport (table scrolls horizontally inside its card — the page itself must not scroll horizontally).
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md docs/superpowers/plans/2026-07-02-phase-5b-portfolio-viewer.md
