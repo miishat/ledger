@@ -10,8 +10,8 @@
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 5b, Task 3 — portfolio metrics (commit 4c01913)
-- **Next task:** Phase 5b, Task 4 — import UI with column mapper
+- **Last completed task:** Phase 5b, Task 4 — import UI with column mapper (commit f731d21)
+- **Next task:** Phase 5b, Task 5 — holdings view + Investments page tabs
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -95,3 +95,4 @@
 2026-07-03 P5b.T1 portfolio store (ledger-portfolio) + backup registration — commit f0650fd (review clean)
 2026-07-03 P5b.T2 portfolio CSV parsing (IBKR + Wealthsimple + generic mapper) — commit 8049cfa (review clean)
 2026-07-03 P5b.T3 portfolio valuation metrics (CAD normalization) — commit 4c01913 (review clean, math hand-verified)
+2026-07-03 P5b.T4 portfolio CSV import UI (auto-detect + column mapper) — commit f731d21 (review clean)
