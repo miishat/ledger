@@ -6,6 +6,7 @@ import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
 import { PageTransition } from './ui/PageTransition'
 import { CommandPalette } from './CommandPalette'
+import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 
 export const Layout: React.FC = () => {
@@ -99,9 +100,11 @@ export const Layout: React.FC = () => {
           <BackupControls />
           <ThemeSelector />
         </div>
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
+        <ErrorBoundary key={location.pathname}>
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </ErrorBoundary>
       </main>
 
       {/* Mobile bottom tab bar */}
