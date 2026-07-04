@@ -40,7 +40,7 @@
   - `interface InvestmentAnalysis { id: string; ticker: string; exchange?: string; thesis?: string; plannedAmount: number; analysisDate: string; startPrice: number; startPriceSource: 'auto' | 'manual'; acted: boolean; lots: BuyLot[] }`
   - `useAnalysisStore` — `{ analyses: InvestmentAnalysis[]; addAnalysis(a: InvestmentAnalysis): void; updateAnalysis(id: string, updates: Partial<InvestmentAnalysis>): void; removeAnalysis(id: string): void; addLot(analysisId: string, lot: BuyLot): void; removeLot(analysisId: string, lotId: string): void }`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/store/useAnalysisStore.test.ts`:
 
@@ -96,12 +96,12 @@ Add to `src/utils/backup.test.ts` next to the other registration tests:
   })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/store/useAnalysisStore.test.ts src/utils/backup.test.ts`
 Expected: FAIL (unresolved module; key missing).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/store/useAnalysisStore.ts`:
 
@@ -169,12 +169,12 @@ export const useAnalysisStore = create<AnalysisState>()(
 
 In `src/utils/backup.ts`, append `'ledger-analyses'` to `BACKUP_KEYS` (after `'ledger-planner'`).
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/store/useAnalysisStore.test.ts src/utils/backup.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/store/useAnalysisStore.ts src/store/useAnalysisStore.test.ts src/utils/backup.ts src/utils/backup.test.ts
@@ -202,7 +202,7 @@ git commit -m "feat: investment analysis store (ledger-analyses) with lots, regi
   - `variance(plannedAmount: number, lots: BuyLot[]): number` (invested − planned; negative = under-invested)
   - `allocationPct(part: number, total: number): number | null`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/investments/analysisMetrics.test.ts`:
 
@@ -255,12 +255,12 @@ describe('plan-vs-actual', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/investments/analysisMetrics.test.ts`
 Expected: FAIL — cannot resolve `./analysisMetrics`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/investments/analysisMetrics.ts`:
 
@@ -317,12 +317,12 @@ export function allocationPct(part: number, total: number): number | null {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/investments/analysisMetrics.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/investments/analysisMetrics.ts src/utils/investments/analysisMetrics.test.ts
@@ -342,7 +342,7 @@ git commit -m "feat: pure analysis metrics (lots, P/L, counterfactual, variance)
 
 Behaviour: user types ticker/exchange/date/planned amount/thesis. The start-price field shows the fetched close for that date (`data.value.close`) with its source; typing any value into it switches to `startPriceSource: 'manual'`. Save requires ticker, positive planned amount, date, and a positive start price (fetched or manual). The fetched price is copied into local component state only on the explicit "Use fetched" action or at save time if the user never overrode — never via an effect (lint rule).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/investments/AnalysisModal.tsx`:
 
@@ -467,12 +467,12 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [x] **Step 2: Verify it compiles**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/investments/AnalysisModal.tsx
@@ -490,7 +490,7 @@ git commit -m "feat: analysis entry modal with historical start-price autofill +
 - Consumes: `useCurrentPrice(ticker, exchange)` (live/override/cache `Resolved<Quote>`), store actions (Task 1), all metrics (Task 2), `formatMoney` from `src/components/planner/format.ts` (4a).
 - Produces: `AnalysisCard: React.FC<{ analysis: InvestmentAnalysis; totals: { plannedAll: number; currentAll: number } }>` — used by Task 5. `totals` powers allocation-at-start vs allocation-now.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/investments/AnalysisCard.tsx`:
 
@@ -596,12 +596,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [x] **Step 2: Verify it compiles**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/investments/AnalysisCard.tsx
@@ -622,7 +622,7 @@ git commit -m "feat: analysis card — live P/L, variance, counterfactual, lots 
 - Consumes: `AnalysisModal` (Task 3), `AnalysisCard` (Task 4), `useAnalysisStore`, metrics (Task 2), `useCurrentPrice` per card (inside `AnalysisCard`).
 - Produces: the new Investments page. Totals header: planned total, invested total, current value total (sum of card values needs prices — computed with last-known prices from `useMarketDataStore` cache; simplification documented in a comment: header totals use cached/start prices, cards show live).
 
-- [ ] **Step 1: Rewrite the page**
+- [x] **Step 1: Rewrite the page**
 
 Replace `src/pages/Investments.tsx` with:
 
@@ -696,7 +696,7 @@ export const Investments: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Delete the mocks**
+- [x] **Step 2: Delete the mocks**
 
 ```bash
 git rm src/components/investments/InvestmentTrackerWidget.tsx src/components/investments/SetTargetModal.tsx src/store/useInvestmentStore.ts
@@ -704,12 +704,12 @@ git rm src/components/investments/InvestmentTrackerWidget.tsx src/components/inv
 
 (Check first: `rg -l "useInvestmentStore|InvestmentTrackerWidget|SetTargetModal" src` — expected importers are only these three files plus `Investments.tsx`, which Step 1 already rewrote. If anything else matches, update it before deleting.)
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run && npx tsc --noEmit && npm run build`
 Expected: all pass, no dangling imports.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A src/pages/Investments.tsx src/components/investments src/store
@@ -724,7 +724,7 @@ git commit -m "feat: Investments page = plan-vs-actual journal; delete v1.0 mock
 - Modify: `docs/superpowers/plans/PROGRESS.md`
 - Modify: `docs/superpowers/plans/2026-07-02-phase-5a-plan-vs-actual.md` (check off boxes)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -732,7 +732,7 @@ npm run lint
 npm run build
 ```
 
-- [ ] **Step 2: Manual acceptance — the spec's 5a "Done when"**
+- [x] **Step 2: Manual acceptance — the spec's 5a "Done when"**
 
 *"User logs an analysis, records (or doesn't record) the actual investment(s), and sees thesis-vs-actual performance and variance with live prices."*
 
@@ -744,7 +744,7 @@ npm run build
 6. Offline → cards fall back to cached/start prices without breaking.
 7. All 5 themes + 375px viewport (cards stack, metric grid wraps 2-col, no horizontal scroll).
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md docs/superpowers/plans/2026-07-02-phase-5a-plan-vs-actual.md
