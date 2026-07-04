@@ -24,7 +24,7 @@ export const Layout: React.FC = () => {
       <ThemeBackground theme={theme} />
 
       {/* Sidebar Navigation */}
-      <nav className="w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex flex-col justify-between transition-all duration-300 z-10">
+      <nav className="hidden md:flex w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
         <div>
           <div className="p-6">
             <h1 className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</h1>
@@ -61,9 +61,39 @@ export const Layout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 relative z-10">
+      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-20 md:pb-8 relative z-10">
+        {/* Mobile Backup + Theme row */}
+        <div className="md:hidden flex items-center justify-center gap-3 mb-4">
+          <BackupControls />
+          <ThemeSelector />
+        </div>
         <Outlet />
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary/90 backdrop-blur-[var(--card-blur)] flex"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-label="Primary"
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = location.pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors ${
+                isActive ? 'text-accent' : 'text-text-secondary'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {item.name}
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }
