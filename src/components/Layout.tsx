@@ -4,6 +4,7 @@ import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
+import { PageTransition } from './ui/PageTransition'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 
 export const Layout: React.FC = () => {
@@ -67,7 +68,9 @@ export const Layout: React.FC = () => {
           <BackupControls />
           <ThemeSelector />
         </div>
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       {/* Mobile bottom tab bar */}
