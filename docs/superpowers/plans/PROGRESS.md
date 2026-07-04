@@ -10,8 +10,8 @@
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** Phase 5a, Task 3 — analysis entry modal (commit b9e3b69)
-- **Next task:** Phase 5a, Task 4 — analysis card with live P/L and lots editor
+- **Last completed task:** Phase 5a, Task 4 — analysis card (commits 20213ef+e816343)
+- **Next task:** Phase 5a, Task 5 — rebuild Investments page, delete v1.0 mocks
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -89,3 +89,4 @@
 2026-07-03 P5a.T1 analysis store (ledger-analyses) + backup registration — commit 37f08bc (review clean)
 2026-07-03 P5a.T2 analysis metrics (lots, P/L, counterfactual, variance) — commit 0cd5677 (review clean, math hand-verified)
 2026-07-03 P5a.T3 analysis entry modal (historical start-price autofill + override) — commit b9e3b69 (review clean)
+2026-07-03 P5a.T4 analysis card (live P/L, variance, counterfactual, lots) — commits 20213ef+e816343 (review caught missing error surface + manual override, fixed)
