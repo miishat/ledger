@@ -46,7 +46,7 @@
   - `WidgetWrapper`, `formatMoney`
 - Produces: five `React.FC` widgets, each with a data-empty state ("Import a portfolio CSV", "Set up compensation", etc. — the app starts data-empty).
 
-- [ ] **Step 1: Implement the five widgets**
+- [x] **Step 1: Implement the five widgets**
 
 Create `src/components/dashboard/widgets/NetWorthTrendWidget.tsx`:
 
@@ -258,7 +258,7 @@ export const PlannerGoalWidget: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Wire into the Dashboard and remove dead code**
+- [x] **Step 2: Wire into the Dashboard and remove dead code**
 
 In `src/pages/Dashboard.tsx`, import the five widgets and add them to the `BentoGrid` (trend widget first, spanning 2 columns; rollups after the existing widgets). Then:
 
@@ -272,7 +272,7 @@ Delete the store, its test, and `AssetsWidget.tsx`/`DebtsWidget.tsx` **only if**
 git rm src/store/useDashboardStore.ts src/store/useDashboardStore.test.ts src/components/dashboard/widgets/AssetsWidget.tsx src/components/dashboard/widgets/DebtsWidget.tsx
 ```
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run && npx tsc --noEmit && npm run build` — all pass. Dev: with empty stores every rollup shows its call-to-action; with data they populate.
 
@@ -296,7 +296,7 @@ git commit -m "feat: dashboard module rollups + net-worth trend; drop mock dashb
   - `useDashboardLayoutStore` — `{ order: string[]; setOrder(order: string[]): void; moveWidget(id: string, beforeId: string | null): void }` (persist key `ledger-dashboard-layout`; `order: []` means "default order")
   - Dashboard widget registry: `const DASHBOARD_WIDGETS: { id: string; element: React.ReactNode }[]` defined in `Dashboard.tsx`; render order = stored order (unknown ids appended in default order, missing ids skipped — resilient to future widget changes).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/store/useDashboardLayoutStore.test.ts`:
 
@@ -337,7 +337,7 @@ Add to `src/utils/backup.test.ts`:
   })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**, then implement
+- [x] **Step 2: Run tests to verify they fail**, then implement
 
 Create `src/store/useDashboardLayoutStore.ts`:
 
@@ -373,7 +373,7 @@ export const useDashboardLayoutStore = create<DashboardLayoutState>()(
 
 Append `'ledger-dashboard-layout'` to `BACKUP_KEYS`.
 
-- [ ] **Step 3: Make the Dashboard draggable**
+- [x] **Step 3: Make the Dashboard draggable**
 
 Rework `src/pages/Dashboard.tsx`: build `DASHBOARD_WIDGETS` (ids: `net-worth`, `trend`, `monthly-summary`, `portfolio`, `comp`, `budget-health`, `top-goal`, `bank`, `investment-accounts`, `income`, `expense`, `receivable`, `other`, `debt`) wrapping each existing element. Resolve order (stored order first, then unlisted defaults), and render each in a draggable shell using native HTML5 DnD:
 
@@ -413,7 +413,7 @@ const orderedIds = [...storedOrder.filter((id) => defaultIds.includes(id)),
 
 Note: `moveWidget` runs against the just-materialized order because `setOrder` and `moveWidget` are sequential store writes in one handler — Zustand applies them synchronously in order.
 
-- [ ] **Step 4: Verify + commit**
+- [x] **Step 4: Verify + commit**
 
 Run: `npx vitest run && npm run build`. Dev: drag a widget onto another → it lands before it; reload → order persists; backup round-trip keeps it.
 
@@ -433,7 +433,7 @@ git commit -m "feat: drag-to-reorder dashboard widgets with persisted layout"
 - Consumes: existing `navItems` (5 routes + icons already defined in Layout), `useLocation`.
 - Produces: at `< md` the sidebar is hidden and a fixed bottom tab bar renders the same 5 items; main content gets bottom padding so nothing hides behind the bar. Touch targets ≥ 44px. Safe-area inset respected (`env(safe-area-inset-bottom)` — Phase 1 set `viewport-fit=cover`).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 In `src/components/Layout.tsx`:
 
@@ -470,7 +470,7 @@ In `src/components/Layout.tsx`:
 
 4. Mobile access to Backup/Theme controls (they live in the hidden sidebar): add them into the `<main>` flow on mobile — a small row at the top of main, `md:hidden`, rendering `<BackupControls />` and `<ThemeSelector />` side by side.
 
-- [ ] **Step 2: Verify + commit**
+- [x] **Step 2: Verify + commit**
 
 Dev at 375px: bottom bar on every route, active tab highlighted, content not obscured, backup/theme reachable; at ≥768px the sidebar is back and the bar is gone.
 
@@ -497,7 +497,7 @@ git commit -m "feat: mobile bottom tab navigation with safe-area support"
   - `PageTransition: React.FC<{ children: React.ReactNode }>` — fade/slide-in keyed by route path (`AnimatePresence mode="wait"`), disabled under reduced motion.
   - `Skeleton: React.FC<{ className?: string }>` — pulsing block using theme vars.
 
-- [ ] **Step 1: Implement the three primitives**
+- [x] **Step 1: Implement the three primitives**
 
 Create `src/components/ui/AnimatedNumber.tsx`:
 
@@ -577,14 +577,14 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) =
 )
 ```
 
-- [ ] **Step 2: Wire them in**
+- [x] **Step 2: Wire them in**
 
 - `Layout.tsx`: `<main>…<PageTransition><Outlet /></PageTransition></main>`.
 - `NetWorthWidget.tsx`: replace the static number with `<AnimatedNumber value={netWorth} format={(n) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />`.
 - `CompHeroWidget.tsx`: where the live price renders, show `<Skeleton className="h-6 w-24" />` while the price status is `loading` and no value is available yet (read the widget first; adapt to its actual markup — if it already has adequate loading UI, skip and record that in the commit message).
 - Charts: Recharts animates draw-in by default (`isAnimationActive`) — no change needed; sparklines in Phase 6 explicitly disabled it, leave them.
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run && npm run build` (Layout/NetWorth changes may affect existing tests — fix imports if any fail). Dev: route changes fade; net worth counts up when an account changes; with DevTools "emulate prefers-reduced-motion" everything is instant.
 
@@ -611,7 +611,7 @@ git commit -m "feat: animated counters, page transitions, skeletons (reduced-mot
   - `filterActions(actions: CommandAction[], query: string): CommandAction[]` (case-insensitive substring on label + hint; empty query = all) — **tested**
   - `CommandPalette: React.FC<{ isOpen: boolean; onClose: () => void }>` — search input (auto-focused), arrow-key selection, Enter navigates, Escape closes, click-outside closes.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/components/commandActions.test.ts`:
 
@@ -643,7 +643,7 @@ describe('filterActions', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify failure, then implement**
+- [x] **Step 2: Run to verify failure, then implement**
 
 Create `src/components/commandActions.ts`:
 
@@ -763,7 +763,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
 In `src/components/Layout.tsx`: add palette state + a global key listener (window `keydown` in a `useEffect`: `(e.metaKey || e.ctrlKey) && e.key === 'k'` → `preventDefault()` + open; the listener only calls `setPaletteOpen` from the event — not synchronously in the effect body, satisfying the lint rule), render `<CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />`, and add a small "⌘K" hint button in the sidebar dock that opens it (mobile: reachable via the same button placed next to the mobile Backup/Theme row from Task 3).
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run src/components/commandActions.test.ts` — PASS. Dev: Ctrl/⌘K opens anywhere; type "mort" → Mortgage; Enter navigates; Escape/click-outside closes; arrows move selection.
 
@@ -781,7 +781,7 @@ git commit -m "feat: command palette (Ctrl/Cmd+K) over modules and planner tools
 - Modify: `docs/superpowers/plans/PROGRESS.md` (mark Phase 7 + milestone complete)
 - Modify: `docs/superpowers/plans/2026-07-02-phase-7-uiux-refresh.md` (check off boxes)
 
-- [ ] **Step 1: Accessibility audit (baseline, per spec)**
+- [x] **Step 1: Accessibility audit (baseline, per spec)**
 
 In dev, for each of the 5 themes:
 1. **Contrast:** run Chrome DevTools CSS Overview (or axe) on Dashboard, Budgeting, Planner hub, Forecaster — fix any text below WCAG AA by adjusting usage (e.g. swap `text-text-secondary` → `text-text-primary` where flagged); do NOT change theme token values.
@@ -795,7 +795,7 @@ git add -A src
 git commit -m "fix: a11y pass — contrast, focus visibility, reduced motion"
 ```
 
-- [ ] **Step 2: Full automated gate**
+- [x] **Step 2: Full automated gate**
 
 ```bash
 npx vitest run
@@ -803,7 +803,7 @@ npm run lint
 npm run build
 ```
 
-- [ ] **Step 3: Manual milestone acceptance — spec Phase 7 "Done when" + cross-cutting criteria (section 6)**
+- [x] **Step 3: Manual milestone acceptance — spec Phase 7 "Done when" + cross-cutting criteria (section 6)**
 
 1. **Phone (375px), every route:** Dashboard (rollups + reorder), Budgeting (all Phase 6 visuals), Investments (both tabs), Planner (hub + forecaster + 2 calculators), Compensation — bottom tabs everywhere, no horizontal scroll, touch targets comfortable.
 2. Dashboard aggregates all modules: portfolio value, comp snapshot + upcoming vests, budget health, top goal, net-worth trend — each with a working empty state from a fresh (wiped) profile.
@@ -812,7 +812,7 @@ npm run build
 5. Backup export → wipe LocalStorage → import → identical state (now including layout order, portfolio, analyses, planner inputs).
 6. PWA still installable (`npm run build && npx vite preview` → Lighthouse PWA pass).
 
-- [ ] **Step 4: Close out the milestone**
+- [x] **Step 4: Close out the milestone**
 
 Update PROGRESS.md: Phase 7 checked, all phases complete, milestone v2.0 done; note any deferred follow-ups.
 
