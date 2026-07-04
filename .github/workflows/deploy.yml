@@ -43,3 +43,9 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Pages transiently reports deployment_failed right after creation;
+          # the default 5s first poll catches it and aborts a deployment that
+          # actually succeeds. Poll later and tolerate more error reports.
+          reporting_interval: 15000
+          error_count: 15
