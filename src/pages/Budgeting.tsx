@@ -9,6 +9,9 @@ import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
+import { SubscriptionsWidget } from '../components/budget/SubscriptionsWidget';
+import { AnomalyAlertsWidget } from '../components/budget/AnomalyAlertsWidget';
+import { CashFlowForecastWidget } from '../components/budget/CashFlowForecastWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -73,6 +76,12 @@ export const Budgeting: React.FC = () => {
         <IncomeWidget selectedMonth={selectedMonth} />
         <ExpenseWidget selectedMonth={selectedMonth} />
         <MonthlySummaryWidget selectedMonth={selectedMonth} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <SubscriptionsWidget />
+        <AnomalyAlertsWidget selectedMonth={selectedMonth} />
+        <CashFlowForecastWidget selectedMonth={selectedMonth} />
       </div>
 
       <TriageInboxWidget />
