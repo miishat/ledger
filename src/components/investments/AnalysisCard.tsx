@@ -22,6 +22,17 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
   const [lotAmount, setLotAmount] = useState(1000)
   const [lotPrice, setLotPrice] = useState(currentPrice)
   const [lotDate, setLotDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [manualPriceDraft, setManualPriceDraft] = useState('')
+  const isOverridden = price.data?.source === 'override'
+
+  const handleManualPriceSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const parsed = Number(manualPriceDraft)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      price.setManual(parsed)
+      setManualPriceDraft('')
+    }
+  }
 
   const invested = totalInvested(analysis.lots)
   const value = currentValue(analysis.lots, currentPrice)
@@ -41,7 +52,37 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
             {price.data ? ` (${price.data.source}${price.data.stale ? ', stale' : ''})` : ''}
             <span className="text-accent"> {pct(thesisChangePct(analysis.startPrice, currentPrice))}</span>
           </p>
+          {price.status === 'error' && (
+            <p className="text-[12px] text-error">live price unavailable — using start price</p>
+          )}
           {analysis.thesis && <p className="text-[13px] text-text-secondary mt-1 italic">{analysis.thesis}</p>}
+          <div className="flex flex-wrap items-center gap-1 mt-1">
+            <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
+              <input
+                type="number"
+                step="0.01"
+                value={manualPriceDraft}
+                onChange={(e) => setManualPriceDraft(e.target.value)}
+                placeholder="Manual price"
+                className="w-24 bg-bg-primary/50 border border-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
+              />
+              <button
+                type="submit"
+                className="px-2 py-1 bg-bg-primary/50 border border-border rounded text-[12px] text-text-primary hover:text-accent transition-colors"
+              >
+                Set
+              </button>
+            </form>
+            {isOverridden && (
+              <button
+                type="button"
+                onClick={() => price.clearManual()}
+                className="text-[12px] text-text-secondary hover:text-accent underline decoration-dotted"
+              >
+                Clear override
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex gap-1">
           <button onClick={() => price.refresh(true)} aria-label="Refresh price" className="p-1.5 text-text-secondary hover:text-accent">
