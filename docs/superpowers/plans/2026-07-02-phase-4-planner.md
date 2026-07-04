@@ -1,5 +1,7 @@
 # Phase 4 — Planner (Tools & Calculators Hub) — Umbrella Plan
 
+> **STATUS: PHASE 4 COMPLETE (2026-07-03).** All sub-plans 4a-4e executed and gate-verified; 12 tools live in the Planner hub. This file remains as the architectural index.
+
 > **For agentic workers:** This is the UMBRELLA plan for Phase 4. You do NOT execute tasks from this file. Execute the sub-plans below in order, each via **superpowers:subagent-driven-development**. Sub-plans 4b–4e are scope stubs here — plan each one JIT (dispatch a planning subagent invoking **superpowers:writing-plans**) right before executing it, exactly as the master plan prescribes for phases.
 
 **Goal:** Rename the "Projections" tab to **Planner** and turn it into a Bento grid of financial tools — 11 focused calculators plus a flagship Net-Worth/FIRE Forecaster that auto-feeds from Dashboard, Budgeting, and Compensation. All inputs persisted.

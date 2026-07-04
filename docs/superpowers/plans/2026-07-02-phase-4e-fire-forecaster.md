@@ -49,7 +49,7 @@
 
 Semantics (file-top comment): monthly compounding at `annualReturnPct/12/100`; contributions at end of month, stepping up `contributionStepUpPct` every 12 months; lump sums land in their month (all three scenarios); `conservative`/`optimistic` = base return ∓ `scenarioSpreadPct` (default 2); `real` = base deflated by inflation; `monthlyDrag` subtracts from the contribution until `untilMonth` (debt service), floor −∞ (negative savings allowed); `contributed = startBalance + Σ contributions + Σ lump sums`, `growth = base − contributed`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/forecast.test.ts`:
 
@@ -109,12 +109,12 @@ describe('buildForecast', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/forecast.test.ts`
 Expected: FAIL — cannot resolve `./forecast`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/forecast.ts`:
 
@@ -208,12 +208,12 @@ export function buildForecast(config: ForecastConfig): ForecastPoint[] {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/forecast.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/forecast.ts src/utils/finance/forecast.test.ts
@@ -235,7 +235,7 @@ git commit -m "feat: deterministic forecast engine (bands, step-up, lump sums, r
   - `monthsToReach(points: ForecastPoint[], target: number, key?: 'base' | 'real'): number | null` (first month ≥ target; also used for goal projected dates)
   - `coastFiNumber(fi: number, annualReturnPct: number, yearsRemaining: number): number` (balance today that grows to FI with zero contributions)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/fire.test.ts`:
 
@@ -275,12 +275,12 @@ describe('coastFiNumber', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/fire.test.ts`
 Expected: FAIL — cannot resolve `./fire`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/fire.ts`:
 
@@ -313,12 +313,12 @@ export function coastFiNumber(fi: number, annualReturnPct: number, yearsRemainin
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/fire.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/fire.ts src/utils/finance/fire.test.ts
@@ -345,7 +345,7 @@ git commit -m "feat: FIRE math (FI number, months-to-target, Coast-FI)"
 
 Model (comment): monthly returns drawn Normal(mean/12, stdDev/√12) via Box–Muller on mulberry32; default 500 runs, seed 42; bands are per-year percentiles across runs.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/monteCarlo.test.ts`:
 
@@ -399,12 +399,12 @@ describe('probabilityOfSuccess', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/monteCarlo.test.ts`
 Expected: FAIL — cannot resolve `./monteCarlo`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/monteCarlo.ts`:
 
@@ -522,12 +522,12 @@ export function probabilityOfSuccess(finalBalances: number[], target: number): n
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/monteCarlo.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/monteCarlo.ts src/utils/finance/monteCarlo.test.ts
@@ -548,7 +548,7 @@ git commit -m "feat: seeded Monte Carlo simulation with percentile bands"
 
 Rules (comment): **RSU** — every `generateVestEvents` event with a `date` strictly after `now` and within the horizon becomes a lump at `monthOffset = whole months between now and the event date`, amount `vestValue`. **Bonus** — `calcAnnualBonus(pkg)` lands every year at `pkg.cashBonusMonth`, first occurrence after `now`. **ESPP** — documented simplification (no per-purchase dates exist in the store): `calcAnnualESPP(pkg)` lands every 12 months from now. Zero-amount lumps are dropped.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/finance/compFeed.test.ts`:
 
@@ -598,12 +598,12 @@ describe('compLumpSums', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/finance/compFeed.test.ts`
 Expected: FAIL — cannot resolve `./compFeed`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/finance/compFeed.ts`:
 
@@ -668,12 +668,12 @@ export function compLumpSums(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/finance/compFeed.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/finance/compFeed.ts src/utils/finance/compFeed.test.ts
@@ -701,7 +701,7 @@ Settings fields (all in `usePlannerStore` under `forecaster`): `years` (25), `an
 
 Resolution rules: `resolved.startBalance` = `getNetWorth()` when `autoStart` else `manualStart`; `resolved.monthlySavings` = `averageMonthlyNetSavings(transactions, 3)` when `autoSavings` (falling back to `manualSavings` when the average is 0 — no budget data) else `manualSavings`; `compLumps` = `compLumpSums(primaryPackage, primaryPackage.companyCurrentPrice, years*12)` when `autoComp` else `[]`; `debtDrag` (when `includeDebtDrag`) = read tool `debt-payoff` inputs (`debtsJson`, `extraMonthly`, `strategy` defaulting to `avalanche`), run `simulatePayoff`, and produce `{ amount: totalMinPayments + extraMonthly, untilMonth: result.months ?? years*12 }`; null when disabled or no debts.
 
-- [ ] **Step 1: Implement the settings hook**
+- [x] **Step 1: Implement the settings hook**
 
 Create `src/components/planner/forecaster/useForecasterSettings.ts`:
 
@@ -811,7 +811,7 @@ export function useForecasterSettings() {
 }
 ```
 
-- [ ] **Step 2: Implement the generic list editor**
+- [x] **Step 2: Implement the generic list editor**
 
 Create `src/components/planner/forecaster/ListEditor.tsx`:
 
@@ -877,12 +877,12 @@ export function ListEditor<T extends { id: string }>({ title, items, columns, ma
 }
 ```
 
-- [ ] **Step 3: Verify it compiles**
+- [x] **Step 3: Verify it compiles**
 
 Run: `npx tsc --noEmit && npx vitest run src/utils/finance`
 Expected: no type errors; finance tests still pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/planner/forecaster/useForecasterSettings.ts src/components/planner/forecaster/ListEditor.tsx
@@ -902,7 +902,7 @@ git commit -m "feat: forecaster settings hook with auto-feed resolution + generi
 
 Chart data: history snapshots become points at negative month offsets (whole months before now, actual value in every band key so the past renders as one line); forecast points from month 0. `view === 'line'` → conservative/optimistic Areas (band) + base (or real) Line + actual history line; `view === 'stacked'` → contributed + growth stacked Areas. Goal markers: `ReferenceLine` at each goal's reached month with its label; ReferenceLine at x=0 labelled "today".
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/planner/forecaster/ForecastChart.tsx`:
 
@@ -1007,12 +1007,12 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [x] **Step 2: Verify it compiles**
 
 Run: `npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/planner/forecaster/ForecastChart.tsx
@@ -1047,7 +1047,7 @@ coast = coastFiNumber(fi, annualReturnPct, years)
 goalMarkers = goals.map(g => ({ label: g.label, month: monthsToReach(points, g.amount), amount: g.amount }))
 ```
 
-- [ ] **Step 1: Implement the page**
+- [x] **Step 1: Implement the page**
 
 Create `src/components/planner/forecaster/ForecasterTool.tsx`:
 
@@ -1274,7 +1274,7 @@ export const ForecasterTool: React.FC = () => {
 
 (`MonteCarloSection` is created in Task 8 — implement Tasks 7 and 8 in the same working session, or temporarily stub the import if committing separately. Preferred: build Task 8's file first, then this one compiles immediately; the task split here is for review granularity.)
 
-- [ ] **Step 2: Swap the registry entry and delete the old projection code**
+- [x] **Step 2: Swap the registry entry and delete the old projection code**
 
 In `src/components/planner/toolRegistry.tsx`: remove the `ProjectionWidget` import, import `ForecasterTool` from `./forecaster/ForecasterTool`, and update the existing `forecaster` entry:
 
@@ -1300,12 +1300,12 @@ git rm src/components/investments/ProjectionWidget.tsx src/store/useProjectionSt
 
 (Verify first with `rg -l "ProjectionWidget|useProjectionStore" src` that the registry was the only remaining importer.)
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run && npx tsc --noEmit`
 Expected: ALL PASS, no dangling imports.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A src/components/planner src/components/investments src/store
@@ -1323,7 +1323,7 @@ git commit -m "feat: full FIRE forecaster replaces ProjectionWidget (auto-feed, 
 - Consumes: `runMonteCarlo`, `probabilityOfSuccess` (Task 3), `LumpSum` (Task 1), Recharts, 4a primitives.
 - Produces: `MonteCarloSection: React.FC<{ startBalance: number; monthlySavings: number; years: number; meanReturnPct: number; stdDevPct: number; stepUpPct: number; lumpSums: LumpSum[]; target: number; onStdDevChange: (v: number) => void }>` — consumed by Task 7.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/planner/forecaster/MonteCarloSection.tsx`:
 
@@ -1404,12 +1404,12 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
 }
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npx tsc --noEmit && npx vitest run`
 Expected: clean + all pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/planner/forecaster/MonteCarloSection.tsx
@@ -1424,7 +1424,7 @@ git commit -m "feat: Monte Carlo percentile fan + probability-of-success readout
 - Modify: `docs/superpowers/plans/PROGRESS.md` (mark Phase 4 complete)
 - Modify: `docs/superpowers/plans/2026-07-02-phase-4e-fire-forecaster.md` and `2026-07-02-phase-4-planner.md` (check off / mark done)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -1434,7 +1434,7 @@ npm run build
 
 Expected: all pass; changed files lint clean.
 
-- [ ] **Step 2: Manual acceptance — the spec's Phase 4 "Done when"**
+- [x] **Step 2: Manual acceptance — the spec's Phase 4 "Done when"**
 
 `npm run dev`, then verify the full spec criterion — *"Planner shows a Bento grid of tools; the forecaster pulls live from other modules and renders all listed views; each calculator is functional and persisted"*:
 
@@ -1445,7 +1445,7 @@ Expected: all pass; changed files lint clean.
 5. Cycle all 5 themes on the forecaster + spot-check 3 calculators; 375px viewport across the forecaster (charts stay in cards, controls wrap, no horizontal scroll).
 6. Offline (DevTools): forecaster still renders (no market data dependency); currency converter degrades to cache/override.
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 Mark Phase 4 complete in the phase checklist, log 4e, set next = "Plan Phase 5a JIT".
 
