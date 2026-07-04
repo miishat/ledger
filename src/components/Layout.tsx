@@ -1,15 +1,28 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
 import { PageTransition } from './ui/PageTransition'
+import { CommandPalette } from './CommandPalette'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -56,6 +69,15 @@ export const Layout: React.FC = () => {
 
         {/* Backup + Theme Dock */}
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-2 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 hover:bg-bg-primary/50 hover:text-text-primary transition-colors"
+            aria-label="Open command palette"
+          >
+            <span>Jump to…</span>
+            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
+          </button>
           <BackupControls />
           <ThemeSelector />
         </div>
@@ -64,7 +86,15 @@ export const Layout: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-20 md:pb-8 relative z-10">
         {/* Mobile Backup + Theme row */}
-        <div className="md:hidden flex items-center justify-center gap-3 mb-4">
+        <div className="md:hidden flex items-center justify-center flex-wrap gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-1.5 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 shrink-0"
+            aria-label="Open command palette"
+          >
+            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
+          </button>
           <BackupControls />
           <ThemeSelector />
         </div>
@@ -97,6 +127,8 @@ export const Layout: React.FC = () => {
           )
         })}
       </nav>
+
+      <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
 }
