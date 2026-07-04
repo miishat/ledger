@@ -67,6 +67,16 @@ export const Dashboard: React.FC = () => {
     ...defaultIds.filter((id) => !storedOrder.includes(id)),
   ];
 
+  // Null-safe resolution: if an id in orderedIds has no matching widget (e.g. a
+  // future id mismatch between DASHBOARD_WIDGET_IDS and DASHBOARD_WIDGETS), it is
+  // skipped instead of crashing the render with a non-null assertion.
+  const resolvedWidgets = orderedIds
+    .map((id) => {
+      const widget = DASHBOARD_WIDGETS.find((x) => x.id === id);
+      return widget ? { id, element: widget.element } : null;
+    })
+    .filter((w): w is { id: string; element: React.ReactNode } => w !== null);
+
   return (
     <div className="p-6 h-full w-full">
       <div className="mb-8 flex justify-between items-center">
@@ -77,8 +87,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <BentoGrid>
-        {orderedIds.map((id) => {
-          const w = DASHBOARD_WIDGETS.find((x) => x.id === id)!;
+        {resolvedWidgets.map(({ id, element }) => {
           return (
             <div
               key={id}
@@ -95,7 +104,7 @@ export const Dashboard: React.FC = () => {
               onDragEnd={() => setDragId(null)}
               className={`cursor-grab active:cursor-grabbing ${dragId === id ? 'opacity-50' : ''}`}
             >
-              {w.element}
+              {element}
             </div>
           );
         })}
