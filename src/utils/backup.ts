@@ -10,6 +10,7 @@ export const BACKUP_KEYS: string[] = [
   'ledger-triage',
   'ledger-market-data',
   'ledger-planner',
+  'ledger-analyses',
 ]
 
 export interface BackupEnvelope {
