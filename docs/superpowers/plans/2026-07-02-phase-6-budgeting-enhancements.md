@@ -41,7 +41,7 @@
 
 Detection rules (document in the file comment): group by `normalizeDescription` + type; require **≥ 3 occurrences**; median interval between consecutive dates in **[5, 95] days** with every interval within **±40% of the median** (tolerates weekly/biweekly/monthly/quarterly, rejects one-offs); amounts within **±25% of the median amount**. `avgAmount` = median amount; `nextExpected` = lastDate + median interval; `monthlyEstimate` = `avgAmount × (30 / intervalDays)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/budget/recurring.test.ts`:
 
@@ -110,12 +110,12 @@ describe('detectRecurring', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/budget/recurring.test.ts`
 Expected: FAIL — cannot resolve `./recurring`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/budget/recurring.ts`:
 
@@ -207,12 +207,12 @@ export function detectRecurring(transactions: Record<string, Transaction>): Recu
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/budget/recurring.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/budget/recurring.ts src/utils/budget/recurring.test.ts
@@ -235,7 +235,7 @@ git commit -m "feat: recurring/subscription detection over budget transactions"
   - `interface Anomaly { categoryId: string; monthSpend: number; rollingAvg: number; ratio: number }`
   - `detectAnomalies(transactions: Record<string, Transaction>, categories: Record<string, Category>, month: string, refDate?: Date): Anomaly[]` — flags categories where the month's spend > **1.5×** the average of the previous 3 completed months AND exceeds it by > **$50** (both thresholds as exported consts).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/budget/categoryStats.test.ts`:
 
@@ -291,12 +291,12 @@ describe('detectAnomalies', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/budget/categoryStats.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/budget/categoryStats.ts`:
 
@@ -370,12 +370,12 @@ export function detectAnomalies(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/budget/categoryStats.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/budget/categoryStats.ts src/utils/budget/categoryStats.test.ts
@@ -398,7 +398,7 @@ git commit -m "feat: category stats + spending anomaly detection vs rolling aver
 
 Model (comment): `netSoFar` = income − expenses recorded in `month` up to and including `today`. For each recurring item, project occurrences from `nextExpected` forward every `intervalDays`; any projected date that lands in `month` and is after `today` contributes `avgAmount` to `expectedIn`/`expectedOut` (and a `pending` row). `projectedNet = netSoFar + expectedIn − expectedOut`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/utils/budget/cashFlowForecast.test.ts`:
 
@@ -455,12 +455,12 @@ describe('forecastMonthEnd', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/utils/budget/cashFlowForecast.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `src/utils/budget/cashFlowForecast.ts`:
 
@@ -511,12 +511,12 @@ export function forecastMonthEnd(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/utils/budget/cashFlowForecast.test.ts`
 Expected: ALL PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/utils/budget/cashFlowForecast.ts src/utils/budget/cashFlowForecast.test.ts
@@ -537,7 +537,7 @@ git commit -m "feat: month-end cash-flow forecast from recurring items"
 - Consumes: `detectRecurring` (T1), `detectAnomalies`/`ANOMALY_RATIO` (T2), `forecastMonthEnd` (T3), `WidgetWrapper` (`src/components/dashboard/WidgetWrapper.tsx` — `{ title, children, className?, action? }`), `useBudgetStore`, `formatMoney` (`src/components/planner/format.ts`).
 - Produces: three widgets, each `React.FC<{ selectedMonth: string }>` (`SubscriptionsWidget` ignores the month — subscriptions are global).
 
-- [ ] **Step 1: Implement the three widgets**
+- [x] **Step 1: Implement the three widgets**
 
 Create `src/components/budget/SubscriptionsWidget.tsx`:
 
@@ -655,7 +655,7 @@ export const CashFlowForecastWidget: React.FC<{ selectedMonth: string }> = ({ se
 }
 ```
 
-- [ ] **Step 2: Add the Insights row to the page**
+- [x] **Step 2: Add the Insights row to the page**
 
 In `src/pages/Budgeting.tsx`, import the three widgets and insert after the existing Income/Expense/Summary row:
 
@@ -667,12 +667,12 @@ In `src/pages/Budgeting.tsx`, import the three widgets and insert after the exis
       </div>
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx vitest run && npx tsc --noEmit`
 Expected: all pass. Dev: with imported history the three widgets populate; with an empty store they show their empty states.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/budget/SubscriptionsWidget.tsx src/components/budget/AnomalyAlertsWidget.tsx src/components/budget/CashFlowForecastWidget.tsx src/pages/Budgeting.tsx
@@ -693,7 +693,7 @@ git commit -m "feat: budgeting insights — subscriptions, anomaly alerts, cash-
 
 Graph: income-category nodes → central "Budget" node → expense category-group nodes. Node/link data built at render: for the month, sum income by category (via `categoryId`, falling back to "Other income") and expenses by the category's group (falling back to "Uncategorized"). Skip rendering the chart (show an empty state) when the month has no income AND no expenses — Recharts Sankey throws on empty node lists.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/budget/SankeyWidget.tsx`:
 
@@ -771,7 +771,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
 
 (If node labels are unreadable in some themes, pass a custom `node` renderer that draws `<text fill="var(--text-primary)">` — check during the gate.)
 
-- [ ] **Step 2: Add the Visuals section to the page**
+- [x] **Step 2: Add the Visuals section to the page**
 
 In `src/pages/Budgeting.tsx`, after the Insights row:
 
@@ -783,7 +783,7 @@ In `src/pages/Budgeting.tsx`, after the Insights row:
 
 (The Task 6–7 widgets join this grid.)
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run && npm run build`. Dev: month with data shows flows; empty month shows the empty state.
 
@@ -807,7 +807,7 @@ git commit -m "feat: Sankey income-flow widget"
 
 Pace logic (comment): expected-by-today = `target × (dayOfMonth / daysInMonth)` (for past months: full target). Over pace = spent > expected × 1.1; under = < × 0.9.
 
-- [ ] **Step 1: Implement both widgets**
+- [x] **Step 1: Implement both widgets**
 
 Create `src/components/budget/CategoryTrendsWidget.tsx`:
 
@@ -915,9 +915,9 @@ export const BudgetProgressWidget: React.FC<{ selectedMonth: string }> = ({ sele
 }
 ```
 
-- [ ] **Step 2: Add both to the Visuals grid** in `src/pages/Budgeting.tsx`.
+- [x] **Step 2: Add both to the Visuals grid** in `src/pages/Budgeting.tsx`.
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run && npm run build`.
 
@@ -938,7 +938,7 @@ git commit -m "feat: category sparklines + budget-vs-actual pace bars"
 - Consumes: `useBudgetStore`, `WidgetWrapper`, `formatMoney`.
 - Produces: `SpendingHeatmapWidget: React.FC<{ selectedMonth: string }>` — a CSS-grid month calendar; each day cell's background is `var(--accent)` at opacity scaled by that day's expense total relative to the month's max day (0 spend = transparent). Title row Mo–Su; cell tooltip via `title` attribute.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create `src/components/budget/SpendingHeatmapWidget.tsx`:
 
@@ -998,7 +998,7 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
 }
 ```
 
-- [ ] **Step 2: Add to the Visuals grid** in `src/pages/Budgeting.tsx`. Final Visuals section:
+- [x] **Step 2: Add to the Visuals grid** in `src/pages/Budgeting.tsx`. Final Visuals section:
 
 ```tsx
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1009,7 +1009,7 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
       </div>
 ```
 
-- [ ] **Step 3: Verify + commit**
+- [x] **Step 3: Verify + commit**
 
 Run: `npx vitest run && npm run build`.
 
@@ -1026,7 +1026,7 @@ git commit -m "feat: spending calendar heatmap"
 - Modify: `docs/superpowers/plans/PROGRESS.md`
 - Modify: `docs/superpowers/plans/2026-07-02-phase-6-budgeting-enhancements.md` (check off boxes)
 
-- [ ] **Step 1: Full automated gate**
+- [x] **Step 1: Full automated gate**
 
 ```bash
 npx vitest run
@@ -1034,7 +1034,7 @@ npm run lint
 npm run build
 ```
 
-- [ ] **Step 2: Manual acceptance — the spec's Phase 6 "Done when"**
+- [x] **Step 2: Manual acceptance — the spec's Phase 6 "Done when"**
 
 *"The above surface in the Budgeting module without regressing CSV import, triage, rules, or paradigms."*
 
@@ -1046,7 +1046,7 @@ npm run build
 6. Sparklines/progress/heatmap: track the month selector; past months show pace as full-month.
 7. All 5 themes (especially Sankey labels + heatmap contrast) and 375px viewport: Sankey and heatmap remain legible, grids stack single-column, no horizontal scroll.
 
-- [ ] **Step 3: Update PROGRESS.md and commit**
+- [x] **Step 3: Update PROGRESS.md and commit**
 
 ```bash
 git add docs/superpowers/plans/PROGRESS.md docs/superpowers/plans/2026-07-02-phase-6-budgeting-enhancements.md

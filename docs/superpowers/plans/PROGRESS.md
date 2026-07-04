@@ -6,12 +6,12 @@
 
 ## Current position
 
-- **Current phase:** 6 — Budgeting enhancements (next up)
+- **Current phase:** 7 — UI/UX 2026 refresh + Dashboard polish (next up)
 - **Phase plan:** umbrella `2026-07-02-phase-4-planner.md` + sub-plans 4a-4e — **ALL written in full** (4b/4c/4d/4e written 2026-07-03; 4d includes sourced 2026 CRA/provincial tax tables)
 - **Later phase plans:** ALSO written in full (2026-07-03) — `…phase-5a-plan-vs-actual.md`, `…phase-5b-portfolio-viewer.md`, `…phase-6-budgeting-enhancements.md`, `…phase-7-uiux-refresh.md`. No JIT planning remains; execute plans in order.
 - **Testing policy change (user, 2026-07-03):** plans 4b onward keep TDD only for pure math/store modules; UI components get no dedicated test files (covered by the registry-driven hub test + manual gates). Tests are not a priority this release.
-- **Last completed task:** PHASE 5b COMPLETE (Tasks 1–6; gate passed 2026-07-03, last code commit cda106e)
-- **Next task:** Execute Phase 6 — Budgeting enhancements (`2026-07-02-phase-6-budgeting-enhancements.md`, already written)
+- **Last completed task:** Phase 6, Task 8 — PHASE 6 GATE (phase complete)
+- **Next task:** Phase 7, Task 1 (see `2026-07-02-phase-7-uiux-refresh.md`)
 - **Status:** IN PROGRESS (branch `ledger-v2`)
 
 **Note:** `npm run lint` has 287 pre-existing errors from v1.0 (none in files this milestone touched — all branch files lint clean). The per-phase "lint clean" gate is applied to changed files until the pre-existing debt is addressed; surfaced to the user 2026-07-02.
@@ -24,7 +24,7 @@
 - [x] Phase 4 — Planner (tools/calculators hub) — 12 tools + FIRE forecaster (2026-07-03)
 - [x] Phase 5a — Investments: Plan vs Actual (2026-07-03)
 - [x] Phase 5b — Investments: Portfolio Viewer (2026-07-03)
-- [ ] Phase 6 — Budgeting enhancements *(plan written)*
+- [x] Phase 6 — Budgeting enhancements (2026-07-04)
 - [ ] Phase 7 — UI/UX 2026 refresh + Dashboard polish *(plan written)*
 
 ## Log (append one line per completed task)
@@ -98,3 +98,11 @@
 2026-07-03 P5b.T4 portfolio CSV import UI (auto-detect + column mapper) — commit f731d21 (review clean)
 2026-07-03 P5b.T5 holdings table + CAD totals + Investments tabs — commit cda106e (review clean)
 2026-07-03 P5b.T6 sub-phase gate — 199/199 tests, build OK, lint clean; live-verified: WS auto-detect + mapper paths (math hand-checked), override in fallback chain, replace/clear/persistence, journal intact, 5 themes, 375px table-in-card scroll. PHASE 5b COMPLETE.
+2026-07-03 P6.T1 recurring/subscription detection — commit 1a50e29 (review clean, logic hand-traced)
+2026-07-04 P6.T2 category stats + anomaly detection — commit 55f9e04 (review clean; thresholds + sign convention verified)
+2026-07-04 P6.T3 month-end cash-flow forecast — commit 6fd275d (review clean; projection semantics verified, loop bounded)
+2026-07-04 P6.T4 smart widgets: subscriptions/anomaly/forecast + Insights row — commit 4435c21 (review clean; interfaces + theme tokens verified)
+2026-07-04 P6.T5 Sankey income-flow widget — commit 1a629eb (review clean; custom node renderer deviation brief-anticipated, theme-vars only)
+2026-07-04 P6.T6 category sparklines + budget pace bars — commits 8622b9e+fe0bfcd (review caught UTC/local clock mix in pace check; fixed)
+2026-07-04 P6.T7 spending calendar heatmap — commit 1dacc9c (review clean; calendar + opacity math verified)
+2026-07-04 P6.T8 PHASE 6 GATE — 209/209 tests, build OK, changed files lint clean; live-verified: subscriptions $1,517/mo (rent+Netflix, grocery correctly rejected), anomalies 3.6×/2.3× with steady categories silent, forecast −2,125+5,000−1,517=1,358 with 4 pending rows, Sankey flows (July expense-only, June Salary→3 groups, empty month → empty state no crash), heatmap day totals hand-checked, pace bars over-pace correct at day 4/31, month selector drives all visuals; regression pass: CSV import → triage (2) → categorize+approve to store, rules UI, paradigm switch both ways, add-transaction modal, reload persistence; 5 themes verified via computed styles (accent/text vars propagate to heatmap/Sankey/sparklines); 375px no horizontal scroll (known pre-existing sidebar squeeze deferred to Phase 7). Preview screenshot tool timed out (harness) — verification DOM/computed-style based. PHASE 6 COMPLETE.
