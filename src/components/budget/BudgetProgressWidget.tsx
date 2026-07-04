@@ -10,7 +10,8 @@ export const BudgetProgressWidget: React.FC<{ selectedMonth: string }> = ({ sele
   const categories = useBudgetStore((s) => s.categories)
 
   const now = new Date()
-  const isCurrentMonth = now.toISOString().slice(0, 7) === selectedMonth
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const isCurrentMonth = currentMonthKey === selectedMonth
   const [y, m] = selectedMonth.split('-').map(Number)
   const daysInMonth = new Date(y, m, 0).getDate()
   const monthFraction = isCurrentMonth ? now.getDate() / daysInMonth : 1
