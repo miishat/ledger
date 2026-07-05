@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { getTool } from '../components/planner/toolRegistry'
 import { ToolSwitcher } from '../components/planner/ToolSwitcher'
+import { ToolInfoButton } from '../components/planner/ToolInfoButton'
 
 export const PlannerTool: React.FC = () => {
   const { toolId } = useParams()
@@ -20,6 +21,7 @@ export const PlannerTool: React.FC = () => {
         </Link>
         <span className="text-[24px] text-text-secondary">/</span>
         <ToolSwitcher current={tool} />
+        <ToolInfoButton tool={tool} />
       </header>
       <Component />
     </div>
