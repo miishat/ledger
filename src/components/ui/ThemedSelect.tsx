@@ -43,13 +43,13 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { setOpen(false); return }
-    if (!open && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
+    if (!open && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       e.preventDefault(); setOpen(true); return
     }
     if (!open) return
     if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight((h) => Math.min(h + 1, options.length - 1)) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)) }
-    else if (e.key === 'Enter') { e.preventDefault(); commit(options[highlight].value) }
+    else if (e.key === 'Enter') { e.preventDefault(); if (options[highlight]) commit(options[highlight].value) }
   }
 
   return (

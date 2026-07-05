@@ -35,4 +35,11 @@ describe('ThemedSelect', () => {
     fireEvent.keyDown(trigger, { key: 'Escape' })
     expect(screen.queryByRole('listbox')).toBeNull()
   })
+
+  it('opens the closed listbox on ArrowUp', () => {
+    render(<ThemedSelect value="a" options={options} onChange={() => {}} />)
+    const trigger = screen.getByRole('button', { name: /alpha/i })
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' })
+    expect(screen.getByRole('listbox')).toBeTruthy()
+  })
 })
