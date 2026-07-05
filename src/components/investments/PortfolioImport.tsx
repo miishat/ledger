@@ -3,20 +3,34 @@ import { Upload } from 'lucide-react'
 import {
   mapPortfolioRows, parsePortfolioCSV, type ColumnMapping, type UnrecognizedPortfolioCSV,
 } from '../../utils/portfolioCsv'
-import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
+import {
+  DEFAULT_ACCOUNT, usePortfolioStore, type Holding, type ImportMode,
+} from '../../store/usePortfolioStore'
 
 const selectCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
 
+const MODE_LABELS: Record<ImportMode, string> = {
+  replace: 'Replace this account',
+  update: 'Update (merge by ticker)',
+  add: 'Add as new rows',
+}
+
 export const PortfolioImport: React.FC = () => {
-  const setHoldings = usePortfolioStore((s) => s.setHoldings)
+  const importHoldings = usePortfolioStore((s) => s.importHoldings)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [account, setAccount] = useState(DEFAULT_ACCOUNT)
+  const [mode, setMode] = useState<ImportMode>('replace')
   const [pending, setPending] = useState<UnrecognizedPortfolioCSV | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping>({ ticker: '', quantity: '', totalCost: '', currency: '' })
   const [message, setMessage] = useState('')
 
-  const stamp = (rows: Omit<Holding, 'id'>[]): Holding[] =>
-    rows.map((r, i) => ({ ...r, id: `h-${i}-${Date.now()}` }))
+  const doImport = (rows: Omit<Holding, 'id' | 'account'>[], via: string) => {
+    const acct = account.trim() || DEFAULT_ACCOUNT
+    importHoldings(acct, mode, rows)
+    setMessage(`Imported ${rows.length} holdings into "${acct}" (${MODE_LABELS[mode].toLowerCase()})${via}.`)
+    setPending(null)
+  }
 
   const onFile = async (file: File) => {
     setMessage('')
@@ -26,9 +40,7 @@ export const PortfolioImport: React.FC = () => {
       setMapping({ ticker: result.headers[0] ?? '', quantity: '', totalCost: '', currency: '' })
       return
     }
-    setHoldings(stamp(result))
-    setPending(null)
-    setMessage(`Imported ${result.length} holdings.`)
+    doImport(result, '')
   }
 
   const applyMapping = () => {
@@ -37,9 +49,7 @@ export const PortfolioImport: React.FC = () => {
       ...mapping,
       currency: mapping.currency || undefined,
     })
-    setHoldings(stamp(rows))
-    setMessage(`Imported ${rows.length} holdings via column mapping.`)
-    setPending(null)
+    doImport(rows, ' via column mapping')
   }
 
   return (
@@ -55,7 +65,24 @@ export const PortfolioImport: React.FC = () => {
           e.target.value = ''
         }}
       />
-      <div className="flex items-center gap-3">
+      <div className="flex items-end gap-3 flex-wrap">
+        <label className="flex flex-col gap-1">
+          <span className="text-[13px] text-text-secondary">Account</span>
+          <input
+            className={selectCls}
+            value={account}
+            onChange={(e) => setAccount(e.target.value)}
+            placeholder="e.g. IBKR margin"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[13px] text-text-secondary">Import mode</span>
+          <select className={selectCls} value={mode} onChange={(e) => setMode(e.target.value as ImportMode)}>
+            {(Object.keys(MODE_LABELS) as ImportMode[]).map((m) => (
+              <option key={m} value={m}>{MODE_LABELS[m]}</option>
+            ))}
+          </select>
+        </label>
         <button
           onClick={() => fileRef.current?.click()}
           className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
@@ -66,7 +93,7 @@ export const PortfolioImport: React.FC = () => {
       </div>
       <p className="text-[12px] text-text-secondary">
         Interactive Brokers and Wealthsimple exports are detected automatically; anything else opens the column mapper.
-        Importing replaces the current portfolio.
+        "Replace" clears only the selected account; other accounts are untouched.
       </p>
 
       {pending && (

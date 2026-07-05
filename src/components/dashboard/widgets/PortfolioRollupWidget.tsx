@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { WidgetWrapper } from '../WidgetWrapper'
-import { usePortfolioStore } from '../../../store/usePortfolioStore'
+import { accountNames, usePortfolioStore } from '../../../store/usePortfolioStore'
 import { useMarketDataStore } from '../../../store/useMarketDataStore'
 import { quoteKey, useFxRate } from '../../../services/marketData'
 import { portfolioTotals } from '../../../utils/investments/portfolioMetrics'
@@ -37,7 +37,7 @@ export const PortfolioRollupWidget: React.FC = () => {
         <span className={`text-[13px] ${t.plCad >= 0 ? 'text-accent' : 'text-error'}`}>
           {t.plCad >= 0 ? '+' : ''}{formatMoney(t.plCad)}{t.plPct !== null ? ` (${t.plPct.toFixed(1)}%)` : ''} all-time
         </span>
-        <span className="text-[12px] text-text-secondary">{holdings.length} holdings · CAD</span>
+        <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
       </div>
     </WidgetWrapper>
   )
