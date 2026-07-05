@@ -14,8 +14,10 @@ interface BudgetState {
   categories: Record<string, Category>;
   categoryGroups: Record<string, CategoryGroup>;
   reallocations: Record<string, Reallocation>;
+  budgetSetupCollapsed: boolean;
 
   setParadigm: (paradigm: BudgetingParadigm) => void;
+  toggleBudgetSetup: () => void;
   
   addTransaction: (transaction: Transaction) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
@@ -44,8 +46,10 @@ export const useBudgetStore = create<BudgetState>()(
       categories: {},
       categoryGroups: {},
       reallocations: {},
+      budgetSetupCollapsed: true,
 
       setParadigm: (paradigm) => set({ paradigm }),
+      toggleBudgetSetup: () => set((state) => ({ budgetSetupCollapsed: !state.budgetSetupCollapsed })),
 
       addTransaction: (transaction) =>
         set((state) => ({
@@ -152,6 +156,14 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: 'ledger-budget',
+      version: 1,
+      migrate: (persistedState) => {
+        const persisted = persistedState as Partial<BudgetState>;
+        return {
+          ...persisted,
+          budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
+        };
+      },
     }
   )
 );

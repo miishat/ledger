@@ -89,10 +89,10 @@ export const Budgeting: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SankeyWidget selectedMonth={selectedMonth} />
+        <BudgetProgressWidget selectedMonth={selectedMonth} />
         <SpendingHeatmapWidget selectedMonth={selectedMonth} />
         <CategoryTrendsWidget selectedMonth={selectedMonth} />
-        <BudgetProgressWidget selectedMonth={selectedMonth} />
+        <SankeyWidget selectedMonth={selectedMonth} />
       </div>
 
       <TriageInboxWidget />

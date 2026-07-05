@@ -19,7 +19,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
     updateCategory,
     deleteCategory,
     addCategoryGroup,
-    deleteCategoryGroup
+    deleteCategoryGroup,
+    budgetSetupCollapsed,
+    toggleBudgetSetup
   } = useBudgetStore();
 
   const [newCatName, setNewCatName] = useState('');
@@ -65,27 +67,42 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
   return (
     <div className="mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
-        <div>
-          <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
-          <p className="text-[14px] text-text-secondary mt-1">Configure your budgeting style and monthly targets.</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <label className="text-[14px] text-text-secondary">Paradigm:</label>
-          <ThemedSelect
-            value={paradigm}
-            onChange={(v) => setParadigm(v as any)}
-            className="min-w-[180px]"
-            options={[
-              { value: 'Ledger Custom', label: 'Ledger Custom' },
-              { value: 'Zero-Based', label: 'Zero-Based' },
-              { value: 'Envelope', label: 'Envelope System' },
-              { value: '50/30/20', label: '50/30/20 Rule' },
-            ]}
-          />
-        </div>
+        <button
+          type="button"
+          onClick={toggleBudgetSetup}
+          aria-expanded={!budgetSetupCollapsed}
+          className="flex items-center gap-2 text-left"
+        >
+          {budgetSetupCollapsed ? (
+            <ChevronRight size={18} className="text-text-secondary" />
+          ) : (
+            <ChevronDown size={18} className="text-text-secondary" />
+          )}
+          <div>
+            <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
+            <p className="text-[14px] text-text-secondary mt-1">Configure your budgeting style and monthly targets.</p>
+          </div>
+        </button>
+
+        {!budgetSetupCollapsed && (
+          <div className="flex items-center gap-3">
+            <label className="text-[14px] text-text-secondary">Paradigm:</label>
+            <ThemedSelect
+              value={paradigm}
+              onChange={(v) => setParadigm(v as any)}
+              className="min-w-[180px]"
+              options={[
+                { value: 'Ledger Custom', label: 'Ledger Custom' },
+                { value: 'Zero-Based', label: 'Zero-Based' },
+                { value: 'Envelope', label: 'Envelope System' },
+                { value: '50/30/20', label: '50/30/20 Rule' },
+              ]}
+            />
+          </div>
+        )}
       </div>
 
+      {!budgetSetupCollapsed && (
       <div className="columns-1 md:columns-2 gap-6">
         {groups.map(group => {
           const isIncomeGroup = group.name.toLowerCase().includes('income') || group.name.toLowerCase().includes('earn');
@@ -210,7 +227,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           );
         })}
       </div>
+      )}
 
+      {!budgetSetupCollapsed && (
       <div className="mt-6 border-t border-border pt-4">
         <button 
           onClick={() => setIsAddOpen(!isAddOpen)}
@@ -273,6 +292,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };
