@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { PLANNER_GROUPS, PLANNER_TOOLS, type PlannerTool } from './toolRegistry'
+import { OverlayBackdrop } from '../ui/OverlayBackdrop'
 
 interface ToolSwitcherProps {
   current: PlannerTool
@@ -44,41 +45,44 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
       </button>
 
       {open && (
-        <div
-          role="menu"
-          className="absolute left-0 top-full mt-2 z-30 w-72 max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-2 flex flex-col gap-1"
-        >
-          {PLANNER_GROUPS.map((group) => {
-            const tools = PLANNER_TOOLS.filter((t) => t.group === group)
-            if (tools.length === 0) return null
-            return (
-              <div key={group} className="flex flex-col">
-                <span className="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{group}</span>
-                {tools.map((t) => {
-                  const Icon = t.icon
-                  const isCurrent = t.id === current.id
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setOpen(false)
-                        if (!isCurrent) navigate(`/planner/${t.id}`)
-                      }}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded text-left text-[14px] transition-colors ${
-                        isCurrent ? 'bg-accent/10 text-accent font-medium' : 'text-text-primary hover:bg-bg-primary/50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {t.name}
-                    </button>
-                  )
-                })}
-              </div>
-            )
-          })}
-        </div>
+        <>
+          <OverlayBackdrop onClose={() => setOpen(false)} />
+          <div
+            role="menu"
+            className="absolute left-0 top-full mt-2 z-30 w-72 max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-2 flex flex-col gap-1"
+          >
+            {PLANNER_GROUPS.map((group) => {
+              const tools = PLANNER_TOOLS.filter((t) => t.group === group)
+              if (tools.length === 0) return null
+              return (
+                <div key={group} className="flex flex-col">
+                  <span className="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{group}</span>
+                  {tools.map((t) => {
+                    const Icon = t.icon
+                    const isCurrent = t.id === current.id
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpen(false)
+                          if (!isCurrent) navigate(`/planner/${t.id}`)
+                        }}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-left text-[14px] transition-colors ${
+                          isCurrent ? 'bg-accent/10 text-accent font-medium' : 'text-text-primary hover:bg-bg-primary/50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        {t.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )
