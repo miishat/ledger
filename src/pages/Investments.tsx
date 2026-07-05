@@ -20,10 +20,11 @@ export const Investments: React.FC = () => {
   const priceFor = (ticker: string, exchange: string | undefined, fallback: number) =>
     overrides[quoteKey(ticker, exchange)] ?? quotes[quoteKey(ticker, exchange)]?.value.price ?? fallback
 
-  const plannedAll = analyses.reduce((s, a) => s + a.plannedAmount, 0)
-  const investedAll = analyses.reduce((s, a) => s + totalInvested(a.lots), 0)
-  const currentAll = analyses.reduce(
-    (s, a) => s + currentValue(a.lots, priceFor(a.ticker, a.exchange, a.startPrice)),
+  const positionsAll = analyses.flatMap((a) => a.positions)
+  const plannedAll = positionsAll.reduce((s, p) => s + p.plannedAmount, 0)
+  const investedAll = positionsAll.reduce((s, p) => s + totalInvested(p.lots), 0)
+  const currentAll = positionsAll.reduce(
+    (s, p) => s + currentValue(p.lots, priceFor(p.ticker, p.exchange, p.startPrice)),
     0,
   )
 

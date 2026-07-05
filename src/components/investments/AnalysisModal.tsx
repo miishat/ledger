@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
-import { useAnalysisStore } from '../../store/useAnalysisStore'
+import { useAnalysisStore, type Position } from '../../store/useAnalysisStore'
 
 interface AnalysisModalProps {
   isOpen: boolean
   onClose: () => void
+  /** When set, adds a position to this analysis instead of creating a new analysis. */
+  analysisId?: string
 }
 
 const inputCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent w-full'
 
-export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose }) => {
+export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, analysisId }) => {
   const addAnalysis = useAnalysisStore((s) => s.addAnalysis)
+  const addPosition = useAnalysisStore((s) => s.addPosition)
+  const existing = useAnalysisStore((s) => (analysisId ? s.analyses.find((a) => a.id === analysisId) : undefined))
+  const [name, setName] = useState('')
   const [ticker, setTicker] = useState('')
   const [exchange, setExchange] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -20,7 +25,9 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
   const [thesis, setThesis] = useState('')
   const [manualPrice, setManualPrice] = useState<number | null>(null)
 
-  const hist = useHistoricalPrice(ticker, exchange || undefined, date)
+  // Positions added to an existing analysis price against its analysis date.
+  const effectiveDate = existing ? existing.analysisDate : date
+  const hist = useHistoricalPrice(ticker, exchange || undefined, effectiveDate)
   const fetchedPrice = hist.data?.value.close
   const effectivePrice = manualPrice ?? fetchedPrice ?? 0
 
@@ -35,34 +42,50 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
 
   if (!isOpen) return null
 
-  const canSave = ticker.trim() !== '' && plannedAmount > 0 && date !== '' && effectivePrice > 0
+  const canSave = ticker.trim() !== '' && plannedAmount > 0 && effectiveDate !== '' && effectivePrice > 0
 
   const save = () => {
-    addAnalysis({
-      id: `an-${Date.now()}`,
+    const position: Position = {
+      id: `pos-${Date.now()}`,
       ticker: ticker.trim().toUpperCase(),
       exchange: exchange.trim() || undefined,
-      thesis: thesis.trim() || undefined,
       plannedAmount,
-      analysisDate: date,
       startPrice: effectivePrice,
       startPriceSource: manualPrice !== null ? 'manual' : 'auto',
       acted: false,
       lots: [],
-    })
-    setTicker(''); setExchange(''); setThesis(''); setManualPrice(null)
+    }
+    if (analysisId) {
+      addPosition(analysisId, position)
+    } else {
+      addAnalysis({
+        id: `an-${Date.now()}`,
+        name: name.trim() || position.ticker,
+        thesis: thesis.trim() || undefined,
+        analysisDate: date,
+        positions: [position],
+      })
+    }
+    setName(''); setTicker(''); setExchange(''); setThesis(''); setManualPrice(null)
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="New analysis">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={analysisId ? 'Add position' : 'New analysis'}>
       <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="text-[18px] font-semibold text-text-primary">New analysis</h2>
+          <h2 className="text-[18px] font-semibold text-text-primary">{analysisId ? `Add position — ${existing?.name ?? ''}` : 'New analysis'}</h2>
           <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {!analysisId && (
+          <label className="flex flex-col gap-1">
+            <span className="text-[13px] text-text-secondary">Analysis name (defaults to ticker)</span>
+            <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Big Tech 2026" />
+          </label>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1">
@@ -73,10 +96,12 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
             <span className="text-[13px] text-text-secondary">Exchange (optional)</span>
             <input className={inputCls} value={exchange} onChange={(e) => setExchange(e.target.value)} placeholder="TSX" />
           </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[13px] text-text-secondary">Analysis date</span>
-            <input type="date" className={inputCls} value={date} onChange={(e) => { setDate(e.target.value); setManualPrice(null) }} />
-          </label>
+          {!analysisId && (
+            <label className="flex flex-col gap-1">
+              <span className="text-[13px] text-text-secondary">Analysis date</span>
+              <input type="date" className={inputCls} value={date} onChange={(e) => { setDate(e.target.value); setManualPrice(null) }} />
+            </label>
+          )}
           <label className="flex flex-col gap-1">
             <span className="text-[13px] text-text-secondary">Planned amount ($)</span>
             <input type="number" className={inputCls} value={plannedAmount} onChange={(e) => setPlannedAmount(Number(e.target.value))} />
@@ -109,17 +134,19 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose })
           </div>
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-[13px] text-text-secondary">Thesis (optional)</span>
-          <textarea className={`${inputCls} min-h-[70px]`} value={thesis} onChange={(e) => setThesis(e.target.value)} placeholder="Why this investment?" />
-        </label>
+        {!analysisId && (
+          <label className="flex flex-col gap-1">
+            <span className="text-[13px] text-text-secondary">Thesis (optional)</span>
+            <textarea className={`${inputCls} min-h-[70px]`} value={thesis} onChange={(e) => setThesis(e.target.value)} placeholder="Why this investment?" />
+          </label>
+        )}
 
         <button
           onClick={save}
           disabled={!canSave}
           className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
         >
-          Save analysis
+          {analysisId ? 'Add position' : 'Save analysis'}
         </button>
       </div>
     </div>

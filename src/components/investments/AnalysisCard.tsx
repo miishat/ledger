@@ -1,92 +1,31 @@
 import React, { useState } from 'react'
-import { Plus, RefreshCw, Trash2 } from 'lucide-react'
-import { useCurrentPrice } from '../../services/marketData'
+import { Plus, Trash2 } from 'lucide-react'
 import { useAnalysisStore, type InvestmentAnalysis } from '../../store/useAnalysisStore'
-import {
-  allocationPct, avgCostBasis, counterfactualValue, currentValue,
-  plDollars, plPct, thesisChangePct, totalInvested, variance,
-} from '../../utils/investments/analysisMetrics'
-import { formatMoney } from '../planner/format'
+import { AnalysisModal } from './AnalysisModal'
+import { PositionCard } from './PositionCard'
 
 interface AnalysisCardProps {
   analysis: InvestmentAnalysis
   totals: { plannedAll: number; currentAll: number }
 }
 
-const pct = (v: number | null) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
-
 export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) => {
-  const { updateAnalysis, removeAnalysis, addLot, removeLot } = useAnalysisStore.getState()
-  const price = useCurrentPrice(analysis.ticker, analysis.exchange)
-  const currentPrice = price.data?.value.price ?? analysis.startPrice
-  const [lotAmount, setLotAmount] = useState(1000)
-  const [lotPrice, setLotPrice] = useState(currentPrice)
-  const [lotDate, setLotDate] = useState(() => new Date().toISOString().slice(0, 10))
-  const [manualPriceDraft, setManualPriceDraft] = useState('')
-  const isOverridden = price.data?.source === 'override'
-
-  const handleManualPriceSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const parsed = Number(manualPriceDraft)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      price.setManual(parsed)
-      setManualPriceDraft('')
-    }
-  }
-
-  const invested = totalInvested(analysis.lots)
-  const value = currentValue(analysis.lots, currentPrice)
-  const counterfactual = counterfactualValue(analysis.plannedAmount, analysis.startPrice, currentPrice)
+  const removeAnalysis = useAnalysisStore((s) => s.removeAnalysis)
+  const [addOpen, setAddOpen] = useState(false)
 
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-[17px] font-semibold text-text-primary">
-            {analysis.ticker}
-            {analysis.exchange ? <span className="text-text-secondary text-[13px]"> · {analysis.exchange}</span> : null}
-          </h3>
+          <h3 className="text-[17px] font-semibold text-text-primary">{analysis.name}</h3>
           <p className="text-[12px] text-text-secondary">
-            Analyzed {analysis.analysisDate} at {analysis.startPrice.toFixed(2)} ({analysis.startPriceSource}) ·
-            now {currentPrice.toFixed(2)}
-            {price.data ? ` (${price.data.source}${price.data.stale ? ', stale' : ''})` : ''}
-            <span className="text-accent"> {pct(thesisChangePct(analysis.startPrice, currentPrice))}</span>
+            Analyzed {analysis.analysisDate} · {analysis.positions.length} position{analysis.positions.length === 1 ? '' : 's'}
           </p>
-          {price.status === 'error' && (
-            <p className="text-[12px] text-error">live price unavailable — using start price</p>
-          )}
           {analysis.thesis && <p className="text-[13px] text-text-secondary mt-1 italic">{analysis.thesis}</p>}
-          <div className="flex flex-wrap items-center gap-1 mt-1">
-            <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
-              <input
-                type="number"
-                step="0.01"
-                value={manualPriceDraft}
-                onChange={(e) => setManualPriceDraft(e.target.value)}
-                placeholder="Manual price"
-                className="w-24 bg-bg-primary/50 border border-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-2 py-1 bg-bg-primary/50 border border-border rounded text-[12px] text-text-primary hover:text-accent transition-colors"
-              >
-                Set
-              </button>
-            </form>
-            {isOverridden && (
-              <button
-                type="button"
-                onClick={() => price.clearManual()}
-                className="text-[12px] text-text-secondary hover:text-accent underline decoration-dotted"
-              >
-                Clear override
-              </button>
-            )}
-          </div>
         </div>
         <div className="flex gap-1">
-          <button onClick={() => price.refresh(true)} aria-label="Refresh price" className="p-1.5 text-text-secondary hover:text-accent">
-            <RefreshCw className={`w-4 h-4 ${price.status === 'loading' ? 'animate-spin' : ''}`} />
+          <button onClick={() => setAddOpen(true)} aria-label="Add position" className="flex items-center gap-1 p-1.5 text-[13px] text-text-secondary hover:text-accent">
+            <Plus className="w-4 h-4" /> Position
           </button>
           <button onClick={() => removeAnalysis(analysis.id)} aria-label="Delete analysis" className="p-1.5 text-text-secondary hover:text-error">
             <Trash2 className="w-4 h-4" />
@@ -94,47 +33,17 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[13px]">
-        <div><p className="text-text-secondary">Planned</p><p className="text-text-primary font-medium">{formatMoney(analysis.plannedAmount)}</p></div>
-        <div><p className="text-text-secondary">Invested</p><p className="text-text-primary font-medium">{formatMoney(invested)} <span className="text-text-secondary">({formatMoney(variance(analysis.plannedAmount, analysis.lots))} vs plan)</span></p></div>
-        <div><p className="text-text-secondary">Value now / P&L</p><p className="text-text-primary font-medium">{formatMoney(value)} · {pct(plPct(analysis.lots, currentPrice))} ({formatMoney(plDollars(analysis.lots, currentPrice))})</p></div>
-        <div><p className="text-text-secondary">If fully executed</p><p className="text-text-primary font-medium">{formatMoney(counterfactual)}</p></div>
-        <div><p className="text-text-secondary">Avg cost</p><p className="text-text-primary font-medium">{avgCostBasis(analysis.lots)?.toFixed(2) ?? '—'}</p></div>
-        <div><p className="text-text-secondary">Allocation at start</p><p className="text-text-primary font-medium">{pct(allocationPct(analysis.plannedAmount, totals.plannedAll))}</p></div>
-        <div><p className="text-text-secondary">Allocation now</p><p className="text-text-primary font-medium">{pct(allocationPct(value, totals.currentAll))}</p></div>
-        <div><p className="text-text-secondary">Acted</p><p className="text-text-primary font-medium">
-          <button onClick={() => updateAnalysis(analysis.id, { acted: !analysis.acted })} className="underline decoration-dotted hover:text-accent">
-            {analysis.acted ? 'Yes' : 'No — still watching'}
-          </button>
-        </p></div>
-      </div>
-
-      <details className="text-[13px]">
-        <summary className="cursor-pointer text-text-secondary hover:text-accent">
-          Buy lots ({analysis.lots.length})
-        </summary>
-        <div className="flex flex-col gap-2 mt-2">
-          {analysis.lots.map((l) => (
-            <div key={l.id} className="flex items-center justify-between border-b border-border pb-1">
-              <span className="text-text-secondary">{l.date} — {formatMoney(l.amountInvested)} @ {l.price.toFixed(2)}</span>
-              <button onClick={() => removeLot(analysis.id, l.id)} aria-label="Remove lot" className="text-text-secondary hover:text-error">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
+      {analysis.positions.length === 0 ? (
+        <p className="text-[13px] text-text-secondary">No positions yet — add one to start tracking.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {analysis.positions.map((p) => (
+            <PositionCard key={p.id} analysisId={analysis.id} analysisDate={analysis.analysisDate} position={p} totals={totals} />
           ))}
-          <div className="flex flex-wrap items-end gap-2">
-            <input type="date" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary" value={lotDate} onChange={(e) => setLotDate(e.target.value)} />
-            <input type="number" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-28" value={lotAmount} onChange={(e) => setLotAmount(Number(e.target.value))} placeholder="Amount $" />
-            <input type="number" step={0.01} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-24" value={lotPrice} onChange={(e) => setLotPrice(Number(e.target.value))} placeholder="Price" />
-            <button
-              onClick={() => lotAmount > 0 && lotPrice > 0 && addLot(analysis.id, { id: `lot-${Date.now()}`, date: lotDate, amountInvested: lotAmount, price: lotPrice })}
-              className="flex items-center gap-1 text-text-secondary hover:text-accent"
-            >
-              <Plus className="w-4 h-4" /> Add lot
-            </button>
-          </div>
         </div>
-      </details>
+      )}
+
+      <AnalysisModal isOpen={addOpen} onClose={() => setAddOpen(false)} analysisId={analysis.id} />
     </div>
   )
 }
