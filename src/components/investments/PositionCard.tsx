@@ -7,6 +7,7 @@ import {
   plDollars, plPct, thesisChangePct, totalInvested, variance,
 } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
+import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 
 interface PositionCardProps {
   analysisId: string
@@ -124,7 +125,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
             </div>
           ))}
           <div className="flex flex-wrap items-end gap-2">
-            <input type="date" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary" value={lotDate} onChange={(e) => setLotDate(e.target.value)} />
+            <ThemedDatePicker className="w-auto" value={lotDate} onChange={setLotDate} />
             <input type="number" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-28" value={lotAmount} onChange={(e) => setLotAmount(Number(e.target.value))} placeholder="Amount $" />
             <input type="number" step={0.01} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-24" value={lotPrice} onChange={(e) => setLotPrice(Number(e.target.value))} placeholder="Price" />
             <button

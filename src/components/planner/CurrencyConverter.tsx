@@ -4,6 +4,7 @@ import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import { fxKey, todayKey, useFxRate, type Currency } from '../../services/marketData'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { CalculatorField } from './CalculatorField'
+import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { ResultCard } from './ResultCard'
 
 const TOOL_ID = 'currency-converter'
@@ -50,11 +51,9 @@ export const CurrencyConverter: React.FC = () => {
         </button>
         <label className="flex flex-col gap-1">
           <span className="text-[13px] font-medium text-text-secondary">Rate date (optional)</span>
-          <input
-            type="date"
-            className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent"
+          <ThemedDatePicker
             value={inputs.date as string}
-            onChange={(e) => setInput(TOOL_ID, 'date', e.target.value)}
+            onChange={(v) => setInput(TOOL_ID, 'date', v)}
           />
         </label>
         <button

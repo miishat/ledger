@@ -11,6 +11,7 @@ import {
 } from '../../store/useCompensationStore'
 import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
+import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 
 const MONTH_OPTIONS = [
   { value: '1', label: 'Jan' },
@@ -150,7 +151,7 @@ export function CompareView() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Lock-In End Date</label>
-                <input type="date" value={compareEsppLockInEndDate} onChange={(e) => setCompareEsppLockInEndDate(e.target.value)} className={inputClass} />
+                <ThemedDatePicker value={compareEsppLockInEndDate} onChange={setCompareEsppLockInEndDate} className={inputClass} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -183,7 +184,7 @@ export function CompareView() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Grant Start Date</label>
-                  <input type="date" value={rsuStartDate} onChange={(e) => setRsuStartDate(e.target.value)} className={inputClass} />
+                  <ThemedDatePicker value={rsuStartDate} onChange={setRsuStartDate} className={inputClass} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">

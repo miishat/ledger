@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { ThemedDatePicker } from '../ui/ThemedDatePicker';
 
 import type { Transaction } from '../../types/budget';
 
@@ -171,12 +172,10 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
             <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Date
             </label>
-            <input
-              type="date"
-              required
+            <ThemedDatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              onChange={setDate}
+              className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] rounded-md text-[14px] focus:border-[var(--color-accent)]"
             />
           </div>
 

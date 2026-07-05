@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
 import { useAnalysisStore, type Position } from '../../store/useAnalysisStore'
+import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 
 interface AnalysisModalProps {
   isOpen: boolean
@@ -99,7 +100,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
           {!analysisId && (
             <label className="flex flex-col gap-1">
               <span className="text-[13px] text-text-secondary">Analysis date</span>
-              <input type="date" className={inputCls} value={date} onChange={(e) => { setDate(e.target.value); setManualPrice(null) }} />
+              <ThemedDatePicker value={date} onChange={(v) => { setDate(v); setManualPrice(null) }} />
             </label>
           )}
           <label className="flex flex-col gap-1">

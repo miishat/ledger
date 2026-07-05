@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
+import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 
 const MONTH_OPTIONS = [
   { value: '1', label: 'January' },
@@ -337,10 +338,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className={labelClass}>Grant Start Date</label>
-                  <input
-                    type="date"
+                  <ThemedDatePicker
                     value={rsuStartDate}
-                    onChange={(e) => setRsuStartDate(e.target.value)}
+                    onChange={setRsuStartDate}
                     className={inputClass}
                   />
                 </div>
@@ -497,10 +497,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className={labelClass}>Lock-In End Date (Optional)</label>
-                  <input
-                    type="date"
+                  <ThemedDatePicker
                     value={esppLockInEndDate}
-                    onChange={(e) => setEsppLockInEndDate(e.target.value)}
+                    onChange={setEsppLockInEndDate}
                     className={inputClass}
                   />
                 </div>
