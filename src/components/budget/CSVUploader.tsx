@@ -6,6 +6,7 @@ import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { v4 as uuidv4 } from 'uuid';
 import type { TriageTransaction } from '../../types/triage';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 export const CSVUploader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,24 +149,27 @@ export const CSVUploader: React.FC = () => {
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Date Column</label>
-                <select value={mapDate} onChange={e => setMapDate(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
-                  <option value="">Select...</option>
-                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+                <ThemedSelect
+                  value={mapDate}
+                  onChange={setMapDate}
+                  options={[{ value: '', label: 'Select...' }, ...mappingData.headers.map(h => ({ value: h, label: h }))]}
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Amount Column</label>
-                <select value={mapAmount} onChange={e => setMapAmount(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
-                  <option value="">Select...</option>
-                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+                <ThemedSelect
+                  value={mapAmount}
+                  onChange={setMapAmount}
+                  options={[{ value: '', label: 'Select...' }, ...mappingData.headers.map(h => ({ value: h, label: h }))]}
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] font-medium text-[var(--color-text-primary)]">Description Column</label>
-                <select value={mapDesc} onChange={e => setMapDesc(e.target.value)} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] focus:border-[var(--color-accent)] outline-none">
-                  <option value="">Select...</option>
-                  {mappingData.headers.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
+                <ThemedSelect
+                  value={mapDesc}
+                  onChange={setMapDesc}
+                  options={[{ value: '', label: 'Select...' }, ...mappingData.headers.map(h => ({ value: h, label: h }))]}
+                />
               </div>
             </div>
 

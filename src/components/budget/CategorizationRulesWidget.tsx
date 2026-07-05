@@ -3,6 +3,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 export const CategorizationRulesWidget: React.FC = () => {
   const categoryRules = useTriageStore((state) => state.categoryRules);
@@ -35,16 +36,15 @@ export const CategorizationRulesWidget: React.FC = () => {
             onChange={(e) => setNewDesc(e.target.value)}
             className="flex-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
           />
-          <select 
+          <ThemedSelect
             value={newCatId}
-            onChange={(e) => setNewCatId(e.target.value)}
-            className="w-48 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-2 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
-          >
-            <option value="">Select Category...</option>
-            {categoryList.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+            onChange={setNewCatId}
+            className="w-48"
+            options={[
+              { value: '', label: 'Select Category...' },
+              ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),
+            ]}
+          />
           <button 
             onClick={handleAdd}
             disabled={!newDesc.trim() || !newCatId}

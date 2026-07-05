@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 import type { Transaction } from '../../types/budget';
 
@@ -156,18 +157,14 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
             <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Category
             </label>
-            <select
+            <ThemedSelect
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
-            >
-              <option value="">Uncategorized</option>
-              {categoryList.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setCategory(v)}
+              options={[
+                { value: '', label: 'Uncategorized' },
+                ...categoryList.map((cat) => ({ value: cat.id, label: cat.name })),
+              ]}
+            />
           </div>
 
           <div className="flex flex-col gap-2">

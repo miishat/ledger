@@ -2,6 +2,22 @@ import React, { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
+import { ThemedSelect } from '../ui/ThemedSelect'
+
+const MONTH_OPTIONS = [
+  { value: '1', label: 'January' },
+  { value: '2', label: 'February' },
+  { value: '3', label: 'March' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'June' },
+  { value: '7', label: 'July' },
+  { value: '8', label: 'August' },
+  { value: '9', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+]
 
 interface CompensationModalProps {
   isOpen: boolean
@@ -252,25 +268,11 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Change Month</label>
-                      <select
-                        value={change.changeMonth || ''}
-                        onChange={(e) => handlePastSalaryChange(change.id, 'changeMonth', e.target.value)}
-                        className={inputClass}
-                      >
-                        <option value="">None</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                      </select>
+                      <ThemedSelect
+                        value={String(change.changeMonth ?? '')}
+                        onChange={(v) => handlePastSalaryChange(change.id, 'changeMonth', v)}
+                        options={[{ value: '', label: 'None' }, ...MONTH_OPTIONS]}
+                      />
                     </div>
                     <button
                       type="button"
@@ -294,24 +296,11 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
               <div className="flex flex-col gap-2">
                 <label className={labelClass}>Bonus Payout Month</label>
-                <select
+                <ThemedSelect
                   value={cashBonusMonth}
-                  onChange={(e) => setCashBonusMonth(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
+                  onChange={(v) => setCashBonusMonth(v)}
+                  options={MONTH_OPTIONS}
+                />
               </div>
             </div>
           )}
@@ -362,14 +351,15 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   <label className={labelClass}>Vesting Schedule</label>
                   <div className="flex items-center gap-2">
                     <label className={labelClass}>Frequency:</label>
-                    <select
+                    <ThemedSelect
                       value={rsuFrequency}
-                      onChange={(e) => setRsuFrequency(e.target.value as VestingFrequency)}
-                      className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
-                    >
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                    </select>
+                      onChange={(v) => setRsuFrequency(v as VestingFrequency)}
+                      className="text-[12px]"
+                      options={[
+                        { value: 'monthly', label: 'Monthly' },
+                        { value: 'quarterly', label: 'Quarterly' },
+                      ]}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

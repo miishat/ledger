@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAccountsStore } from '../../store/useAccountsStore';
 import type { AccountType } from '../../store/useAccountsStore';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 interface Account {
   id: string;
@@ -83,18 +84,17 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-text-secondary">Type</label>
-            <select
+            <ThemedSelect
               value={type}
-              onChange={(e) => setType(e.target.value as AccountType)}
-              className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary focus:outline-none focus:border-accent"
-              required
-            >
-              <option value="bank">Bank Account</option>
-              <option value="investment">Investment Account</option>
-              <option value="debt">Debt / Liability</option>
-              <option value="receivable">Receivable</option>
-              <option value="other">Other Asset</option>
-            </select>
+              onChange={(v) => setType(v as AccountType)}
+              options={[
+                { value: 'bank', label: 'Bank Account' },
+                { value: 'investment', label: 'Investment Account' },
+                { value: 'debt', label: 'Debt / Liability' },
+                { value: 'receivable', label: 'Receivable' },
+                { value: 'other', label: 'Other Asset' },
+              ]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">

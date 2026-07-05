@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 interface CategoryManagerWidgetProps {
   selectedMonth: string;
@@ -71,16 +72,17 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         
         <div className="flex items-center gap-3">
           <label className="text-[14px] text-text-secondary">Paradigm:</label>
-          <select 
+          <ThemedSelect
             value={paradigm}
-            onChange={(e) => setParadigm(e.target.value as any)}
-            className="bg-bg-primary border border-border rounded-md px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
-          >
-            <option value="Ledger Custom">Ledger Custom</option>
-            <option value="Zero-Based">Zero-Based</option>
-            <option value="Envelope">Envelope System</option>
-            <option value="50/30/20">50/30/20 Rule</option>
-          </select>
+            onChange={(v) => setParadigm(v as any)}
+            className="min-w-[180px]"
+            options={[
+              { value: 'Ledger Custom', label: 'Ledger Custom' },
+              { value: 'Zero-Based', label: 'Zero-Based' },
+              { value: 'Envelope', label: 'Envelope System' },
+              { value: '50/30/20', label: '50/30/20 Rule' },
+            ]}
+          />
         </div>
       </div>
 
@@ -126,13 +128,12 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none truncate w-full"
                           placeholder="Category Name"
                         />
-                        <select 
+                        <ThemedSelect
                           value={cat.groupId}
-                          onChange={(e) => updateCategory(cat.id, { groupId: e.target.value })}
-                          className="text-[11px] text-text-secondary bg-transparent hover:text-text-primary focus:outline-none cursor-pointer w-full mt-0.5 appearance-none"
-                        >
-                          {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                        </select>
+                          onChange={(v) => updateCategory(cat.id, { groupId: v })}
+                          className="!bg-transparent !border-0 !px-0 !py-0 text-[11px] text-text-secondary hover:text-text-primary"
+                          options={groups.map(g => ({ value: g.id, label: g.name }))}
+                        />
                       </div>
                       <div className="flex items-center gap-2 flex-1 justify-end">
                         {(() => {
@@ -234,16 +235,14 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
               </div>
               <div className="flex flex-col gap-1 flex-1">
                 <label className="text-[12px] text-text-secondary">Group</label>
-                <select 
+                <ThemedSelect
                   value={newCatGroupId}
-                  onChange={(e) => setNewCatGroupId(e.target.value)}
-                  className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
-                >
-                  <option value="">Select Group...</option>
-                  {groups.map(g => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setNewCatGroupId(v)}
+                  options={[
+                    { value: '', label: 'Select Group...' },
+                    ...groups.map(g => ({ value: g.id, label: g.name })),
+                  ]}
+                />
               </div>
               <button 
                 type="submit"

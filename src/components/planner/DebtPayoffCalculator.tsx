@@ -86,10 +86,15 @@ export const DebtPayoffCalculator: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         <CalculatorField label="Extra monthly payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
-        <SelectField label="Strategy" value={strategy} onChange={(v) => setInput(TOOL_ID, 'strategy', v)}>
-          <option value="avalanche">Avalanche (highest APR first)</option>
-          <option value="snowball">Snowball (smallest balance first)</option>
-        </SelectField>
+        <SelectField
+          label="Strategy"
+          value={strategy}
+          onChange={(v) => setInput(TOOL_ID, 'strategy', v)}
+          options={[
+            { value: 'avalanche', label: 'Avalanche (highest APR first)' },
+            { value: 'snowball', label: 'Snowball (smallest balance first)' },
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

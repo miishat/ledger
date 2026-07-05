@@ -91,11 +91,12 @@ export const SalaryTaxTool: React.FC = () => {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         <CalculatorField label="Gross annual income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
-        <SelectField label="Province" value={province} onChange={(v) => setInput(TOOL_ID, 'province', v)}>
-          {PROVINCES.map((p) => (
-            <option key={p.code} value={p.code}>{p.name}</option>
-          ))}
-        </SelectField>
+        <SelectField
+          label="Province"
+          value={province}
+          onChange={(v) => setInput(TOOL_ID, 'province', v)}
+          options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

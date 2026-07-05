@@ -59,12 +59,17 @@ export const SavingsGoalCalculator: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="max-w-xs">
-        <SelectField label="Solve for" value={solveFor} onChange={(v) => setInput(TOOL_ID, 'solveFor', v)}>
-          <option value="monthly">Monthly contribution</option>
-          <option value="months">Time to goal</option>
-          <option value="rate">Required return</option>
-          <option value="target">Final balance</option>
-        </SelectField>
+        <SelectField
+          label="Solve for"
+          value={solveFor}
+          onChange={(v) => setInput(TOOL_ID, 'solveFor', v)}
+          options={[
+            { value: 'monthly', label: 'Monthly contribution' },
+            { value: 'months', label: 'Time to goal' },
+            { value: 'rate', label: 'Required return' },
+            { value: 'target', label: 'Final balance' },
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">

@@ -10,6 +10,22 @@ import {
   calcAnnualRSU
 } from '../../store/useCompensationStore'
 import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
+import { ThemedSelect } from '../ui/ThemedSelect'
+
+const MONTH_OPTIONS = [
+  { value: '1', label: 'Jan' },
+  { value: '2', label: 'Feb' },
+  { value: '3', label: 'Mar' },
+  { value: '4', label: 'Apr' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'Jun' },
+  { value: '7', label: 'Jul' },
+  { value: '8', label: 'Aug' },
+  { value: '9', label: 'Sep' },
+  { value: '10', label: 'Oct' },
+  { value: '11', label: 'Nov' },
+  { value: '12', label: 'Dec' },
+]
 
 export function CompareView() {
   const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
@@ -114,20 +130,7 @@ export function CompareView() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Bonus Month</label>
-                <select value={compareCashBonusMonth} onChange={(e) => setCompareCashBonusMonth(e.target.value)} className={inputClass}>
-                  <option value="1">Jan</option>
-                  <option value="2">Feb</option>
-                  <option value="3">Mar</option>
-                  <option value="4">Apr</option>
-                  <option value="5">May</option>
-                  <option value="6">Jun</option>
-                  <option value="7">Jul</option>
-                  <option value="8">Aug</option>
-                  <option value="9">Sep</option>
-                  <option value="10">Oct</option>
-                  <option value="11">Nov</option>
-                  <option value="12">Dec</option>
-                </select>
+                <ThemedSelect value={compareCashBonusMonth} onChange={setCompareCashBonusMonth} options={MONTH_OPTIONS} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -186,18 +189,26 @@ export function CompareView() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Vesting</label>
-                  <select value={rsuPreset} onChange={(e) => setRsuPreset(e.target.value as VestingPreset)} className={inputClass}>
-                    <option value="4yr-1yr-cliff">4yr / 1yr cliff</option>
-                    <option value="3yr-no-cliff">3yr / no cliff</option>
-                    <option value="custom">Custom</option>
-                  </select>
+                  <ThemedSelect
+                    value={rsuPreset}
+                    onChange={(v) => setRsuPreset(v as VestingPreset)}
+                    options={[
+                      { value: '4yr-1yr-cliff', label: '4yr / 1yr cliff' },
+                      { value: '3yr-no-cliff', label: '3yr / no cliff' },
+                      { value: 'custom', label: 'Custom' },
+                    ]}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Frequency</label>
-                  <select value={rsuFrequency} onChange={(e) => setRsuFrequency(e.target.value as VestingFrequency)} className={inputClass}>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                  </select>
+                  <ThemedSelect
+                    value={rsuFrequency}
+                    onChange={(v) => setRsuFrequency(v as VestingFrequency)}
+                    options={[
+                      { value: 'monthly', label: 'Monthly' },
+                      { value: 'quarterly', label: 'Quarterly' },
+                    ]}
+                  />
                 </div>
               </div>
               {rsuPreset === 'custom' && (

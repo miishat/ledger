@@ -3,6 +3,7 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
 import { Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 interface TransactionListWidgetProps {
   selectedMonth: string;
@@ -36,17 +37,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
       <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex items-center gap-3">
-          <select 
+          <ThemedSelect
             value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-            className="bg-bg-primary border border-border rounded px-2 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-accent cursor-pointer shadow-sm"
-          >
-            <option value="">All Categories</option>
-            <option value="uncategorized">Uncategorized</option>
-            {Object.values(categories).map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedCategoryId}
+            className="text-[13px] shadow-sm"
+            options={[
+              { value: '', label: 'All Categories' },
+              { value: 'uncategorized', label: 'Uncategorized' },
+              ...Object.values(categories).map(c => ({ value: c.id, label: c.name })),
+            ]}
+          />
           {txList.length > 0 && (
             <button 
               onClick={() => {

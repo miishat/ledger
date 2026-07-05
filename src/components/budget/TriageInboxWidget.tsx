@@ -3,6 +3,7 @@ import { Check, X } from 'lucide-react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { ThemedSelect } from '../ui/ThemedSelect';
 
 export const TriageInboxWidget: React.FC = () => {
   const pendingTransactions = useTriageStore((state) => state.pendingTransactions);
@@ -42,16 +43,15 @@ export const TriageInboxWidget: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2 mt-1">
-              <select
+              <ThemedSelect
                 value={tx.categoryId || ''}
-                onChange={(e) => updatePending(tx.id, { categoryId: e.target.value })}
-                className="flex-1 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
-              >
-                <option value="">Uncategorized</option>
-                {categoryList.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+                onChange={(v) => updatePending(tx.id, { categoryId: v })}
+                className="flex-1 text-[12px]"
+                options={[
+                  { value: '', label: 'Uncategorized' },
+                  ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),
+                ]}
+              />
               
               <button
                 onClick={() => approveTransaction(tx.id)}

@@ -3,6 +3,7 @@ import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import { marginalRate, PROVINCES, type Province } from '../../utils/finance/canadaTax'
 import { compareRrspTfsa } from '../../utils/finance/rrspVsTfsa'
 import { CalculatorField } from './CalculatorField'
+import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
@@ -38,18 +39,12 @@ export const RrspVsTfsaCalculator: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <CalculatorField label="Amount to invest (pre-tax)" prefix="$" step={500} value={inputs.amount} onChange={set('amount')} />
         <CalculatorField label="Current income" prefix="$" step={1000} value={inputs.income} onChange={set('income')} />
-        <label className="flex flex-col gap-1">
-          <span className="text-[13px] font-medium text-text-secondary">Province</span>
-          <select
-            className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent"
-            value={province}
-            onChange={(e) => setInput(TOOL_ID, 'province', e.target.value)}
-          >
-            {PROVINCES.map((p) => (
-              <option key={p.code} value={p.code}>{p.name}</option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Province"
+          value={province}
+          onChange={(v) => setInput(TOOL_ID, 'province', v)}
+          options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
+        />
         <CalculatorField label="Expected retirement income" prefix="$" step={1000} value={inputs.retireIncome} onChange={set('retireIncome')} />
         <CalculatorField label="Annual return" suffix="%" step={0.1} value={inputs.annualReturnPct} onChange={set('annualReturnPct')} />
         <CalculatorField label="Years invested" min={1} max={60} value={inputs.years} onChange={set('years')} />

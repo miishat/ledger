@@ -6,6 +6,7 @@ import {
 import {
   DEFAULT_ACCOUNT, usePortfolioStore, type Holding, type ImportMode,
 } from '../../store/usePortfolioStore'
+import { ThemedSelect } from '../ui/ThemedSelect'
 
 const selectCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
@@ -77,11 +78,11 @@ export const PortfolioImport: React.FC = () => {
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[13px] text-text-secondary">Import mode</span>
-          <select className={selectCls} value={mode} onChange={(e) => setMode(e.target.value as ImportMode)}>
-            {(Object.keys(MODE_LABELS) as ImportMode[]).map((m) => (
-              <option key={m} value={m}>{MODE_LABELS[m]}</option>
-            ))}
-          </select>
+          <ThemedSelect
+            value={mode}
+            onChange={(v) => setMode(v as ImportMode)}
+            options={(Object.keys(MODE_LABELS) as ImportMode[]).map((m) => ({ value: m, label: MODE_LABELS[m] }))}
+          />
         </label>
         <button
           onClick={() => fileRef.current?.click()}
@@ -110,16 +111,14 @@ export const PortfolioImport: React.FC = () => {
             ] as const).map(([key, label]) => (
               <label key={key} className="flex flex-col gap-1">
                 <span className="text-[13px] text-text-secondary">{label}</span>
-                <select
-                  className={selectCls}
+                <ThemedSelect
                   value={mapping[key] ?? ''}
-                  onChange={(e) => setMapping((m) => ({ ...m, [key]: e.target.value }))}
-                >
-                  <option value="">—</option>
-                  {pending.headers.map((h) => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setMapping((m) => ({ ...m, [key]: v }))}
+                  options={[
+                    { value: '', label: 'None' },
+                    ...pending.headers.map((h) => ({ value: h, label: h })),
+                  ]}
+                />
               </label>
             ))}
           </div>
