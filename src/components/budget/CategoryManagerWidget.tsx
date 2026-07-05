@@ -187,7 +187,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             if (isOverBudget) progressColor = 'bg-error';
                             else if (progressPercentage > 85) progressColor = 'bg-orange-500';
                           } else {
-                            if (progressPercentage >= 100) progressColor = 'bg-green-500';
+                            if (progressPercentage >= 100) progressColor = 'bg-accent';
                           }
 
                           return (
