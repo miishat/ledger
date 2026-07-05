@@ -71,15 +71,6 @@ export const Layout: React.FC = () => {
 
         {/* Backup + Theme Dock */}
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="flex items-center gap-2 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 hover:bg-bg-primary/50 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-            aria-label="Open command palette"
-          >
-            <span>Jump to…</span>
-            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
-          </button>
           <BackupControls />
           <ThemeSelector />
         </div>
@@ -109,7 +100,7 @@ export const Layout: React.FC = () => {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary/90 backdrop-blur-[var(--card-blur)] flex"
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary backdrop-blur-[var(--card-blur)] flex"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
