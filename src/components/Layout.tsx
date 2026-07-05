@@ -80,14 +80,6 @@ export const Layout: React.FC = () => {
       <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-20 md:pb-8 relative z-10">
         {/* Mobile Backup + Theme row */}
         <div className="md:hidden flex items-center justify-center flex-wrap gap-3 mb-4">
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="flex items-center gap-1.5 text-[12px] text-text-secondary border border-border rounded px-2.5 py-1.5 shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-            aria-label="Open command palette"
-          >
-            <kbd className="text-[10px] border border-border rounded px-1">⌘K</kbd>
-          </button>
           <BackupControls />
           <ThemeSelector />
         </div>
