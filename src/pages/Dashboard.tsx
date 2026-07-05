@@ -7,7 +7,6 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { AccountCategoryWidget } from '../components/dashboard/AccountCategoryWidget';
 import { NetWorthTrendWidget } from '../components/dashboard/widgets/NetWorthTrendWidget';
 import { PortfolioRollupWidget } from '../components/dashboard/widgets/PortfolioRollupWidget';
-import { CompSnapshotWidget } from '../components/dashboard/widgets/CompSnapshotWidget';
 import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealthWidget';
 import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
@@ -30,7 +29,6 @@ const DASHBOARD_WIDGET_IDS: string[] = [
   'other',
   'debt',
   'portfolio',
-  'comp',
   'budget-health',
   'top-goal',
 ];
@@ -63,7 +61,6 @@ export const Dashboard: React.FC = () => {
     { id: 'other', element: <AccountCategoryWidget title="Others" type="other" /> },
     { id: 'debt', element: <AccountCategoryWidget title="Debts & Liabilities" type="debt" /> },
     { id: 'portfolio', element: <PortfolioRollupWidget /> },
-    { id: 'comp', element: <CompSnapshotWidget /> },
     { id: 'budget-health', element: <BudgetHealthWidget /> },
     { id: 'top-goal', element: <PlannerGoalWidget /> },
   ];
