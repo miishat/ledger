@@ -304,3 +304,26 @@ export function takeHomePay(gross: number, province: Province): TakeHome {
   const ei = eiPremium(gross, province)
   return { gross, federal, provincial, cpp, ei, net: gross - federal - provincial - cpp - ei }
 }
+
+export interface TakeHomeWithDeductions extends TakeHome {
+  taxableIncome: number
+  taxSavings: number
+}
+
+/** Take-home with RRSP/FHSA deductions: income tax on (gross - contributions),
+ *  CPP/EI still on gross. taxSavings = tax(gross) - tax(taxable). */
+export function takeHomeWithDeductions(
+  gross: number,
+  province: Province,
+  rrsp: number,
+  fhsa: number,
+): TakeHomeWithDeductions {
+  const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa))
+  const federal = federalTax(taxableIncome, province)
+  const provincial = provincialTax(taxableIncome, province)
+  const cpp = cppContribution(gross)
+  const ei = eiPremium(gross, province)
+  const taxSavings = totalIncomeTax(gross, province) - totalIncomeTax(taxableIncome, province)
+  const net = gross - federal - provincial - cpp - ei
+  return { gross, federal, provincial, cpp, ei, net, taxableIncome, taxSavings }
+}

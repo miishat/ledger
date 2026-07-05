@@ -8,6 +8,8 @@ import {
   provincialTax,
   provincialTaxParts,
   takeHomePay,
+  takeHomeWithDeductions,
+  totalIncomeTax,
 } from './canadaTax'
 
 describe('federalTax', () => {
@@ -109,5 +111,35 @@ describe('marginalRateBreakdown', () => {
       const parts = provincialTaxParts(income, 'ON')
       expect(parts.base + parts.surtax).toBeCloseTo(provincialTax(income, 'ON'), 8)
     }
+  })
+})
+
+describe('takeHomeWithDeductions', () => {
+  it('zero contributions matches takeHomePay', () => {
+    const base = takeHomePay(100000, 'ON')
+    const d = takeHomeWithDeductions(100000, 'ON', 0, 0)
+    expect(d.net).toBeCloseTo(base.net, 6)
+    expect(d.taxSavings).toBe(0)
+    expect(d.taxableIncome).toBe(100000)
+  })
+
+  it('contributions reduce taxable income and produce positive savings', () => {
+    const d = takeHomeWithDeductions(100000, 'ON', 10000, 8000)
+    expect(d.taxableIncome).toBe(82000)
+    expect(d.taxSavings).toBeGreaterThan(0)
+    expect(d.taxSavings).toBeCloseTo(
+      totalIncomeTax(100000, 'ON') - totalIncomeTax(82000, 'ON'), 6)
+  })
+
+  it('CPP and EI are unaffected by deductions', () => {
+    const base = takeHomePay(100000, 'ON')
+    const d = takeHomeWithDeductions(100000, 'ON', 20000, 0)
+    expect(d.cpp).toBeCloseTo(base.cpp, 6)
+    expect(d.ei).toBeCloseTo(base.ei, 6)
+  })
+
+  it('contributions above gross clamp taxable income at zero', () => {
+    const d = takeHomeWithDeductions(30000, 'ON', 40000, 8000)
+    expect(d.taxableIncome).toBe(0)
   })
 })
