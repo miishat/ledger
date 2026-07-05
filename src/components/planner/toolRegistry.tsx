@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Scale, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ForecasterTool } from './forecaster/ForecasterTool'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -11,7 +11,6 @@ import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { SalaryTaxTool } from './SalaryTaxTool'
-import { RrspVsTfsaCalculator } from './RrspVsTfsaCalculator'
 
 export type PlannerToolGroup =
   | 'Forecasting & Growth'
@@ -235,18 +234,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
         { name: 'Marginal rate', description: 'Tax on your next dollar earned.' },
         { name: 'Effective rate', description: 'Total tax divided by total income.' },
       ],
-    },
-  },
-  {
-    id: 'rrsp-vs-tfsa',
-    name: 'RRSP vs TFSA',
-    description: 'Which account wins for your marginal rate now vs in retirement.',
-    group: 'Income & Tax',
-    icon: Scale,
-    component: RrspVsTfsaCalculator,
-    info: {
-      howTo: 'Compares RRSP and TFSA outcomes for your marginal rate now vs in retirement.',
-      params: [],
     },
   },
 ]
