@@ -6,6 +6,7 @@ import { simulateSwap } from '../../utils/investments/swapSim'
 import { formatMoney } from '../planner/format'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { Skeleton } from '../ui/Skeleton'
+import { CalculatorField } from '../planner/CalculatorField'
 
 interface SwapSimulatorProps {
   analysis: InvestmentAnalysis
@@ -75,13 +76,13 @@ const SwapRow: React.FC<{
           <span className="text-[11px] text-text-secondary">
             Swap in start price {swap.inStartPriceSource === 'manual' ? '(manual)' : fetchedStartPrice !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
           </span>
-          <div className="flex gap-1">
-            <input
-              type="number"
+          <div className="flex gap-1 items-center">
+            <CalculatorField
+              label=""
+              prefix="$"
               step={0.01}
-              className={inputCls}
-              value={inStartPrice || ''}
-              onChange={(e) => updateSwap(analysis.id, swap.id, { inStartPrice: Number(e.target.value), inStartPriceSource: 'manual' })}
+              value={inStartPrice}
+              onChange={(v) => updateSwap(analysis.id, swap.id, { inStartPrice: v, inStartPriceSource: 'manual' })}
             />
             {swap.inStartPriceSource === 'manual' && fetchedStartPrice !== undefined && (
               <button
