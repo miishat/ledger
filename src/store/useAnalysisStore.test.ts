@@ -12,7 +12,7 @@ const position: Position = {
 }
 
 const analysis: InvestmentAnalysis = {
-  id: 'a1', name: 'Big Tech 2026', analysisDate: '2026-01-15', positions: [position],
+  id: 'a1', name: 'Big Tech 2026', analysisDate: '2026-01-15', positions: [position], swaps: [],
 }
 
 describe('useAnalysisStore', () => {
@@ -79,5 +79,37 @@ describe('useAnalysisStore', () => {
       startPrice: 95, startPriceSource: 'manual', acted: true,
     })
     expect(a.positions[0].lots).toHaveLength(1)
+  })
+
+  it('migrates v1 analyses (no swaps field) by adding an empty swaps array', async () => {
+    localStorage.setItem(
+      'ledger-analyses',
+      JSON.stringify({
+        state: {
+          analyses: [{
+            id: 'a1', name: 'Big Tech 2026', analysisDate: '2026-01-15',
+            positions: [position],
+          }],
+        },
+        version: 1,
+      }),
+    )
+    await useAnalysisStore.persist.rehydrate()
+    const a = useAnalysisStore.getState().analyses[0]
+    expect(a.swaps).toEqual([])
+  })
+
+  it('adds, updates and removes swap scenarios', () => {
+    const s = useAnalysisStore.getState()
+    s.addAnalysis(analysis)
+    s.addSwap('a1', {
+      id: 'sw1', side: 'plan', outPositionId: 'p1',
+      inTicker: 'GFS', inStartPrice: 40, inStartPriceSource: 'manual',
+    })
+    expect(useAnalysisStore.getState().analyses[0].swaps).toHaveLength(1)
+    s.updateSwap('a1', 'sw1', { inStartPrice: 42 })
+    expect(useAnalysisStore.getState().analyses[0].swaps[0].inStartPrice).toBe(42)
+    s.removeSwap('a1', 'sw1')
+    expect(useAnalysisStore.getState().analyses[0].swaps).toHaveLength(0)
   })
 })

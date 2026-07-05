@@ -65,6 +65,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
         thesis: thesis.trim() || undefined,
         analysisDate: date,
         positions: [position],
+        swaps: [],
       })
     }
     setName(''); setTicker(''); setExchange(''); setThesis(''); setManualPrice(null)

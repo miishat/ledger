@@ -13,10 +13,22 @@ export interface Position {
   ticker: string
   exchange?: string
   plannedAmount: number
+  allocationPct?: number
+  extraPlanned?: number
   startPrice: number
   startPriceSource: 'auto' | 'manual'
   acted: boolean
   lots: BuyLot[]
+}
+
+export interface SwapScenario {
+  id: string
+  side: 'plan' | 'actual'
+  outPositionId: string
+  inTicker: string
+  inExchange?: string
+  inStartPrice: number
+  inStartPriceSource: 'auto' | 'manual'
 }
 
 export interface InvestmentAnalysis {
@@ -24,7 +36,10 @@ export interface InvestmentAnalysis {
   name: string
   thesis?: string
   analysisDate: string // YYYY-MM-DD
+  initialFund?: number
+  extraFund?: number
   positions: Position[]
+  swaps: SwapScenario[]
 }
 
 interface AnalysisState {
@@ -37,6 +52,9 @@ interface AnalysisState {
   updatePosition: (analysisId: string, positionId: string, updates: Partial<Position>) => void
   addLot: (analysisId: string, positionId: string, lot: BuyLot) => void
   removeLot: (analysisId: string, positionId: string, lotId: string) => void
+  addSwap: (analysisId: string, swap: SwapScenario) => void
+  removeSwap: (analysisId: string, swapId: string) => void
+  updateSwap: (analysisId: string, swapId: string, updates: Partial<SwapScenario>) => void
 }
 
 function mapAnalysis(
@@ -115,34 +133,67 @@ export const useAnalysisStore = create<AnalysisState>()(
             lots: p.lots.filter((l) => l.id !== lotId),
           })),
         })),
+      addSwap: (analysisId, swap) =>
+        set((state) => ({
+          analyses: mapAnalysis(state.analyses, analysisId, (a) => ({ ...a, swaps: [...(a.swaps ?? []), swap] })),
+        })),
+      removeSwap: (analysisId, swapId) =>
+        set((state) => ({
+          analyses: mapAnalysis(state.analyses, analysisId, (a) => ({
+            ...a,
+            swaps: (a.swaps ?? []).filter((s) => s.id !== swapId),
+          })),
+        })),
+      updateSwap: (analysisId, swapId, updates) =>
+        set((state) => ({
+          analyses: mapAnalysis(state.analyses, analysisId, (a) => ({
+            ...a,
+            swaps: (a.swaps ?? []).map((s) => (s.id === swapId ? { ...s, ...updates } : s)),
+          })),
+        })),
     }),
     {
       name: 'ledger-analyses',
-      version: 1,
+      version: 2,
       // v0: one flat ticker per analysis → wrap it as the single position.
+      // v1: analyses gain a `swaps` scenario list.
       migrate: (persisted, version) => {
-        if (version >= 1) return persisted
-        const state = persisted as { analyses?: LegacyAnalysis[] }
-        if (!Array.isArray(state.analyses)) return persisted
-        const analyses: InvestmentAnalysis[] = state.analyses.map((old) => ({
-          id: old.id,
-          name: old.ticker,
-          thesis: old.thesis,
-          analysisDate: old.analysisDate,
-          positions: [
-            {
-              id: `${old.id}-p1`,
-              ticker: old.ticker,
-              exchange: old.exchange,
-              plannedAmount: old.plannedAmount,
-              startPrice: old.startPrice,
-              startPriceSource: old.startPriceSource,
-              acted: old.acted,
-              lots: old.lots ?? [],
-            },
-          ],
-        }))
-        return { ...state, analyses } as unknown
+        let state = persisted as { analyses?: (LegacyAnalysis | InvestmentAnalysis)[] }
+
+        if (version < 1) {
+          if (!Array.isArray(state.analyses)) return persisted
+          const analyses: InvestmentAnalysis[] = (state.analyses as LegacyAnalysis[]).map((old) => ({
+            id: old.id,
+            name: old.ticker,
+            thesis: old.thesis,
+            analysisDate: old.analysisDate,
+            positions: [
+              {
+                id: `${old.id}-p1`,
+                ticker: old.ticker,
+                exchange: old.exchange,
+                plannedAmount: old.plannedAmount,
+                startPrice: old.startPrice,
+                startPriceSource: old.startPriceSource,
+                acted: old.acted,
+                lots: old.lots ?? [],
+              },
+            ],
+            swaps: [],
+          }))
+          state = { ...state, analyses }
+        }
+
+        if (version < 2) {
+          if (!Array.isArray(state.analyses)) return state as unknown
+          const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
+            ...a,
+            swaps: a.swaps ?? [],
+          }))
+          state = { ...state, analyses }
+        }
+
+        return state as unknown
       },
     },
   ),
