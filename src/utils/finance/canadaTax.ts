@@ -222,16 +222,25 @@ export function federalTax(income: number, province: Province): number {
   return province === 'QC' ? net * (1 - QC_ABATEMENT) : net
 }
 
-export function provincialTax(income: number, province: Province): number {
+/** Provincial tax split into the statutory bracket tax and the ON surtax.
+ *  base + surtax === provincialTax(income, province). */
+export function provincialTaxParts(
+  income: number,
+  province: Province,
+): { base: number; surtax: number } {
   const { brackets, bpa } = PROVINCIAL_TAX[province]
   const gross = bracketTax(income, brackets)
   const credit = bpa * brackets[0].rate
-  let tax = Math.max(0, gross - credit)
-  if (province === 'ON') {
-    // Ontario surtax: 20% of ON tax over $5,818 plus 36% of ON tax over $7,446.
-    tax += Math.max(0, tax - 5_818) * 0.2 + Math.max(0, tax - 7_446) * 0.36
-  }
-  return tax
+  const base = Math.max(0, gross - credit)
+  // Ontario surtax: 20% of ON tax over $5,818 plus 36% of ON tax over $7,446.
+  const surtax =
+    province === 'ON' ? Math.max(0, base - 5_818) * 0.2 + Math.max(0, base - 7_446) * 0.36 : 0
+  return { base, surtax }
+}
+
+export function provincialTax(income: number, province: Province): number {
+  const { base, surtax } = provincialTaxParts(income, province)
+  return base + surtax
 }
 
 export function cppContribution(income: number): number {
@@ -252,6 +261,26 @@ export function totalIncomeTax(income: number, province: Province): number {
 export function marginalRate(income: number, province: Province): number {
   const delta = 100
   return ((totalIncomeTax(income + delta, province) - totalIncomeTax(income, province)) / delta) * 100
+}
+
+export interface MarginalBreakdown {
+  federal: number // percentage points, e.g. 29.29
+  provincialBase: number
+  surtax: number
+  total: number // === federal + provincialBase + surtax === marginalRate()
+}
+
+/** Decomposes the marginal rate into federal, provincial-bracket, and ON-surtax
+ *  components via the same $100 finite difference marginalRate() uses, so the
+ *  parts always sum to the headline number (including BPA phase-out effects). */
+export function marginalRateBreakdown(income: number, province: Province): MarginalBreakdown {
+  const delta = 100
+  const fed = ((federalTax(income + delta, province) - federalTax(income, province)) / delta) * 100
+  const p0 = provincialTaxParts(income, province)
+  const p1 = provincialTaxParts(income + delta, province)
+  const provincialBase = ((p1.base - p0.base) / delta) * 100
+  const surtax = ((p1.surtax - p0.surtax) / delta) * 100
+  return { federal: fed, provincialBase, surtax, total: fed + provincialBase + surtax }
 }
 
 export function effectiveRate(income: number, province: Province): number {

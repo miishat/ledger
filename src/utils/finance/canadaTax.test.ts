@@ -4,7 +4,9 @@ import {
   eiPremium,
   federalTax,
   marginalRate,
+  marginalRateBreakdown,
   provincialTax,
+  provincialTaxParts,
   takeHomePay,
 } from './canadaTax'
 
@@ -77,5 +79,35 @@ describe('rates and take-home', () => {
     expect(t.cpp).toBeCloseTo(4_646.45, 2)
     expect(t.ei).toBeCloseTo(1_123.07, 2)
     expect(t.net).toBeCloseTo(100_000 - 14_392.73 - 6_377.83 - 4_646.45 - 1_123.07, 0)
+  })
+})
+
+describe('marginalRateBreakdown', () => {
+  it('components sum to the headline marginal rate (ON, $200k)', () => {
+    const b = marginalRateBreakdown(200_000, 'ON')
+    expect(b.total).toBeCloseTo(marginalRate(200_000, 'ON'), 6)
+    expect(b.federal + b.provincialBase + b.surtax).toBeCloseTo(b.total, 10)
+  })
+
+  it('shows a positive surtax component once ON tax exceeds both thresholds ($200k)', () => {
+    const b = marginalRateBreakdown(200_000, 'ON')
+    // marginal surtax = 56% of the 12.16% ON bracket rate ≈ 6.81
+    expect(b.surtax).toBeGreaterThan(6)
+    expect(b.surtax).toBeLessThan(7.5)
+  })
+
+  it('has no surtax component at low ON income ($60k)', () => {
+    expect(marginalRateBreakdown(60_000, 'ON').surtax).toBe(0)
+  })
+
+  it('has no surtax component outside Ontario (BC, $200k)', () => {
+    expect(marginalRateBreakdown(200_000, 'BC').surtax).toBe(0)
+  })
+
+  it('provincialTaxParts sums to provincialTax', () => {
+    for (const income of [40_000, 90_000, 150_000, 250_000]) {
+      const parts = provincialTaxParts(income, 'ON')
+      expect(parts.base + parts.surtax).toBeCloseTo(provincialTax(income, 'ON'), 8)
+    }
   })
 })

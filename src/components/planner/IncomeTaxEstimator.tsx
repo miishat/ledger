@@ -4,6 +4,7 @@ import {
   effectiveRate,
   FEDERAL_BRACKETS,
   marginalRate,
+  marginalRateBreakdown,
   PROVINCES,
   PROVINCIAL_TAX,
   totalIncomeTax,
@@ -59,6 +60,7 @@ export const IncomeTaxEstimator: React.FC = () => {
   const setInput = usePlannerStore((s) => s.setInput)
   const province = inputs.province as Province
   const income = inputs.income
+  const breakdown = marginalRateBreakdown(income, province)
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,8 +82,18 @@ export const IncomeTaxEstimator: React.FC = () => {
       <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
         <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={income} />
         <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={income} />
+        <div className="flex flex-col gap-1">
+          <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal rate breakdown</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-primary">
+            <span>Federal {breakdown.federal.toFixed(2)}%</span>
+            <span>+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
+            {breakdown.surtax > 0 && <span>+ ON surtax {breakdown.surtax.toFixed(2)}%</span>}
+            <span className="font-semibold">= {breakdown.total.toFixed(2)}%</span>
+          </div>
+        </div>
         <p className="text-[12px] text-text-secondary">
-          Filled portion = income inside each bracket. Marginal rate shown includes the Ontario surtax where it applies.
+          Filled portion = income inside each bracket. The breakdown above shows why the marginal
+          rate can exceed the bracket rates — Ontario's surtax adds to every extra dollar's tax.
         </p>
       </div>
     </div>
