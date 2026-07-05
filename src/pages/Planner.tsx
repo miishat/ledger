@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { BentoGrid } from '../components/dashboard/BentoGrid'
 import { PLANNER_GROUPS, PLANNER_TOOLS } from '../components/planner/toolRegistry'
 
 export const Planner: React.FC = () => (
@@ -14,10 +13,16 @@ export const Planner: React.FC = () => (
     {PLANNER_GROUPS.map((group) => {
       const tools = PLANNER_TOOLS.filter((t) => t.group === group)
       if (tools.length === 0) return null
+      const gridCols =
+        tools.length === 1
+          ? 'grid-cols-1'
+          : tools.length === 2
+            ? 'grid-cols-1 md:grid-cols-2'
+            : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
       return (
         <section key={group} className="flex flex-col gap-3">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">{group}</h2>
-          <BentoGrid>
+          <div className={`grid gap-6 ${gridCols}`}>
             {tools.map((tool) => {
               const Icon = tool.icon
               return (
@@ -34,7 +39,7 @@ export const Planner: React.FC = () => (
                 </Link>
               )
             })}
-          </BentoGrid>
+          </div>
         </section>
       )
     })}
