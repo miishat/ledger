@@ -29,10 +29,10 @@ export const RrspVsTfsaCalculator: React.FC = () => {
 
   const verdict =
     r.recommendation === 'Either'
-      ? 'At equal marginal rates RRSP and TFSA are equivalent — pick by flexibility.'
+      ? 'At equal marginal rates RRSP and TFSA are equivalent, pick by flexibility.'
       : r.recommendation === 'RRSP'
-        ? 'Your marginal rate today is higher than in retirement — the RRSP deduction wins.'
-        : 'You expect a higher rate in retirement — pay the tax now and grow tax-free in the TFSA.'
+        ? 'Your marginal rate today is higher than in retirement: the RRSP deduction wins.'
+        : 'You expect a higher rate in retirement: pay the tax now and grow tax-free in the TFSA.'
 
   return (
     <div className="flex flex-col gap-6">

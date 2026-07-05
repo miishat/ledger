@@ -65,7 +65,7 @@ export const EmergencyFundCalculator: React.FC = () => {
         </div>
         <p className="text-[12px] text-text-secondary mt-2">
           {gap === 0
-            ? 'Fully funded — nice.'
+            ? 'Fully funded, nice.'
             : `Save ${formatMoney(gap)} more to reach ${inputs.targetMonths} months of cover.`}
         </p>
       </div>

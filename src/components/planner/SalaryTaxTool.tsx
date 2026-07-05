@@ -119,7 +119,7 @@ export const SalaryTaxTool: React.FC = () => {
         </div>
         <p className="text-[12px] text-text-secondary">
           Filled portion = income inside each bracket. The breakdown above shows why the marginal
-          rate can exceed the bracket rates — Ontario's surtax adds to every extra dollar's tax.
+          rate can exceed the bracket rates: Ontario's surtax adds to every extra dollar's tax.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export const SalaryTaxTool: React.FC = () => {
           </div>
         ))}
         <p className="text-[12px] text-text-secondary mt-2">
-          2026 rates, employee side, basic personal amount only — an estimate, not payroll advice.
+          2026 rates, employee side, basic personal amount only. An estimate, not payroll advice.
         </p>
       </div>
     </div>

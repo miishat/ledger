@@ -167,7 +167,7 @@ export const ForecasterTool: React.FC = () => {
       </div>
       <ResultCard
         label={`Coast-FI (needed today to coast for ${settings.years}y)`}
-        value={`${formatMoney(coast)} — you have ${formatMoney(resolved.startBalance)} (${resolved.startBalance >= coast ? 'coasting ✓' : 'not yet'})`}
+        value={`${formatMoney(coast)}, you have ${formatMoney(resolved.startBalance)} (${resolved.startBalance >= coast ? 'coasting ✓' : 'not yet'})`}
       />
 
       {/* Goals + life events */}

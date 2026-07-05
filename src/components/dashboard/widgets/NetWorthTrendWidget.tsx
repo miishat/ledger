@@ -10,7 +10,7 @@ export const NetWorthTrendWidget: React.FC = () => {
     return (
       <WidgetWrapper title="Net Worth Over Time" className="md:col-span-2">
         <p className="text-[13px] text-text-secondary mt-2">
-          Update your accounts a few times — each change records a snapshot and the trend appears here.
+          Update your accounts a few times: each change records a snapshot and the trend appears here.
         </p>
       </WidgetWrapper>
     )

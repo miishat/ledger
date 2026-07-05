@@ -7,7 +7,7 @@ export const Planner: React.FC = () => (
     <header>
       <h1 className="text-[24px] font-semibold text-text-primary">Planner</h1>
       <p className="text-[14px] text-text-secondary mt-1">
-        Financial tools and calculators — every input is saved automatically.
+        Financial tools and calculators. Every input is saved automatically.
       </p>
     </header>
     {PLANNER_GROUPS.map((group) => {

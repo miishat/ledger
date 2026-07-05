@@ -68,7 +68,7 @@ export const RentVsBuyCalculator: React.FC = () => {
           </LineChart>
         </ResponsiveContainer>
         <p className="text-[12px] text-text-secondary mt-2">
-          Cumulative unrecoverable costs only — rent vs interest, taxes, maintenance and the return your down payment could have earned.
+          Cumulative unrecoverable costs only: rent vs interest, taxes, maintenance and the return your down payment could have earned.
         </p>
       </div>
     </div>

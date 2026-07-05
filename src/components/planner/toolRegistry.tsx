@@ -45,7 +45,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'forecaster',
     name: 'Net-Worth / FIRE Forecaster',
-    description: 'Your history projected forward — scenarios, FIRE date, goals, Monte Carlo.',
+    description: 'Your history projected forward: scenarios, FIRE date, goals, Monte Carlo.',
     group: 'Forecasting & Growth',
     icon: TrendingUp,
     component: ForecasterTool,
@@ -93,7 +93,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'debt-payoff',
     name: 'Debt Payoff',
-    description: 'Snowball vs avalanche — payoff date, total interest, extra-payment impact.',
+    description: 'Snowball vs avalanche: payoff date, total interest, extra-payment impact.',
     group: 'Debt & Housing',
     icon: CreditCard,
     component: DebtPayoffCalculator,
@@ -117,7 +117,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'salary-tax',
     name: 'Salary & Tax',
-    description: 'Gross to net for any province — 2026 tax breakdown, marginal/effective rates, CPP and EI.',
+    description: 'Gross to net for any province. 2026 tax breakdown, marginal/effective rates, CPP and EI.',
     group: 'Income & Tax',
     icon: Landmark,
     component: SalaryTaxTool,

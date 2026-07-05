@@ -22,7 +22,7 @@ export const AnomalyAlertsWidget: React.FC<{ selectedMonth: string }> = ({ selec
               <AlertTriangle className="w-4 h-4 text-error shrink-0 mt-0.5" />
               <p className="text-text-primary">
                 <span className="font-medium">{categories[a.categoryId]?.name ?? a.categoryId}</span> is at{' '}
-                {formatMoney(a.monthSpend)} — {a.ratio.toFixed(1)}× your {formatMoney(a.rollingAvg)} 3-month average.
+                {formatMoney(a.monthSpend)}, {a.ratio.toFixed(1)}× your {formatMoney(a.rollingAvg)} 3-month average.
               </p>
             </div>
           ))}

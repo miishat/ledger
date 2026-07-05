@@ -72,7 +72,7 @@ export const Investments: React.FC = () => {
           {analyses.length === 0 ? (
             <div className="themed-card rounded-lg p-10 flex flex-col items-center gap-2">
               <p className="text-text-primary text-[16px] font-medium">No analyses yet</p>
-              <p className="text-text-secondary text-[14px]">Record your first investment thesis — the start price auto-fills from the analysis date.</p>
+              <p className="text-text-secondary text-[14px]">Record your first investment thesis. The start price auto-fills from the analysis date.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">

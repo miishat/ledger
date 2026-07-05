@@ -75,7 +75,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={analysisId ? 'Add position' : 'New analysis'}>
       <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="text-[18px] font-semibold text-text-primary">{analysisId ? `Add position — ${existing?.name ?? ''}` : 'New analysis'}</h2>
+          <h2 className="text-[18px] font-semibold text-text-primary">{analysisId ? `Add position: ${existing?.name ?? ''}` : 'New analysis'}</h2>
           <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
             <X className="w-5 h-5" />
           </button>
@@ -114,7 +114,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
             Start price {manualPrice !== null
               ? '(manual)'
               : fetchedPrice !== undefined
-                ? `(auto — ${hist.data?.source}${hist.data?.stale ? ', stale' : ''})`
+                ? `(auto: ${hist.data?.source}${hist.data?.stale ? ', stale' : ''})`
                 : hist.status === 'loading'
                   ? '(fetching…)'
                   : '(enter manually or pick ticker + date)'}

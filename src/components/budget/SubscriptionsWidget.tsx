@@ -13,7 +13,7 @@ export const SubscriptionsWidget: React.FC = () => {
   return (
     <WidgetWrapper title="Subscriptions & Recurring">
       {items.length === 0 ? (
-        <p className="text-[13px] text-text-secondary mt-2">No repeating charges detected yet — import more history.</p>
+        <p className="text-[13px] text-text-secondary mt-2">No repeating charges detected yet. Import more history.</p>
       ) : (
         <div className="flex flex-col gap-2 mt-2">
           <p className="text-[13px] text-text-secondary">

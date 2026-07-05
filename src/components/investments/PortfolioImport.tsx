@@ -100,7 +100,7 @@ export const PortfolioImport: React.FC = () => {
       {pending && (
         <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
           <p className="text-[13px] text-text-primary font-medium">
-            Unrecognized format — map your columns ({pending.rows.length} rows):
+            Unrecognized format. Map your columns ({pending.rows.length} rows):
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {([

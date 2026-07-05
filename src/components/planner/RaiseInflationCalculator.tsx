@@ -19,10 +19,10 @@ export const RaiseInflationCalculator: React.FC = () => {
 
   const verdict =
     real > 0.25
-      ? `A real raise — your purchasing power grew ${real.toFixed(2)}%.`
+      ? `A real raise: your purchasing power grew ${real.toFixed(2)}%.`
       : real < -0.25
-        ? `Not a real raise — inflation ate it. You're down ${Math.abs(real).toFixed(2)}% in purchasing power.`
-        : 'A wash — your raise roughly matches inflation.'
+        ? `Not a real raise. Inflation ate it. You're down ${Math.abs(real).toFixed(2)}% in purchasing power.`
+        : 'A wash: your raise roughly matches inflation.'
 
   return (
     <div className="flex flex-col gap-6">

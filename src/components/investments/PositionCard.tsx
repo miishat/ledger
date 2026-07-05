@@ -56,7 +56,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
             <span className="text-accent"> {pct(thesisChangePct(position.startPrice, currentPrice))}</span>
           </p>
           {price.status === 'error' && (
-            <p className="text-[12px] text-error">live price unavailable — using start price</p>
+            <p className="text-[12px] text-error">live price unavailable, using start price</p>
           )}
           <div className="flex flex-wrap items-center gap-1 mt-1">
             <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
@@ -106,7 +106,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
         <div><p className="text-text-secondary">Allocation now</p><p className="text-text-primary font-medium">{pct(allocationPct(value, totals.currentAll))}</p></div>
         <div><p className="text-text-secondary">Acted</p><p className="text-text-primary font-medium">
           <button onClick={() => updatePosition(analysisId, position.id, { acted: !position.acted })} className="underline decoration-dotted hover:text-accent">
-            {position.acted ? 'Yes' : 'No — still watching'}
+            {position.acted ? 'Yes' : 'No, still watching'}
           </button>
         </p></div>
       </div>
@@ -118,7 +118,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
         <div className="flex flex-col gap-2 mt-2">
           {position.lots.map((l) => (
             <div key={l.id} className="flex items-center justify-between border-b border-border pb-1">
-              <span className="text-text-secondary">{l.date} — {formatMoney(l.amountInvested)} @ {l.price.toFixed(2)}</span>
+              <span className="text-text-secondary">{l.date}: {formatMoney(l.amountInvested)} @ {l.price.toFixed(2)}</span>
               <button onClick={() => removeLot(analysisId, position.id, l.id)} aria-label="Remove lot" className="text-text-secondary hover:text-error">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

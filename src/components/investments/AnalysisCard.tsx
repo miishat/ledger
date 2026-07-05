@@ -34,7 +34,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
       </div>
 
       {analysis.positions.length === 0 ? (
-        <p className="text-[13px] text-text-secondary">No positions yet — add one to start tracking.</p>
+        <p className="text-[13px] text-text-secondary">No positions yet. Add one to start tracking.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {analysis.positions.map((p) => (

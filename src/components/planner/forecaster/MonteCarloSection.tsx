@@ -66,7 +66,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           </ComposedChart>
         </ResponsiveContainer>
         <p className="text-[12px] text-text-secondary mt-2">
-          500 seeded simulations — shaded band spans the 10th to 90th percentile.
+          500 seeded simulations. Shaded band spans the 10th to 90th percentile.
         </p>
       </div>
     </div>

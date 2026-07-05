@@ -35,7 +35,7 @@ export const CurrencyConverter: React.FC = () => {
     override !== undefined
       ? 'manual override'
       : fx.data
-        ? `${fx.data.source}${fx.data.stale ? ' (stale)' : ''} — as of ${new Date(fx.data.asOf).toLocaleString()}`
+        ? `${fx.data.source}${fx.data.stale ? ' (stale)' : ''}, as of ${new Date(fx.data.asOf).toLocaleString()}`
         : fx.status
 
   return (
@@ -68,7 +68,7 @@ export const CurrencyConverter: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ResultCard
           label={`Converted (${to})`}
-          value={converted !== undefined ? formatAmount(converted, to) : fx.status === 'error' ? 'Unavailable — set a manual rate' : '…'}
+          value={converted !== undefined ? formatAmount(converted, to) : fx.status === 'error' ? 'Unavailable, set a manual rate' : '…'}
           highlight
         />
         <ResultCard label={`Rate ${from}→${to}`} value={rate !== undefined ? rate.toFixed(4) : '…'} />
@@ -96,7 +96,7 @@ export const CurrencyConverter: React.FC = () => {
               onClick={() => clearOverride(overrideKey)}
               className="px-3 py-2 rounded-lg border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors"
             >
-              Clear override — use live
+              Clear override, use live
             </button>
           )}
         </div>
