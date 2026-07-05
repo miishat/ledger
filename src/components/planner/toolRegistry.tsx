@@ -191,6 +191,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
         { name: 'Gross annual income', description: 'Your household gross income before tax, used to estimate affordability.' },
         { name: 'GDS ratio', description: 'Gross Debt Service: the percent of gross income lenders allow for housing costs, typically up to 39.' },
         { name: 'Property tax / month', description: 'Estimated monthly property tax, factored into the affordability calculation.' },
+        { name: 'Extra payments', description: 'Optional prepayments: recurring monthly extras over a year range, or one-time lump sums. Both shorten the loan and cut interest.' },
       ],
     },
   },
