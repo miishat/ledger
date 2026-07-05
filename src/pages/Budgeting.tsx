@@ -22,6 +22,8 @@ export const Budgeting: React.FC = () => {
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
 
+  const [tab, setTab] = useState<'overview' | 'insights' | 'transactions' | 'setup'>('overview');
+
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
 
   const shiftMonth = (delta: number) => {
@@ -75,31 +77,64 @@ export const Budgeting: React.FC = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <IncomeWidget selectedMonth={selectedMonth} />
-        <ExpenseWidget selectedMonth={selectedMonth} />
-        <MonthlySummaryWidget selectedMonth={selectedMonth} />
+      <div className="flex gap-2">
+        {(['overview', 'insights', 'transactions', 'setup'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
+              tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            {t === 'overview' ? 'Overview' : t === 'insights' ? 'Insights' : t === 'transactions' ? 'Transactions' : 'Setup'}
+          </button>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SubscriptionsWidget />
-        <AnomalyAlertsWidget selectedMonth={selectedMonth} />
-      </div>
+      {tab === 'overview' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <IncomeWidget selectedMonth={selectedMonth} />
+            <ExpenseWidget selectedMonth={selectedMonth} />
+            <MonthlySummaryWidget selectedMonth={selectedMonth} />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <BudgetProgressWidget selectedMonth={selectedMonth} />
-        <SpendingHeatmapWidget selectedMonth={selectedMonth} />
-        <CategoryTrendsWidget selectedMonth={selectedMonth} />
-        <SankeyWidget selectedMonth={selectedMonth} />
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <BudgetProgressWidget selectedMonth={selectedMonth} />
+            <SankeyWidget selectedMonth={selectedMonth} />
+          </div>
+        </>
+      )}
 
-      <TriageInboxWidget />
-      
-      <CategorizationRulesWidget />
+      {tab === 'insights' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SubscriptionsWidget />
+            <AnomalyAlertsWidget selectedMonth={selectedMonth} />
+          </div>
 
-      <CategoryManagerWidget selectedMonth={selectedMonth} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SpendingHeatmapWidget selectedMonth={selectedMonth} />
+            <CategoryTrendsWidget selectedMonth={selectedMonth} />
+          </div>
+        </>
+      )}
 
-      <TransactionListWidget selectedMonth={selectedMonth} />
+      {tab === 'transactions' && (
+        <>
+          <TriageInboxWidget />
+
+          <TransactionListWidget selectedMonth={selectedMonth} />
+        </>
+      )}
+
+      {tab === 'setup' && (
+        <>
+          <CategoryManagerWidget selectedMonth={selectedMonth} />
+
+          <CategorizationRulesWidget />
+        </>
+      )}
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
