@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   effectiveRate,
@@ -7,6 +7,7 @@ import {
   marginalRateBreakdown,
   PROVINCES,
   PROVINCIAL_TAX,
+  takeHomePay,
   totalIncomeTax,
   type Bracket,
   type Province,
@@ -16,7 +17,7 @@ import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
-const TOOL_ID = 'income-tax'
+const TOOL_ID = 'salary-tax'
 const DEFAULTS = { income: 100000, province: 'ON' as string }
 
 /** Horizontal stacked bar: one segment per bracket, filled up to `income`. */
@@ -55,17 +56,41 @@ const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: number 
   )
 }
 
-export const IncomeTaxEstimator: React.FC = () => {
+export const SalaryTaxTool: React.FC = () => {
   const inputs = useToolInputs(TOOL_ID, DEFAULTS)
   const setInput = usePlannerStore((s) => s.setInput)
   const province = inputs.province as Province
   const income = inputs.income
+
+  // One-time seed from the legacy income-tax / take-home-pay saved inputs so
+  // nobody loses their numbers. Legacy entries are read, never deleted.
+  useEffect(() => {
+    const { inputs: all, setInput: set } = usePlannerStore.getState()
+    if (all[TOOL_ID] !== undefined) return
+    const oldTax = all['income-tax']
+    const oldPay = all['take-home-pay']
+    if (oldTax) {
+      if (typeof oldTax.income === 'number') set(TOOL_ID, 'income', oldTax.income)
+      if (typeof oldTax.province === 'string') set(TOOL_ID, 'province', oldTax.province)
+    } else if (oldPay) {
+      if (typeof oldPay.gross === 'number') set(TOOL_ID, 'income', oldPay.gross)
+      if (typeof oldPay.province === 'string') set(TOOL_ID, 'province', oldPay.province)
+    }
+  }, [])
+
   const breakdown = marginalRateBreakdown(income, province)
+  const t = takeHomePay(income, province)
+  const deductions = [
+    { label: 'Federal tax', value: t.federal },
+    { label: 'Provincial tax', value: t.provincial },
+    { label: 'CPP (incl. CPP2)', value: t.cpp },
+    { label: 'EI', value: t.ei },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-        <CalculatorField label="Taxable income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
+        <CalculatorField label="Gross annual income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
         <SelectField label="Province" value={province} onChange={(v) => setInput(TOOL_ID, 'province', v)}>
           {PROVINCES.map((p) => (
             <option key={p.code} value={p.code}>{p.name}</option>
@@ -94,6 +119,28 @@ export const IncomeTaxEstimator: React.FC = () => {
         <p className="text-[12px] text-text-secondary">
           Filled portion = income inside each bracket. The breakdown above shows why the marginal
           rate can exceed the bracket rates — Ontario's surtax adds to every extra dollar's tax.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <ResultCard label="Net annual" value={formatMoney(t.net)} highlight />
+        <ResultCard label="Net monthly" value={formatMoney(t.net / 12)} />
+        <ResultCard label="Net biweekly" value={formatMoney(t.net / 26)} />
+      </div>
+
+      <div className="themed-card rounded-lg p-4 flex flex-col gap-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-secondary">Deductions</p>
+        {deductions.map((d) => (
+          <div key={d.label} className="flex items-center gap-3">
+            <span className="text-[13px] text-text-secondary w-40 shrink-0">{d.label}</span>
+            <div className="flex-1 h-2 rounded bg-bg-primary/50 overflow-hidden">
+              <div className="h-full bg-accent/70" style={{ width: `${t.gross > 0 ? (d.value / t.gross) * 100 : 0}%` }} />
+            </div>
+            <span className="text-[13px] text-text-primary w-24 text-right">{formatMoney(d.value)}</span>
+          </div>
+        ))}
+        <p className="text-[12px] text-text-secondary mt-2">
+          2026 rates, employee side, basic personal amount only — an estimate, not payroll advice.
         </p>
       </div>
     </div>

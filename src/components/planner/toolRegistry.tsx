@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Percent, Scale, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, Scale, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ForecasterTool } from './forecaster/ForecasterTool'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -10,8 +10,7 @@ import { CurrencyConverter } from './CurrencyConverter'
 import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
-import { TakeHomePayCalculator } from './TakeHomePayCalculator'
-import { IncomeTaxEstimator } from './IncomeTaxEstimator'
+import { SalaryTaxTool } from './SalaryTaxTool'
 import { RrspVsTfsaCalculator } from './RrspVsTfsaCalculator'
 
 export interface PlannerTool {
@@ -90,18 +89,11 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     component: RentVsBuyCalculator,
   },
   {
-    id: 'take-home-pay',
-    name: 'Take-Home Pay',
-    description: 'Gross to net for any province — 2026 federal/provincial tax, CPP and EI.',
+    id: 'salary-tax',
+    name: 'Salary & Tax',
+    description: 'Gross to net for any province — 2026 tax breakdown, marginal/effective rates, CPP and EI.',
     icon: Landmark,
-    component: TakeHomePayCalculator,
-  },
-  {
-    id: 'income-tax',
-    name: 'Income Tax Estimator',
-    description: 'Marginal and effective 2026 tax rates by province, with bracket visualization.',
-    icon: Percent,
-    component: IncomeTaxEstimator,
+    component: SalaryTaxTool,
   },
   {
     id: 'rrsp-vs-tfsa',

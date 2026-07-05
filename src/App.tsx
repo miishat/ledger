@@ -33,6 +33,8 @@ function App() {
           <Route path="budget" element={<Budgeting />} />
           <Route path="investments" element={<Investments />} />
           <Route path="planner" element={<Planner />} />
+          <Route path="planner/income-tax" element={<Navigate to="/planner/salary-tax" replace />} />
+          <Route path="planner/take-home-pay" element={<Navigate to="/planner/salary-tax" replace />} />
           <Route path="planner/:toolId" element={<PlannerTool />} />
           <Route path="projections" element={<Navigate to="/planner" replace />} />
           <Route path="compensation" element={<Compensation />} />
