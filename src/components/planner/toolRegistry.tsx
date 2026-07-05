@@ -13,10 +13,27 @@ import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { SalaryTaxTool } from './SalaryTaxTool'
 import { RrspVsTfsaCalculator } from './RrspVsTfsaCalculator'
 
+export type PlannerToolGroup =
+  | 'Forecasting & Growth'
+  | 'Savings'
+  | 'Debt & Housing'
+  | 'Income & Tax'
+  | 'Utilities'
+
+/** Hub section + dropdown order. */
+export const PLANNER_GROUPS: PlannerToolGroup[] = [
+  'Forecasting & Growth',
+  'Savings',
+  'Debt & Housing',
+  'Income & Tax',
+  'Utilities',
+]
+
 export interface PlannerTool {
   id: string
   name: string
   description: string
+  group: PlannerToolGroup
   icon: LucideIcon
   component: React.ComponentType
 }
@@ -29,6 +46,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'forecaster',
     name: 'Net-Worth / FIRE Forecaster',
     description: 'Your history projected forward — scenarios, FIRE date, goals, Monte Carlo.',
+    group: 'Forecasting & Growth',
     icon: TrendingUp,
     component: ForecasterTool,
   },
@@ -36,6 +54,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'compound-interest',
     name: 'Compound Interest',
     description: 'See how a starting balance and monthly contributions grow over time.',
+    group: 'Forecasting & Growth',
     icon: LineChart,
     component: CompoundInterestCalculator,
   },
@@ -43,6 +62,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'savings-goal',
     name: 'Savings Goal',
     description: 'Solve for any variable: contribution, time, required return, or final balance.',
+    group: 'Savings',
     icon: Target,
     component: SavingsGoalCalculator,
   },
@@ -50,6 +70,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'emergency-fund',
     name: 'Emergency Fund',
     description: 'How many months of expenses you have covered, and the gap to your target.',
+    group: 'Savings',
     icon: ShieldCheck,
     component: EmergencyFundCalculator,
   },
@@ -57,6 +78,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'currency-converter',
     name: 'Currency Converter',
     description: 'USD ⇄ CAD with live rates, historical lookup, and manual fallback.',
+    group: 'Utilities',
     icon: ArrowLeftRight,
     component: CurrencyConverter,
   },
@@ -64,6 +86,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'raise-inflation',
     name: 'Raise vs Inflation',
     description: 'Is my raise a real raise? Nominal vs inflation-adjusted.',
+    group: 'Income & Tax',
     icon: TrendingDown,
     component: RaiseInflationCalculator,
   },
@@ -71,6 +94,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'debt-payoff',
     name: 'Debt Payoff',
     description: 'Snowball vs avalanche — payoff date, total interest, extra-payment impact.',
+    group: 'Debt & Housing',
     icon: CreditCard,
     component: DebtPayoffCalculator,
   },
@@ -78,6 +102,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'mortgage',
     name: 'Mortgage',
     description: 'Payment, amortization curve, and how much house you can afford.',
+    group: 'Debt & Housing',
     icon: Home,
     component: MortgageCalculator,
   },
@@ -85,6 +110,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'rent-vs-buy',
     name: 'Rent vs Buy',
     description: 'Cumulative-cost crossover: when (if ever) buying beats renting.',
+    group: 'Debt & Housing',
     icon: Building2,
     component: RentVsBuyCalculator,
   },
@@ -92,6 +118,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'salary-tax',
     name: 'Salary & Tax',
     description: 'Gross to net for any province — 2026 tax breakdown, marginal/effective rates, CPP and EI.',
+    group: 'Income & Tax',
     icon: Landmark,
     component: SalaryTaxTool,
   },
@@ -99,6 +126,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     id: 'rrsp-vs-tfsa',
     name: 'RRSP vs TFSA',
     description: 'Which account wins for your marginal rate now vs in retirement.',
+    group: 'Income & Tax',
     icon: Scale,
     component: RrspVsTfsaCalculator,
   },
