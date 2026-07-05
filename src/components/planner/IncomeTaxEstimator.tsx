@@ -11,6 +11,7 @@ import {
   type Province,
 } from '../../utils/finance/canadaTax'
 import { CalculatorField } from './CalculatorField'
+import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
@@ -61,20 +62,13 @@ export const IncomeTaxEstimator: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         <CalculatorField label="Taxable income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
-        <label className="flex flex-col gap-1">
-          <span className="text-[13px] font-medium text-text-secondary">Province</span>
-          <select
-            className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent"
-            value={province}
-            onChange={(e) => setInput(TOOL_ID, 'province', e.target.value)}
-          >
-            {PROVINCES.map((p) => (
-              <option key={p.code} value={p.code}>{p.name}</option>
-            ))}
-          </select>
-        </label>
+        <SelectField label="Province" value={province} onChange={(v) => setInput(TOOL_ID, 'province', v)}>
+          {PROVINCES.map((p) => (
+            <option key={p.code} value={p.code}>{p.name}</option>
+          ))}
+        </SelectField>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

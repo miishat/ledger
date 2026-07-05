@@ -7,6 +7,7 @@ import {
   solveTarget,
 } from '../../utils/finance/savingsGoal'
 import { CalculatorField } from './CalculatorField'
+import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
@@ -57,21 +58,16 @@ export const SavingsGoalCalculator: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <label className="flex flex-col gap-1 max-w-xs">
-        <span className="text-[13px] font-medium text-text-secondary">Solve for</span>
-        <select
-          className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent"
-          value={solveFor}
-          onChange={(e) => setInput(TOOL_ID, 'solveFor', e.target.value)}
-        >
+      <div className="max-w-xs">
+        <SelectField label="Solve for" value={solveFor} onChange={(v) => setInput(TOOL_ID, 'solveFor', v)}>
           <option value="monthly">Monthly contribution</option>
           <option value="months">Time to goal</option>
           <option value="rate">Required return</option>
           <option value="target">Final balance</option>
-        </select>
-      </label>
+        </SelectField>
+      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         {solveFor !== 'target' && (
           <CalculatorField label="Goal amount" prefix="$" step={1000} value={inputs.target} onChange={set('target')} />
         )}

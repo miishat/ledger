@@ -6,6 +6,7 @@ import {
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import { simulatePayoff, type Debt, type PayoffStrategy } from '../../utils/finance/debtPayoff'
 import { CalculatorField } from './CalculatorField'
+import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
@@ -85,17 +86,10 @@ export const DebtPayoffCalculator: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         <CalculatorField label="Extra monthly payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
-        <label className="flex flex-col gap-1">
-          <span className="text-[13px] font-medium text-text-secondary">Strategy</span>
-          <select
-            className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent"
-            value={strategy}
-            onChange={(e) => setInput(TOOL_ID, 'strategy', e.target.value)}
-          >
-            <option value="avalanche">Avalanche (highest APR first)</option>
-            <option value="snowball">Snowball (smallest balance first)</option>
-          </select>
-        </label>
+        <SelectField label="Strategy" value={strategy} onChange={(v) => setInput(TOOL_ID, 'strategy', v)}>
+          <option value="avalanche">Avalanche (highest APR first)</option>
+          <option value="snowball">Snowball (smallest balance first)</option>
+        </SelectField>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
