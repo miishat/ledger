@@ -3,8 +3,8 @@ import {
   bookValue, holdingPlDollars, holdingPlPct, marketValue, portfolioTotals, toCad,
 } from './portfolioMetrics'
 
-const cadHolding: Holding = { id: 'h1', ticker: 'VFV', quantity: 100, avgCost: 120, currency: 'CAD' }
-const usdHolding: Holding = { id: 'h2', ticker: 'AAPL', quantity: 10, avgCost: 180, currency: 'USD' }
+const cadHolding: Holding = { id: 'h1', account: 'Default', ticker: 'VFV', quantity: 100, avgCost: 120, currency: 'CAD' }
+const usdHolding: Holding = { id: 'h2', account: 'Default', ticker: 'AAPL', quantity: 10, avgCost: 180, currency: 'USD' }
 
 describe('per-holding math', () => {
   it('book and market value', () => {

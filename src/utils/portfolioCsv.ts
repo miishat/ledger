@@ -17,7 +17,7 @@ export interface UnrecognizedPortfolioCSV {
 export interface PortfolioParserConfig {
   name: string
   detect: (headers: string[]) => boolean
-  parse: (row: Record<string, string>) => Omit<Holding, 'id'> | null
+  parse: (row: Record<string, string>) => Omit<Holding, 'id' | 'account'> | null
 }
 
 function toCurrency(raw: string | undefined): Currency {
@@ -82,7 +82,7 @@ export const PORTFOLIO_PARSERS: PortfolioParserConfig[] = [
 
 export function parsePortfolioText(
   text: string,
-): Omit<Holding, 'id'>[] | UnrecognizedPortfolioCSV {
+): Omit<Holding, 'id' | 'account'>[] | UnrecognizedPortfolioCSV {
   const results = Papa.parse<Record<string, string>>(text, {
     header: true,
     skipEmptyLines: true,
@@ -91,7 +91,7 @@ export function parsePortfolioText(
   const headers = results.meta.fields ?? []
   const parser = PORTFOLIO_PARSERS.find((p) => p.detect(headers))
   if (!parser) return { unrecognized: true, headers, rows: results.data }
-  const holdings: Omit<Holding, 'id'>[] = []
+  const holdings: Omit<Holding, 'id' | 'account'>[] = []
   for (const row of results.data) {
     const parsed = parser.parse(row)
     if (parsed) holdings.push(parsed)
@@ -101,7 +101,7 @@ export function parsePortfolioText(
 
 export async function parsePortfolioCSV(
   file: File,
-): Promise<Omit<Holding, 'id'>[] | UnrecognizedPortfolioCSV> {
+): Promise<Omit<Holding, 'id' | 'account'>[] | UnrecognizedPortfolioCSV> {
   return parsePortfolioText(await file.text())
 }
 
@@ -115,8 +115,8 @@ export interface ColumnMapping {
 export function mapPortfolioRows(
   rows: Record<string, string>[],
   mapping: ColumnMapping,
-): Omit<Holding, 'id'>[] {
-  const holdings: Omit<Holding, 'id'>[] = []
+): Omit<Holding, 'id' | 'account'>[] {
+  const holdings: Omit<Holding, 'id' | 'account'>[] = []
   for (const row of rows) {
     const ticker = row[mapping.ticker]?.trim()
     const quantity = positive(row[mapping.quantity])
