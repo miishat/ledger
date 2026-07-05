@@ -101,7 +101,7 @@ export const MortgageCalculator: React.FC = () => {
           </div>
           <p className="text-[13px] text-text-secondary">
             GDS-style estimate: {inputs.gdsPct}% of gross income minus property tax and {formatMoney(HEATING_MONTHLY)} heating,
-            with your current down payment of {formatMoney(downPayment)} added on top. Lenders also apply stress tests — treat as a ceiling.
+            with your current down payment of {formatMoney(downPayment)} added on top. Lenders also apply stress tests, treated here as a ceiling.
           </p>
         </>
       )}
