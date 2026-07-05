@@ -47,7 +47,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
 
   if (incomeByCat.size === 0 && expenseByGroup.size === 0) {
     return (
-      <WidgetWrapper title="Income flow">
+      <WidgetWrapper title="Income Flow">
         <p className="text-[13px] text-text-secondary mt-2">No transactions this month.</p>
       </WidgetWrapper>
     )
@@ -69,7 +69,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
   ].filter((l) => l.value > 0)
 
   return (
-    <WidgetWrapper title="Income flow" className="md:col-span-2">
+    <WidgetWrapper title="Income Flow" className="md:col-span-2">
       <div className="h-[300px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <Sankey

@@ -11,7 +11,7 @@ export const CashFlowForecastWidget: React.FC<{ selectedMonth: string }> = ({ se
   const f = forecastMonthEnd(transactions, detectRecurring(transactions), selectedMonth, today)
 
   return (
-    <WidgetWrapper title="Month-end forecast">
+    <WidgetWrapper title="Month-End Forecast">
       <div className="flex flex-col gap-2 mt-2 text-[13px]">
         <div className="flex justify-between"><span className="text-text-secondary">Net so far</span><span className="text-text-primary">{formatMoney(f.netSoFar)}</span></div>
         <div className="flex justify-between"><span className="text-text-secondary">Expected in</span><span className="text-text-primary">+{formatMoney(f.expectedIn)}</span></div>

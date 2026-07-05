@@ -20,7 +20,7 @@ export const PlannerGoalWidget: React.FC = () => {
   const top = [...goals].sort((a, b) => b.amount - a.amount)[0]
   if (!top) {
     return (
-      <WidgetWrapper title="Top goal">
+      <WidgetWrapper title="Top Goal">
         <p className="text-[13px] text-text-secondary mt-2">
           <Link to="/planner/forecaster" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Add a goal in the Forecaster</Link> to track it here.
         </p>
@@ -30,7 +30,7 @@ export const PlannerGoalWidget: React.FC = () => {
   const progress = top.amount > 0 ? Math.min(1, netWorth / top.amount) : 0
 
   return (
-    <WidgetWrapper title="Top goal">
+    <WidgetWrapper title="Top Goal">
       <div className="flex flex-col gap-2 mt-2">
         <span className="text-[15px] text-text-primary font-medium">{top.label}</span>
         <span className="text-[13px] text-text-secondary">{formatMoney(netWorth)} of {formatMoney(top.amount)} ({Math.round(progress * 100)}%)</span>

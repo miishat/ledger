@@ -84,8 +84,8 @@ export const IncomeTaxEstimator: React.FC = () => {
       </div>
 
       <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
-        <BracketBar title="Federal brackets" brackets={FEDERAL_BRACKETS} income={income} />
-        <BracketBar title={`${PROVINCIAL_TAX[province].name} brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={income} />
+        <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={income} />
+        <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={income} />
         <p className="text-[12px] text-text-secondary">
           Filled portion = income inside each bracket. Marginal rate shown includes the Ontario surtax where it applies.
         </p>

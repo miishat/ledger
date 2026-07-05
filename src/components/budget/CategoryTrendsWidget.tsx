@@ -17,7 +17,7 @@ export const CategoryTrendsWidget: React.FC<{ selectedMonth: string }> = ({ sele
     .slice(0, 8)
 
   return (
-    <WidgetWrapper title="Category trends (6 months)">
+    <WidgetWrapper title="Category Trends (6 Months)">
       {rows.length === 0 ? (
         <p className="text-[13px] text-text-secondary mt-2">No categorized spending yet.</p>
       ) : (

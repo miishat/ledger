@@ -174,7 +174,7 @@ export const ForecasterTool: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-3">
           <ListEditor<Goal>
-            title="Goals (net-worth targets)"
+            title="Goals (Net-Worth Targets)"
             items={goals}
             columns={[
               { key: 'label', label: 'Goal', type: 'text' },
@@ -190,7 +190,7 @@ export const ForecasterTool: React.FC = () => {
           ))}
         </div>
         <ListEditor<LifeEvent>
-          title="Life events (negative = cost, positive = windfall)"
+          title="Life Events (Negative = Cost, Positive = Windfall)"
           items={events}
           columns={[
             { key: 'label', label: 'Event', type: 'text' },

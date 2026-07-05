@@ -26,7 +26,7 @@ export const BudgetProgressWidget: React.FC<{ selectedMonth: string }> = ({ sele
     })
 
   return (
-    <WidgetWrapper title="Budget vs actual">
+    <WidgetWrapper title="Budget vs. Actual">
       {rows.length === 0 ? (
         <p className="text-[13px] text-text-secondary mt-2">Set target amounts on categories to track progress.</p>
       ) : (

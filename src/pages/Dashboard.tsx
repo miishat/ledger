@@ -35,6 +35,13 @@ const DASHBOARD_WIDGET_IDS: string[] = [
   'top-goal',
 ];
 
+// Grid placement lives on the draggable wrapper div (the actual grid child), not on the
+// widget's own root element, since Tailwind col-span only affects direct grid children.
+const WIDGET_SPAN: Record<string, string> = {
+  'net-worth': 'md:col-span-2',
+  trend: 'col-span-1 md:col-span-2 lg:col-span-1',
+};
+
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -102,7 +109,7 @@ export const Dashboard: React.FC = () => {
                 setDragId(null);
               }}
               onDragEnd={() => setDragId(null)}
-              className={`cursor-grab active:cursor-grabbing ${dragId === id ? 'opacity-50' : ''}`}
+              className={`cursor-grab active:cursor-grabbing ${WIDGET_SPAN[id] ?? ''} ${dragId === id ? 'opacity-50' : ''}`}
             >
               {element}
             </div>

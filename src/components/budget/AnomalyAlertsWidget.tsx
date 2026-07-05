@@ -12,7 +12,7 @@ export const AnomalyAlertsWidget: React.FC<{ selectedMonth: string }> = ({ selec
   const anomalies = detectAnomalies(transactions, categories, selectedMonth, refDate)
 
   return (
-    <WidgetWrapper title="Spending alerts">
+    <WidgetWrapper title="Spending Alerts">
       {anomalies.length === 0 ? (
         <p className="text-[13px] text-text-secondary mt-2">Nothing unusual this month.</p>
       ) : (

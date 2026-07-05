@@ -11,7 +11,7 @@ export const SubscriptionsWidget: React.FC = () => {
   const monthlyTotal = items.reduce((s, i) => s + i.monthlyEstimate, 0)
 
   return (
-    <WidgetWrapper title="Subscriptions & recurring">
+    <WidgetWrapper title="Subscriptions & Recurring">
       {items.length === 0 ? (
         <p className="text-[13px] text-text-secondary mt-2">No repeating charges detected yet — import more history.</p>
       ) : (

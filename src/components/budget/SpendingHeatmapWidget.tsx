@@ -26,7 +26,7 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
   ]
 
   return (
-    <WidgetWrapper title="Spending calendar">
+    <WidgetWrapper title="Spending Calendar">
       <div className="grid grid-cols-7 gap-1 mt-2 text-[11px]">
         {WEEKDAYS.map((d) => (
           <div key={d} className="text-center text-text-secondary">{d}</div>
