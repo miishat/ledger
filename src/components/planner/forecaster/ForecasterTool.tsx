@@ -81,7 +81,7 @@ export const ForecasterTool: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Auto-fed inputs with manual overrides */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <AutoField
           label="Starting balance"
           auto={settings.autoStart as boolean}
@@ -124,12 +124,12 @@ export const ForecasterTool: React.FC = () => {
       </div>
 
       {/* What-if sliders */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
         <CalculatorField label="Years" min={1} max={50} value={settings.years} onChange={(v) => setSetting('years', v)} />
         <CalculatorField label="Return" suffix="%" step={0.1} value={settings.annualReturnPct} onChange={(v) => setSetting('annualReturnPct', v)} />
         <CalculatorField label="Inflation" suffix="%" step={0.1} value={settings.inflationPct} onChange={(v) => setSetting('inflationPct', v)} />
         <CalculatorField label="Contribution step-up" suffix="%/yr" step={0.5} value={settings.stepUpPct} onChange={(v) => setSetting('stepUpPct', v)} />
-        <CalculatorField label="Scenario spread" suffix="±%" step={0.5} value={settings.spreadPct} onChange={(v) => setSetting('spreadPct', v)} />
+        <CalculatorField label="Scenario spread" suffix="± %" step={0.5} value={settings.spreadPct} onChange={(v) => setSetting('spreadPct', v)} />
       </div>
 
       {/* View toggles */}

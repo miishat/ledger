@@ -58,7 +58,7 @@ export const SavingsGoalCalculator: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="max-w-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
         <SelectField
           label="Solve for"
           value={solveFor}
@@ -70,9 +70,6 @@ export const SavingsGoalCalculator: React.FC = () => {
             { value: 'target', label: 'Final balance' },
           ]}
         />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
         {solveFor !== 'target' && (
           <CalculatorField label="Goal amount" prefix="$" step={1000} value={inputs.target} onChange={set('target')} />
         )}
@@ -88,8 +85,10 @@ export const SavingsGoalCalculator: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ResultCard label={result.label} value={result.value} highlight />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-3">
+          <ResultCard label={result.label} value={result.value} highlight />
+        </div>
       </div>
     </div>
   )

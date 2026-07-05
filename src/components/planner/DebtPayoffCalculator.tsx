@@ -61,7 +61,7 @@ export const DebtPayoffCalculator: React.FC = () => {
           </button>
         </div>
         {debts.map((d) => (
-          <div key={d.id} className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end border-b border-border pb-3 last:border-b-0">
+          <div key={d.id} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-3 items-end border-b border-border pb-3 last:border-b-0">
             <label className="flex flex-col gap-1">
               <span className="text-[13px] font-medium text-text-secondary">Name</span>
               <input
@@ -75,7 +75,7 @@ export const DebtPayoffCalculator: React.FC = () => {
             <CalculatorField label="Min payment" prefix="$" step={10} value={d.minPayment} onChange={(v) => updateDebt(d.id, { minPayment: v })} />
             <button
               onClick={() => saveDebts(debts.filter((x) => x.id !== d.id))}
-              className="justify-self-start p-2 rounded-lg text-text-secondary hover:text-error transition-colors"
+              className="self-end p-2 mb-2 rounded-lg text-text-secondary hover:text-error transition-colors"
               aria-label={`Remove ${d.name}`}
             >
               <Trash2 className="w-4 h-4" />
@@ -84,7 +84,7 @@ export const DebtPayoffCalculator: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
         <CalculatorField label="Extra monthly payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
         <SelectField
           label="Strategy"
