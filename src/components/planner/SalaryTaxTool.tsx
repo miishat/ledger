@@ -7,7 +7,7 @@ import {
   marginalRateBreakdown,
   PROVINCES,
   PROVINCIAL_TAX,
-  takeHomePay,
+  takeHomeWithDeductions,
   totalIncomeTax,
   type Bracket,
   type Province,
@@ -18,35 +18,40 @@ import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
 const TOOL_ID = 'salary-tax'
-const DEFAULTS = { income: 100000, province: 'ON' as string }
+const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0 }
 
-/** Horizontal stacked bar: one segment per bracket, filled up to `income`. */
+/** Bracket visual: one visually separate segment per bracket, with a rate
+ *  label, income-range caption, and accent fill for the portion of income
+ *  inside that bracket. */
 const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: number }> = ({ title, brackets, income }) => {
-  const cap = Math.max(income * 1.25, 1) // view window slightly past current income
+  const cap = Math.max(income * 1.25, 1)
   const segments = brackets
-    .reduce<Array<{ start: number; end: number; rate: number; lower: number }>>((acc, b) => {
-      const lower = acc.length > 0 ? acc[acc.length - 1].lower : 0
-      const start = lower
+    .reduce<Array<{ start: number; end: number; rate: number }>>((acc, b) => {
+      const start = acc.length > 0 ? acc[acc.length - 1].end : 0
       const end = Math.min(b.upTo, cap)
-      if (end > start) {
-        acc.push({ start, end, rate: b.rate, lower: b.upTo })
-      }
+      if (end > start) acc.push({ start, end, rate: b.rate })
       return acc
     }, [])
-    .map(({ start, end, rate }) => ({ start, end, rate }))
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <span className="text-[12px] uppercase tracking-wide text-text-secondary">{title}</span>
-      <div className="flex h-6 w-full rounded overflow-hidden border border-border">
+      <div className="flex w-full gap-1">
         {segments.map((s) => {
           const width = ((s.end - s.start) / cap) * 100
           const filledTo = Math.min(Math.max(income - s.start, 0), s.end - s.start)
-          const filledPct = ((s.end - s.start) > 0 ? filledTo / (s.end - s.start) : 0) * 100
+          const filledPct = (s.end - s.start > 0 ? filledTo / (s.end - s.start) : 0) * 100
+          const active = income > s.start
           return (
-            <div key={s.start} className="relative bg-bg-primary/40 border-r border-border last:border-r-0" style={{ width: `${width}%` }} title={`${(s.rate * 100).toFixed(2)}% from ${formatMoney(s.start)}`}>
-              <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] text-text-primary">
-                {(s.rate * 100).toFixed(1)}%
+            <div key={s.start} className="flex flex-col gap-1" style={{ width: `${width}%` }}>
+              <div className={`relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
+                   title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
+                <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
+                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-medium text-text-primary">
+                  {(s.rate * 100).toFixed(1)}%
+                </span>
+              </div>
+              <span className="text-[10px] text-text-secondary text-center truncate">
+                {formatMoney(s.start)}{s.end < cap ? ` to ${formatMoney(s.end)}` : '+'}
               </span>
             </div>
           )
@@ -78,8 +83,8 @@ export const SalaryTaxTool: React.FC = () => {
     }
   }, [])
 
-  const breakdown = marginalRateBreakdown(income, province)
-  const t = takeHomePay(income, province)
+  const t = takeHomeWithDeductions(income, province, inputs.rrsp, inputs.fhsa)
+  const breakdown = marginalRateBreakdown(t.taxableIncome, province)
   const deductions = [
     { label: 'Federal tax', value: t.federal },
     { label: 'Provincial tax', value: t.provincial },
@@ -89,7 +94,7 @@ export const SalaryTaxTool: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
         <CalculatorField label="Gross annual income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
         <SelectField
           label="Province"
@@ -97,17 +102,33 @@ export const SalaryTaxTool: React.FC = () => {
           onChange={(v) => setInput(TOOL_ID, 'province', v)}
           options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
         />
+        <CalculatorField label="RRSP contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
+        <CalculatorField label="FHSA contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Total income tax" value={formatMoney(totalIncomeTax(income, province))} highlight />
-        <ResultCard label="Marginal rate" value={`${marginalRate(income, province).toFixed(2)}%`} />
-        <ResultCard label="Effective rate" value={`${effectiveRate(income, province).toFixed(2)}%`} />
+        <ResultCard label="Total income tax" value={formatMoney(totalIncomeTax(t.taxableIncome, province))} highlight />
+        <ResultCard label="Marginal rate" value={`${marginalRate(t.taxableIncome, province).toFixed(2)}%`} />
+        <ResultCard label="Effective rate" value={`${effectiveRate(t.taxableIncome, province).toFixed(2)}%`} />
       </div>
 
+      {inputs.rrsp + inputs.fhsa > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <ResultCard label="Taxable income" value={formatMoney(t.taxableIncome)} />
+            <ResultCard label="Tax savings from contributions" value={formatMoney(t.taxSavings)} highlight />
+            <ResultCard label="Net after contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
+          </div>
+          <p className="text-[12px] text-text-secondary">
+            RRSP limit is 18% of last year's earned income up to the annual maximum. FHSA limit is
+            $8,000 per year. Contributions here are assumed fully deductible this year.
+          </p>
+        </div>
+      )}
+
       <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
-        <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={income} />
-        <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={income} />
+        <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={t.taxableIncome} />
+        <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.taxableIncome} />
         <div className="flex flex-col gap-1">
           <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal rate breakdown</span>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-primary">
