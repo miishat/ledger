@@ -17,6 +17,13 @@ describe('CalculatorField', () => {
     fireEvent.change(screen.getByLabelText('Years'), { target: { value: '' } })
     expect(onChange).toHaveBeenCalledWith(0)
   })
+
+  it('renders suffix without wrapping', () => {
+    render(<CalculatorField label="Scenario spread" suffix="± %" value={2} onChange={() => {}} />)
+    const suffix = screen.getByText('± %')
+    expect(suffix.className).toContain('whitespace-nowrap')
+    expect(suffix.className).toContain('shrink-0')
+  })
 })
 
 describe('ResultCard', () => {

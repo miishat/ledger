@@ -28,7 +28,7 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
         {label}
       </label>
       <div className="flex items-center gap-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 focus-within:border-accent transition-colors">
-        {prefix && <span className="text-[13px] text-text-secondary">{prefix}</span>}
+        {prefix && <span className="text-[13px] text-text-secondary whitespace-nowrap shrink-0">{prefix}</span>}
         <input
           id={inputId}
           type="number"
@@ -39,7 +39,7 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
           step={step}
           onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
         />
-        {suffix && <span className="text-[13px] text-text-secondary">{suffix}</span>}
+        {suffix && <span className="text-[13px] text-text-secondary whitespace-nowrap shrink-0">{suffix}</span>}
       </div>
     </div>
   )
