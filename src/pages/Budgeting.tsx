@@ -11,7 +11,6 @@ import { TransactionListWidget } from '../components/budget/TransactionListWidge
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
 import { SubscriptionsWidget } from '../components/budget/SubscriptionsWidget';
 import { AnomalyAlertsWidget } from '../components/budget/AnomalyAlertsWidget';
-import { CashFlowForecastWidget } from '../components/budget/CashFlowForecastWidget';
 import { SankeyWidget } from '../components/budget/SankeyWidget';
 import { SpendingHeatmapWidget } from '../components/budget/SpendingHeatmapWidget';
 import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget';
@@ -82,10 +81,9 @@ export const Budgeting: React.FC = () => {
         <MonthlySummaryWidget selectedMonth={selectedMonth} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <SubscriptionsWidget />
         <AnomalyAlertsWidget selectedMonth={selectedMonth} />
-        <CashFlowForecastWidget selectedMonth={selectedMonth} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

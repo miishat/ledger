@@ -17,7 +17,7 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => 
 
   return (
     <WidgetWrapper title="Income">
-      <div className="flex flex-col gap-2 mt-4">
+      <div className="flex items-baseline gap-2 mt-4">
         <span className="text-[28px] font-bold text-accent">${totalIncome.toFixed(2)}</span>
         <span className="text-[12px] text-text-secondary">This month</span>
       </div>

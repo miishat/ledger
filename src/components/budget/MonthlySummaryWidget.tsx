@@ -1,6 +1,9 @@
 import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { detectRecurring } from '../../utils/budget/recurring';
+import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast';
+import { formatMoney } from '../planner/format';
 
 interface MonthlySummaryWidgetProps {
   selectedMonth: string; // YYYY-MM
@@ -8,21 +11,28 @@ interface MonthlySummaryWidgetProps {
 
 export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ selectedMonth }) => {
   const transactions = useBudgetStore((state) => state.transactions);
-  
+
   const transactionsList = Object.values(transactions);
-  
+
   const thisMonthTransactions = transactionsList.filter(t => t.date.startsWith(selectedMonth));
-  
+
   const totalIncome = thisMonthTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const totalExpense = thisMonthTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const netChange = totalIncome - totalExpense;
   const isPositive = netChange >= 0;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const forecast = forecastMonthEnd(transactions, detectRecurring(transactions), selectedMonth, today);
+  const pendingSummary = forecast.pending
+    .slice(0, 5)
+    .map((p) => `${p.expectedDate}: ${p.type === 'income' ? '+' : '-'}${formatMoney(p.amount)} ${p.description}`)
+    .join('\n');
 
   return (
     <WidgetWrapper title="Monthly Summary">
@@ -47,8 +57,21 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
               -${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
+
+          <div
+            className="flex justify-between items-center text-sm"
+            title={pendingSummary || 'No pending recurring items detected'}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent/50"></div>
+              <span className="text-text-secondary">Projected Net</span>
+            </div>
+            <span className={`font-medium ${forecast.projectedNet >= 0 ? 'text-text-primary' : 'text-error'}`}>
+              {forecast.projectedNet >= 0 ? '+' : '-'}{formatMoney(Math.abs(forecast.projectedNet))}
+            </span>
+          </div>
         </div>
-        
+
         <div className="flex justify-between items-end mt-auto">
           <span className="text-sm font-medium text-text-secondary">Net Change</span>
           <span className={`text-[20px] font-bold ${isPositive ? 'text-accent' : 'text-red-500'}`}>
