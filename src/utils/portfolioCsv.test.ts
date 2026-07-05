@@ -49,3 +49,29 @@ describe('mapPortfolioRows', () => {
     expect(mapped).toHaveLength(0)
   })
 })
+
+describe('header normalization', () => {
+  it('detects IBKR despite BOM, padding, and lowercase headers', () => {
+    const csv = '﻿ symbol , Quantity , cost basis ,Currency\nAAPL,10,1500,USD\n'
+    const result = parsePortfolioText(csv)
+    expect(Array.isArray(result)).toBe(true)
+    const holdings = result as Array<{ ticker: string; quantity: number; avgCost: number }>
+    expect(holdings).toHaveLength(1)
+    expect(holdings[0].ticker).toBe('AAPL')
+    expect(holdings[0].quantity).toBe(10)
+    expect(holdings[0].avgCost).toBeCloseTo(150)
+  })
+
+  it('detects Wealthsimple with trailing header whitespace', () => {
+    const csv = 'Symbol ,Quantity,Book Value \nVFV,5,600\n'
+    const result = parsePortfolioText(csv)
+    expect(Array.isArray(result)).toBe(true)
+    expect((result as unknown[]).length).toBe(1)
+  })
+
+  it('still falls through to the mapper for genuinely unknown headers', () => {
+    const csv = 'Ticker,Shares,Total\nAAPL,10,1500\n'
+    const result = parsePortfolioText(csv)
+    expect('unrecognized' in (result as object)).toBe(true)
+  })
+})

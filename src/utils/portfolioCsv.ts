@@ -29,38 +29,52 @@ function positive(raw: string | undefined): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+/** Case-insensitive row lookup; header keys are already BOM-stripped and
+ *  trimmed by the transformHeader in parsePortfolioText. */
+function cell(row: Record<string, string>, name: string): string | undefined {
+  if (row[name] !== undefined) return row[name]
+  const target = name.toLowerCase()
+  const key = Object.keys(row).find((k) => k.toLowerCase() === target)
+  return key !== undefined ? row[key] : undefined
+}
+
+function hasHeader(headers: string[], name: string): boolean {
+  const target = name.toLowerCase()
+  return headers.some((h) => h.toLowerCase() === target)
+}
+
 export const PORTFOLIO_PARSERS: PortfolioParserConfig[] = [
   {
     name: 'Interactive Brokers',
-    detect: (headers) => headers.includes('Symbol') && headers.includes('Cost Basis'),
+    detect: (headers) => hasHeader(headers, 'Symbol') && hasHeader(headers, 'Cost Basis'),
     parse: (row) => {
-      const quantity = positive(row['Quantity'])
-      const costBasis = positive(row['Cost Basis'])
-      const ticker = row['Symbol']?.trim()
+      const quantity = positive(cell(row, 'Quantity'))
+      const costBasis = positive(cell(row, 'Cost Basis'))
+      const ticker = cell(row, 'Symbol')?.trim()
       if (!ticker || quantity === null || costBasis === null) return null
       return {
         ticker: ticker.toUpperCase(),
-        name: row['Description']?.trim() || undefined,
+        name: cell(row, 'Description')?.trim() || undefined,
         quantity,
         avgCost: costBasis / quantity,
-        currency: toCurrency(row['Currency']),
+        currency: toCurrency(cell(row, 'Currency')),
       }
     },
   },
   {
     name: 'Wealthsimple',
-    detect: (headers) => headers.includes('Symbol') && headers.includes('Book Value'),
+    detect: (headers) => hasHeader(headers, 'Symbol') && hasHeader(headers, 'Book Value'),
     parse: (row) => {
-      const quantity = positive(row['Quantity'])
-      const bookValue = positive(row['Book Value'])
-      const ticker = row['Symbol']?.trim()
+      const quantity = positive(cell(row, 'Quantity'))
+      const bookValue = positive(cell(row, 'Book Value'))
+      const ticker = cell(row, 'Symbol')?.trim()
       if (!ticker || quantity === null || bookValue === null) return null
       return {
         ticker: ticker.toUpperCase(),
-        name: row['Name']?.trim() || undefined,
+        name: cell(row, 'Name')?.trim() || undefined,
         quantity,
         avgCost: bookValue / quantity,
-        currency: toCurrency(row['Currency']),
+        currency: toCurrency(cell(row, 'Currency')),
       }
     },
   },
@@ -69,7 +83,11 @@ export const PORTFOLIO_PARSERS: PortfolioParserConfig[] = [
 export function parsePortfolioText(
   text: string,
 ): Omit<Holding, 'id'>[] | UnrecognizedPortfolioCSV {
-  const results = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true })
+  const results = Papa.parse<Record<string, string>>(text, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (h) => h.replace(/^﻿/, '').trim(),
+  })
   const headers = results.meta.fields ?? []
   const parser = PORTFOLIO_PARSERS.find((p) => p.detect(headers))
   if (!parser) return { unrecognized: true, headers, rows: results.data }
