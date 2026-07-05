@@ -50,3 +50,41 @@ export function amortizationSchedule(
 export function scheduleTotalInterest(schedule: AmortizationPoint[]): number {
   return schedule.reduce((sum, p) => sum + p.interestPaid, 0)
 }
+
+export interface ExtraPayment {
+  id: string
+  kind: 'recurring' | 'oneTime'
+  amount: number // dollars per month (recurring) or total (oneTime)
+  fromYear: number // 1-based year the extra starts (oneTime: the year it lands, applied in that year's first month)
+  toYear: number // recurring only: last year inclusive; ignored for oneTime
+}
+
+/** Base schedule plus extra payments: recurring monthly extras active during
+ *  [fromYear, toYear], and one-time lump sums applied in the first month of
+ *  fromYear. Payments never exceed the remaining balance. */
+export function amortizationScheduleWithExtras(
+  principal: number,
+  annualRatePct: number,
+  years: number,
+  extras: ExtraPayment[],
+): AmortizationPoint[] {
+  const r = annualRatePct / 100 / 12
+  const basePayment = monthlyPayment(principal, annualRatePct, years)
+  const points: AmortizationPoint[] = []
+  let balance = principal
+  const maxMonths = Math.round(years * 12) + 1
+  for (let m = 1; m <= maxMonths && balance > 1e-6; m++) {
+    const year = Math.ceil(m / 12)
+    const recurring = extras
+      .filter((e) => e.kind === 'recurring' && year >= e.fromYear && year <= e.toYear)
+      .reduce((s, e) => s + Math.max(0, e.amount), 0)
+    const lump = extras
+      .filter((e) => e.kind === 'oneTime' && m === (e.fromYear - 1) * 12 + 1)
+      .reduce((s, e) => s + Math.max(0, e.amount), 0)
+    const interest = balance * r
+    const principalPortion = Math.min(basePayment + recurring + lump - interest, balance)
+    balance = Math.max(0, balance - principalPortion)
+    points.push({ month: m, interestPaid: interest, principalPaid: principalPortion, balance })
+  }
+  return points
+}

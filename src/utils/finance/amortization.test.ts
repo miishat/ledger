@@ -1,5 +1,6 @@
 import {
   amortizationSchedule,
+  amortizationScheduleWithExtras,
   monthlyPayment,
   principalFromPayment,
   scheduleTotalInterest,
@@ -51,5 +52,53 @@ describe('amortizationSchedule', () => {
     const s = amortizationSchedule(1_000, 12, 1, 500)
     expect(s[s.length - 1].balance).toBe(0)
     expect(s.every((p) => p.balance >= 0)).toBe(true)
+  })
+})
+
+describe('amortizationScheduleWithExtras', () => {
+  const P = 400000, R = 5, Y = 25
+
+  it('no extras equals the base schedule', () => {
+    const a = amortizationSchedule(P, R, Y)
+    const b = amortizationScheduleWithExtras(P, R, Y, [])
+    expect(b.length).toBe(a.length)
+    expect(b[b.length - 1].balance).toBeCloseTo(a[a.length - 1].balance, 6)
+  })
+
+  it('recurring extra shortens the loan and cuts interest', () => {
+    const base = amortizationSchedule(P, R, Y)
+    const extra = amortizationScheduleWithExtras(P, R, Y, [
+      { id: 'x', kind: 'recurring', amount: 500, fromYear: 1, toYear: 25 },
+    ])
+    expect(extra.length).toBeLessThan(base.length)
+    expect(scheduleTotalInterest(extra)).toBeLessThan(scheduleTotalInterest(base))
+  })
+
+  it('recurring extra only applies within its year range', () => {
+    const early = amortizationScheduleWithExtras(P, R, Y, [
+      { id: 'x', kind: 'recurring', amount: 500, fromYear: 1, toYear: 5 },
+    ])
+    const late = amortizationScheduleWithExtras(P, R, Y, [
+      { id: 'x', kind: 'recurring', amount: 500, fromYear: 21, toYear: 25 },
+    ])
+    // same total extra budget, but early prepayment saves more interest
+    expect(scheduleTotalInterest(early)).toBeLessThan(scheduleTotalInterest(late))
+  })
+
+  it('one-time lump sum drops the balance in its month', () => {
+    const s = amortizationScheduleWithExtras(P, R, Y, [
+      { id: 'x', kind: 'oneTime', amount: 20000, fromYear: 2, toYear: 2 },
+    ])
+    const base = amortizationSchedule(P, R, Y)
+    const month13 = s.find((p) => p.month === 13)!
+    const base13 = base.find((p) => p.month === 13)!
+    expect(base13.balance - month13.balance).toBeGreaterThan(19000)
+  })
+
+  it('never overpays: final balance is exactly zero', () => {
+    const s = amortizationScheduleWithExtras(50000, R, 5, [
+      { id: 'x', kind: 'oneTime', amount: 999999, fromYear: 1, toYear: 1 },
+    ])
+    expect(s[s.length - 1].balance).toBe(0)
   })
 })
