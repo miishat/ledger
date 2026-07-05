@@ -197,7 +197,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-3 bg-red-500/10 text-red-500 rounded-md text-[14px] font-medium hover:bg-red-500/20 transition-colors"
+                className="px-4 py-3 bg-error/10 text-error rounded-md text-[14px] font-medium hover:bg-error/20 transition-colors"
               >
                 Delete
               </button>

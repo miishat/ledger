@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Landmark } from 'lucide-react'
 import { useFxRate } from '../../services/marketData'
 import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
 import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { HoldingRow } from './HoldingRow'
 import { PortfolioImport } from './PortfolioImport'
+import { EmptyState } from '../ui/EmptyState'
 
 export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
@@ -27,9 +28,8 @@ export const PortfolioView: React.FC = () => {
       <PortfolioImport />
 
       {holdings.length === 0 ? (
-        <div className="themed-card rounded-lg p-10 flex flex-col items-center gap-2">
-          <p className="text-text-primary text-[16px] font-medium">No holdings yet</p>
-          <p className="text-text-secondary text-[14px]">Import a broker CSV to see your portfolio with live values.</p>
+        <div className="themed-card rounded-lg p-10">
+          <EmptyState icon={Landmark} message="No holdings yet" hint="Import a broker CSV to see your portfolio with live values." />
         </div>
       ) : (
         <>

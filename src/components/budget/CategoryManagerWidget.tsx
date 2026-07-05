@@ -124,7 +124,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                 {groupCats.length === 0 && (
                   <button 
                     onClick={() => deleteCategoryGroup(group.id)}
-                    className="p-1 text-text-secondary hover:text-red-500 transition-colors"
+                    className="p-1 text-text-secondary hover:text-error transition-colors"
                     title="Delete Empty Group"
                   >
                     <Trash2 size={14} />
@@ -166,7 +166,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 </span>
                                 <button 
                                   onClick={() => deleteCategory(cat.id)}
-                                  className="p-1 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -184,7 +184,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           
                           let progressColor = 'bg-[var(--color-accent)]';
                           if (!isIncomeGroup) {
-                            if (isOverBudget) progressColor = 'bg-red-500';
+                            if (isOverBudget) progressColor = 'bg-error';
                             else if (progressPercentage > 85) progressColor = 'bg-orange-500';
                           } else {
                             if (progressPercentage >= 100) progressColor = 'bg-green-500';
@@ -193,7 +193,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           return (
                             <>
                               <div className="flex flex-col items-end min-w-[100px]">
-                                <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-red-500' : 'text-text-secondary'}`}>
+                                <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-error' : 'text-text-secondary'}`}>
                                   ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - effectiveTarget).toFixed(0)} over)`}
                                 </span>
                                 {effectiveTarget > 0 && (
@@ -211,7 +211,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                               />
                               <button 
                                 onClick={() => deleteCategory(cat.id)}
-                                className="p-1 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 size={14} />
                               </button>

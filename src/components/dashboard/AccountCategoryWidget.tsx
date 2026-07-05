@@ -74,7 +74,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                     </button>
                     <button 
                       onClick={() => removeAccount(acc.id)}
-                      className="text-text-secondary/50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      className="text-text-secondary/50 hover:text-error opacity-0 group-hover:opacity-100 transition-all"
                       aria-label="Remove account"
                     >
                       <Trash2 size={14} />

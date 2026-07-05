@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, NotebookText } from 'lucide-react'
 import { AnalysisCard } from '../components/investments/AnalysisCard'
 import { AnalysisModal } from '../components/investments/AnalysisModal'
 import { PortfolioView } from '../components/investments/PortfolioView'
@@ -8,6 +8,8 @@ import { useMarketDataStore } from '../store/useMarketDataStore'
 import { quoteKey } from '../services/marketData'
 import { currentValue, totalInvested } from '../utils/investments/analysisMetrics'
 import { formatMoney } from '../components/planner/format'
+import { Stat } from '../components/ui/Stat'
+import { EmptyState } from '../components/ui/EmptyState'
 
 export const Investments: React.FC = () => {
   const analyses = useAnalysisStore((s) => s.analyses)
@@ -64,15 +66,25 @@ export const Investments: React.FC = () => {
       {tab === 'journal' ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total planned</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(plannedAll)}</p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Actually invested</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(investedAll)} <span className="text-[13px] text-text-secondary">({formatMoney(investedAll - plannedAll)} vs plan)</span></p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Current value</p><p className="text-[22px] font-semibold text-accent">{formatMoney(currentAll)}</p></div>
+            <div className="themed-card rounded-lg p-4">
+              <Stat label="Total planned" value={formatMoney(plannedAll)} />
+            </div>
+            <div className="themed-card rounded-lg p-4">
+              <Stat label="Actually invested" value={formatMoney(investedAll)} sub={`${formatMoney(investedAll - plannedAll)} vs plan`} />
+            </div>
+            <div className="themed-card rounded-lg p-4">
+              <Stat label="Current value" value={formatMoney(currentAll)} tone="accent" />
+            </div>
           </div>
 
           {analyses.length === 0 ? (
-            <div className="themed-card rounded-lg p-10 flex flex-col items-center gap-2">
-              <p className="text-text-primary text-[16px] font-medium">No analyses yet</p>
-              <p className="text-text-secondary text-[14px]">Record your first investment thesis. The start price auto-fills from the analysis date.</p>
+            <div className="themed-card rounded-lg p-10">
+              <EmptyState
+                icon={NotebookText}
+                message="No analyses yet"
+                hint="Record your first investment thesis. The start price auto-fills from the analysis date."
+                action={{ label: 'New analysis', onClick: () => setIsModalOpen(true) }}
+              />
             </div>
           ) : (
             <div className="flex flex-col gap-4">

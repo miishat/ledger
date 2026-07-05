@@ -1,6 +1,7 @@
 import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { formatMoney } from '../planner/format';
 
 interface IncomeWidgetProps {
   selectedMonth: string; // YYYY-MM
@@ -18,7 +19,7 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => 
   return (
     <WidgetWrapper title="Income">
       <div className="flex items-baseline gap-2 mt-4">
-        <span className="text-[28px] font-bold text-accent">${totalIncome.toFixed(2)}</span>
+        <span className="text-[28px] font-bold text-accent">{formatMoney(totalIncome)}</span>
         <span className="text-[12px] text-text-secondary">This month</span>
       </div>
     </WidgetWrapper>

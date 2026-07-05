@@ -8,6 +8,7 @@ import {
 } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
+import { Skeleton } from '../ui/Skeleton'
 
 interface PositionCardProps {
   analysisId: string
@@ -49,11 +50,17 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
             {position.ticker}
             {position.exchange ? <span className="text-text-secondary text-[13px]"> · {position.exchange}</span> : null}
           </h4>
-          <p className="text-[12px] text-text-secondary">
-            Analyzed {analysisDate} at {position.startPrice.toFixed(2)} ({position.startPriceSource}) ·
-            now {currentPrice.toFixed(2)}
-            {price.data ? ` (${price.data.source}${price.data.stale ? ', stale' : ''})` : ''}
-            <span className="text-accent"> {pct(thesisChangePct(position.startPrice, currentPrice))}</span>
+          <p className="text-[12px] text-text-secondary flex items-center gap-1 flex-wrap">
+            <span>Analyzed {analysisDate} at {position.startPrice.toFixed(2)} ({position.startPriceSource}) · now</span>
+            {price.status === 'loading' && !price.data ? (
+              <Skeleton className="h-4 w-16 inline-block" />
+            ) : (
+              <span>
+                {currentPrice.toFixed(2)}
+                {price.data ? ` (${price.data.source}${price.data.stale ? ', stale' : ''})` : ''}
+                <span className="text-accent"> {pct(thesisChangePct(position.startPrice, currentPrice))}</span>
+              </span>
+            )}
           </p>
           {price.status === 'error' && (
             <p className="text-[12px] text-error">live price unavailable, using start price</p>

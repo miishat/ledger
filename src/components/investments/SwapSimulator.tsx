@@ -106,8 +106,8 @@ const SwapRow: React.FC<{
 
       {swap.inTicker.trim() !== '' && (
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
-          <span>
-            Current price: {inCurrentPrice !== undefined ? inCurrentPrice.toFixed(2) : '—'}
+          <span className="inline-flex items-center gap-1">
+            Current price: {isLoadingCurrent ? <Skeleton className="h-4 w-16 inline-block" /> : (inCurrentPrice !== undefined ? inCurrentPrice.toFixed(2) : '—')}
             {isCurrentOverridden ? ' (manual)' : ''}
           </span>
           {current.status === 'error' && !isCurrentOverridden && (

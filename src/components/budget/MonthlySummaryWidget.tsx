@@ -44,17 +44,17 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
               <span className="text-text-secondary">Money In</span>
             </div>
             <span className="font-medium text-text-primary">
-              +${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              +{formatMoney(totalIncome)}
             </span>
           </div>
           
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <div className="w-2 h-2 rounded-full bg-error"></div>
               <span className="text-text-secondary">Money Out</span>
             </div>
             <span className="font-medium text-text-primary">
-              -${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              -{formatMoney(totalExpense)}
             </span>
           </div>
 
@@ -74,8 +74,8 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
 
         <div className="flex justify-between items-end mt-auto">
           <span className="text-sm font-medium text-text-secondary">Net Change</span>
-          <span className={`text-[20px] font-bold ${isPositive ? 'text-accent' : 'text-red-500'}`}>
-            {isPositive ? '+' : '-'}${Math.abs(netChange).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className={`text-[20px] font-bold ${isPositive ? 'text-accent' : 'text-error'}`}>
+            {isPositive ? '+' : '-'}{formatMoney(Math.abs(netChange))}
           </span>
         </div>
       </div>

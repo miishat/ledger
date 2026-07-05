@@ -278,7 +278,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                     <button
                       type="button"
                       onClick={() => removePastSalaryChange(change.id)}
-                      className="p-2 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors h-[38px] flex items-center justify-center border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+                      className="p-2 text-[var(--color-text-secondary)] hover:text-error transition-colors h-[38px] flex items-center justify-center border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
                     >
                       <X size={16} />
                     </button>
@@ -449,7 +449,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                             <button
                               type="button"
                               onClick={() => useCompensationStore.getState().removeRSUGrant(g.id)}
-                              className="text-[12px] text-red-500 hover:opacity-80 transition-opacity"
+                              className="text-[12px] text-error hover:opacity-80 transition-opacity"
                             >
                               Remove
                             </button>

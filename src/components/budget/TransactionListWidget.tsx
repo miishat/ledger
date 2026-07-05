@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2, Receipt } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { formatMoney } from '../planner/format';
+import { EmptyState } from '../ui/EmptyState';
 
 interface TransactionListWidgetProps {
   selectedMonth: string;
@@ -54,7 +56,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                   clearAllTransactions();
                 }
               }}
-              className="text-[13px] text-red-500 hover:text-red-400 transition-colors border border-red-500/30 hover:bg-red-500/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
+              className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/30 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
               title="Clear All Transactions"
             >
               <Trash2 size={14} /> Clear All
@@ -70,9 +72,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
         </div>
       </div>
       {txList.length === 0 ? (
-        <p className="text-text-secondary text-[14px] flex-grow flex items-center justify-center">
-          No transactions yet. Import a CSV or add one manually to see it here.
-        </p>
+        <div className="flex-grow flex items-center justify-center">
+          <EmptyState icon={Receipt} message="No transactions yet" hint="Import a CSV or add one manually to see it here." />
+        </div>
       ) : (
         <div className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : ''}`}>
           <table className="w-full text-left border-collapse">
@@ -100,7 +102,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                     </span>
                   </td>
                   <td className={`py-3 text-[14px] font-medium text-right ${tx.type === 'income' ? 'text-accent' : 'text-text-primary'}`}>
-                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                    {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
                   </td>
                   <td className="py-3 text-right">
                     <button 
@@ -108,7 +110,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                         e.stopPropagation();
                         deleteTransaction(tx.id);
                       }}
-                      className="p-1.5 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                      className="p-1.5 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
                     >
                       <Trash2 size={16} />
                     </button>

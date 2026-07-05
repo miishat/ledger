@@ -135,7 +135,7 @@ export const CSVUploader: React.FC = () => {
         <Upload size={16} />
         {isParsing ? 'Parsing...' : 'Import CSV'}
       </button>
-      {error && <span className="text-[12px] text-red-500 text-center">{error}</span>}
+      {error && <span className="text-[12px] text-error text-center">{error}</span>}
 
       {mappingData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" onClick={() => setMappingData(null)} role="dialog" aria-modal="true" aria-label="Map CSV Columns">

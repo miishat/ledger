@@ -4,6 +4,7 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { formatMoney } from '../planner/format';
 
 export const TriageInboxWidget: React.FC = () => {
   const pendingTransactions = useTriageStore((state) => state.pendingTransactions);
@@ -38,7 +39,7 @@ export const TriageInboxWidget: React.FC = () => {
                 <p className="text-[12px] text-[var(--color-text-secondary)]">{tx.date}</p>
               </div>
               <span className={`text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
-                {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
               </span>
             </div>
             
@@ -62,7 +63,7 @@ export const TriageInboxWidget: React.FC = () => {
               </button>
               <button
                 onClick={() => rejectTransaction(tx.id)}
-                className="p-1 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                className="p-1 rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
                 title="Reject/Delete"
               >
                 <X size={16} />

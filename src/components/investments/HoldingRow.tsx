@@ -6,6 +6,7 @@ import {
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
+import { Skeleton } from '../ui/Skeleton'
 
 interface HoldingRowProps {
   holding: Holding
@@ -36,7 +37,9 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, total
       </td>
       <td className="py-2 pr-3 text-right text-text-secondary">{holding.quantity}</td>
       <td className="py-2 pr-3 text-right text-text-secondary">{holding.avgCost.toFixed(2)}</td>
-      <td className="py-2 pr-3 text-right text-text-primary">{price.toFixed(2)}</td>
+      <td className="py-2 pr-3 text-right text-text-primary">
+        {live.status === 'loading' && !live.data ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
+      </td>
       <td className="py-2 pr-3 text-right text-text-primary">{formatMoney(bookValue(holding))}</td>
       <td className="py-2 pr-3 text-right text-text-primary">{formatMoney(marketValue(holding, price))}</td>
       <td className={`py-2 pr-3 text-right ${holdingPlDollars(holding, price) >= 0 ? 'text-accent' : 'text-error'}`}>

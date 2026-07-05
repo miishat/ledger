@@ -68,7 +68,7 @@ export const CategorizationRulesWidget: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => removeRule(desc)}
-                    className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                    className="p-1.5 rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>

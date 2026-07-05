@@ -1,6 +1,8 @@
 import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { formatMoney } from '../planner/format';
+import { EmptyState } from '../ui/EmptyState';
 
 interface ExpenseWidgetProps {
   selectedMonth: string; // YYYY-MM
@@ -32,7 +34,7 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
     <WidgetWrapper title="Expenses">
       <div className="flex flex-col gap-4 mt-4 h-full">
         <div className="flex items-baseline gap-2">
-          <span className="text-[28px] font-bold text-red-500">${totalExpense.toFixed(2)}</span>
+          <span className="text-[28px] font-bold text-error">{formatMoney(totalExpense)}</span>
           <span className="text-[12px] text-text-secondary">This month</span>
         </div>
         
@@ -41,14 +43,12 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
             {sortedCategories.map(([category, amount]) => (
               <div key={category} className="flex justify-between items-center p-2 bg-bg-secondary rounded border border-border">
                 <span className="text-[14px] text-text-primary">{category}</span>
-                <span className="text-[14px] font-medium">${amount.toFixed(2)}</span>
+                <span className="text-[14px] font-medium">{formatMoney(amount)}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-[14px] text-text-secondary mt-2">
-            No expenses this month.
-          </div>
+          <EmptyState message="No expenses this month" hint="Log a transaction to see your spending broken down by category." />
         )}
       </div>
     </WidgetWrapper>
