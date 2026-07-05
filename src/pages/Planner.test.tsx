@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PLANNER_TOOLS } from '../components/planner/toolRegistry'
 import { Planner } from './Planner'
@@ -44,5 +44,13 @@ describe('PlannerTool route', () => {
   it('redirects unknown tool ids back to the hub', () => {
     renderAt('/planner/not-a-tool')
     expect(screen.getByRole('heading', { name: 'Planner' })).toBeInTheDocument()
+  })
+
+  it('switches tools through the breadcrumb dropdown', () => {
+    renderAt(`/planner/${PLANNER_TOOLS[0].id}`)
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(PLANNER_TOOLS[0].name) }))
+    const target = PLANNER_TOOLS[1]
+    fireEvent.click(screen.getByRole('menuitem', { name: new RegExp(target.name) }))
+    expect(screen.getByRole('heading', { name: target.name })).toBeInTheDocument()
   })
 })
