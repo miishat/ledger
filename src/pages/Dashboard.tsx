@@ -109,7 +109,7 @@ export const Dashboard: React.FC = () => {
                 setDragId(null);
               }}
               onDragEnd={() => setDragId(null)}
-              className={`cursor-grab active:cursor-grabbing ${WIDGET_SPAN[id] ?? ''} ${dragId === id ? 'opacity-50' : ''}`}
+              className={`h-full cursor-grab active:cursor-grabbing ${WIDGET_SPAN[id] ?? ''} ${dragId === id ? 'opacity-50' : ''}`}
             >
               {element}
             </div>

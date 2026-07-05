@@ -10,7 +10,7 @@ interface WidgetWrapperProps {
 
 export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ title, children, className = '', action }) => {
   return (
-    <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
+    <div className={`themed-card rounded-lg p-4 flex flex-col h-full ${className}`}>
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-[18px] font-semibold text-text-primary">{title}</h2>
         {action && action}
