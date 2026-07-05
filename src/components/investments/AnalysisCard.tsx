@@ -6,8 +6,11 @@ import { PositionCard } from './PositionCard'
 import { FundSummaryBar } from './FundSummaryBar'
 import { PlanTable } from './PlanTable'
 import { ActualTable } from './ActualTable'
+import { SwapSimulator } from './SwapSimulator'
 import { planFundSummary, planRow, actualFundSummary } from '../../utils/investments/planMetrics'
 import { useResolvedPriceFor } from '../../utils/investments/priceFor'
+import { totalInvested } from '../../utils/investments/analysisMetrics'
+import type { Position } from '../../store/useAnalysisStore'
 
 interface AnalysisCardProps {
   analysis: InvestmentAnalysis
@@ -93,6 +96,15 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
                 )}
                 startDate={analysis.analysisDate}
               />
+              <SwapSimulator
+                analysis={analysis}
+                side="plan"
+                priceFor={priceFor}
+                investedFor={(p: Position) => {
+                  const row = planRow(p, analysis.initialFund ?? 0, priceFor(p))
+                  return row.initialInvestment + row.extra
+                }}
+              />
               <div className="flex flex-col gap-2">
                 {analysis.positions.map((p) => (
                   <div key={p.id} className="flex flex-wrap items-end gap-2 text-[13px]">
@@ -123,6 +135,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
           ) : (
             <>
               <FundSummaryBar summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />
+              <SwapSimulator
+                analysis={analysis}
+                side="actual"
+                priceFor={priceFor}
+                investedFor={(p: Position) => totalInvested(p.lots)}
+              />
               <ActualTable analysis={analysis} priceFor={priceFor} />
             </>
           )}
