@@ -24,4 +24,11 @@ describe('ThemedDatePicker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(screen.getByText('June 2026')).toBeTruthy()
   })
+
+  it('renders no overlay backdrop when open', () => {
+    render(<ThemedDatePicker value="2026-07-05" onChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /2026-07-05/ }))
+    expect(screen.getByRole('grid')).toBeTruthy()
+    expect(screen.queryByTestId('overlay-backdrop')).toBeNull()
+  })
 })

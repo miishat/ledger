@@ -42,4 +42,11 @@ describe('ThemedSelect', () => {
     fireEvent.keyDown(trigger, { key: 'ArrowUp' })
     expect(screen.getByRole('listbox')).toBeTruthy()
   })
+
+  it('renders no overlay backdrop when open', () => {
+    render(<ThemedSelect value="a" options={options} onChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /alpha/i }))
+    expect(screen.getByRole('listbox')).toBeTruthy()
+    expect(screen.queryByTestId('overlay-backdrop')).toBeNull()
+  })
 })

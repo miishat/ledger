@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
-import { OverlayBackdrop } from './OverlayBackdrop'
 
 export interface ThemedSelectOption {
   value: string
@@ -16,7 +15,7 @@ interface ThemedSelectProps {
 }
 
 /** Theme-aware replacement for native <select>. Styled like the planner
- *  ToolSwitcher menu: themed card, accent highlight, blur backdrop. */
+ *  ToolSwitcher menu: themed card, accent highlight. */
 export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, onChange, className = '' }) => {
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(0)
@@ -68,11 +67,9 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
         <ChevronDown className={`w-4 h-4 shrink-0 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <>
-          <OverlayBackdrop onClose={() => setOpen(false)} />
           <div
             role="listbox"
-            className="absolute left-0 right-0 top-full mt-1 z-30 max-h-64 overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-1 flex flex-col"
+            className="absolute left-0 right-0 top-full mt-1 z-40 max-h-64 overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-1 flex flex-col animate-dropdown-in"
           >
             {options.map((o, i) => (
               <button
@@ -91,7 +88,6 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
               </button>
             ))}
           </div>
-        </>
       )}
     </div>
   )

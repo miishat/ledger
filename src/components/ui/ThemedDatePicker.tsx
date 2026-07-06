@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
-import { OverlayBackdrop } from './OverlayBackdrop'
 
 interface ThemedDatePickerProps {
   id?: string
@@ -14,12 +13,22 @@ const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Theme-aware replacement for <input type="date">: themed month-grid
- *  calendar popover with blur backdrop. */
+ *  calendar popover. */
 export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, onChange, className = '' }) => {
   const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
   const initial = /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date().toISOString().slice(0, 10)
   const [viewYear, setViewYear] = useState(Number(initial.slice(0, 4)))
   const [viewMonth, setViewMonth] = useState(Number(initial.slice(5, 7)) - 1) // 0-based
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    return () => window.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const firstDow = new Date(viewYear, viewMonth, 1).getDay()
@@ -36,7 +45,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
   }
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       <button
         id={id}
         type="button"
@@ -49,9 +58,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
         <Calendar className="w-4 h-4 shrink-0 text-text-secondary" />
       </button>
       {open && (
-        <>
-          <OverlayBackdrop onClose={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-30 w-64 themed-card border border-border rounded-lg shadow-xl p-3">
+          <div className="absolute left-0 top-full mt-1 z-40 w-64 themed-card border border-border rounded-lg shadow-xl p-3 animate-dropdown-in">
             <div className="flex items-center justify-between mb-2">
               <button type="button" aria-label="Previous month" onClick={() => shiftMonth(-1)} className="p-1 rounded hover:bg-bg-primary/50 text-text-secondary hover:text-accent">
                 <ChevronLeft className="w-4 h-4" />
@@ -86,7 +93,6 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
               })}
             </div>
           </div>
-        </>
       )}
     </div>
   )

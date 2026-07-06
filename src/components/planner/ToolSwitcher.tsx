@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { PLANNER_GROUPS, PLANNER_TOOLS, type PlannerTool } from './toolRegistry'
-import { OverlayBackdrop } from '../ui/OverlayBackdrop'
 
 interface ToolSwitcherProps {
   current: PlannerTool
@@ -45,11 +44,9 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
       </button>
 
       {open && (
-        <>
-          <OverlayBackdrop onClose={() => setOpen(false)} />
           <div
             role="menu"
-            className="absolute left-0 top-full mt-2 z-30 w-72 max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-2 flex flex-col gap-1"
+            className="absolute left-0 top-full mt-2 z-40 w-72 max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-2 flex flex-col gap-1 animate-dropdown-in"
           >
             {PLANNER_GROUPS.map((group) => {
               const tools = PLANNER_TOOLS.filter((t) => t.group === group)
@@ -82,7 +79,6 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
               )
             })}
           </div>
-        </>
       )}
     </div>
   )
