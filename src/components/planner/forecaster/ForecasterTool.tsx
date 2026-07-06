@@ -37,7 +37,7 @@ const AutoField: React.FC<{
           auto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
         }`}
       >
-        {auto ? `auto: ${autoHint}` : 'manual'}
+        {auto ? autoHint : 'Manual'}
       </button>
     </div>
     {auto ? (
@@ -86,7 +86,7 @@ export const ForecasterTool: React.FC = () => {
           label="Starting balance"
           auto={settings.autoStart as boolean}
           autoValue={autoFeed.startBalance}
-          autoHint="Dashboard net worth"
+          autoHint="Dashboard Net Worth"
           manualValue={settings.manualStart}
           onToggle={(v) => setSetting('autoStart', v)}
           onManual={(v) => setSetting('manualStart', v)}
@@ -95,7 +95,7 @@ export const ForecasterTool: React.FC = () => {
           label="Monthly savings"
           auto={settings.autoSavings as boolean}
           autoValue={resolved.monthlySavings}
-          autoHint="Budget avg (3mo)"
+          autoHint="Budget Average (3 Months)"
           manualValue={settings.manualSavings}
           onToggle={(v) => setSetting('autoSavings', v)}
           onManual={(v) => setSetting('manualSavings', v)}
