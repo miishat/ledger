@@ -47,7 +47,17 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
           )
         })}
       </div>
-      <p className="text-[12px] text-text-secondary mt-2">Darker = more spent that day{max > 0 ? ` (max ${formatMoney(max)})` : ''}.</p>
+      <div data-testid="heatmap-legend" className="flex items-center gap-1.5 mt-2 text-[11px] text-text-secondary">
+        <span>$0</span>
+        {[0.15, 0.36, 0.57, 0.78, 1].map((op) => (
+          <span
+            key={op}
+            className="w-4 h-3 rounded-sm border border-border"
+            style={{ backgroundColor: `color-mix(in srgb, var(--accent) ${Math.round(op * 100)}%, transparent)` }}
+          />
+        ))}
+        <span>{max > 0 ? formatMoney(max) : 'max'}</span>
+      </div>
     </WidgetWrapper>
   )
 }
