@@ -67,7 +67,7 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
                           if (!isCurrent) navigate(`/planner/${t.id}`)
                         }}
                         className={`flex items-center gap-2 px-2 py-1.5 rounded text-left text-[14px] transition-colors ${
-                          isCurrent ? 'bg-accent/10 text-accent font-medium' : 'text-text-primary hover:bg-bg-primary/50'
+                          isCurrent ? 'bg-accent/10 text-accent font-medium' : 'text-text-primary hover:bg-accent/10 hover:text-accent'
                         }`}
                       >
                         <Icon className="w-4 h-4 shrink-0" />

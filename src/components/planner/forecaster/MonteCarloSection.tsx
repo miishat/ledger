@@ -46,9 +46,9 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
-        <CalculatorField label="Volatility (std dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
-        <ResultCard label={`Chance of reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
-        <ResultCard label="Median outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
+        <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
+        <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
+        <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
       </div>
       <div className="themed-card rounded-lg p-4 h-[300px]">
         <ResponsiveContainer width="100%" height="100%">

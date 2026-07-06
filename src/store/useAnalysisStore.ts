@@ -38,6 +38,7 @@ export interface InvestmentAnalysis {
   analysisDate: string // YYYY-MM-DD
   initialFund?: number
   extraFund?: number
+  plannedBudget?: number
   positions: Position[]
   swaps: SwapScenario[]
 }
@@ -154,9 +155,10 @@ export const useAnalysisStore = create<AnalysisState>()(
     }),
     {
       name: 'ledger-analyses',
-      version: 2,
+      version: 3,
       // v0: one flat ticker per analysis → wrap it as the single position.
       // v1: analyses gain a `swaps` scenario list.
+      // v2→v3: plannedBudget defaults to initialFund + extraFund; funds become actual-side.
       migrate: (persisted, version) => {
         let state = persisted as { analyses?: (LegacyAnalysis | InvestmentAnalysis)[] }
 
@@ -189,6 +191,15 @@ export const useAnalysisStore = create<AnalysisState>()(
           const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
             ...a,
             swaps: a.swaps ?? [],
+          }))
+          state = { ...state, analyses }
+        }
+
+        if (version < 3) {
+          if (!Array.isArray(state.analyses)) return state as unknown
+          const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
+            ...a,
+            plannedBudget: a.plannedBudget ?? (a.initialFund ?? 0) + (a.extraFund ?? 0),
           }))
           state = { ...state, analyses }
         }

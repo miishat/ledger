@@ -72,7 +72,7 @@ export const DebtPayoffCalculator: React.FC = () => {
             </label>
             <CalculatorField label="Balance" prefix="$" step={100} value={d.balance} onChange={(v) => updateDebt(d.id, { balance: v })} />
             <CalculatorField label="APR" suffix="%" step={0.1} value={d.aprPct} onChange={(v) => updateDebt(d.id, { aprPct: v })} />
-            <CalculatorField label="Min payment" prefix="$" step={10} value={d.minPayment} onChange={(v) => updateDebt(d.id, { minPayment: v })} />
+            <CalculatorField label="Min Payment" prefix="$" step={10} value={d.minPayment} onChange={(v) => updateDebt(d.id, { minPayment: v })} />
             <button
               onClick={() => saveDebts(debts.filter((x) => x.id !== d.id))}
               className="self-end p-2 mb-2 rounded-lg text-text-secondary hover:text-error transition-colors"
@@ -85,23 +85,23 @@ export const DebtPayoffCalculator: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-        <CalculatorField label="Extra monthly payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
+        <CalculatorField label="Extra Monthly Payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
         <SelectField
           label="Strategy"
           value={strategy}
           onChange={(v) => setInput(TOOL_ID, 'strategy', v)}
           options={[
-            { value: 'avalanche', label: 'Avalanche (highest APR first)' },
-            { value: 'snowball', label: 'Snowball (smallest balance first)' },
+            { value: 'avalanche', label: 'Avalanche (Highest APR First)' },
+            { value: 'snowball', label: 'Snowball (Smallest Balance First)' },
           ]}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ResultCard label={`Debt-free in (${strategy})`} value={formatMonths(chosen.months)} highlight />
-        <ResultCard label="Total interest" value={formatMoney(chosen.totalInterest)} />
+        <ResultCard label="Total Interest" value={formatMoney(chosen.totalInterest)} />
         <ResultCard
-          label="vs other strategy"
+          label="vs Other Strategy"
           value={other.totalInterest >= chosen.totalInterest
             ? `saves ${formatMoney(other.totalInterest - chosen.totalInterest)}`
             : `costs ${formatMoney(chosen.totalInterest - other.totalInterest)} more`}

@@ -6,6 +6,7 @@ import { PositionCard } from './PositionCard'
 import { FundSummaryBar } from './FundSummaryBar'
 import { PlanTable } from './PlanTable'
 import { ActualTable } from './ActualTable'
+import { AddTradeForm } from './AddTradeForm'
 import { SwapSimulator } from './SwapSimulator'
 import { planFundSummary, planRow, actualFundSummary } from '../../utils/investments/planMetrics'
 import { useResolvedPriceFor } from '../../utils/investments/priceFor'
@@ -68,9 +69,51 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
 
           {subTab === 'plan' ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 max-w-xs">
+                <span className="text-[13px] text-text-secondary">Planned Budget ($)</span>
+                <input
+                  type="number"
+                  className={fundInputCls}
+                  value={analysis.plannedBudget ?? 0}
+                  onChange={(e) => {
+                    const budget = Number(e.target.value)
+                    updateAnalysis(analysis.id, { plannedBudget: budget })
+                    analysis.positions.forEach((p) =>
+                      updatePosition(analysis.id, p.id, { plannedAmount: (budget * (p.allocationPct ?? 0)) / 100 }),
+                    )
+                  }}
+                />
+              </label>
+              <FundSummaryBar
+                side="plan"
+                summary={planFundSummary(
+                  analysis.positions.map((p) => planRow(p, analysis.plannedBudget ?? 0, priceFor(p))),
+                  analysis.plannedBudget ?? 0,
+                )}
+                startDate={analysis.analysisDate}
+              />
+              <SwapSimulator
+                analysis={analysis}
+                side="plan"
+                priceFor={priceFor}
+                investedFor={(p: Position) => planRow(p, analysis.plannedBudget ?? 0, priceFor(p)).plannedDollars}
+              />
+              <PlanTable
+                analysis={analysis}
+                priceFor={priceFor}
+                onAllocationChange={(positionId, pct) =>
+                  updatePosition(analysis.id, positionId, {
+                    allocationPct: pct,
+                    plannedAmount: ((analysis.plannedBudget ?? 0) * pct) / 100,
+                  })
+                }
+              />
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 max-w-md">
                 <label className="flex flex-col gap-1">
-                  <span className="text-[13px] text-text-secondary">Initial fund ($)</span>
+                  <span className="text-[13px] text-text-secondary">Initial Fund ($)</span>
                   <input
                     type="number"
                     className={fundInputCls}
@@ -79,7 +122,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
                   />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[13px] text-text-secondary">Extra fund ($)</span>
+                  <span className="text-[13px] text-text-secondary">Extra Fund ($)</span>
                   <input
                     type="number"
                     className={fundInputCls}
@@ -88,60 +131,21 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
                   />
                 </label>
               </div>
-              <FundSummaryBar
-                summary={planFundSummary(
-                  analysis.positions.map((p) => planRow(p, analysis.initialFund ?? 0, priceFor(p))),
-                  analysis.initialFund ?? 0,
-                  analysis.extraFund ?? 0,
-                )}
-                startDate={analysis.analysisDate}
-              />
-              <SwapSimulator
-                analysis={analysis}
-                side="plan"
-                priceFor={priceFor}
-                investedFor={(p: Position) => {
-                  const row = planRow(p, analysis.initialFund ?? 0, priceFor(p))
-                  return row.initialInvestment + row.extra
-                }}
-              />
-              <div className="flex flex-col gap-2">
-                {analysis.positions.map((p) => (
-                  <div key={p.id} className="flex flex-wrap items-end gap-2 text-[13px]">
-                    <span className="text-text-secondary w-16">{p.ticker}</span>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-text-secondary">Allocation %</span>
-                      <input
-                        type="number"
-                        className={`${fundInputCls} w-28`}
-                        value={p.allocationPct ?? 0}
-                        onChange={(e) => updatePosition(analysis.id, p.id, { allocationPct: Number(e.target.value) })}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-text-secondary">Extra planned $</span>
-                      <input
-                        type="number"
-                        className={`${fundInputCls} w-28`}
-                        value={p.extraPlanned ?? 0}
-                        onChange={(e) => updatePosition(analysis.id, p.id, { extraPlanned: Number(e.target.value) })}
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <PlanTable analysis={analysis} priceFor={priceFor} />
-            </>
-          ) : (
-            <>
-              <FundSummaryBar summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />
-              <SwapSimulator
-                analysis={analysis}
-                side="actual"
-                priceFor={priceFor}
-                investedFor={(p: Position) => totalInvested(p.lots)}
-              />
-              <ActualTable analysis={analysis} priceFor={priceFor} />
+              <AddTradeForm analysis={analysis} />
+              {analysis.positions.some((p) => p.lots.length > 0) ? (
+                <>
+                  <FundSummaryBar side="actual" summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />
+                  <SwapSimulator
+                    analysis={analysis}
+                    side="actual"
+                    priceFor={priceFor}
+                    investedFor={(p: Position) => totalInvested(p.lots)}
+                  />
+                  <ActualTable analysis={analysis} priceFor={priceFor} />
+                </>
+              ) : (
+                <p className="text-[13px] text-text-secondary">No trades recorded yet. Add your first trade to see actual performance.</p>
+              )}
             </>
           )}
 

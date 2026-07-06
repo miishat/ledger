@@ -14,15 +14,36 @@ interface ThemedSelectProps {
   className?: string
 }
 
+const MENU_MAX = 256 // px, matches previous max-h-64
+const MENU_MARGIN = 16
+const MIN_BELOW = 160
+
+/** Decide dropdown direction and scroll height from the trigger's rect. */
+export function menuPlacement(
+  rect: { top: number; bottom: number },
+  viewportHeight: number,
+): { openUp: boolean; maxHeight: number } {
+  const below = viewportHeight - rect.bottom - MENU_MARGIN
+  const above = rect.top - MENU_MARGIN
+  if (below < MIN_BELOW && above > below) {
+    return { openUp: true, maxHeight: Math.min(MENU_MAX, above) }
+  }
+  return { openUp: false, maxHeight: Math.min(MENU_MAX, Math.max(below, MIN_BELOW)) }
+}
+
 /** Theme-aware replacement for native <select>. Styled like the planner
  *  ToolSwitcher menu: themed card, accent highlight. */
 export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, onChange, className = '' }) => {
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(0)
+  const [placement, setPlacement] = useState({ openUp: false, maxHeight: 256 })
   const rootRef = useRef<HTMLDivElement>(null)
   const selected = options.find((o) => o.value === value)
 
   const openListbox = () => {
+    if (rootRef.current) {
+      setPlacement(menuPlacement(rootRef.current.getBoundingClientRect(), window.innerHeight))
+    }
     setHighlight(Math.max(0, options.findIndex((o) => o.value === value)))
     setOpen(true)
   }
@@ -69,7 +90,10 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
       {open && (
           <div
             role="listbox"
-            className="absolute left-0 right-0 top-full mt-1 z-40 max-h-64 overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-1 flex flex-col animate-dropdown-in"
+            style={{ maxHeight: placement.maxHeight }}
+            className={`absolute left-0 right-0 z-40 overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-1 flex flex-col animate-dropdown-in ${
+              placement.openUp ? 'bottom-full mb-1' : 'top-full mt-1'
+            }`}
           >
             {options.map((o, i) => (
               <button

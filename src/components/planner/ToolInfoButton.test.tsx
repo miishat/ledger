@@ -8,6 +8,6 @@ describe('ToolInfoButton', () => {
     render(<ToolInfoButton tool={getTool('mortgage')!} />)
     fireEvent.click(screen.getByRole('button', { name: 'About this tool' }))
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(screen.getByText('GDS ratio')).toBeTruthy()
+    expect(screen.getByText('GDS Ratio')).toBeTruthy()
   })
 })

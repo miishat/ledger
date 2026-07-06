@@ -4,6 +4,15 @@ import { WidgetWrapper } from '../WidgetWrapper'
 import { useAccountsStore } from '../../../store/useAccountsStore'
 import { formatMoney } from '../../planner/format'
 
+/** Brokerage-style axis: track the data range with headroom, never force zero. */
+export function trendDomain(values: number[]): [number, number] {
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min
+  const pad = range > 0 ? range * 0.08 : Math.max(Math.abs(max) * 0.05, 1)
+  return [min - pad, max + pad]
+}
+
 export const NetWorthTrendWidget: React.FC = () => {
   const history = useAccountsStore((s) => s.history)
   if (history.length < 2) {
@@ -15,13 +24,14 @@ export const NetWorthTrendWidget: React.FC = () => {
       </WidgetWrapper>
     )
   }
+  const domain = trendDomain(history.map((h) => h.value))
   return (
     <WidgetWrapper title="Net Worth Over Time" className="md:col-span-2">
       <div className="h-[220px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={history}>
             <XAxis dataKey="date" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} minTickGap={40} />
-            <YAxis width={70} tickFormatter={(v: number) => formatMoney(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+            <YAxis width={70} domain={domain} allowDataOverflow={false} tickFormatter={(v: number) => formatMoney(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
             <Tooltip
               formatter={(value) => [formatMoney(Number(value)), 'Net worth']}
               contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}

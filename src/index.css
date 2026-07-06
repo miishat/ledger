@@ -33,6 +33,12 @@
   --accent: #3b82f6;
   --border-color: #e5e7eb;
   --error: #dc2626;
+  --chart-1: #3b82f6;
+  --chart-2: #8b5cf6;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #06b6d4;
+  --chart-6: #ef4444;
 
   --font-family-body: 'Inter', sans-serif;
   --font-family-display: 'Space Grotesk', sans-serif;
@@ -54,6 +60,12 @@
   --accent: #3b82f6;
   --border-color: #e5e7eb;
   --error: #dc2626;
+  --chart-1: #3b82f6;
+  --chart-2: #8b5cf6;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #06b6d4;
+  --chart-6: #ef4444;
 
   --font-family-body: 'Inter', sans-serif;
   --font-family-display: 'Space Grotesk', sans-serif;
@@ -75,6 +87,12 @@
   --accent: #10b981;
   --border-color: #27272a;
   --error: #ff3b30;
+  --chart-1: #10b981;
+  --chart-2: #8b5cf6;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #3b82f6;
+  --chart-6: #ef4444;
 
   --font-family-body: 'JetBrains Mono', monospace;
   --font-family-display: 'JetBrains Mono', monospace;
@@ -96,6 +114,12 @@
   --accent: #d4a853;
   --border-color: #1a1a1a;
   --error: #e5484d;
+  --chart-1: #d4a853;
+  --chart-2: #8b5cf6;
+  --chart-3: #38bdf8;
+  --chart-4: #ec4899;
+  --chart-5: #34d399;
+  --chart-6: #ef4444;
 
   --font-family-body: 'Lato', sans-serif;
   --font-family-display: 'Playfair Display', serif;
@@ -117,6 +141,12 @@
   --accent: #34d399;
   --border-color: #1e293b;
   --error: #f87171;
+  --chart-1: #34d399;
+  --chart-2: #a78bfa;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #38bdf8;
+  --chart-6: #f87171;
 
   --font-family-body: 'Poppins', sans-serif;
   --font-family-display: 'Outfit', sans-serif;
@@ -138,6 +168,12 @@
   --accent: #22d3ee;
   --border-color: rgba(255, 255, 255, 0.08);
   --error: #fb7185;
+  --chart-1: #22d3ee;
+  --chart-2: #a78bfa;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #34d399;
+  --chart-6: #f87171;
 
   --font-family-body: 'Inter', sans-serif;
   --font-family-display: 'Plus Jakarta Sans', sans-serif;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { ThemedSelect } from './ThemedSelect'
+import { ThemedSelect, menuPlacement } from './ThemedSelect'
 
 const options = [
   { value: 'a', label: 'Alpha' },
@@ -48,5 +48,21 @@ describe('ThemedSelect', () => {
     fireEvent.click(screen.getByRole('button', { name: /alpha/i }))
     expect(screen.getByRole('listbox')).toBeTruthy()
     expect(screen.queryByTestId('overlay-backdrop')).toBeNull()
+  })
+})
+
+describe('menuPlacement', () => {
+  it('opens down with full height when there is room below', () => {
+    expect(menuPlacement({ top: 100, bottom: 130 }, 800)).toEqual({ openUp: false, maxHeight: 256 })
+  })
+
+  it('clamps height to remaining space below', () => {
+    // 800 - 600 bottom - 16 margin = 184 available
+    expect(menuPlacement({ top: 570, bottom: 600 }, 800)).toEqual({ openUp: false, maxHeight: 184 })
+  })
+
+  it('flips up when below is cramped and above has more room', () => {
+    // below: 800 - 720 - 16 = 64 (< 160); above: 690 - 16 = 674 → up, clamped to 256
+    expect(menuPlacement({ top: 690, bottom: 720 }, 800)).toEqual({ openUp: true, maxHeight: 256 })
   })
 })

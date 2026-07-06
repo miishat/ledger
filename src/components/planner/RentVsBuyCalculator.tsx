@@ -30,16 +30,16 @@ export const RentVsBuyCalculator: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <CalculatorField label="Monthly rent" prefix="$" step={50} value={inputs.monthlyRent} onChange={set('monthlyRent')} />
-        <CalculatorField label="Rent increase" suffix="%/yr" step={0.5} value={inputs.rentIncreasePct} onChange={set('rentIncreasePct')} />
-        <CalculatorField label="Home price" prefix="$" step={5000} value={inputs.price} onChange={set('price')} />
-        <CalculatorField label="Down payment" suffix="%" min={0} max={100} value={inputs.downPct} onChange={set('downPct')} />
-        <CalculatorField label="Mortgage rate" suffix="%" step={0.05} value={inputs.ratePct} onChange={set('ratePct')} />
-        <CalculatorField label="Property tax" suffix="%/yr" step={0.1} value={inputs.propertyTaxPct} onChange={set('propertyTaxPct')} />
+        <CalculatorField label="Monthly Rent" prefix="$" step={50} value={inputs.monthlyRent} onChange={set('monthlyRent')} />
+        <CalculatorField label="Rent Increase" suffix="%/yr" step={0.5} value={inputs.rentIncreasePct} onChange={set('rentIncreasePct')} />
+        <CalculatorField label="Home Price" prefix="$" step={5000} value={inputs.price} onChange={set('price')} />
+        <CalculatorField label="Down Payment" suffix="%" min={0} max={100} value={inputs.downPct} onChange={set('downPct')} />
+        <CalculatorField label="Mortgage Rate" suffix="%" step={0.05} value={inputs.ratePct} onChange={set('ratePct')} />
+        <CalculatorField label="Property Tax" suffix="%/yr" step={0.1} value={inputs.propertyTaxPct} onChange={set('propertyTaxPct')} />
         <CalculatorField label="Maintenance" suffix="%/yr" step={0.1} value={inputs.maintenancePct} onChange={set('maintenancePct')} />
-        <CalculatorField label="Investment return (opportunity)" suffix="%" step={0.5} value={inputs.opportunityPct} onChange={set('opportunityPct')} />
-        <CalculatorField label="Horizon (years)" min={1} max={40} value={inputs.horizonYears} onChange={set('horizonYears')} />
-        <CalculatorField label="Amortization (years)" min={1} max={35} value={inputs.amortYears} onChange={set('amortYears')} />
+        <CalculatorField label="Investment Return (Opportunity)" suffix="%" step={0.5} value={inputs.opportunityPct} onChange={set('opportunityPct')} />
+        <CalculatorField label="Horizon (Years)" min={1} max={40} value={inputs.horizonYears} onChange={set('horizonYears')} />
+        <CalculatorField label="Amortization (Years)" min={1} max={35} value={inputs.amortYears} onChange={set('amortYears')} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

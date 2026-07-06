@@ -112,4 +112,36 @@ describe('useAnalysisStore', () => {
     s.removeSwap('a1', 'sw1')
     expect(useAnalysisStore.getState().analyses[0].swaps).toHaveLength(0)
   })
+
+  it('migrates v2 analyses by defaulting plannedBudget to initialFund + extraFund', async () => {
+    localStorage.setItem(
+      'ledger-analyses',
+      JSON.stringify({
+        state: {
+          analyses: [{
+            id: 'a1', name: 'Big Tech 2026', analysisDate: '2026-01-15',
+            initialFund: 10_000, extraFund: 2_000,
+            positions: [position], swaps: [],
+          }],
+        },
+        version: 2,
+      }),
+    )
+    await useAnalysisStore.persist.rehydrate()
+    const a = useAnalysisStore.getState().analyses[0]
+    expect(a.plannedBudget).toBe(12_000)
+  })
+})
+
+describe('analysis store plannedBudget', () => {
+  it('accepts plannedBudget on an analysis', () => {
+    const a: InvestmentAnalysis = {
+      id: 'a1', name: 'Test', analysisDate: '2026-01-01',
+      plannedBudget: 12000, initialFund: 10000, extraFund: 2000,
+      positions: [], swaps: [],
+    }
+    useAnalysisStore.setState({ analyses: [] })
+    useAnalysisStore.getState().addAnalysis(a)
+    expect(useAnalysisStore.getState().analyses[0].plannedBudget).toBe(12000)
+  })
 })

@@ -9,6 +9,7 @@ import { NetWorthTrendWidget } from '../components/dashboard/widgets/NetWorthTre
 import { PortfolioRollupWidget } from '../components/dashboard/widgets/PortfolioRollupWidget';
 import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealthWidget';
 import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
+import { UpcomingVestsWidget } from '../components/dashboard/widgets/UpcomingVestsWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 
 // Canonical default widget order/ids, hoisted to module scope so it is a stable
@@ -31,6 +32,7 @@ const DASHBOARD_WIDGET_IDS: string[] = [
   'portfolio',
   'budget-health',
   'top-goal',
+  'upcoming-vests',
 ];
 
 // Grid placement lives on the draggable wrapper div (the actual grid child), not on the
@@ -63,6 +65,7 @@ export const Dashboard: React.FC = () => {
     { id: 'portfolio', element: <PortfolioRollupWidget /> },
     { id: 'budget-health', element: <BudgetHealthWidget /> },
     { id: 'top-goal', element: <PlannerGoalWidget /> },
+    { id: 'upcoming-vests', element: <UpcomingVestsWidget /> },
   ];
 
   const defaultIds = DASHBOARD_WIDGET_IDS;

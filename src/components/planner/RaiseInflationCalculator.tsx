@@ -27,15 +27,15 @@ export const RaiseInflationCalculator: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <CalculatorField label="Old salary" prefix="$" step={1000} value={inputs.oldSalary} onChange={set('oldSalary')} />
-        <CalculatorField label="New salary" prefix="$" step={1000} value={inputs.newSalary} onChange={set('newSalary')} />
+        <CalculatorField label="Old Salary" prefix="$" step={1000} value={inputs.oldSalary} onChange={set('oldSalary')} />
+        <CalculatorField label="New Salary" prefix="$" step={1000} value={inputs.newSalary} onChange={set('newSalary')} />
         <CalculatorField label="Inflation" suffix="%" step={0.1} value={inputs.inflationPct} onChange={set('inflationPct')} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Nominal raise" value={`${nominal.toFixed(2)}%`} />
-        <ResultCard label="Real raise" value={`${real.toFixed(2)}%`} highlight />
-        <ResultCard label="Real change (old-salary dollars)" value={formatMoney(realDollars)} />
+        <ResultCard label="Nominal Raise" value={`${nominal.toFixed(2)}%`} />
+        <ResultCard label="Real Raise" value={`${real.toFixed(2)}%`} highlight />
+        <ResultCard label="Real Change (Old-Salary Dollars)" value={formatMoney(realDollars)} />
       </div>
 
       <p className="text-[14px] text-text-primary">{verdict}</p>

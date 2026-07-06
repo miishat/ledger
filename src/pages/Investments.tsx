@@ -23,7 +23,7 @@ export const Investments: React.FC = () => {
     overrides[quoteKey(ticker, exchange)] ?? quotes[quoteKey(ticker, exchange)]?.value.price ?? fallback
 
   const positionsAll = analyses.flatMap((a) => a.positions)
-  const plannedAll = positionsAll.reduce((s, p) => s + p.plannedAmount, 0)
+  const plannedAll = analyses.reduce((s, a) => s + (a.plannedBudget ?? 0), 0)
   const investedAll = positionsAll.reduce((s, p) => s + totalInvested(p.lots), 0)
   const currentAll = positionsAll.reduce(
     (s, p) => s + currentValue(p.lots, priceFor(p.ticker, p.exchange, p.startPrice)),
@@ -67,13 +67,13 @@ export const Investments: React.FC = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4">
-              <Stat label="Total planned" value={formatMoney(plannedAll)} />
+              <Stat label="Total Planned" value={formatMoney(plannedAll)} />
             </div>
             <div className="themed-card rounded-lg p-4">
-              <Stat label="Actually invested" value={formatMoney(investedAll)} sub={`${formatMoney(investedAll - plannedAll)} vs plan`} />
+              <Stat label="Actually Invested" value={formatMoney(investedAll)} sub={`${formatMoney(investedAll - plannedAll)} vs plan`} />
             </div>
             <div className="themed-card rounded-lg p-4">
-              <Stat label="Current value" value={formatMoney(currentAll)} tone="accent" />
+              <Stat label="Current Value" value={formatMoney(currentAll)} tone="accent" />
             </div>
           </div>
 

@@ -37,22 +37,22 @@ export const SavingsGoalCalculator: React.FC = () => {
   switch (solveFor) {
     case 'target': {
       const v = solveTarget(inputs.principal, inputs.annualRatePct, inputs.monthlyContribution, months)
-      result = { label: 'Projected balance', value: formatMoney(v) }
+      result = { label: 'Projected Balance', value: formatMoney(v) }
       break
     }
     case 'months': {
       const m = solveMonths(inputs.target, inputs.principal, inputs.annualRatePct, inputs.monthlyContribution)
-      result = { label: 'Time to goal', value: m === null ? 'Not reachable' : formatMonths(m) }
+      result = { label: 'Time to Goal', value: m === null ? 'Not reachable' : formatMonths(m) }
       break
     }
     case 'rate': {
       const r = solveAnnualRate(inputs.target, inputs.principal, inputs.monthlyContribution, months)
-      result = { label: 'Annual return needed', value: r === null ? 'Not reachable' : `${r.toFixed(2)}%` }
+      result = { label: 'Annual Return Needed', value: r === null ? 'Not reachable' : `${r.toFixed(2)}%` }
       break
     }
     default: {
       const c = solveMonthlyContribution(inputs.target, inputs.principal, inputs.annualRatePct, months)
-      result = { label: 'Monthly contribution needed', value: c === null ? 'Not reachable' : formatMoney(c) }
+      result = { label: 'Monthly Contribution Needed', value: c === null ? 'Not reachable' : formatMoney(c) }
     }
   }
 
@@ -60,25 +60,25 @@ export const SavingsGoalCalculator: React.FC = () => {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
         <SelectField
-          label="Solve for"
+          label="Solve For"
           value={solveFor}
           onChange={(v) => setInput(TOOL_ID, 'solveFor', v)}
           options={[
-            { value: 'monthly', label: 'Monthly contribution' },
-            { value: 'months', label: 'Time to goal' },
-            { value: 'rate', label: 'Required return' },
-            { value: 'target', label: 'Final balance' },
+            { value: 'monthly', label: 'Monthly Contribution' },
+            { value: 'months', label: 'Time to Goal' },
+            { value: 'rate', label: 'Required Return' },
+            { value: 'target', label: 'Final Balance' },
           ]}
         />
         {solveFor !== 'target' && (
-          <CalculatorField label="Goal amount" prefix="$" step={1000} value={inputs.target} onChange={set('target')} />
+          <CalculatorField label="Goal Amount" prefix="$" step={1000} value={inputs.target} onChange={set('target')} />
         )}
-        <CalculatorField label="Starting amount" prefix="$" step={100} value={inputs.principal} onChange={set('principal')} />
+        <CalculatorField label="Starting Amount" prefix="$" step={100} value={inputs.principal} onChange={set('principal')} />
         {solveFor !== 'monthly' && (
-          <CalculatorField label="Monthly contribution" prefix="$" step={50} value={inputs.monthlyContribution} onChange={set('monthlyContribution')} />
+          <CalculatorField label="Monthly Contribution" prefix="$" step={50} value={inputs.monthlyContribution} onChange={set('monthlyContribution')} />
         )}
         {solveFor !== 'rate' && (
-          <CalculatorField label="Annual return" suffix="%" step={0.1} value={inputs.annualRatePct} onChange={set('annualRatePct')} />
+          <CalculatorField label="Annual Return" suffix="%" step={0.1} value={inputs.annualRatePct} onChange={set('annualRatePct')} />
         )}
         {solveFor !== 'months' && (
           <CalculatorField label="Years" min={1} max={60} value={inputs.years} onChange={set('years')} />

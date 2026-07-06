@@ -86,8 +86,8 @@ export const SalaryTaxTool: React.FC = () => {
   const t = takeHomeWithDeductions(income, province, inputs.rrsp, inputs.fhsa)
   const breakdown = marginalRateBreakdown(t.taxableIncome, province)
   const deductions = [
-    { label: 'Federal tax', value: t.federal },
-    { label: 'Provincial tax', value: t.provincial },
+    { label: 'Federal Tax', value: t.federal },
+    { label: 'Provincial Tax', value: t.provincial },
     { label: 'CPP (incl. CPP2)', value: t.cpp },
     { label: 'EI', value: t.ei },
   ]
@@ -95,29 +95,29 @@ export const SalaryTaxTool: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
-        <CalculatorField label="Gross annual income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
+        <CalculatorField label="Gross Annual Income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
         <SelectField
           label="Province"
           value={province}
           onChange={(v) => setInput(TOOL_ID, 'province', v)}
           options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
         />
-        <CalculatorField label="RRSP contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
-        <CalculatorField label="FHSA contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
+        <CalculatorField label="RRSP Contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
+        <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Total income tax" value={formatMoney(totalIncomeTax(t.taxableIncome, province))} highlight />
-        <ResultCard label="Marginal rate" value={`${marginalRate(t.taxableIncome, province).toFixed(2)}%`} />
-        <ResultCard label="Effective rate" value={`${effectiveRate(t.taxableIncome, province).toFixed(2)}%`} />
+        <ResultCard label="Total Income Tax" value={formatMoney(totalIncomeTax(t.taxableIncome, province))} highlight />
+        <ResultCard label="Marginal Rate" value={`${marginalRate(t.taxableIncome, province).toFixed(2)}%`} />
+        <ResultCard label="Effective Rate" value={`${effectiveRate(t.taxableIncome, province).toFixed(2)}%`} />
       </div>
 
       {inputs.rrsp + inputs.fhsa > 0 && (
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ResultCard label="Taxable income" value={formatMoney(t.taxableIncome)} />
-            <ResultCard label="Tax savings from contributions" value={formatMoney(t.taxSavings)} highlight />
-            <ResultCard label="Net after contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
+            <ResultCard label="Taxable Income" value={formatMoney(t.taxableIncome)} />
+            <ResultCard label="Tax Savings From Contributions" value={formatMoney(t.taxSavings)} highlight />
+            <ResultCard label="Net After Contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
           </div>
           <p className="text-[12px] text-text-secondary">
             RRSP limit is 18% of last year's earned income up to the annual maximum. FHSA limit is
@@ -130,7 +130,7 @@ export const SalaryTaxTool: React.FC = () => {
         <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={t.taxableIncome} />
         <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.taxableIncome} />
         <div className="flex flex-col gap-1">
-          <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal rate breakdown</span>
+          <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-primary">
             <span>Federal {breakdown.federal.toFixed(2)}%</span>
             <span>+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
@@ -145,9 +145,9 @@ export const SalaryTaxTool: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Net annual" value={formatMoney(t.net)} highlight />
-        <ResultCard label="Net monthly" value={formatMoney(t.net / 12)} />
-        <ResultCard label="Net biweekly" value={formatMoney(t.net / 26)} />
+        <ResultCard label="Net Annual" value={formatMoney(t.net)} highlight />
+        <ResultCard label="Net Monthly" value={formatMoney(t.net / 12)} />
+        <ResultCard label="Net Biweekly" value={formatMoney(t.net / 26)} />
       </div>
 
       <div className="themed-card rounded-lg p-4 flex flex-col gap-2">
