@@ -24,9 +24,9 @@ export const EmergencyFundCalculator: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <CalculatorField label="Monthly essential expenses" prefix="$" step={100} value={inputs.monthlyExpenses} onChange={set('monthlyExpenses')} />
-        <CalculatorField label="Months of cover" min={1} max={24} value={inputs.targetMonths} onChange={set('targetMonths')} />
-        <CalculatorField label="Current savings" prefix="$" step={100} value={inputs.currentSavings} onChange={set('currentSavings')} />
+        <CalculatorField label="Monthly Essential Expenses" prefix="$" step={100} value={inputs.monthlyExpenses} onChange={set('monthlyExpenses')} />
+        <CalculatorField label="Months of Cover" min={1} max={24} value={inputs.targetMonths} onChange={set('targetMonths')} />
+        <CalculatorField label="Current Savings" prefix="$" step={100} value={inputs.currentSavings} onChange={set('currentSavings')} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -54,8 +54,8 @@ export const EmergencyFundCalculator: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Target fund" value={formatMoney(target)} highlight />
-        <ResultCard label="Gap to close" value={formatMoney(gap)} />
+        <ResultCard label="Target Fund" value={formatMoney(target)} highlight />
+        <ResultCard label="Gap to Close" value={formatMoney(gap)} />
         <ResultCard label="Funded" value={`${Math.round(progress * 100)}%`} />
       </div>
 

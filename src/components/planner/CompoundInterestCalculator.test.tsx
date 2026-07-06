@@ -11,28 +11,28 @@ beforeEach(() => {
 describe('CompoundInterestCalculator', () => {
   it('renders inputs with defaults and the three result cards', () => {
     render(<CompoundInterestCalculator />)
-    expect(screen.getByLabelText('Starting amount')).toHaveValue(10000)
-    expect(screen.getByLabelText('Monthly contribution')).toHaveValue(500)
-    expect(screen.getByLabelText('Annual return')).toHaveValue(7)
+    expect(screen.getByLabelText('Starting Amount')).toHaveValue(10000)
+    expect(screen.getByLabelText('Monthly Contribution')).toHaveValue(500)
+    expect(screen.getByLabelText('Annual Return')).toHaveValue(7)
     expect(screen.getByLabelText('Years')).toHaveValue(20)
-    expect(screen.getByText('Future value')).toBeInTheDocument()
-    expect(screen.getByText('Total contributed')).toBeInTheDocument()
+    expect(screen.getByText('Future Value')).toBeInTheDocument()
+    expect(screen.getByText('Total Contributed')).toBeInTheDocument()
     expect(screen.getByText('Growth')).toBeInTheDocument()
   })
 
   it('shows the correct future value for zero-rate inputs', () => {
     render(<CompoundInterestCalculator />)
-    fireEvent.change(screen.getByLabelText('Starting amount'), { target: { value: '1000' } })
-    fireEvent.change(screen.getByLabelText('Monthly contribution'), { target: { value: '100' } })
-    fireEvent.change(screen.getByLabelText('Annual return'), { target: { value: '0' } })
+    fireEvent.change(screen.getByLabelText('Starting Amount'), { target: { value: '1000' } })
+    fireEvent.change(screen.getByLabelText('Monthly Contribution'), { target: { value: '100' } })
+    fireEvent.change(screen.getByLabelText('Annual Return'), { target: { value: '0' } })
     fireEvent.change(screen.getByLabelText('Years'), { target: { value: '1' } })
-    // 1000 + 100 * 12 = 2200, appears in both Future value and Total contributed
+    // 1000 + 100 * 12 = 2200, appears in both Future Value and Total Contributed
     expect(screen.getAllByText('$2,200').length).toBeGreaterThanOrEqual(2)
   })
 
   it('persists edited inputs to the planner store', () => {
     render(<CompoundInterestCalculator />)
-    fireEvent.change(screen.getByLabelText('Starting amount'), { target: { value: '20000' } })
+    fireEvent.change(screen.getByLabelText('Starting Amount'), { target: { value: '20000' } })
     expect(usePlannerStore.getState().inputs['compound-interest'].principal).toBe(20000)
   })
 

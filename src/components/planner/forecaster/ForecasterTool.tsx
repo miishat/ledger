@@ -83,7 +83,7 @@ export const ForecasterTool: React.FC = () => {
       {/* Auto-fed inputs with manual overrides */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <AutoField
-          label="Starting balance"
+          label="Starting Balance"
           auto={settings.autoStart as boolean}
           autoValue={autoFeed.startBalance}
           autoHint="Dashboard Net Worth"
@@ -92,7 +92,7 @@ export const ForecasterTool: React.FC = () => {
           onManual={(v) => setSetting('manualStart', v)}
         />
         <AutoField
-          label="Monthly savings"
+          label="Monthly Savings"
           auto={settings.autoSavings as boolean}
           autoValue={resolved.monthlySavings}
           autoHint="Budget Average (3 Months)"
@@ -101,7 +101,7 @@ export const ForecasterTool: React.FC = () => {
           onManual={(v) => setSetting('manualSavings', v)}
         />
         <div className="flex flex-col gap-1">
-          <span className="text-[13px] font-medium text-text-secondary">Comp events / debt drag</span>
+          <span className="text-[13px] font-medium text-text-secondary">Comp Events / Debt Drag</span>
           <div className="flex gap-2">
             <button
               onClick={() => setSetting('autoComp', !settings.autoComp)}
@@ -109,7 +109,7 @@ export const ForecasterTool: React.FC = () => {
                 settings.autoComp ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
-              {settings.autoComp ? `${autoFeed.compLumps.length} comp events on` : 'comp events off'}
+              {settings.autoComp ? `${autoFeed.compLumps.length} Comp Events On` : 'Comp Events Off'}
             </button>
             <button
               onClick={() => setSetting('includeDebtDrag', !settings.includeDebtDrag)}
@@ -117,7 +117,7 @@ export const ForecasterTool: React.FC = () => {
                 settings.includeDebtDrag ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
-              {autoFeed.debtDrag ? `debt drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'debt drag off'}
+              {autoFeed.debtDrag ? `Debt Drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'Debt Drag Off'}
             </button>
           </div>
         </div>
@@ -128,8 +128,8 @@ export const ForecasterTool: React.FC = () => {
         <CalculatorField label="Years" min={1} max={50} value={settings.years} onChange={(v) => setSetting('years', v)} />
         <CalculatorField label="Return" suffix="%" step={0.1} value={settings.annualReturnPct} onChange={(v) => setSetting('annualReturnPct', v)} />
         <CalculatorField label="Inflation" suffix="%" step={0.1} value={settings.inflationPct} onChange={(v) => setSetting('inflationPct', v)} />
-        <CalculatorField label="Contribution step-up" suffix="%/yr" step={0.5} value={settings.stepUpPct} onChange={(v) => setSetting('stepUpPct', v)} />
-        <CalculatorField label="Scenario spread" suffix="± %" step={0.5} value={settings.spreadPct} onChange={(v) => setSetting('spreadPct', v)} />
+        <CalculatorField label="Contribution Step-Up" suffix="%/yr" step={0.5} value={settings.stepUpPct} onChange={(v) => setSetting('stepUpPct', v)} />
+        <CalculatorField label="Scenario Spread" suffix="± %" step={0.5} value={settings.spreadPct} onChange={(v) => setSetting('spreadPct', v)} />
       </div>
 
       {/* View toggles */}
@@ -160,13 +160,13 @@ export const ForecasterTool: React.FC = () => {
 
       {/* FIRE engine */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <CalculatorField label="Annual spending in retirement" prefix="$" step={1000} value={settings.annualSpending} onChange={(v) => setSetting('annualSpending', v)} />
-        <CalculatorField label="Withdrawal rate" suffix="%" step={0.1} value={settings.withdrawalRatePct} onChange={(v) => setSetting('withdrawalRatePct', v)} />
-        <ResultCard label="FI number" value={formatMoney(fi)} highlight />
-        <ResultCard label="Projected FI date" value={formatMonthsOut(fiMonth)} />
+        <CalculatorField label="Annual Spending in Retirement" prefix="$" step={1000} value={settings.annualSpending} onChange={(v) => setSetting('annualSpending', v)} />
+        <CalculatorField label="Withdrawal Rate" suffix="%" step={0.1} value={settings.withdrawalRatePct} onChange={(v) => setSetting('withdrawalRatePct', v)} />
+        <ResultCard label="FI Number" value={formatMoney(fi)} highlight />
+        <ResultCard label="Projected FI Date" value={formatMonthsOut(fiMonth)} />
       </div>
       <ResultCard
-        label={`Coast-FI (needed today to coast for ${settings.years}y)`}
+        label={`Coast-FI (Needed Today to Coast for ${settings.years}y)`}
         value={`${formatMoney(coast)}, you have ${formatMoney(resolved.startBalance)} (${resolved.startBalance >= coast ? 'coasting ✓' : 'not yet'})`}
       />
 
@@ -194,7 +194,7 @@ export const ForecasterTool: React.FC = () => {
           items={events}
           columns={[
             { key: 'label', label: 'Event', type: 'text' },
-            { key: 'yearsFromNow', label: 'Years from now', type: 'number', step: 0.5 },
+            { key: 'yearsFromNow', label: 'Years From Now', type: 'number', step: 0.5 },
             { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 },
           ]}
           makeNew={() => ({ id: `e${Date.now()}`, label: 'House down payment', yearsFromNow: 3, amount: -100000 })}

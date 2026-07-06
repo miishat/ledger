@@ -16,11 +16,11 @@ export const PlanTable: React.FC<{ analysis: InvestmentAnalysis; priceFor: (p: P
             <th className={`${th} text-left`}>Ticker</th>
             <th className={th}>Allocation %</th>
             <th className={th}>Extra $</th>
-            <th className={th}>Initial investment</th>
-            <th className={th}>Start price</th>
+            <th className={th}>Initial Investment</th>
+            <th className={th}>Start Price</th>
             <th className={th}>Shares</th>
-            <th className={th}>Current price</th>
-            <th className={th}>Current value</th>
+            <th className={th}>Current Price</th>
+            <th className={th}>Current Value</th>
             <th className={th}>Return $</th>
             <th className={th}>Return %</th>
           </tr>

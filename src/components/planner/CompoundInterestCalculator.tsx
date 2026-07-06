@@ -36,15 +36,15 @@ export const CompoundInterestCalculator: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <CalculatorField label="Starting amount" prefix="$" step={100} value={inputs.principal} onChange={set('principal')} />
-        <CalculatorField label="Monthly contribution" prefix="$" step={50} value={inputs.monthlyContribution} onChange={set('monthlyContribution')} />
-        <CalculatorField label="Annual return" suffix="%" step={0.1} value={inputs.annualRatePct} onChange={set('annualRatePct')} />
+        <CalculatorField label="Starting Amount" prefix="$" step={100} value={inputs.principal} onChange={set('principal')} />
+        <CalculatorField label="Monthly Contribution" prefix="$" step={50} value={inputs.monthlyContribution} onChange={set('monthlyContribution')} />
+        <CalculatorField label="Annual Return" suffix="%" step={0.1} value={inputs.annualRatePct} onChange={set('annualRatePct')} />
         <CalculatorField label="Years" min={1} max={60} value={inputs.years} onChange={set('years')} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Future value" value={formatMoney(fv)} highlight />
-        <ResultCard label="Total contributed" value={formatMoney(contributed)} />
+        <ResultCard label="Future Value" value={formatMoney(fv)} highlight />
+        <ResultCard label="Total Contributed" value={formatMoney(contributed)} />
         <ResultCard label="Growth" value={formatMoney(fv - contributed)} />
       </div>
 

@@ -48,13 +48,13 @@ export const ActualTable: React.FC<{ analysis: InvestmentAnalysis; priceFor: (p:
         <thead className="bg-bg-primary/50">
           <tr>
             <th className={`${th} text-left`}>Ticker</th>
-            <th className={th}>Initial investment</th>
-            <th className={th}>Extra investment</th>
-            <th className={th}>Start price</th>
-            <th className={th}>Average price</th>
+            <th className={th}>Initial Investment</th>
+            <th className={th}>Extra Investment</th>
+            <th className={th}>Start Price</th>
+            <th className={th}>Average Price</th>
             <th className={th}>Shares</th>
-            <th className={th}>Current price</th>
-            <th className={th}>Current value</th>
+            <th className={th}>Current Price</th>
+            <th className={th}>Current Value</th>
             <th className={th}>Return $</th>
             <th className={th}>Return %</th>
           </tr>

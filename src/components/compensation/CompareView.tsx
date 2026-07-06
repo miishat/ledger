@@ -194,8 +194,8 @@ export function CompareView() {
                     value={rsuPreset}
                     onChange={(v) => setRsuPreset(v as VestingPreset)}
                     options={[
-                      { value: '4yr-1yr-cliff', label: '4yr / 1yr cliff' },
-                      { value: '3yr-no-cliff', label: '3yr / no cliff' },
+                      { value: '4yr-1yr-cliff', label: '4yr / 1yr Cliff' },
+                      { value: '3yr-no-cliff', label: '3yr / No Cliff' },
                       { value: 'custom', label: 'Custom' },
                     ]}
                   />
