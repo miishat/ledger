@@ -23,8 +23,8 @@ export type PlannerToolGroup =
 export const PLANNER_GROUPS: PlannerToolGroup[] = [
   'Forecasting & Growth',
   'Savings',
-  'Debt & Housing',
   'Income & Tax',
+  'Debt & Housing',
   'Utilities',
 ]
 
