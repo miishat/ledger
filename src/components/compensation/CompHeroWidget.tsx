@@ -19,11 +19,11 @@ interface CompHeroWidgetProps {
 }
 
 const COMP_COLORS = {
-  baseSalary: 'var(--color-accent)',
-  cashBonus: '#8b5cf6', // violet-500
-  espp: '#f59e0b', // amber-500
-  rrsp: '#ec4899', // pink-500
-  rsu: '#06b6d4', // cyan-500
+  baseSalary: 'var(--chart-1)',
+  cashBonus: 'var(--chart-2)',
+  espp: 'var(--chart-3)',
+  rrsp: 'var(--chart-4)',
+  rsu: 'var(--chart-5)',
 }
 
 export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {

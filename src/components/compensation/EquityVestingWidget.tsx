@@ -17,7 +17,7 @@ export function EquityVestingWidget() {
   const { timeMode } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
 
-  const COLORS = ['var(--color-accent)', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#ef4444']
+  const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)']
 
   const CustomEquityTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
