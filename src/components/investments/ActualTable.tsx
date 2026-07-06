@@ -41,7 +41,7 @@ function actualRow(position: Position, currentPrice: number): ActualRow {
 }
 
 export const ActualTable: React.FC<{ analysis: InvestmentAnalysis; priceFor: (p: Position) => number }> = ({ analysis, priceFor }) => {
-  const rows = analysis.positions.map((p) => actualRow(p, priceFor(p)))
+  const rows = analysis.positions.filter((p) => p.lots.length > 0).map((p) => actualRow(p, priceFor(p)))
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full border-collapse">

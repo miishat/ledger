@@ -6,6 +6,7 @@ import { PositionCard } from './PositionCard'
 import { FundSummaryBar } from './FundSummaryBar'
 import { PlanTable } from './PlanTable'
 import { ActualTable } from './ActualTable'
+import { AddTradeForm } from './AddTradeForm'
 import { SwapSimulator } from './SwapSimulator'
 import { planFundSummary, planRow, actualFundSummary } from '../../utils/investments/planMetrics'
 import { useResolvedPriceFor } from '../../utils/investments/priceFor'
@@ -110,14 +111,41 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
             </>
           ) : (
             <>
-              <FundSummaryBar side="actual" summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />
-              <SwapSimulator
-                analysis={analysis}
-                side="actual"
-                priceFor={priceFor}
-                investedFor={(p: Position) => totalInvested(p.lots)}
-              />
-              <ActualTable analysis={analysis} priceFor={priceFor} />
+              <div className="grid grid-cols-2 gap-3 max-w-md">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[13px] text-text-secondary">Initial Fund ($)</span>
+                  <input
+                    type="number"
+                    className={fundInputCls}
+                    value={analysis.initialFund ?? 0}
+                    onChange={(e) => updateAnalysis(analysis.id, { initialFund: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[13px] text-text-secondary">Extra Fund ($)</span>
+                  <input
+                    type="number"
+                    className={fundInputCls}
+                    value={analysis.extraFund ?? 0}
+                    onChange={(e) => updateAnalysis(analysis.id, { extraFund: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+              <AddTradeForm analysis={analysis} />
+              {analysis.positions.some((p) => p.lots.length > 0) ? (
+                <>
+                  <FundSummaryBar side="actual" summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />
+                  <SwapSimulator
+                    analysis={analysis}
+                    side="actual"
+                    priceFor={priceFor}
+                    investedFor={(p: Position) => totalInvested(p.lots)}
+                  />
+                  <ActualTable analysis={analysis} priceFor={priceFor} />
+                </>
+              ) : (
+                <p className="text-[13px] text-text-secondary">No trades recorded yet. Add your first trade to see actual performance.</p>
+              )}
             </>
           )}
 
