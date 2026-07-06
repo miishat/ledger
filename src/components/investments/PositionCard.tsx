@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChevronDown, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { ChevronDown, RefreshCw, Trash2 } from 'lucide-react'
 import { useCurrentPrice } from '../../services/marketData'
 import { useAnalysisStore, type Position } from '../../store/useAnalysisStore'
 import {
@@ -7,7 +7,6 @@ import {
   plDollars, plPct, thesisChangePct, totalInvested, variance,
 } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
-import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { Skeleton } from '../ui/Skeleton'
 
 interface PositionCardProps {
@@ -20,12 +19,9 @@ interface PositionCardProps {
 const pct = (v: number | null) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
 
 export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysisDate, position, totals }) => {
-  const { updatePosition, removePosition, addLot, removeLot } = useAnalysisStore.getState()
+  const { updatePosition, removePosition, removeLot } = useAnalysisStore.getState()
   const price = useCurrentPrice(position.ticker, position.exchange)
   const currentPrice = price.data?.value.price ?? position.startPrice
-  const [lotAmount, setLotAmount] = useState(1000)
-  const [lotPrice, setLotPrice] = useState(currentPrice)
-  const [lotDate, setLotDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [manualPriceDraft, setManualPriceDraft] = useState('')
   const [expanded, setExpanded] = useState(false)
   const isOverridden = price.data?.source === 'override'
@@ -148,17 +144,6 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
                   </button>
                 </div>
               ))}
-              <div className="flex flex-wrap items-end gap-2">
-                <ThemedDatePicker className="w-auto" value={lotDate} onChange={setLotDate} />
-                <input type="number" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-28" value={lotAmount} onChange={(e) => setLotAmount(Number(e.target.value))} placeholder="Amount $" />
-                <input type="number" step={0.01} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-text-primary w-24" value={lotPrice} onChange={(e) => setLotPrice(Number(e.target.value))} placeholder="Price" />
-                <button
-                  onClick={() => lotAmount > 0 && lotPrice > 0 && addLot(analysisId, position.id, { id: `lot-${Date.now()}`, date: lotDate, amountInvested: lotAmount, price: lotPrice })}
-                  className="flex items-center gap-1 text-text-secondary hover:text-accent"
-                >
-                  <Plus className="w-4 h-4" /> Add lot
-                </button>
-              </div>
             </div>
           </details>
         </>

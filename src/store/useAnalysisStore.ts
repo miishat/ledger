@@ -158,7 +158,7 @@ export const useAnalysisStore = create<AnalysisState>()(
       version: 3,
       // v0: one flat ticker per analysis → wrap it as the single position.
       // v1: analyses gain a `swaps` scenario list.
-      // v2: plannedBudget defaults to initialFund + extraFund; funds become actual-side.
+      // v2→v3: plannedBudget defaults to initialFund + extraFund; funds become actual-side.
       migrate: (persisted, version) => {
         let state = persisted as { analyses?: (LegacyAnalysis | InvestmentAnalysis)[] }
 
