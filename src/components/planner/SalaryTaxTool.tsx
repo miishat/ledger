@@ -23,7 +23,7 @@ const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0 }
 /** Bracket visual: one visually separate segment per bracket, with a rate
  *  label, income-range caption, and accent fill for the portion of income
  *  inside that bracket. */
-const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: number }> = ({ title, brackets, income }) => {
+export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: number }> = ({ title, brackets, income }) => {
   const cap = Math.max(income * 1.25, 1)
   const segments = brackets
     .reduce<Array<{ start: number; end: number; rate: number }>>((acc, b) => {
@@ -43,10 +43,10 @@ const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: number 
           const active = income > s.start
           return (
             <div key={s.start} className="flex flex-col gap-1" style={{ width: `${width}%` }}>
-              <div className={`relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
+              <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
                    title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
                 <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
-                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-medium text-text-primary">
+                <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-[11px] font-medium text-text-primary">
                   {(s.rate * 100).toFixed(1)}%
                 </span>
               </div>
