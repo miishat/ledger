@@ -6,6 +6,7 @@ import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { CalculatorField } from './CalculatorField'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { ResultCard } from './ResultCard'
+import { NumberInput } from '../ui/NumberInput'
 
 const TOOL_ID = 'currency-converter'
 const DEFAULTS = { amount: 100, from: 'USD' as string, date: '' as string }
@@ -79,15 +80,12 @@ export const CurrencyConverter: React.FC = () => {
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-[13px] font-medium text-text-secondary">Manual rate override</span>
-            <input
-              type="number"
-              step={0.0001}
+            <NumberInput
               className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent w-40"
-              value={override ?? ''}
+              value={override ?? 0}
               placeholder={fx.data?.value.rate.toFixed(4) ?? ''}
-              onChange={(e) => {
-                const v = Number(e.target.value)
-                if (e.target.value !== '' && Number.isFinite(v) && v > 0) setOverride(overrideKey, v)
+              onCommit={(v) => {
+                if (v > 0) setOverride(overrideKey, v)
               }}
             />
           </label>

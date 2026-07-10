@@ -11,10 +11,10 @@ beforeEach(() => {
 describe('CompoundInterestCalculator', () => {
   it('renders inputs with defaults and the three result cards', () => {
     render(<CompoundInterestCalculator />)
-    expect(screen.getByLabelText('Starting Amount')).toHaveValue(10000)
-    expect(screen.getByLabelText('Monthly Contribution')).toHaveValue(500)
-    expect(screen.getByLabelText('Annual Return')).toHaveValue(7)
-    expect(screen.getByLabelText('Years')).toHaveValue(20)
+    expect(screen.getByLabelText('Starting Amount')).toHaveValue('10000')
+    expect(screen.getByLabelText('Monthly Contribution')).toHaveValue('500')
+    expect(screen.getByLabelText('Annual Return')).toHaveValue('7')
+    expect(screen.getByLabelText('Years')).toHaveValue('20')
     expect(screen.getByText('Future Value')).toBeInTheDocument()
     expect(screen.getByText('Total Contributed')).toBeInTheDocument()
     expect(screen.getByText('Growth')).toBeInTheDocument()
@@ -39,6 +39,6 @@ describe('CompoundInterestCalculator', () => {
   it('restores saved inputs on remount', () => {
     usePlannerStore.getState().setInput('compound-interest', 'years', 33)
     render(<CompoundInterestCalculator />)
-    expect(screen.getByLabelText('Years')).toHaveValue(33)
+    expect(screen.getByLabelText('Years')).toHaveValue('33')
   })
 })

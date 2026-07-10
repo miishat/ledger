@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { NumberInput } from '../ui/NumberInput';
 
 interface CategoryManagerWidgetProps {
   selectedMonth: string;
@@ -203,10 +204,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 )}
                               </div>
                               <span className="text-[13px] text-text-secondary ml-2">target: $</span>
-                              <input
-                                type="number"
+                              <NumberInput
                                 value={cat.targetAmount}
-                                onChange={(e) => updateCategory(cat.id, { targetAmount: Number(e.target.value) })}
+                                onCommit={(n) => updateCategory(cat.id, { targetAmount: n })}
                                 className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
                               />
                               <button 

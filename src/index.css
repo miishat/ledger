@@ -223,6 +223,17 @@ select option {
   color: var(--color-text-primary);
 }
 
+/* Native number inputs (if any remain) must not show spinner arrows. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: var(--calendar-filter);
   cursor: pointer;

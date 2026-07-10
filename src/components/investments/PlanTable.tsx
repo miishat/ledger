@@ -2,6 +2,7 @@ import React from 'react'
 import type { InvestmentAnalysis, Position } from '../../store/useAnalysisStore'
 import { planRow } from '../../utils/investments/planMetrics'
 import { formatMoney } from '../planner/format'
+import { NumberInput } from '../ui/NumberInput'
 
 const th = 'px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-text-secondary'
 const td = 'px-3 py-2 text-right text-[13px] text-text-primary tabular-nums'
@@ -37,15 +38,13 @@ export const PlanTable: React.FC<PlanTableProps> = ({ analysis, priceFor, onAllo
             <tr key={r.positionId} className="border-t border-border/60">
               <td className={`${td} text-left font-medium`}>{r.ticker}</td>
               <td className={td}>
-                <input
-                  type="number"
-                  step={0.5}
+                <NumberInput
                   min={0}
                   max={100}
                   aria-label={`Allocation % for ${r.ticker}`}
                   className="w-20 bg-bg-primary/50 border border-border rounded px-2 py-1 text-right text-[13px] text-text-primary outline-none focus:border-accent"
                   value={r.allocationPct}
-                  onChange={(e) => onAllocationChange(r.positionId, Number(e.target.value))}
+                  onCommit={(n) => onAllocationChange(r.positionId, n)}
                 />
               </td>
               <td className={td}>{formatMoney(r.plannedDollars)}</td>

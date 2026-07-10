@@ -12,6 +12,7 @@ import { planFundSummary, planRow, actualFundSummary } from '../../utils/investm
 import { useResolvedPriceFor } from '../../utils/investments/priceFor'
 import { totalInvested } from '../../utils/investments/analysisMetrics'
 import type { Position } from '../../store/useAnalysisStore'
+import { NumberInput } from '../ui/NumberInput'
 
 interface AnalysisCardProps {
   analysis: InvestmentAnalysis
@@ -71,12 +72,10 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
             <>
               <label className="flex flex-col gap-1 max-w-xs">
                 <span className="text-[13px] text-text-secondary">Planned Budget ($)</span>
-                <input
-                  type="number"
+                <NumberInput
                   className={fundInputCls}
                   value={analysis.plannedBudget ?? 0}
-                  onChange={(e) => {
-                    const budget = Number(e.target.value)
+                  onCommit={(budget) => {
                     updateAnalysis(analysis.id, { plannedBudget: budget })
                     analysis.positions.forEach((p) =>
                       updatePosition(analysis.id, p.id, { plannedAmount: (budget * (p.allocationPct ?? 0)) / 100 }),
@@ -114,20 +113,18 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
               <div className="grid grid-cols-2 gap-3 max-w-md">
                 <label className="flex flex-col gap-1">
                   <span className="text-[13px] text-text-secondary">Initial Fund ($)</span>
-                  <input
-                    type="number"
+                  <NumberInput
                     className={fundInputCls}
                     value={analysis.initialFund ?? 0}
-                    onChange={(e) => updateAnalysis(analysis.id, { initialFund: Number(e.target.value) })}
+                    onCommit={(n) => updateAnalysis(analysis.id, { initialFund: n })}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
                   <span className="text-[13px] text-text-secondary">Extra Fund ($)</span>
-                  <input
-                    type="number"
+                  <NumberInput
                     className={fundInputCls}
                     value={analysis.extraFund ?? 0}
-                    onChange={(e) => updateAnalysis(analysis.id, { extraFund: Number(e.target.value) })}
+                    onCommit={(n) => updateAnalysis(analysis.id, { extraFund: n })}
                   />
                 </label>
               </div>

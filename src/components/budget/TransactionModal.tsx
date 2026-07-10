@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { ThemedDatePicker } from '../ui/ThemedDatePicker';
+import { NumberInput } from '../ui/NumberInput';
 
 import type { Transaction } from '../../types/budget';
 
@@ -25,7 +26,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
 
 
   const [type, setType] = useState<TransactionType>('expense');
-  const [amount, setAmount] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
   const [category, setCategory] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
@@ -33,13 +34,13 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   React.useEffect(() => {
     if (initialTransaction) {
       setType(initialTransaction.type);
-      setAmount(initialTransaction.amount.toString());
+      setAmount(initialTransaction.amount);
       setCategory(initialTransaction.categoryId || '');
       setDate(initialTransaction.date);
       setDescription(initialTransaction.description || '');
     } else {
       setType('expense');
-      setAmount('');
+      setAmount(0);
       setCategory(categoryList.length > 0 ? categoryList[0].id : '');
       setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
@@ -59,12 +60,12 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || isNaN(Number(amount))) return;
+    if (amount <= 0) return;
 
     if (initialTransaction) {
       updateTransaction(initialTransaction.id, {
         type,
-        amount: Number(amount),
+        amount,
         categoryId: category,
         date,
         description
@@ -73,7 +74,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       addTransaction({
         id: crypto.randomUUID(),
         type,
-        amount: Number(amount),
+        amount,
         categoryId: category,
         date,
         description
@@ -82,7 +83,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
 
     // Reset form
     setType('expense');
-    setAmount('');
+    setAmount(0);
     setCategory(categoryList.length > 0 ? categoryList[0].id : '');
     setDate(new Date().toISOString().split('T')[0]);
     setDescription('');
@@ -143,12 +144,9 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
             <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Amount
             </label>
-            <input
-              type="number"
-              step="0.01"
-              required
+            <NumberInput
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onCommit={setAmount}
               className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
               placeholder="0.00"
             />

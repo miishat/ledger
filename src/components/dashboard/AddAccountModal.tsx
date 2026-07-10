@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useAccountsStore } from '../../store/useAccountsStore';
 import type { AccountType } from '../../store/useAccountsStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { NumberInput } from '../ui/NumberInput';
 
 interface Account {
   id: string;
@@ -20,7 +21,7 @@ interface AddAccountModalProps {
 
 export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, defaultType = 'bank', editingAccount }) => {
   const [name, setName] = useState('');
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(0);
   const [type, setType] = useState<AccountType>(defaultType);
 
   const { addAccount, updateAccount } = useAccountsStore();
@@ -29,12 +30,12 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
     if (isOpen) {
       if (editingAccount) {
         setName(editingAccount.name);
-        setValue(editingAccount.value.toString());
+        setValue(editingAccount.value);
         setType(editingAccount.type);
       } else {
         setType(defaultType);
         setName('');
-        setValue('');
+        setValue(0);
       }
     }
   }, [isOpen, defaultType, editingAccount]);
@@ -52,18 +53,17 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedValue = parseFloat(value);
-    if (name && !isNaN(parsedValue)) {
+    if (name) {
       if (editingAccount) {
         updateAccount(editingAccount.id, {
           name,
-          value: parsedValue,
+          value,
           type,
         });
       } else {
         addAccount({
           name,
-          value: parsedValue,
+          value,
           type,
         });
       }
@@ -111,14 +111,11 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-text-secondary">Value / Balance</label>
-            <input
-              type="number"
-              step="0.01"
+            <NumberInput
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onCommit={setValue}
               placeholder="0.00"
               className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent"
-              required
             />
           </div>
 

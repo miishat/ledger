@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
 import { useAnalysisStore, type Position } from '../../store/useAnalysisStore'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
+import { NumberInput } from '../ui/NumberInput'
 import { TickerRowEditor, type DraftRow } from './TickerRowEditor'
 
 interface AnalysisModalProps {
@@ -75,7 +76,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[13px] text-text-secondary">Planned amount ($)</span>
-          <input type="number" className={inputCls} value={plannedAmount} onChange={(e) => setPlannedAmount(Number(e.target.value))} />
+          <NumberInput className={inputCls} value={plannedAmount} onCommit={setPlannedAmount} />
         </label>
       </div>
 
@@ -90,12 +91,10 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
                 : '(enter manually or pick ticker + date)'}
         </span>
         <div className="flex gap-2">
-          <input
-            type="number"
-            step={0.01}
+          <NumberInput
             className={inputCls}
-            value={effectivePrice || ''}
-            onChange={(e) => setManualPrice(Number(e.target.value))}
+            value={effectivePrice}
+            onCommit={setManualPrice}
           />
           {manualPrice !== null && fetchedPrice !== undefined && (
             <button onClick={() => setManualPrice(null)} className="text-[12px] text-text-secondary hover:text-accent whitespace-nowrap">
@@ -183,12 +182,11 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[13px] text-text-secondary">Planned Budget ($)</span>
-          <input
+          <NumberInput
             aria-label="Planned Budget ($)"
-            type="number"
             className={inputCls}
             value={plannedBudget}
-            onChange={(e) => setPlannedBudget(Number(e.target.value))}
+            onCommit={setPlannedBudget}
           />
         </label>
       </div>

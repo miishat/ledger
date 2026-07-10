@@ -9,6 +9,7 @@ interface NumberInputProps {
   step?: number
   placeholder?: string
   className?: string
+  disabled?: boolean
   'aria-label'?: string
 }
 

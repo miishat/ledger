@@ -7,6 +7,7 @@ import { formatMoney } from '../planner/format'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { Skeleton } from '../ui/Skeleton'
 import { CalculatorField } from '../planner/CalculatorField'
+import { NumberInput } from '../ui/NumberInput'
 
 interface SwapSimulatorProps {
   analysis: InvestmentAnalysis
@@ -36,14 +37,13 @@ const SwapRow: React.FC<{
   const inCurrentPrice = current.data?.value.price
   const isCurrentOverridden = current.data?.source === 'override'
   const isLoadingCurrent = swap.inTicker.trim() !== '' && current.status === 'loading'
-  const [manualCurrentDraft, setManualCurrentDraft] = useState('')
+  const [manualCurrentDraft, setManualCurrentDraft] = useState(0)
 
   const handleManualCurrentSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const parsed = Number(manualCurrentDraft)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      current.setManual(parsed)
-      setManualCurrentDraft('')
+    if (manualCurrentDraft > 0) {
+      current.setManual(manualCurrentDraft)
+      setManualCurrentDraft(0)
     }
   }
 
@@ -114,11 +114,9 @@ const SwapRow: React.FC<{
             <span className="text-error">live price unavailable</span>
           )}
           <form onSubmit={handleManualCurrentSubmit} className="flex items-center gap-1">
-            <input
-              type="number"
-              step="0.01"
+            <NumberInput
               value={manualCurrentDraft}
-              onChange={(e) => setManualCurrentDraft(e.target.value)}
+              onCommit={setManualCurrentDraft}
               placeholder="Manual current price"
               className="w-32 bg-bg-primary/50 border border-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
             />

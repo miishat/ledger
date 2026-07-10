@@ -1,6 +1,7 @@
 import React from 'react'
 import { Trash2 } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
+import { NumberInput } from '../ui/NumberInput'
 
 export interface DraftRow {
   key: string
@@ -46,15 +47,16 @@ export const TickerRowEditor: React.FC<{
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-[12px] text-text-secondary">Allocation % {index + 1}</span>
-        <input aria-label={`Allocation % ${index + 1}`} type="number" min={0} max={100} className={inputCls} value={row.allocationPct || ''}
-          onChange={(e) => onChange({ ...row, allocationPct: Number(e.target.value) })} />
+        <NumberInput aria-label={`Allocation % ${index + 1}`} min={0} max={100} className={inputCls}
+          value={row.allocationPct}
+          onCommit={(n) => onChange({ ...row, allocationPct: n })} />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-[12px] text-text-secondary">
           Start Price {row.manualPrice !== null ? '(manual)' : fetched !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
         </span>
-        <input type="number" step={0.01} className={inputCls} value={effective || ''}
-          onChange={(e) => onChange({ ...row, manualPrice: Number(e.target.value) })} />
+        <NumberInput className={inputCls} value={effective}
+          onCommit={(n) => onChange({ ...row, manualPrice: n })} />
       </label>
       <button type="button" onClick={onRemove} aria-label={`Remove ticker ${index + 1}`} className="p-2 text-text-secondary hover:text-error">
         <Trash2 className="w-4 h-4" />
