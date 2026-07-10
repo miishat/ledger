@@ -32,6 +32,14 @@ describe('ResultCard', () => {
     expect(screen.getByText('Future value')).toBeInTheDocument()
     expect(screen.getByText('$1,234')).toBeInTheDocument()
   })
+
+  it('wraps long values and shrinks below the sm breakpoint instead of clipping', () => {
+    render(<ResultCard label="Portfolio" value="$1,200,000" />)
+    const value = screen.getByText('$1,200,000')
+    expect(value.className).toContain('break-words')
+    expect(value.className).toContain('text-[18px]')
+    expect(value.className).toContain('sm:text-[22px]')
+  })
 })
 
 describe('formatMoney', () => {

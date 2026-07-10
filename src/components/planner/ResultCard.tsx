@@ -13,7 +13,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ label, value, highlight 
     }`}
   >
     <p className="text-[12px] uppercase tracking-wide text-text-secondary">{label}</p>
-    <p className={`text-[22px] font-semibold mt-1 ${highlight ? 'text-accent' : 'text-text-primary'}`}>
+    <p className={`text-[18px] sm:text-[22px] font-semibold mt-1 break-words leading-snug ${highlight ? 'text-accent' : 'text-text-primary'}`}>
       {value}
     </p>
   </div>
