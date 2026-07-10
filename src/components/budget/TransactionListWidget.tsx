@@ -36,9 +36,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
 
   return (
     <div className={wrapperClass}>
-      <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
+      <div className="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b border-border pb-4">
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           <ThemedSelect
             value={selectedCategoryId}
             onChange={setSelectedCategoryId}
@@ -105,12 +105,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                     {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
                   </td>
                   <td className="py-3 text-right">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteTransaction(tx.id);
                       }}
-                      className="p-1.5 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                      aria-label="Delete transaction"
+                      className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
                     >
                       <Trash2 size={16} />
                     </button>
