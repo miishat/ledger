@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 
 interface NumberInputProps {
   value: number
@@ -26,11 +26,6 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 }) => {
   // null = not editing; otherwise the raw text being typed.
   const [text, setText] = useState<string | null>(null)
-  const [displayValue, setDisplayValue] = useState(value)
-
-  useEffect(() => {
-    setDisplayValue(value)
-  }, [value])
 
   const clamp = (n: number) =>
     Math.min(max ?? Number.POSITIVE_INFINITY, Math.max(min ?? Number.NEGATIVE_INFINITY, n))
@@ -39,25 +34,19 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     <input
       type="text"
       inputMode="decimal"
-      value={text ?? String(displayValue)}
-      onFocus={() => setText(displayValue === 0 ? '' : String(displayValue))}
+      value={text ?? String(value)}
+      onFocus={() => setText(value === 0 ? '' : String(value))}
       onChange={(e) => {
         const next = e.target.value
         if (!NUMERIC.test(next)) return
         setText(next)
         const parsed = parseFloat(next)
-        if (!Number.isNaN(parsed)) {
-          const clamped = clamp(parsed)
-          onCommit(clamped)
-          setDisplayValue(clamped)
-        }
+        if (!Number.isNaN(parsed)) onCommit(clamp(parsed))
       }}
       onBlur={() => {
         if (text !== null) {
           const parsed = parseFloat(text)
-          const clamped = clamp(Number.isNaN(parsed) ? 0 : parsed)
-          onCommit(clamped)
-          setDisplayValue(clamped)
+          onCommit(clamp(Number.isNaN(parsed) ? 0 : parsed))
         }
         setText(null)
       }}

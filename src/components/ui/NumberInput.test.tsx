@@ -1,5 +1,29 @@
+import { useState } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { NumberInput } from './NumberInput'
+
+// Mirrors how every real call site uses NumberInput: controlled, echoing
+// committed values back into the `value` prop.
+const Controlled = (props: {
+  initial: number
+  onCommit?: (n: number) => void
+  min?: number
+  max?: number
+}) => {
+  const [v, setV] = useState(props.initial)
+  return (
+    <NumberInput
+      aria-label="amt"
+      value={v}
+      min={props.min}
+      max={props.max}
+      onCommit={(n) => {
+        setV(n)
+        props.onCommit?.(n)
+      }}
+    />
+  )
+}
 
 describe('NumberInput', () => {
   it('renders the numeric value', () => {
@@ -20,7 +44,7 @@ describe('NumberInput', () => {
 
   it('allows clearing while editing and commits 0 on blur', () => {
     const onCommit = vi.fn()
-    render(<NumberInput aria-label="amt" value={250} onCommit={onCommit} />)
+    render(<Controlled initial={250} onCommit={onCommit} />)
     const input = screen.getByLabelText('amt')
     fireEvent.focus(input)
     fireEvent.change(input, { target: { value: '' } })
