@@ -39,7 +39,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
   const ActionButton = (
     <button
       onClick={handleAdd}
-      className="flex items-center text-xs font-medium text-text-secondary hover:text-accent transition-colors"
+      className="flex items-center text-xs font-medium text-text-secondary hover:text-accent transition-colors px-2 py-1.5 -my-1.5 -mx-2 rounded-md"
     >
       <Plus size={16} className="mr-1" />
       Add
@@ -65,16 +65,16 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                     <span className="text-sm font-medium text-text-primary">
                       ${acc.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <button 
+                    <button
                       onClick={() => handleEdit(acc)}
-                      className="text-text-secondary/50 hover:text-accent opacity-0 group-hover:opacity-100 transition-all ml-1"
+                      className="p-2 -m-1 text-text-secondary/50 hover:text-accent sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
                       aria-label="Edit account"
                     >
                       <Edit2 size={14} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => removeAccount(acc.id)}
-                      className="text-text-secondary/50 hover:text-error opacity-0 group-hover:opacity-100 transition-all"
+                      className="p-2 -m-1 text-text-secondary/50 hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
                       aria-label="Remove account"
                     >
                       <Trash2 size={14} />
