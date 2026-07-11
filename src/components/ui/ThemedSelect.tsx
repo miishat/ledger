@@ -91,7 +91,7 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
           <div
             role="listbox"
             style={{ maxHeight: placement.maxHeight }}
-            className={`absolute left-0 right-0 z-40 overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-1 flex flex-col animate-dropdown-in ${
+            className={`absolute left-0 right-0 z-40 overflow-y-auto themed-menu border border-border rounded-lg shadow-xl p-1 flex flex-col animate-dropdown-in ${
               placement.openUp ? 'bottom-full mb-1' : 'top-full mt-1'
             }`}
           >

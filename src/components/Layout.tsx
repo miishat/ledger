@@ -93,8 +93,8 @@ export const Layout: React.FC = () => {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary backdrop-blur-[var(--card-blur)] flex"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border flex"
+        style={{ backgroundColor: 'var(--dropdown-bg)', paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
         {navItems.map((item) => {

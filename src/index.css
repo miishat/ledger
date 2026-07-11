@@ -47,6 +47,7 @@
   --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --card-blur: none;
+  --dropdown-bg: #ffffff;
 
   color-scheme: light;
   --calendar-filter: invert(0);
@@ -74,6 +75,7 @@
   --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --card-blur: none;
+  --dropdown-bg: #ffffff;
 
   color-scheme: light;
   --calendar-filter: invert(0);
@@ -101,6 +103,7 @@
   --card-border: #27272a;
   --card-shadow: none;
   --card-blur: none;
+  --dropdown-bg: #111111;
 
   color-scheme: dark;
   --calendar-filter: invert(0.8) hue-rotate(180deg);
@@ -128,6 +131,7 @@
   --card-border: #1a1a1a;
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   --card-blur: none;
+  --dropdown-bg: #0a0a0a;
 
   color-scheme: dark;
   --calendar-filter: invert(0.8) hue-rotate(180deg);
@@ -155,6 +159,7 @@
   --card-border: rgba(30, 41, 59, 0.55);
   --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   --card-blur: none;
+  --dropdown-bg: #0f172a;
 
   color-scheme: dark;
   --calendar-filter: invert(0.8) hue-rotate(180deg);
@@ -182,6 +187,7 @@
   --card-border: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   --card-blur: blur(12px);
+  --dropdown-bg: #1a1625;
 
   color-scheme: dark;
   --calendar-filter: invert(0.8) hue-rotate(180deg);
@@ -206,6 +212,14 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--card-shadow);
   backdrop-filter: var(--card-blur);
   -webkit-backdrop-filter: var(--card-blur);
+}
+
+/* Floating menus (selects, date pickers) — always opaque, never blurred,
+   so they stay readable over gradient/glass backgrounds. */
+.themed-menu {
+  background-color: var(--dropdown-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
 }
 
 @keyframes dropdown-in {
