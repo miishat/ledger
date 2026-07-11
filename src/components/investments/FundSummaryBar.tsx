@@ -7,12 +7,12 @@ export const FundSummaryBar: React.FC<{ summary: FundSummary; startDate: string;
   <div className="grid grid-cols-2 md:grid-cols-6 gap-4 themed-card rounded-lg p-4">
     <Stat label="Start Date" value={startDate} />
     {side === 'plan' ? (
-      <Stat label="Planned Budget" value={formatMoney(summary.totalFund)} />
+      <Stat label="Planned Budget" value={formatMoney(summary.totalInvested)} />
     ) : (
       <>
-        <Stat label="Initial Fund" value={formatMoney(summary.initialFund)} />
-        <Stat label="Extra Fund" value={formatMoney(summary.extraFund)} />
-        <Stat label="Total Invested" value={formatMoney(summary.totalFund)} />
+        <Stat label="Initial Fund" value={formatMoney(summary.initialInvested)} />
+        <Stat label="Extra Fund" value={formatMoney(summary.extraInvested)} />
+        <Stat label="Total Invested" value={formatMoney(summary.totalInvested)} />
       </>
     )}
     <Stat label="Current Value" value={formatMoney(summary.currentValue)} tone="accent" />
