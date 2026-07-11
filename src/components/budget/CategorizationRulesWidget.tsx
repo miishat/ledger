@@ -28,18 +28,18 @@ export const CategorizationRulesWidget: React.FC = () => {
   return (
     <WidgetWrapper title={`Categorization Rules (${rulesEntries.length})`}>
       <div className="flex flex-col gap-4 mt-2">
-        <div className="flex gap-2">
-          <input 
-            type="text" 
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="text"
             placeholder="Description Match (e.g. UBER)"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
-            className="flex-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
+            className="flex-1 min-w-[140px] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
           />
           <ThemedSelect
             value={newCatId}
             onChange={setNewCatId}
-            className="w-48"
+            className="w-full sm:w-48"
             options={[
               { value: '', label: 'Select Category...' },
               ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),

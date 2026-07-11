@@ -42,14 +42,14 @@ export const Budgeting: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
-      <header className="flex justify-between items-center">
+      <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Budgeting Module</h1>
           <p className="text-[14px] text-text-secondary mt-1">
             Manage your income, track expenses, and view your cash flow.
           </p>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
             <button 
               onClick={() => shiftMonth(-1)} 
@@ -77,7 +77,7 @@ export const Budgeting: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['overview', 'insights', 'transactions', 'setup'] as const).map((t) => (
           <button
             key={t}
