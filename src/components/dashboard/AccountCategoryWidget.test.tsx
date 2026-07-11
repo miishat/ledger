@@ -2,6 +2,12 @@ import { render, screen } from '@testing-library/react'
 import { AccountCategoryWidget } from './AccountCategoryWidget'
 import { useAccountsStore } from '../../store/useAccountsStore'
 
+const initialState = useAccountsStore.getState()
+
+beforeEach(() => {
+  useAccountsStore.setState(initialState, true)
+})
+
 describe('AccountCategoryWidget mobile tap targets', () => {
   it('renders touch-visible, padded edit/remove buttons', () => {
     useAccountsStore.setState({
