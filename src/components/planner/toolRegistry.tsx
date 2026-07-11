@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Hourglass, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ForecasterTool } from './forecaster/ForecasterTool'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -11,6 +11,7 @@ import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { SalaryTaxTool } from './SalaryTaxTool'
+import { InflationAdjusterCalculator } from './InflationAdjusterCalculator'
 
 export type PlannerToolGroup =
   | 'Forecasting & Growth'
@@ -233,6 +234,23 @@ export const PLANNER_TOOLS: PlannerTool[] = [
         { name: 'FHSA Contribution', description: 'First Home Savings Account deposits, deductible like RRSP. Annual limit $8,000.' },
         { name: 'Marginal Rate', description: 'The tax rate applied to your next dollar earned — higher than your effective rate because Canada uses progressive tax brackets.' },
         { name: 'Effective Rate', description: 'Your total tax as a percent of total income — the blended rate across all brackets, lower than your marginal rate.' },
+      ],
+    },
+  },
+  {
+    id: 'inflation-adjuster',
+    name: 'Inflation Adjuster',
+    description: "What today's dollars cost later — or what a future amount is worth today.",
+    group: 'Utilities',
+    icon: Hourglass,
+    component: InflationAdjusterCalculator,
+    info: {
+      howTo: "Convert money across time. Future Cost mode shows what today's amount will cost after years of inflation — useful for checking what a savings goal will really be worth when you reach it. Today's Value mode discounts a future amount back to present-day dollars.",
+      params: [
+        { name: 'Direction', description: "Today's $ → Future Cost projects forward; Future $ → Today's Value discounts back." },
+        { name: 'Amount', description: 'The dollar amount to convert.' },
+        { name: 'Years', description: 'How many years of inflation to apply.' },
+        { name: 'Annual Inflation', description: 'Expected average yearly inflation rate. Bank of Canada targets 2%.' },
       ],
     },
   },
