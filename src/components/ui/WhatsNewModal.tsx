@@ -12,7 +12,16 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null
 
   // Minimal markdown rendering: ## sections, ### subsections, - bullets.
-  const lines = changelog.split('\n').filter((l) => !l.startsWith('# ') && !l.startsWith('All notable') && !l.startsWith('[Keep a') && !l.startsWith('pre-1.0'))
+  const allLines = changelog.split('\n').filter((l) => !l.startsWith('# ') && !l.startsWith('All notable') && !l.startsWith('[Keep a') && !l.startsWith('pre-1.0'))
+
+  // Drop "## " sections with no content before the next "## " heading (e.g. an empty [Unreleased]).
+  const lines = allLines.filter((line, i) => {
+    if (!line.startsWith('## ')) return true
+    const rest = allLines.slice(i + 1)
+    const nextSectionIdx = rest.findIndex((l) => l.startsWith('## '))
+    const body = nextSectionIdx === -1 ? rest : rest.slice(0, nextSectionIdx)
+    return body.some((l) => l.trim().length > 0)
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label="What's New">

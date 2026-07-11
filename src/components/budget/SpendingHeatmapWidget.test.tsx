@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SpendingHeatmapWidget } from './SpendingHeatmapWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
+
+beforeEach(() => {
+  useBudgetStore.setState({ transactions: {} })
+})
 
 describe('SpendingHeatmapWidget legend', () => {
   it('shows a color-swatch legend instead of the darker-equals-more text', () => {

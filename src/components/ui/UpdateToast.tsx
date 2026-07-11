@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
@@ -7,18 +7,31 @@ const CHECK_INTERVAL_MS = 60 * 60 * 1000 // hourly
 /** Shows a refresh prompt when a new deploy is waiting, and keeps long-lived
  *  tabs checking for updates (hourly + when the tab regains focus). */
 export const UpdateToast: React.FC = () => {
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | undefined>()
+
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(_url, registration) {
-      if (!registration) return
-      setInterval(() => registration.update(), CHECK_INTERVAL_MS)
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') registration.update()
-      })
+    onRegisteredSW(_url, reg) {
+      setRegistration(reg)
     },
   })
+
+  useEffect(() => {
+    if (!registration) return
+
+    const interval = setInterval(() => registration.update(), CHECK_INTERVAL_MS)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') registration.update()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [registration])
 
   if (!needRefresh) return null
 
