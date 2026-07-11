@@ -12,6 +12,7 @@ import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { formatMoney } from './format'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 const TOOL_ID = 'mortgage'
 const DEFAULTS = {
@@ -134,7 +135,7 @@ export const MortgageCalculator: React.FC = () => {
                 <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
                 <Tooltip
                   formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-                  contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  {...chartTooltipStyles}
                 />
                 <Area type="monotone" dataKey="baseline" stroke={extras.length > 0 ? 'var(--text-secondary)' : 'var(--accent)'}
                   fill={extras.length > 0 ? 'var(--text-secondary)' : 'var(--accent)'} fillOpacity={extras.length > 0 ? 0.12 : 0.25} />

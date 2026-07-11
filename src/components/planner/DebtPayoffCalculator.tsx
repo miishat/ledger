@@ -9,6 +9,7 @@ import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 const TOOL_ID = 'debt-payoff'
 const DEFAULT_DEBTS: Debt[] = [
@@ -116,7 +117,7 @@ export const DebtPayoffCalculator: React.FC = () => {
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
             <Tooltip
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-              contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              {...chartTooltipStyles}
             />
             <Legend />
             <Line type="monotone" dataKey="avalanche" stroke="var(--accent)" dot={false} strokeWidth={2} />
