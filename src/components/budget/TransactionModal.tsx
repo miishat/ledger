@@ -50,12 +50,19 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
     }
   }, [initialTransaction, isOpen, categories]);
 
-  useEffect(() => {
-    if (category && !categoryList.some((c) => c.id === category)) {
-      setCategory(categoryList[0]?.id ?? '');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  const handleTypeChange = (nextType: TransactionType) => {
+    setType(nextType);
+    const nextCategoryList = Object.values(categories).filter((cat) => {
+      const group = categoryGroups[cat.groupId];
+      return (group?.kind ?? 'expense') === nextType;
+    });
+    setCategory((current) => {
+      if (current && !nextCategoryList.some((c) => c.id === current)) {
+        return nextCategoryList[0]?.id ?? '';
+      }
+      return current;
+    });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -133,7 +140,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
                   ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => setType('expense')}
+              onClick={() => handleTypeChange('expense')}
             >
               Expense
             </button>
@@ -144,7 +151,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
                   ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
-              onClick={() => setType('income')}
+              onClick={() => handleTypeChange('income')}
             >
               Income
             </button>

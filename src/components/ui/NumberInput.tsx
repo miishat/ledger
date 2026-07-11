@@ -22,6 +22,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   onCommit,
   min,
   max,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   step: _step,
   ...rest
 }) => {

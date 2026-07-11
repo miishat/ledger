@@ -141,7 +141,12 @@ export function migrateAnalyses(persisted: unknown, version: number): unknown {
   if (version < 4) {
     if (!Array.isArray(state.analyses)) return state as unknown
     const analyses = (state.analyses as (InvestmentAnalysis & { initialFund?: number; extraFund?: number })[]).map(
-      ({ initialFund: _i, extraFund: _e, ...a }) => a,
+      (a) => {
+        const copy: Partial<InvestmentAnalysis & { initialFund?: number; extraFund?: number }> = { ...a }
+        delete copy.initialFund
+        delete copy.extraFund
+        return copy as InvestmentAnalysis
+      },
     )
     state = { ...state, analyses }
   }

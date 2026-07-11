@@ -16,7 +16,9 @@ export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [whatsNewOpen, setWhatsNewOpen] = useState(false)
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
+    shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -30,8 +32,6 @@ export const Layout: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    const stored = localStorage.getItem(LAST_SEEN_VERSION_KEY)
-    if (shouldShowWhatsNew(stored, __APP_VERSION__)) setWhatsNewOpen(true)
     localStorage.setItem(LAST_SEEN_VERSION_KEY, __APP_VERSION__)
   }, [])
 

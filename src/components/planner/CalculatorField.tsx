@@ -18,6 +18,7 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
   onChange,
   min = 0,
   max,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   step: _step,
   prefix,
   suffix,
