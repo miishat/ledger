@@ -57,7 +57,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">Add position: {existing?.name ?? ''}</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
@@ -90,17 +90,14 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
                 ? '(fetching…)'
                 : '(enter manually or pick ticker + date)'}
         </span>
-        <div className="flex gap-2">
-          <NumberInput
-            className={inputCls}
-            value={effectivePrice}
-            onCommit={setManualPrice}
-          />
-          {manualPrice !== null && fetchedPrice !== undefined && (
-            <button onClick={() => setManualPrice(null)} className="text-[12px] text-text-secondary hover:text-accent whitespace-nowrap">
-              Use fetched ({fetchedPrice.toFixed(2)})
-            </button>
-          )}
+        <div className="flex gap-2 items-center">
+          <NumberInput className={inputCls} value={effectivePrice} onCommit={setManualPrice} />
+          <button
+            onClick={() => setManualPrice(null)}
+            className={`text-[12px] text-text-secondary hover:text-accent whitespace-nowrap ${manualPrice !== null && fetchedPrice !== undefined ? '' : 'invisible'}`}
+          >
+            Use fetched ({(fetchedPrice ?? 0).toFixed(2)})
+          </button>
         </div>
       </label>
 
@@ -162,7 +159,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">New analysis</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
@@ -210,9 +207,9 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         >
           <Plus className="w-4 h-4" /> Add Ticker
         </button>
-        {validRows.length > 0 && allocationSum !== 100 && (
-          <p className="text-[12px] text-text-secondary">Allocations sum to {allocationSum}%</p>
-        )}
+        <p className={`text-[12px] text-text-secondary ${validRows.length > 0 && allocationSum !== 100 ? '' : 'invisible'}`}>
+          Allocations sum to {allocationSum}%
+        </p>
       </div>
 
       <label className="flex flex-col gap-1">
@@ -244,7 +241,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={analysisId ? 'Add position' : 'New analysis'}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label={analysisId ? 'Add position' : 'New analysis'}>
       {analysisId ? (
         <AddPositionModal analysisId={analysisId} onClose={onClose} />
       ) : (
