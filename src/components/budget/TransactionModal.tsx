@@ -20,12 +20,15 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   const updateTransaction = useBudgetStore((state) => state.updateTransaction);
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
   const categories = useBudgetStore((state) => state.categories);
-
-  const categoryList = Object.values(categories);
-  // Actually, let's just use all categories from the store
-
+  const categoryGroups = useBudgetStore((state) => state.categoryGroups);
 
   const [type, setType] = useState<TransactionType>('expense');
+
+  const categoryList = Object.values(categories).filter((cat) => {
+    const group = categoryGroups[cat.groupId];
+    return (group?.kind ?? 'expense') === type;
+  });
+
   const [amount, setAmount] = useState<number>(0);
   const [category, setCategory] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -46,6 +49,13 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       setDescription('');
     }
   }, [initialTransaction, isOpen, categories]);
+
+  useEffect(() => {
+    if (category && !categoryList.some((c) => c.id === category)) {
+      setCategory(categoryList[0]?.id ?? '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
   useEffect(() => {
     if (!isOpen) return;

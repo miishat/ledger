@@ -8,6 +8,28 @@ import type {
   Transaction,
 } from '../types/budget';
 
+/** v1 -> v2: category groups gain a kind. Existing groups are classified by
+ *  the old name heuristic once; from then on kind is explicit. */
+export function migrateBudgetState(persisted: unknown, version: number): unknown {
+  if (version >= 2) return persisted
+  const state = persisted as { categoryGroups?: Record<string, Omit<CategoryGroup, 'kind'> & { kind?: CategoryGroup['kind'] }> }
+  if (!state?.categoryGroups) return persisted
+  const categoryGroups = Object.fromEntries(
+    Object.entries(state.categoryGroups).map(([id, g]) => [
+      id,
+      {
+        ...g,
+        kind:
+          g.kind ??
+          (g.name.toLowerCase().includes('income') || g.name.toLowerCase().includes('earn')
+            ? ('income' as const)
+            : ('expense' as const)),
+      },
+    ]),
+  )
+  return { ...state, categoryGroups }
+}
+
 interface BudgetState {
   paradigm: BudgetingParadigm;
   transactions: Record<string, Transaction>;
@@ -121,12 +143,12 @@ export const useBudgetStore = create<BudgetState>()(
         if (Object.keys(state.categories).length > 0) return state; // Only seed if empty
         return {
           categoryGroups: {
-            'g-2': { id: 'g-2', name: 'Income' },
-            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing' },
-            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment' },
-            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities' },
-            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping' },
-            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food' }
+            'g-2': { id: 'g-2', name: 'Income', kind: 'income' },
+            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing', kind: 'expense' },
+            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment', kind: 'expense' },
+            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities', kind: 'expense' },
+            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping', kind: 'expense' },
+            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food', kind: 'expense' }
           },
           categories: {
             'c-6': { id: 'c-6', groupId: 'g-2', name: 'Salary', targetAmount: 0 },
@@ -156,13 +178,14 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: 'ledger-budget',
-      version: 1,
-      migrate: (persistedState) => {
+      version: 2,
+      migrate: (persistedState, version) => {
         const persisted = persistedState as Partial<BudgetState>;
-        return {
+        const withDefaults = {
           ...persisted,
           budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
         };
+        return migrateBudgetState(withDefaults, version) as Partial<BudgetState>;
       },
     }
   )

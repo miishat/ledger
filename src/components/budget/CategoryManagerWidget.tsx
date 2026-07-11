@@ -28,6 +28,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupKind, setNewGroupKind] = useState<'income' | 'expense'>('expense');
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const groups = Object.values(categoryGroups);
@@ -52,7 +53,8 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
 
     addCategoryGroup({
       id: crypto.randomUUID(),
-      name: newGroupName
+      name: newGroupName,
+      kind: newGroupKind
     });
     setNewGroupName('');
   };
@@ -106,7 +108,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
       {!budgetSetupCollapsed && (
       <div className="columns-1 md:columns-2 gap-6">
         {groups.map(group => {
-          const isIncomeGroup = group.name.toLowerCase().includes('income') || group.name.toLowerCase().includes('earn');
+          const isIncomeGroup = group.kind === 'income';
           const groupCats = catList.filter(c => c.groupId === group.id);
           const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
           const groupEarned = groupCats.reduce((sum, cat) => {
@@ -274,15 +276,26 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
             <form onSubmit={handleAddGroup} className="flex items-end gap-3 flex-1">
               <div className="flex flex-col gap-1 flex-1">
                 <label className="text-[12px] text-text-secondary">New Group</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="e.g. Discretionary"
                   className="bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
                 />
               </div>
-              <button 
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-[12px] text-text-secondary">Type</label>
+                <ThemedSelect
+                  value={newGroupKind}
+                  onChange={(v) => setNewGroupKind(v as 'income' | 'expense')}
+                  options={[
+                    { value: 'expense', label: 'Expense' },
+                    { value: 'income', label: 'Income' },
+                  ]}
+                />
+              </div>
+              <button
                 type="submit"
                 className="flex items-center gap-1 bg-bg-secondary hover:bg-border border border-border text-text-primary px-4 py-1.5 rounded text-[14px] transition-colors"
               >
