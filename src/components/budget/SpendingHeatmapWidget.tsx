@@ -16,6 +16,13 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
   }
   const max = Math.max(0, ...byDay.values())
 
+  const incomeByDay = new Map<number, number>()
+  for (const t of Object.values(transactions)) {
+    if (t.type !== 'income' || !t.date.startsWith(selectedMonth)) continue
+    const day = Number(t.date.slice(8, 10))
+    incomeByDay.set(day, (incomeByDay.get(day) ?? 0) + t.amount)
+  }
+
   const [y, m] = selectedMonth.split('-').map(Number)
   const daysInMonth = new Date(y, m, 0).getDate()
   const firstWeekday = (new Date(y, m - 1, 1).getDay() + 6) % 7 // Monday-first
@@ -34,15 +41,22 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
         {cells.map((day, i) => {
           if (day === null) return <div key={`pad-${i}`} />
           const spend = byDay.get(day) ?? 0
+          const income = incomeByDay.get(day) ?? 0
           const opacity = max > 0 ? 0.15 + 0.85 * (spend / max) : 0
           return (
             <div
               key={day}
-              title={`${selectedMonth}-${String(day).padStart(2, '0')}: ${formatMoney(spend)}`}
-              className="aspect-square rounded flex items-center justify-center border border-border text-text-primary"
+              title={`${selectedMonth}-${String(day).padStart(2, '0')}: ${formatMoney(spend)} spent${income > 0 ? ` · ${formatMoney(income)} income` : ''}`}
+              className="relative aspect-square rounded flex items-center justify-center border border-border text-text-primary"
               style={{ backgroundColor: spend > 0 ? `color-mix(in srgb, var(--accent) ${Math.round(opacity * 100)}%, transparent)` : 'transparent' }}
             >
               {day}
+              {income > 0 && (
+                <span
+                  data-testid={`income-marker-${day}`}
+                  className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-green-500"
+                />
+              )}
             </div>
           )
         })}
@@ -57,6 +71,8 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
           />
         ))}
         <span>{max > 0 ? formatMoney(max) : 'max'}</span>
+        <span className="ml-3 w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+        <span>income</span>
       </div>
     </WidgetWrapper>
   )
