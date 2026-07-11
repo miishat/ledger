@@ -33,6 +33,9 @@ export default defineConfig({
     setupFiles: ['./src/setupTests.ts'],
     globals: true,
   },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? 'dev'),
+  },
   build: {
     chunkSizeWarningLimit: 1000
   }
