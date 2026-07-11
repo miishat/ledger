@@ -5,6 +5,7 @@ import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
 import { PageTransition } from './ui/PageTransition'
+import { UpdateToast } from './ui/UpdateToast'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
@@ -115,6 +116,7 @@ export const Layout: React.FC = () => {
         })}
       </nav>
 
+      <UpdateToast />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
