@@ -36,4 +36,27 @@ describe('FundSummaryBar', () => {
     fireEvent.change(input, { target: { value: '15000' } })
     expect(onChange).toHaveBeenLastCalledWith(15000)
   })
+
+  it('totalReturnPct === null renders "n/a" as the Total Return value', () => {
+    render(
+      <FundSummaryBar
+        side="plan"
+        summary={{ totalInvested: 0, totalReturnPct: null, totalReturnDollars: 0, initialInvested: 0, extraInvested: 0, currentValue: 0 }}
+        startDate="2026-07-01"
+      />,
+    )
+    expect(screen.getByText('n/a')).toBeInTheDocument()
+  })
+
+  it('plan side without onPlannedBudgetChange renders static Planned Budget cell', () => {
+    render(
+      <FundSummaryBar
+        side="plan"
+        summary={summary}
+        startDate="2026-07-01"
+      />,
+    )
+    expect(screen.queryByLabelText('Planned Budget ($)')).not.toBeInTheDocument()
+    expect(screen.getByText('Planned Budget')).toBeInTheDocument()
+  })
 })
