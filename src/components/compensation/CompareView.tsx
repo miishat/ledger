@@ -12,6 +12,7 @@ import {
 import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
+import { NumberInput } from '../ui/NumberInput'
 
 const MONTH_OPTIONS = [
   { value: '1', label: 'Jan' },
@@ -32,26 +33,26 @@ export function CompareView() {
   const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
 
   const [compareName] = useState('Compare Offer')
-  const [compareBaseSalary, setCompareBaseSalary] = useState('')
-  const [compareCompanyCurrentPrice, setCompareCompanyCurrentPrice] = useState('100')
-  const [compareCashBonusPercent, setCompareCashBonusPercent] = useState('0')
+  const [compareBaseSalary, setCompareBaseSalary] = useState(0)
+  const [compareCompanyCurrentPrice, setCompareCompanyCurrentPrice] = useState(100)
+  const [compareCashBonusPercent, setCompareCashBonusPercent] = useState(0)
   const [compareCashBonusMonth, setCompareCashBonusMonth] = useState('12')
-  const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState('0')
-  const [compareEsppDiscountPercent, setCompareEsppDiscountPercent] = useState('15')
-  const [compareEsppLockedInPrice, setCompareEsppLockedInPrice] = useState('100')
+  const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState(0)
+  const [compareEsppDiscountPercent, setCompareEsppDiscountPercent] = useState(15)
+  const [compareEsppLockedInPrice, setCompareEsppLockedInPrice] = useState(100)
   const [compareEsppLockInEndDate, setCompareEsppLockInEndDate] = useState('')
-  const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState('0')
-  const [compareRrspMatchCap, setCompareRrspMatchCap] = useState('0')
+  const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState(0)
+  const [compareRrspMatchCap, setCompareRrspMatchCap] = useState(0)
 
   // RSU / Equity grants for the compare offer
   const [compareRsuGrants, setCompareRsuGrants] = useState<RSUGrant[]>([])
   const [rsuGrantName, setRsuGrantName] = useState('')
-  const [rsuGrantShares, setRsuGrantShares] = useState('')
-  const [rsuGrantPrice, setRsuGrantPrice] = useState('100')
+  const [rsuGrantShares, setRsuGrantShares] = useState(0)
+  const [rsuGrantPrice, setRsuGrantPrice] = useState(100)
   const [rsuStartDate, setRsuStartDate] = useState(new Date().toISOString().split('T')[0])
   const [rsuPreset, setRsuPreset] = useState<VestingPreset>('4yr-1yr-cliff')
-  const [rsuTotalMonths, setRsuTotalMonths] = useState('48')
-  const [rsuCliffMonths, setRsuCliffMonths] = useState('12')
+  const [rsuTotalMonths, setRsuTotalMonths] = useState(48)
+  const [rsuCliffMonths, setRsuCliffMonths] = useState(12)
   const [rsuFrequency, setRsuFrequency] = useState<VestingFrequency>('monthly')
 
   const addCompareRsuGrant = () => {
@@ -59,22 +60,22 @@ export function CompareView() {
 
     const vestingSchedule: VestingSchedule = {
       preset: rsuPreset,
-      totalVestMonths: rsuPreset === 'custom' ? Number(rsuTotalMonths) : (rsuPreset === '4yr-1yr-cliff' ? 48 : 36),
-      cliffMonths: rsuPreset === 'custom' ? Number(rsuCliffMonths) : (rsuPreset === '4yr-1yr-cliff' ? 12 : 0),
+      totalVestMonths: rsuPreset === 'custom' ? rsuTotalMonths : (rsuPreset === '4yr-1yr-cliff' ? 48 : 36),
+      cliffMonths: rsuPreset === 'custom' ? rsuCliffMonths : (rsuPreset === '4yr-1yr-cliff' ? 12 : 0),
       frequency: rsuFrequency
     }
 
     setCompareRsuGrants(prev => [...prev, {
       id: crypto.randomUUID(),
       grantName: rsuGrantName,
-      grantShares: Number(rsuGrantShares),
-      grantPrice: Number(rsuGrantPrice),
+      grantShares: rsuGrantShares,
+      grantPrice: rsuGrantPrice,
       grantStartDate: rsuStartDate,
       vestingSchedule
     }])
 
     setRsuGrantName('')
-    setRsuGrantShares('')
+    setRsuGrantShares(0)
   }
 
   const removeCompareRsuGrant = (id: string) => {
@@ -85,17 +86,17 @@ export function CompareView() {
     setComparePackage({
       id: 'compare',
       name: compareName,
-      companyCurrentPrice: Number(compareCompanyCurrentPrice) || 0,
-      baseSalary: Number(compareBaseSalary) || 0,
+      companyCurrentPrice: compareCompanyCurrentPrice,
+      baseSalary: compareBaseSalary,
       pastSalaryChanges: [],
-      cashBonusPercent: Number(compareCashBonusPercent) || 0,
+      cashBonusPercent: compareCashBonusPercent,
       cashBonusMonth: Number(compareCashBonusMonth) || 12,
-      esppContributionPercent: Number(compareEsppContributionPercent) || 0,
-      esppDiscountPercent: Number(compareEsppDiscountPercent) || 0,
-      esppLockedInPrice: Number(compareEsppLockedInPrice) || 0,
+      esppContributionPercent: compareEsppContributionPercent,
+      esppDiscountPercent: compareEsppDiscountPercent,
+      esppLockedInPrice: compareEsppLockedInPrice,
       esppLockInEndDate: compareEsppLockInEndDate,
-      rrspMatchPercent: Number(compareRrspMatchPercent) || 0,
-      rrspMatchCap: Number(compareRrspMatchCap) || 0,
+      rrspMatchPercent: compareRrspMatchPercent,
+      rrspMatchCap: compareRrspMatchCap,
       rsuGrants: compareRsuGrants
     })
   }
@@ -117,17 +118,17 @@ export function CompareView() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-3 mb-1">
               <label className={labelClass}>Company Stock Price ($)</label>
-              <input type="number" value={compareCompanyCurrentPrice} onChange={(e) => setCompareCompanyCurrentPrice(e.target.value)} className={inputClass} />
+              <NumberInput value={compareCompanyCurrentPrice} onCommit={setCompareCompanyCurrentPrice} className={inputClass} />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Base Salary ($)</label>
-              <input type="number" value={compareBaseSalary} onChange={(e) => setCompareBaseSalary(e.target.value)} className={inputClass} />
+              <NumberInput value={compareBaseSalary} onCommit={setCompareBaseSalary} className={inputClass} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Cash Bonus (%)</label>
-                <input type="number" value={compareCashBonusPercent} onChange={(e) => setCompareCashBonusPercent(e.target.value)} className={inputClass} />
+                <NumberInput value={compareCashBonusPercent} onCommit={setCompareCashBonusPercent} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Bonus Month</label>
@@ -137,17 +138,17 @@ export function CompareView() {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>ESPP (%)</label>
-                <input type="number" value={compareEsppContributionPercent} onChange={(e) => setCompareEsppContributionPercent(e.target.value)} className={inputClass} />
+                <NumberInput value={compareEsppContributionPercent} onCommit={setCompareEsppContributionPercent} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Discount (%)</label>
-                <input type="number" value={compareEsppDiscountPercent} onChange={(e) => setCompareEsppDiscountPercent(e.target.value)} className={inputClass} />
+                <NumberInput value={compareEsppDiscountPercent} onCommit={setCompareEsppDiscountPercent} className={inputClass} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Lock-In Price ($)</label>
-                <input type="number" value={compareEsppLockedInPrice} onChange={(e) => setCompareEsppLockedInPrice(e.target.value)} className={inputClass} />
+                <NumberInput value={compareEsppLockedInPrice} onCommit={setCompareEsppLockedInPrice} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Lock-In End Date</label>
@@ -157,11 +158,11 @@ export function CompareView() {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>RRSP Match (%)</label>
-                <input type="number" value={compareRrspMatchPercent} onChange={(e) => setCompareRrspMatchPercent(e.target.value)} className={inputClass} />
+                <NumberInput value={compareRrspMatchPercent} onCommit={setCompareRrspMatchPercent} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Match Cap ($)</label>
-                <input type="number" value={compareRrspMatchCap} onChange={(e) => setCompareRrspMatchCap(e.target.value)} className={inputClass} />
+                <NumberInput value={compareRrspMatchCap} onCommit={setCompareRrspMatchCap} className={inputClass} />
               </div>
             </div>
 
@@ -175,12 +176,12 @@ export function CompareView() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Number of Shares</label>
-                <input type="number" value={rsuGrantShares} onChange={(e) => setRsuGrantShares(e.target.value)} className={inputClass} />
+                <NumberInput value={rsuGrantShares} onCommit={setRsuGrantShares} className={inputClass} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Grant Price ($)</label>
-                  <input type="number" value={rsuGrantPrice} onChange={(e) => setRsuGrantPrice(e.target.value)} className={inputClass} />
+                  <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} className={inputClass} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Grant Start Date</label>
@@ -216,11 +217,11 @@ export function CompareView() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className={labelClass}>Total Vest (months)</label>
-                    <input type="number" value={rsuTotalMonths} onChange={(e) => setRsuTotalMonths(e.target.value)} className={inputClass} />
+                    <NumberInput value={rsuTotalMonths} onCommit={setRsuTotalMonths} className={inputClass} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className={labelClass}>Cliff (months)</label>
-                    <input type="number" value={rsuCliffMonths} onChange={(e) => setRsuCliffMonths(e.target.value)} className={inputClass} />
+                    <NumberInput value={rsuCliffMonths} onCommit={setRsuCliffMonths} className={inputClass} />
                   </div>
                 </div>
               )}

@@ -13,6 +13,7 @@ import { futureValue, growthSeries } from '../../utils/finance/compound'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 const TOOL_ID = 'compound-interest'
 const DEFAULTS: Record<string, number> = { principal: 10000, monthlyContribution: 500, annualRatePct: 7, years: 20 }
@@ -56,11 +57,7 @@ export const CompoundInterestCalculator: React.FC = () => {
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
             <Tooltip
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-              contentStyle={{
-                backgroundColor: 'var(--bg-primary)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--text-primary)',
-              }}
+              {...chartTooltipStyles}
             />
             <Area type="monotone" dataKey="contributed" name="Contributed" stackId="1" stroke="var(--text-secondary)" fill="var(--text-secondary)" fillOpacity={0.25} />
             <Area type="monotone" dataKey="growth" name="Growth" stackId="1" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.35} />

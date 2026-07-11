@@ -8,6 +8,7 @@ import {
 } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 import { Skeleton } from '../ui/Skeleton'
+import { NumberInput } from '../ui/NumberInput'
 
 interface PositionCardProps {
   analysisId: string
@@ -22,16 +23,15 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
   const { updatePosition, removePosition, removeLot } = useAnalysisStore.getState()
   const price = useCurrentPrice(position.ticker, position.exchange)
   const currentPrice = price.data?.value.price ?? position.startPrice
-  const [manualPriceDraft, setManualPriceDraft] = useState('')
+  const [manualPriceDraft, setManualPriceDraft] = useState(0)
   const [expanded, setExpanded] = useState(false)
   const isOverridden = price.data?.source === 'override'
 
   const handleManualPriceSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const parsed = Number(manualPriceDraft)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      price.setManual(parsed)
-      setManualPriceDraft('')
+    if (manualPriceDraft > 0) {
+      price.setManual(manualPriceDraft)
+      setManualPriceDraft(0)
     }
   }
 
@@ -70,11 +70,9 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
           {expanded && (
             <div className="flex flex-wrap items-center gap-1 mt-1">
               <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
-                <input
-                  type="number"
-                  step="0.01"
+                <NumberInput
                   value={manualPriceDraft}
-                  onChange={(e) => setManualPriceDraft(e.target.value)}
+                  onCommit={setManualPriceDraft}
                   placeholder="Manual price"
                   className="w-24 bg-bg-primary/50 border border-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
                 />

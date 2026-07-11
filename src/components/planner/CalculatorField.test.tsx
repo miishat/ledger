@@ -6,15 +6,17 @@ import { formatMoney } from './format'
 describe('CalculatorField', () => {
   it('renders a labelled number input with the current value', () => {
     render(<CalculatorField label="Starting amount" value={5000} onChange={() => {}} />)
-    expect(screen.getByLabelText('Starting amount')).toHaveValue(5000)
+    expect(screen.getByLabelText('Starting amount')).toHaveValue('5000')
   })
 
-  it('emits numeric values on change, and 0 for empty input', () => {
+  it('emits numeric values on change, and 0 for empty input on blur', () => {
     const onChange = vi.fn()
     render(<CalculatorField label="Years" value={10} onChange={onChange} />)
-    fireEvent.change(screen.getByLabelText('Years'), { target: { value: '25' } })
+    const input = screen.getByLabelText('Years')
+    fireEvent.change(input, { target: { value: '25' } })
     expect(onChange).toHaveBeenCalledWith(25)
-    fireEvent.change(screen.getByLabelText('Years'), { target: { value: '' } })
+    fireEvent.change(input, { target: { value: '' } })
+    fireEvent.blur(input)
     expect(onChange).toHaveBeenCalledWith(0)
   })
 

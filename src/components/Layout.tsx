@@ -5,14 +5,20 @@ import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
 import { PageTransition } from './ui/PageTransition'
+import { UpdateToast } from './ui/UpdateToast'
+import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
+import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
+    shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -23,6 +29,10 @@ export const Layout: React.FC = () => {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(LAST_SEEN_VERSION_KEY, __APP_VERSION__)
   }, [])
 
   const navItems = [
@@ -73,6 +83,9 @@ export const Layout: React.FC = () => {
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
           <BackupControls />
           <ThemeSelector />
+          <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
+            v{__APP_VERSION__} · What's New
+          </button>
         </div>
       </nav>
 
@@ -82,6 +95,9 @@ export const Layout: React.FC = () => {
         <div className="md:hidden flex items-center justify-center flex-wrap gap-3 mb-4">
           <BackupControls />
           <ThemeSelector />
+          <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
+            v{__APP_VERSION__} · What's New
+          </button>
         </div>
         <ErrorBoundary key={location.pathname}>
           <PageTransition>
@@ -92,8 +108,8 @@ export const Layout: React.FC = () => {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-bg-secondary backdrop-blur-[var(--card-blur)] flex"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border flex"
+        style={{ backgroundColor: 'var(--dropdown-bg)', paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
         {navItems.map((item) => {
@@ -115,6 +131,8 @@ export const Layout: React.FC = () => {
         })}
       </nav>
 
+      <UpdateToast />
+      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )

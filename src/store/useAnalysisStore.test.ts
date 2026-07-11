@@ -1,4 +1,4 @@
-import { useAnalysisStore, type InvestmentAnalysis, type Position } from './useAnalysisStore'
+import { useAnalysisStore, migrateAnalyses, type InvestmentAnalysis, type Position } from './useAnalysisStore'
 
 const initialState = useAnalysisStore.getState()
 beforeEach(() => {
@@ -131,13 +131,48 @@ describe('useAnalysisStore', () => {
     const a = useAnalysisStore.getState().analyses[0]
     expect(a.plannedBudget).toBe(12_000)
   })
+
+  it('v3 -> v4 strips manual fund fields', () => {
+    const persisted = {
+      analyses: [{
+        id: 'a1', name: 'X', analysisDate: '2026-01-01',
+        initialFund: 5000, extraFund: 1000, plannedBudget: 6000,
+        positions: [], swaps: [],
+      }],
+    }
+    const out = migrateAnalyses(persisted, 3) as { analyses: Record<string, unknown>[] }
+    expect(out.analyses[0]).not.toHaveProperty('initialFund')
+    expect(out.analyses[0]).not.toHaveProperty('extraFund')
+    expect(out.analyses[0]).toHaveProperty('plannedBudget', 6000)
+  })
+
+  it('migrates v3 analyses (with fund fields) via rehydrate by stripping initialFund/extraFund', async () => {
+    localStorage.setItem(
+      'ledger-analyses',
+      JSON.stringify({
+        state: {
+          analyses: [{
+            id: 'a1', name: 'Big Tech 2026', analysisDate: '2026-01-15',
+            initialFund: 10_000, extraFund: 2_000, plannedBudget: 12_000,
+            positions: [position], swaps: [],
+          }],
+        },
+        version: 3,
+      }),
+    )
+    await useAnalysisStore.persist.rehydrate()
+    const a = useAnalysisStore.getState().analyses[0]
+    expect(a).not.toHaveProperty('initialFund')
+    expect(a).not.toHaveProperty('extraFund')
+    expect(a.plannedBudget).toBe(12_000)
+  })
 })
 
 describe('analysis store plannedBudget', () => {
   it('accepts plannedBudget on an analysis', () => {
     const a: InvestmentAnalysis = {
       id: 'a1', name: 'Test', analysisDate: '2026-01-01',
-      plannedBudget: 12000, initialFund: 10000, extraFund: 2000,
+      plannedBudget: 12000,
       positions: [], swaps: [],
     }
     useAnalysisStore.setState({ analyses: [] })

@@ -4,6 +4,7 @@ import type { SankeyNodeProps } from 'recharts'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 function renderSankeyNode(budgetIdx: number) {
   return ({ x, y, width, height, index, payload }: SankeyNodeProps) => {
@@ -69,7 +70,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
   ].filter((l) => l.value > 0)
 
   return (
-    <WidgetWrapper title="Income Flow" className="md:col-span-2">
+    <WidgetWrapper title="Income Flow">
       <div className="h-[300px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
@@ -79,10 +80,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
             link={{ stroke: 'var(--accent)', strokeOpacity: 0.35 }}
             node={renderSankeyNode(budgetIdx)}
           >
-            <Tooltip
-              formatter={(value) => formatMoney(Number(value))}
-              contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-            />
+            <Tooltip formatter={(value) => formatMoney(Number(value))} {...chartTooltipStyles} />
           </Sankey>
         </ResponsiveContainer>
       </div>

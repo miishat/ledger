@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { useAnalysisStore, type InvestmentAnalysis } from '../../store/useAnalysisStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
+import { NumberInput } from '../ui/NumberInput'
 
 const inputCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent w-28'
@@ -60,11 +61,11 @@ export const AddTradeForm: React.FC<{ analysis: InvestmentAnalysis }> = ({ analy
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-[12px] text-text-secondary">Shares</span>
-        <input aria-label="Shares" type="number" step={0.01} className={inputCls} value={shares || ''} onChange={(e) => setShares(Number(e.target.value))} />
+        <NumberInput aria-label="Shares" className={inputCls} value={shares} onCommit={setShares} />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-[12px] text-text-secondary">Price</span>
-        <input aria-label="Price" type="number" step={0.01} className={inputCls} value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} />
+        <NumberInput aria-label="Price" className={inputCls} value={price} onCommit={setPrice} />
       </label>
       <button
         type="button"

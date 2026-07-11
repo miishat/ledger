@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -194,8 +195,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                     new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value),
                     name
                   ]}
-                  contentStyle={{ backgroundColor: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text-primary)' }}
-                  itemStyle={{ color: 'var(--color-text-primary)' }}
+                  {...chartTooltipStyles}
                 />
               </PieChart>
             </ResponsiveContainer>

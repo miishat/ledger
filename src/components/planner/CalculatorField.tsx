@@ -1,4 +1,5 @@
 import React from 'react'
+import { NumberInput } from '../ui/NumberInput'
 
 interface CalculatorFieldProps {
   label: string
@@ -17,7 +18,8 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
   onChange,
   min = 0,
   max,
-  step = 1,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  step: _step,
   prefix,
   suffix,
 }) => {
@@ -29,15 +31,13 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
       </label>
       <div className="flex items-center gap-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 focus-within:border-accent transition-colors">
         {prefix && <span className="text-[13px] text-text-secondary whitespace-nowrap shrink-0">{prefix}</span>}
-        <input
+        <NumberInput
           id={inputId}
-          type="number"
           className="w-full bg-transparent text-text-primary text-[15px] outline-none"
           value={value}
           min={min}
           max={max}
-          step={step}
-          onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+          onCommit={onChange}
         />
         {suffix && <span className="text-[13px] text-text-secondary whitespace-nowrap shrink-0">{suffix}</span>}
       </div>

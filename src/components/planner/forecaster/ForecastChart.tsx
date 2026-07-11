@@ -5,6 +5,7 @@ import {
 import type { NetWorthSnapshot } from '../../../store/useAccountsStore'
 import type { ForecastPoint } from '../../../utils/finance/forecast'
 import { formatMoney } from '../format'
+import { chartTooltipStyles } from '../../../utils/chartTheme'
 
 interface GoalMarker {
   label: string
@@ -67,7 +68,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
               return month < 0 ? `${-month}mo ago` : `+${(month / 12).toFixed(1)}y`
             }}
             formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-            contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+            {...chartTooltipStyles}
           />
           <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" label={{ value: 'today', fill: 'var(--text-secondary)', fontSize: 11 }} />
           {view === 'line' ? (

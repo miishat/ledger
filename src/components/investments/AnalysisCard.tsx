@@ -18,9 +18,6 @@ interface AnalysisCardProps {
   totals: { plannedAll: number; currentAll: number }
 }
 
-const fundInputCls =
-  'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent w-full'
-
 export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) => {
   const removeAnalysis = useAnalysisStore((s) => s.removeAnalysis)
   const updateAnalysis = useAnalysisStore((s) => s.updateAnalysis)
@@ -69,21 +66,6 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
 
           {subTab === 'plan' ? (
             <>
-              <label className="flex flex-col gap-1 max-w-xs">
-                <span className="text-[13px] text-text-secondary">Planned Budget ($)</span>
-                <input
-                  type="number"
-                  className={fundInputCls}
-                  value={analysis.plannedBudget ?? 0}
-                  onChange={(e) => {
-                    const budget = Number(e.target.value)
-                    updateAnalysis(analysis.id, { plannedBudget: budget })
-                    analysis.positions.forEach((p) =>
-                      updatePosition(analysis.id, p.id, { plannedAmount: (budget * (p.allocationPct ?? 0)) / 100 }),
-                    )
-                  }}
-                />
-              </label>
               <FundSummaryBar
                 side="plan"
                 summary={planFundSummary(
@@ -91,6 +73,12 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
                   analysis.plannedBudget ?? 0,
                 )}
                 startDate={analysis.analysisDate}
+                onPlannedBudgetChange={(budget) => {
+                  updateAnalysis(analysis.id, { plannedBudget: budget })
+                  analysis.positions.forEach((p) =>
+                    updatePosition(analysis.id, p.id, { plannedAmount: (budget * (p.allocationPct ?? 0)) / 100 }),
+                  )
+                }}
               />
               <SwapSimulator
                 analysis={analysis}
@@ -111,26 +99,6 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
             </>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-3 max-w-md">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[13px] text-text-secondary">Initial Fund ($)</span>
-                  <input
-                    type="number"
-                    className={fundInputCls}
-                    value={analysis.initialFund ?? 0}
-                    onChange={(e) => updateAnalysis(analysis.id, { initialFund: Number(e.target.value) })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-[13px] text-text-secondary">Extra Fund ($)</span>
-                  <input
-                    type="number"
-                    className={fundInputCls}
-                    value={analysis.extraFund ?? 0}
-                    onChange={(e) => updateAnalysis(analysis.id, { extraFund: Number(e.target.value) })}
-                  />
-                </label>
-              </div>
               <AddTradeForm analysis={analysis} />
               {analysis.positions.some((p) => p.lots.length > 0) ? (
                 <>

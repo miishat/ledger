@@ -3,6 +3,7 @@ export type BudgetingParadigm = 'Target-Based' | 'Zero-Based' | 'Ledger Custom';
 export interface CategoryGroup {
   id: string;
   name: string;
+  kind: 'income' | 'expense';
 }
 
 export interface Category {

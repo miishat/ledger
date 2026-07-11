@@ -1,6 +1,6 @@
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeftRight, Building2, CreditCard, Home, Landmark, LineChart, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowLeftRight, Building2, CreditCard, Home, Hourglass, Landmark, LineChart, Percent, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { ForecasterTool } from './forecaster/ForecasterTool'
 import { CompoundInterestCalculator } from './CompoundInterestCalculator'
 import { DebtPayoffCalculator } from './DebtPayoffCalculator'
@@ -11,6 +11,8 @@ import { RaiseInflationCalculator } from './RaiseInflationCalculator'
 import { MortgageCalculator } from './MortgageCalculator'
 import { RentVsBuyCalculator } from './RentVsBuyCalculator'
 import { SalaryTaxTool } from './SalaryTaxTool'
+import { InflationAdjusterCalculator } from './InflationAdjusterCalculator'
+import { RateConverterCalculator } from './RateConverterCalculator'
 
 export type PlannerToolGroup =
   | 'Forecasting & Growth'
@@ -233,6 +235,41 @@ export const PLANNER_TOOLS: PlannerTool[] = [
         { name: 'FHSA Contribution', description: 'First Home Savings Account deposits, deductible like RRSP. Annual limit $8,000.' },
         { name: 'Marginal Rate', description: 'The tax rate applied to your next dollar earned — higher than your effective rate because Canada uses progressive tax brackets.' },
         { name: 'Effective Rate', description: 'Your total tax as a percent of total income — the blended rate across all brackets, lower than your marginal rate.' },
+      ],
+    },
+  },
+  {
+    id: 'inflation-adjuster',
+    name: 'Inflation Adjuster',
+    description: "What today's dollars cost later — or what a future amount is worth today.",
+    group: 'Utilities',
+    icon: Hourglass,
+    component: InflationAdjusterCalculator,
+    info: {
+      howTo: "Convert money across time. Future Cost mode shows what today's amount will cost after years of inflation — useful for checking what a savings goal will really be worth when you reach it. Today's Value mode discounts a future amount back to present-day dollars.",
+      params: [
+        { name: 'Direction', description: "Today's $ → Future Cost projects forward; Future $ → Today's Value discounts back." },
+        { name: 'Amount', description: 'The dollar amount to convert.' },
+        { name: 'Years', description: 'How many years of inflation to apply.' },
+        { name: 'Annual Inflation', description: 'Expected average yearly inflation rate. Bank of Canada targets 2%.' },
+      ],
+    },
+  },
+  {
+    id: 'rate-converter',
+    name: 'Rate & Return Converter',
+    description: 'APR ⇄ APY across compounding frequencies, and CAGR from any start/end value.',
+    group: 'Utilities',
+    icon: Percent,
+    component: RateConverterCalculator,
+    info: {
+      howTo: 'Normalize rates so they compare fairly. APR ⇄ APY mode converts between the nominal rate banks advertise and the effective annual rate you actually earn or pay, for a given compounding frequency. CAGR mode turns a total gain ("$10k became $14k in 3 years") into the equivalent steady annual return.',
+      params: [
+        { name: 'Mode', description: 'APR ⇄ APY converts rate formats; Annualized Return computes CAGR from start and end values.' },
+        { name: 'Direction', description: 'Convert an advertised APR to effective APY, or back the APR out of a quoted APY.' },
+        { name: 'Compounding', description: 'How often interest is applied. More frequent compounding widens the APR/APY gap.' },
+        { name: 'Starting / Ending Value', description: 'The investment value at the start and end of the period (CAGR mode).' },
+        { name: 'Years', description: 'The length of the period (CAGR mode). Fractions like 2.5 are fine.' },
       ],
     },
   },

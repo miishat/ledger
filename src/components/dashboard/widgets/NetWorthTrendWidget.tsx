@@ -3,6 +3,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { WidgetWrapper } from '../WidgetWrapper'
 import { useAccountsStore } from '../../../store/useAccountsStore'
 import { formatMoney } from '../../planner/format'
+import { chartTooltipStyles } from '../../../utils/chartTheme'
 
 /** Brokerage-style axis: track the data range with headroom, never force zero. */
 export function trendDomain(values: number[]): [number, number] {
@@ -34,7 +35,7 @@ export const NetWorthTrendWidget: React.FC = () => {
             <YAxis width={70} domain={domain} allowDataOverflow={false} tickFormatter={(v: number) => formatMoney(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
             <Tooltip
               formatter={(value) => [formatMoney(Number(value)), 'Net worth']}
-              contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              {...chartTooltipStyles}
             />
             <Area type="monotone" dataKey="value" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.2} strokeWidth={2} />
           </AreaChart>

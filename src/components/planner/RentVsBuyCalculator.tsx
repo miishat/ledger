@@ -7,6 +7,7 @@ import { rentVsBuy } from '../../utils/finance/rentVsBuy'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
+import { chartTooltipStyles } from '../../utils/chartTheme'
 
 const TOOL_ID = 'rent-vs-buy'
 const DEFAULTS = {
@@ -60,7 +61,7 @@ export const RentVsBuyCalculator: React.FC = () => {
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
             <Tooltip
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-              contentStyle={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              {...chartTooltipStyles}
             />
             <Legend />
             <Line type="monotone" dataKey="Renting" stroke="var(--text-secondary)" dot={false} strokeWidth={2} />

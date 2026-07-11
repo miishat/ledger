@@ -36,8 +36,6 @@ export interface InvestmentAnalysis {
   name: string
   thesis?: string
   analysisDate: string // YYYY-MM-DD
-  initialFund?: number
-  extraFund?: number
   plannedBudget?: number
   positions: Position[]
   swaps: SwapScenario[]
@@ -90,6 +88,70 @@ interface LegacyAnalysis {
   startPriceSource: 'auto' | 'manual'
   acted: boolean
   lots: BuyLot[]
+}
+
+/** Persisted-state migration chain, exported for direct testing. */
+export function migrateAnalyses(persisted: unknown, version: number): unknown {
+  let state = persisted as { analyses?: (LegacyAnalysis | InvestmentAnalysis)[] }
+
+  if (version < 1) {
+    if (!Array.isArray(state.analyses)) return persisted
+    const analyses: InvestmentAnalysis[] = (state.analyses as LegacyAnalysis[]).map((old) => ({
+      id: old.id,
+      name: old.ticker,
+      thesis: old.thesis,
+      analysisDate: old.analysisDate,
+      positions: [
+        {
+          id: `${old.id}-p1`,
+          ticker: old.ticker,
+          exchange: old.exchange,
+          plannedAmount: old.plannedAmount,
+          startPrice: old.startPrice,
+          startPriceSource: old.startPriceSource,
+          acted: old.acted,
+          lots: old.lots ?? [],
+        },
+      ],
+      swaps: [],
+    }))
+    state = { ...state, analyses }
+  }
+
+  if (version < 2) {
+    if (!Array.isArray(state.analyses)) return state as unknown
+    const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
+      ...a,
+      swaps: a.swaps ?? [],
+    }))
+    state = { ...state, analyses }
+  }
+
+  if (version < 3) {
+    if (!Array.isArray(state.analyses)) return state as unknown
+    const analyses = (state.analyses as (InvestmentAnalysis & { initialFund?: number; extraFund?: number })[]).map(
+      (a) => ({
+        ...a,
+        plannedBudget: a.plannedBudget ?? (a.initialFund ?? 0) + (a.extraFund ?? 0),
+      }),
+    )
+    state = { ...state, analyses }
+  }
+
+  if (version < 4) {
+    if (!Array.isArray(state.analyses)) return state as unknown
+    const analyses = (state.analyses as (InvestmentAnalysis & { initialFund?: number; extraFund?: number })[]).map(
+      (a) => {
+        const copy: Partial<InvestmentAnalysis & { initialFund?: number; extraFund?: number }> = { ...a }
+        delete copy.initialFund
+        delete copy.extraFund
+        return copy as InvestmentAnalysis
+      },
+    )
+    state = { ...state, analyses }
+  }
+
+  return state as unknown
 }
 
 export const useAnalysisStore = create<AnalysisState>()(
@@ -155,57 +217,12 @@ export const useAnalysisStore = create<AnalysisState>()(
     }),
     {
       name: 'ledger-analyses',
-      version: 3,
+      version: 4,
       // v0: one flat ticker per analysis → wrap it as the single position.
       // v1: analyses gain a `swaps` scenario list.
       // v2→v3: plannedBudget defaults to initialFund + extraFund; funds become actual-side.
-      migrate: (persisted, version) => {
-        let state = persisted as { analyses?: (LegacyAnalysis | InvestmentAnalysis)[] }
-
-        if (version < 1) {
-          if (!Array.isArray(state.analyses)) return persisted
-          const analyses: InvestmentAnalysis[] = (state.analyses as LegacyAnalysis[]).map((old) => ({
-            id: old.id,
-            name: old.ticker,
-            thesis: old.thesis,
-            analysisDate: old.analysisDate,
-            positions: [
-              {
-                id: `${old.id}-p1`,
-                ticker: old.ticker,
-                exchange: old.exchange,
-                plannedAmount: old.plannedAmount,
-                startPrice: old.startPrice,
-                startPriceSource: old.startPriceSource,
-                acted: old.acted,
-                lots: old.lots ?? [],
-              },
-            ],
-            swaps: [],
-          }))
-          state = { ...state, analyses }
-        }
-
-        if (version < 2) {
-          if (!Array.isArray(state.analyses)) return state as unknown
-          const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
-            ...a,
-            swaps: a.swaps ?? [],
-          }))
-          state = { ...state, analyses }
-        }
-
-        if (version < 3) {
-          if (!Array.isArray(state.analyses)) return state as unknown
-          const analyses = (state.analyses as InvestmentAnalysis[]).map((a) => ({
-            ...a,
-            plannedBudget: a.plannedBudget ?? (a.initialFund ?? 0) + (a.extraFund ?? 0),
-          }))
-          state = { ...state, analyses }
-        }
-
-        return state as unknown
-      },
+      // v3→v4: initialFund/extraFund removed from the model; actual side derives funds from trades.
+      migrate: migrateAnalyses,
     },
   ),
 )

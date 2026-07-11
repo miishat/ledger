@@ -6,12 +6,13 @@ import { EquityVestingWidget } from '../components/compensation/EquityVestingWid
 import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
 import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
+import { NumberInput } from '../components/ui/NumberInput'
 
 export const Compensation: React.FC = () => {
   const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
     useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [manualPriceDraft, setManualPriceDraft] = useState('')
+  const [manualPriceDraft, setManualPriceDraft] = useState(0)
 
   const {
     pkg,
@@ -30,10 +31,9 @@ export const Compensation: React.FC = () => {
 
   const handleManualPriceSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const parsed = Number(manualPriceDraft)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      setManualPrice(parsed)
-      setManualPriceDraft('')
+    if (manualPriceDraft > 0) {
+      setManualPrice(manualPriceDraft)
+      setManualPriceDraft(0)
     }
   }
 
@@ -71,11 +71,9 @@ export const Compensation: React.FC = () => {
               Refresh Price
             </button>
             <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
-              <input
-                type="number"
-                step="0.01"
+              <NumberInput
                 value={manualPriceDraft}
-                onChange={(e) => setManualPriceDraft(e.target.value)}
+                onCommit={setManualPriceDraft}
                 placeholder="Manual price"
                 className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
               />
@@ -118,12 +116,11 @@ export const Compensation: React.FC = () => {
                 </span>
                 <div className="flex items-center gap-1">
                   <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
-                  <input
-                    type="number"
-                    value={pkg.companyCurrentPrice || ''}
-                    onChange={(e) => setPrimaryPackage({ companyCurrentPrice: Number(e.target.value) || 0 })}
+                  <NumberInput
+                    value={pkg.companyCurrentPrice ?? 0}
+                    onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
                     disabled={useCadConversion}
-                    className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0"
+                    className="w-24 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60"
                   />
                 </div>
               </div>

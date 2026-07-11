@@ -58,7 +58,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
         <Calendar className="w-4 h-4 shrink-0 text-text-secondary" />
       </button>
       {open && (
-          <div className="absolute left-0 top-full mt-1 z-40 w-64 themed-card border border-border rounded-lg shadow-xl p-3 animate-dropdown-in">
+          <div className="absolute left-0 top-full mt-1 z-40 w-64 themed-menu border border-border rounded-lg shadow-xl p-3 animate-dropdown-in">
             <div className="flex items-center justify-between mb-2">
               <button type="button" aria-label="Previous month" onClick={() => shiftMonth(-1)} className="p-1 rounded hover:bg-bg-primary/50 text-text-secondary hover:text-accent">
                 <ChevronLeft className="w-4 h-4" />
