@@ -6,6 +6,25 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-11
+
+### Added
+- Debt Payoff: pick a debt type — Credit Card and Line of Credit minimums are calculated for you (3% of balance / interest-only, updated as the balance falls); Loans take either your known payment or your amortization term.
+- Mortgage: Biweekly (Accelerated) payment toggle — see the per-paycheque amount, how many years sooner you're done, and the interest saved.
+- "Check for Updates" button in What's New, plus an update check every time the app launches — installed-app updates no longer depend on visiting the website.
+- First-launch disclaimer and a persistent "Estimates Only — Not Financial Advice" link.
+
+### Changed
+- What's New shows only the latest version expanded; older releases are collapsible. The panel and tool info popovers are wider.
+- One capitalization rule everywhere: labels, buttons, and headings are Title Case.
+- Plan vs Actual: the card's add button follows the tab — "+ Position" on Plan, "+ Trade" on Actual.
+- Mobile: theme selector and the version link sit on their own rows.
+
+### Fixed
+- Tool list and info popovers are opaque and readable in Glassmorphism and Aurora themes.
+- New Analysis dialog no longer shakes while typing a ticker or exchange.
+- Mobile pages no longer get cut off behind the bottom navigation bar.
+
 ## [0.3-beta] - 2026-07-10
 
 ### Added
