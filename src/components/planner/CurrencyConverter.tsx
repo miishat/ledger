@@ -51,7 +51,7 @@ export const CurrencyConverter: React.FC = () => {
           <ArrowLeftRight className="w-4 h-4" /> {from} → {to}
         </button>
         <label className="flex flex-col gap-1">
-          <span className="text-[13px] font-medium text-text-secondary">Rate date (optional)</span>
+          <span className="text-[13px] font-medium text-text-secondary">Rate Date (Optional)</span>
           <ThemedDatePicker
             value={inputs.date as string}
             onChange={(v) => setInput(TOOL_ID, 'date', v)}
@@ -76,10 +76,10 @@ export const CurrencyConverter: React.FC = () => {
       </div>
 
       <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
-        <p className="text-[12px] uppercase tracking-wide text-text-secondary">Rate source: {sourceLabel}</p>
+        <p className="text-[12px] uppercase tracking-wide text-text-secondary">Rate Source: {sourceLabel}</p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-[13px] font-medium text-text-secondary">Manual rate override</span>
+            <span className="text-[13px] font-medium text-text-secondary">Manual Rate Override</span>
             <NumberInput
               className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent w-40"
               value={override ?? 0}
@@ -94,7 +94,7 @@ export const CurrencyConverter: React.FC = () => {
               onClick={() => clearOverride(overrideKey)}
               className="px-3 py-2 rounded-lg border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors"
             >
-              Clear override, use live
+              Clear Override, Use Live
             </button>
           )}
         </div>

@@ -34,8 +34,8 @@ export const PortfolioView: React.FC = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Value now (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
+            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total Invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
+            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Value Now (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total P/L</p><p className={`text-[22px] font-semibold ${totals.plCad >= 0 ? 'text-accent' : 'text-error'}`}>{formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}</p></div>
           </div>
 
@@ -51,7 +51,7 @@ export const PortfolioView: React.FC = () => {
                     <tr className="text-left text-text-secondary border-b border-border">
                       <th className="py-2 pr-3 font-medium">Holding</th>
                       <th className="py-2 pr-3 font-medium text-right">Qty</th>
-                      <th className="py-2 pr-3 font-medium text-right">Avg cost</th>
+                      <th className="py-2 pr-3 font-medium text-right">Avg Cost</th>
                       <th className="py-2 pr-3 font-medium text-right">Price</th>
                       <th className="py-2 pr-3 font-medium text-right">Book</th>
                       <th className="py-2 pr-3 font-medium text-right">Value</th>

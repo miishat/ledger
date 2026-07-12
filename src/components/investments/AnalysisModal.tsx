@@ -59,7 +59,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
   return (
     <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-text-primary">Add position: {existing?.name ?? ''}</h2>
+        <h2 className="text-[18px] font-semibold text-text-primary">Add Position: {existing?.name ?? ''}</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
           <X className="w-5 h-5" />
         </button>
@@ -71,18 +71,18 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
           <input className={inputCls} value={ticker} onChange={(e) => { setTicker(e.target.value); setManualPrice(null) }} placeholder="AAPL" />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[13px] text-text-secondary">Exchange (optional)</span>
+          <span className="text-[13px] text-text-secondary">Exchange (Optional)</span>
           <input className={inputCls} value={exchange} onChange={(e) => setExchange(e.target.value)} placeholder="TSX" />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[13px] text-text-secondary">Planned amount ($)</span>
+          <span className="text-[13px] text-text-secondary">Planned Amount ($)</span>
           <NumberInput className={inputCls} value={plannedAmount} onCommit={setPlannedAmount} />
         </label>
       </div>
 
       <label className="flex flex-col gap-1">
         <span className="text-[13px] text-text-secondary block truncate whitespace-nowrap">
-          Start price {manualPrice !== null
+          Start Price {manualPrice !== null
             ? '(manual)'
             : fetchedPrice !== undefined
               ? `(auto: ${hist.data?.source}${hist.data?.stale ? ', stale' : ''})`
@@ -96,7 +96,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
             onClick={() => setManualPrice(null)}
             className={`text-[12px] text-text-secondary hover:text-accent whitespace-nowrap ${manualPrice !== null && fetchedPrice !== undefined ? '' : 'invisible'}`}
           >
-            Use fetched ({(fetchedPrice ?? 0).toFixed(2)})
+            Use Fetched ({(fetchedPrice ?? 0).toFixed(2)})
           </button>
         </div>
       </label>
@@ -106,7 +106,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
         disabled={!canSave}
         className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
       >
-        Add position
+        Add Position
       </button>
     </div>
   )
@@ -161,20 +161,20 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-text-primary">New analysis</h2>
+        <h2 className="text-[18px] font-semibold text-text-primary">New Analysis</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="text-[13px] text-text-secondary">Analysis name (defaults to ticker)</span>
+        <span className="text-[13px] text-text-secondary">Analysis Name (Defaults to Ticker)</span>
         <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Big Tech 2026" />
       </label>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1">
-          <span className="text-[13px] text-text-secondary">Analysis date</span>
+          <span className="text-[13px] text-text-secondary">Analysis Date</span>
           <ThemedDatePicker value={date} onChange={setDate} />
         </label>
         <label className="flex flex-col gap-1">
@@ -213,7 +213,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="text-[13px] text-text-secondary">Thesis (optional)</span>
+        <span className="text-[13px] text-text-secondary">Thesis (Optional)</span>
         <textarea className={`${inputCls} min-h-[70px]`} value={thesis} onChange={(e) => setThesis(e.target.value)} placeholder="Why this investment?" />
       </label>
 
@@ -222,7 +222,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         disabled={!canSave}
         className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
       >
-        Save analysis
+        Save Analysis
       </button>
     </div>
   )

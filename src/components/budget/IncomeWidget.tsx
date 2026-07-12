@@ -20,7 +20,7 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => 
     <WidgetWrapper title="Income">
       <div className="flex items-baseline gap-2 mt-4">
         <span className="text-[28px] font-bold text-accent">{formatMoney(totalIncome)}</span>
-        <span className="text-[12px] text-text-secondary">This month</span>
+        <span className="text-[12px] text-text-secondary">This Month</span>
       </div>
     </WidgetWrapper>
   );

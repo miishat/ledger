@@ -44,7 +44,7 @@ export const Investments: React.FC = () => {
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
           >
-            <Plus className="w-4 h-4" /> New analysis
+            <Plus className="w-4 h-4" /> New Analysis
           </button>
         )}
       </header>
@@ -83,7 +83,7 @@ export const Investments: React.FC = () => {
                 icon={NotebookText}
                 message="No analyses yet"
                 hint="Record your first investment thesis. The start price auto-fills from the analysis date."
-                action={{ label: 'New analysis', onClick: () => setIsModalOpen(true) }}
+                action={{ label: 'New Analysis', onClick: () => setIsModalOpen(true) }}
               />
             </div>
           ) : (

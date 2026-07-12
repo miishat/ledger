@@ -25,7 +25,7 @@ export const NetWorthWidget: React.FC = () => {
           <span className={isPositive ? '' : 'text-error'}>
             {isPositive ? '+' : ''}{netWorthTrend}%
           </span>
-          <span className="text-text-secondary ml-2 font-normal text-sm">vs last month</span>
+          <span className="text-text-secondary ml-2 font-normal text-sm">vs Last Month</span>
         </div>
       </div>
     </WidgetWrapper>

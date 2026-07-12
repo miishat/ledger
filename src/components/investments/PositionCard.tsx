@@ -117,11 +117,11 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[13px]">
             <div><p className="text-text-secondary">Planned</p><p className="text-text-primary font-medium">{formatMoney(position.plannedAmount)}</p></div>
             <div><p className="text-text-secondary">Invested</p><p className="text-text-primary font-medium">{formatMoney(invested)} <span className="text-text-secondary">({formatMoney(variance(position.plannedAmount, position.lots))} vs plan)</span></p></div>
-            <div><p className="text-text-secondary">Value now / P&L</p><p className="text-text-primary font-medium">{formatMoney(value)} · {pct(plPct(position.lots, currentPrice))} ({formatMoney(plDollars(position.lots, currentPrice))})</p></div>
-            <div><p className="text-text-secondary">If fully executed</p><p className="text-text-primary font-medium">{formatMoney(counterfactual)}</p></div>
-            <div><p className="text-text-secondary">Avg cost</p><p className="text-text-primary font-medium">{avgCostBasis(position.lots)?.toFixed(2) ?? '—'}</p></div>
-            <div><p className="text-text-secondary">Allocation at start</p><p className="text-text-primary font-medium">{pct(allocationPct(position.plannedAmount, totals.plannedAll))}</p></div>
-            <div><p className="text-text-secondary">Allocation now</p><p className="text-text-primary font-medium">{pct(allocationPct(value, totals.currentAll))}</p></div>
+            <div><p className="text-text-secondary">Value Now / P&L</p><p className="text-text-primary font-medium">{formatMoney(value)} · {pct(plPct(position.lots, currentPrice))} ({formatMoney(plDollars(position.lots, currentPrice))})</p></div>
+            <div><p className="text-text-secondary">If Fully Executed</p><p className="text-text-primary font-medium">{formatMoney(counterfactual)}</p></div>
+            <div><p className="text-text-secondary">Avg Cost</p><p className="text-text-primary font-medium">{avgCostBasis(position.lots)?.toFixed(2) ?? '—'}</p></div>
+            <div><p className="text-text-secondary">Allocation at Start</p><p className="text-text-primary font-medium">{pct(allocationPct(position.plannedAmount, totals.plannedAll))}</p></div>
+            <div><p className="text-text-secondary">Allocation Now</p><p className="text-text-primary font-medium">{pct(allocationPct(value, totals.currentAll))}</p></div>
             <div><p className="text-text-secondary">Acted</p><p className="text-text-primary font-medium">
               <button onClick={() => updatePosition(analysisId, position.id, { acted: !position.acted })} className="underline decoration-dotted hover:text-accent">
                 {position.acted ? 'Yes' : 'No, still watching'}

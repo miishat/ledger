@@ -34,7 +34,7 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
       <div className="flex flex-col gap-4 mt-4 h-full">
         <div className="flex items-baseline gap-2">
           <span className="text-[28px] font-bold text-error">{formatMoney(totalExpense)}</span>
-          <span className="text-[12px] text-text-secondary">This month</span>
+          <span className="text-[12px] text-text-secondary">This Month</span>
         </div>
         
         {sortedCategories.length > 0 && (

@@ -18,8 +18,8 @@ describe('PositionCard', () => {
     render(<PositionCard analysisId="a1" analysisDate="2026-01-01" position={position} totals={{ plannedAll: 10000, currentAll: 1000 }} />)
     // collapsed: header visible, detail grid hidden
     expect(screen.getByText('AAPL')).toBeTruthy()
-    expect(screen.queryByText('If fully executed')).toBeNull()
+    expect(screen.queryByText('If Fully Executed')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /expand aapl/i }))
-    expect(screen.getByText('If fully executed')).toBeTruthy()
+    expect(screen.getByText('If Fully Executed')).toBeTruthy()
   })
 })

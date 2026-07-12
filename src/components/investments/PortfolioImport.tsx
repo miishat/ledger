@@ -77,7 +77,7 @@ export const PortfolioImport: React.FC = () => {
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[13px] text-text-secondary">Import mode</span>
+          <span className="text-[13px] text-text-secondary">Import Mode</span>
           <ThemedSelect
             value={mode}
             onChange={(v) => setMode(v as ImportMode)}
