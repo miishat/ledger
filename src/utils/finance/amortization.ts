@@ -47,7 +47,7 @@ export function amortizationSchedule(
   return points
 }
 
-export function scheduleTotalInterest(schedule: AmortizationPoint[]): number {
+export function scheduleTotalInterest(schedule: Array<{ interestPaid: number }>): number {
   return schedule.reduce((sum, p) => sum + p.interestPaid, 0)
 }
 
@@ -85,6 +85,36 @@ export function amortizationScheduleWithExtras(
     const principalPortion = Math.min(basePayment + recurring + lump - interest, balance)
     balance = Math.max(0, balance - principalPortion)
     points.push({ month: m, interestPaid: interest, principalPaid: principalPortion, balance })
+  }
+  return points
+}
+
+export interface BiweeklyPoint {
+  period: number
+  interestPaid: number
+  principalPaid: number
+  balance: number
+}
+
+/** Accelerated biweekly: pay monthlyPayment/2 every two weeks (26/yr — one
+ *  extra monthly payment per year), interest accruing at annualRate/26 per
+ *  period. This is the "biweekly" Canadian lenders offer; it retires the
+ *  loan years early. */
+export function acceleratedBiweeklySchedule(
+  principal: number,
+  annualRatePct: number,
+  years: number,
+): BiweeklyPoint[] {
+  const payment = monthlyPayment(principal, annualRatePct, years) / 2
+  const r = annualRatePct / 100 / 26
+  const points: BiweeklyPoint[] = []
+  let balance = principal
+  const maxPeriods = Math.round(years * 26) + 2 // guard; accelerated always finishes early
+  for (let p = 1; p <= maxPeriods && balance > 1e-6; p++) {
+    const interest = balance * r
+    const principalPortion = Math.min(payment - interest, balance)
+    balance = Math.max(0, balance - principalPortion)
+    points.push({ period: p, interestPaid: interest, principalPaid: principalPortion, balance })
   }
   return points
 }

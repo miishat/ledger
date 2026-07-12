@@ -1,4 +1,5 @@
 import {
+  acceleratedBiweeklySchedule,
   amortizationSchedule,
   amortizationScheduleWithExtras,
   monthlyPayment,
@@ -100,5 +101,17 @@ describe('amortizationScheduleWithExtras', () => {
       { id: 'x', kind: 'oneTime', amount: 999999, fromYear: 1, toYear: 1 },
     ])
     expect(s[s.length - 1].balance).toBe(0)
+  })
+})
+
+describe('acceleratedBiweeklySchedule', () => {
+  it('pays off years sooner and saves interest vs monthly', () => {
+    const monthly = amortizationSchedule(480_000, 4.5, 25)
+    const biweekly = acceleratedBiweeklySchedule(480_000, 4.5, 25)
+    // Accelerated biweekly (monthly/2 × 26 = ~13 monthly payments/yr)
+    // should shave multiple years off a 25y amortization.
+    expect(biweekly.length / 26).toBeLessThan(monthly.length / 12 - 2)
+    expect(scheduleTotalInterest(biweekly)).toBeLessThan(scheduleTotalInterest(monthly))
+    expect(biweekly[biweekly.length - 1].balance).toBe(0)
   })
 })
