@@ -81,7 +81,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="text-[13px] text-text-secondary">
+        <span className="text-[13px] text-text-secondary block truncate whitespace-nowrap">
           Start price {manualPrice !== null
             ? '(manual)'
             : fetchedPrice !== undefined

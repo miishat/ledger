@@ -35,24 +35,24 @@ export const TickerRowEditor: React.FC<{
 
   return (
     <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-end">
-      <label className="flex flex-col gap-1">
-        <span className="text-[12px] text-text-secondary">Ticker {index + 1}</span>
+      <label className="flex flex-col gap-1 min-w-0">
+        <span className="text-[12px] text-text-secondary truncate whitespace-nowrap">Ticker {index + 1}</span>
         <input aria-label={`Ticker ${index + 1}`} className={inputCls} value={row.ticker}
           onChange={(e) => onChange({ ...row, ticker: e.target.value, manualPrice: null })} placeholder="AAPL" />
       </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[12px] text-text-secondary">Exchange</span>
+      <label className="flex flex-col gap-1 min-w-0">
+        <span className="text-[12px] text-text-secondary truncate whitespace-nowrap">Exchange</span>
         <input className={inputCls} value={row.exchange}
           onChange={(e) => onChange({ ...row, exchange: e.target.value })} placeholder="TSX" />
       </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[12px] text-text-secondary">Allocation % {index + 1}</span>
+      <label className="flex flex-col gap-1 min-w-0">
+        <span className="text-[12px] text-text-secondary truncate whitespace-nowrap">Allocation % {index + 1}</span>
         <NumberInput aria-label={`Allocation % ${index + 1}`} min={0} max={100} className={inputCls}
           value={row.allocationPct}
           onCommit={(n) => onChange({ ...row, allocationPct: n })} />
       </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[12px] text-text-secondary">
+      <label className="flex flex-col gap-1 min-w-0">
+        <span className="text-[12px] text-text-secondary truncate whitespace-nowrap">
           Start Price {row.manualPrice !== null ? '(manual)' : fetched !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
         </span>
         <NumberInput className={inputCls} value={effective}
