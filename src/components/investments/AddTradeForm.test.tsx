@@ -15,8 +15,7 @@ const analysis: InvestmentAnalysis = {
 describe('AddTradeForm', () => {
   it('adds a lot (shares x price) to the chosen position', () => {
     useAnalysisStore.setState({ analyses: [analysis] })
-    render(<AddTradeForm analysis={analysis} />)
-    fireEvent.click(screen.getByRole('button', { name: /add trade/i }))
+    render(<AddTradeForm analysis={analysis} open onOpenChange={() => {}} />)
     fireEvent.change(screen.getByLabelText('Shares'), { target: { value: '10' } })
     fireEvent.change(screen.getByLabelText('Price'), { target: { value: '110' } })
     fireEvent.click(screen.getByRole('button', { name: /^save trade$/i }))

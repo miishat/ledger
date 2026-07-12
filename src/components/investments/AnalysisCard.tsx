@@ -23,6 +23,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
   const updateAnalysis = useAnalysisStore((s) => s.updateAnalysis)
   const updatePosition = useAnalysisStore((s) => s.updatePosition)
   const [addOpen, setAddOpen] = useState(false)
+  const [tradeOpen, setTradeOpen] = useState(false)
   const [subTab, setSubTab] = useState<'plan' | 'actual'>('plan')
   const priceFor = useResolvedPriceFor()
 
@@ -37,9 +38,15 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
           {analysis.thesis && <p className="text-[13px] text-text-secondary mt-1 italic">{analysis.thesis}</p>}
         </div>
         <div className="flex gap-1">
-          <button onClick={() => setAddOpen(true)} aria-label="Add position" className="flex items-center gap-1 p-1.5 text-[13px] text-text-secondary hover:text-accent">
-            <Plus className="w-4 h-4" /> Position
-          </button>
+          {subTab === 'actual' && analysis.positions.length > 0 ? (
+            <button onClick={() => setTradeOpen(true)} aria-label="Add trade" className="flex items-center gap-1 p-1.5 text-[13px] text-text-secondary hover:text-accent">
+              <Plus className="w-4 h-4" /> Trade
+            </button>
+          ) : (
+            <button onClick={() => setAddOpen(true)} aria-label="Add position" className="flex items-center gap-1 p-1.5 text-[13px] text-text-secondary hover:text-accent">
+              <Plus className="w-4 h-4" /> Position
+            </button>
+          )}
           <button onClick={() => removeAnalysis(analysis.id)} aria-label="Delete analysis" className="p-1.5 text-text-secondary hover:text-error">
             <Trash2 className="w-4 h-4" />
           </button>
@@ -99,7 +106,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, totals }) 
             </>
           ) : (
             <>
-              <AddTradeForm analysis={analysis} />
+              <AddTradeForm analysis={analysis} open={tradeOpen} onOpenChange={setTradeOpen} />
               {analysis.positions.some((p) => p.lots.length > 0) ? (
                 <>
                   <FundSummaryBar side="actual" summary={actualFundSummary(analysis.positions, priceFor)} startDate={analysis.analysisDate} />

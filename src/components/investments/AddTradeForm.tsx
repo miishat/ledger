@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Plus } from 'lucide-react'
 import { useAnalysisStore, type InvestmentAnalysis } from '../../store/useAnalysisStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
@@ -10,15 +9,18 @@ const inputCls =
 
 /** "Add Trade" entry point for the Actual tab: pick a planned ticker,
  *  enter date / shares / price; saved as a buy lot on that position. */
-export const AddTradeForm: React.FC<{ analysis: InvestmentAnalysis }> = ({ analysis }) => {
+export const AddTradeForm: React.FC<{
+  analysis: InvestmentAnalysis
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}> = ({ analysis, open, onOpenChange }) => {
   const addLot = useAnalysisStore((s) => s.addLot)
-  const [open, setOpen] = useState(false)
   const [positionId, setPositionId] = useState(analysis.positions[0]?.id ?? '')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [shares, setShares] = useState(0)
   const [price, setPrice] = useState(0)
 
-  if (analysis.positions.length === 0) return null
+  if (analysis.positions.length === 0 || !open) return null
 
   const save = () => {
     if (!positionId || shares <= 0 || price <= 0) return
@@ -29,19 +31,7 @@ export const AddTradeForm: React.FC<{ analysis: InvestmentAnalysis }> = ({ analy
       price,
     })
     setShares(0)
-    setOpen(false)
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium border border-accent text-accent bg-accent/10 hover:opacity-90 transition-opacity"
-      >
-        <Plus className="w-4 h-4" /> Add Trade
-      </button>
-    )
+    onOpenChange(false)
   }
 
   return (
@@ -75,7 +65,7 @@ export const AddTradeForm: React.FC<{ analysis: InvestmentAnalysis }> = ({ analy
       >
         Save Trade
       </button>
-      <button type="button" onClick={() => setOpen(false)} className="px-2 py-2 text-[13px] text-text-secondary hover:text-text-primary">
+      <button type="button" onClick={() => onOpenChange(false)} className="px-2 py-2 text-[13px] text-text-secondary hover:text-text-primary">
         Cancel
       </button>
     </div>
