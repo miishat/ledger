@@ -46,7 +46,7 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
       {open && (
           <div
             role="menu"
-            className="absolute left-0 top-full mt-2 z-40 w-72 max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-2 flex flex-col gap-1 animate-dropdown-in"
+            className="absolute left-0 top-full mt-2 z-40 w-72 max-h-[70vh] overflow-y-auto themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1 animate-dropdown-in"
           >
             {PLANNER_GROUPS.map((group) => {
               const tools = PLANNER_TOOLS.filter((t) => t.group === group)

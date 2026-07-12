@@ -21,7 +21,7 @@ export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
           <div
             role="dialog"
             aria-label={`${tool.name} help`}
-            className="absolute left-0 top-full mt-2 z-30 w-[26rem] max-w-[90vw] max-h-[70vh] overflow-y-auto themed-card border border-border rounded-lg shadow-xl p-4 flex flex-col gap-3"
+            className="absolute left-0 top-full mt-2 z-30 w-[32rem] max-w-[90vw] max-h-[70vh] overflow-y-auto themed-menu rounded-lg shadow-xl p-4 flex flex-col gap-3"
           >
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-[15px] font-semibold text-text-primary">{tool.name}</h3>
