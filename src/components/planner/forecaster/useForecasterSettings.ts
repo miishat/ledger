@@ -78,7 +78,7 @@ export function useForecasterSettings() {
       const extra = Number(debtInputs.extraMonthly ?? 0)
       const strategy = (debtInputs.strategy as PayoffStrategy) ?? 'avalanche'
       const result = simulatePayoff(debts, extra, strategy)
-      const totalMin = debts.reduce((s, d) => s + d.minPayment, 0)
+      const totalMin = debts.reduce((s, d) => s + (d.minPayment ?? 0), 0)
       autoFeed.debtDrag = { amount: totalMin + extra, untilMonth: result.months ?? horizonMonths }
     }
   }
