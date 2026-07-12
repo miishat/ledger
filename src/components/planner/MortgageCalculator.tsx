@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
-  amortizationSchedule, amortizationScheduleWithExtras, monthlyPayment, principalFromPayment,
+  acceleratedBiweeklySchedule, amortizationSchedule, amortizationScheduleWithExtras, monthlyPayment, principalFromPayment,
   scheduleTotalInterest, type ExtraPayment,
 } from '../../utils/finance/amortization'
 import { CalculatorField } from './CalculatorField'
@@ -17,6 +17,7 @@ import { chartTooltipStyles } from '../../utils/chartTheme'
 const TOOL_ID = 'mortgage'
 const DEFAULTS = {
   mode: 'payment' as string,
+  frequency: 'monthly' as string,
   price: 600000,
   downPct: 20,
   ratePct: 4.5,
@@ -47,13 +48,29 @@ export const MortgageCalculator: React.FC = () => {
   const scheduleWithExtras = amortizationScheduleWithExtras(principal, inputs.ratePct, inputs.years, extras)
   const interestSaved = scheduleTotalInterest(schedule) - scheduleTotalInterest(scheduleWithExtras)
   const monthsSaved = schedule.length - scheduleWithExtras.length
+
+  const frequency = inputs.frequency as 'monthly' | 'biweekly'
+  const biweeklySchedule = frequency === 'biweekly'
+    ? acceleratedBiweeklySchedule(principal, inputs.ratePct, inputs.years)
+    : null
+  const biweeklyMonths = biweeklySchedule ? Math.round((biweeklySchedule.length / 26) * 12) : 0
+  const biweeklyInterestSaved = biweeklySchedule
+    ? scheduleTotalInterest(schedule) - scheduleTotalInterest(biweeklySchedule)
+    : 0
+
   const chartData = schedule
     .filter((p) => p.month % 12 === 0)
-    .map((p) => ({
-      year: p.month / 12,
-      baseline: Math.round(p.balance),
-      withExtras: Math.round(scheduleWithExtras.find((q) => q.month === p.month)?.balance ?? 0),
-    }))
+    .map((p) => {
+      const year = p.month / 12
+      return {
+        year,
+        baseline: Math.round(p.balance),
+        ...(frequency === 'monthly'
+          ? { withExtras: Math.round(scheduleWithExtras.find((q) => q.month === p.month)?.balance ?? 0) }
+          : { biweekly: Math.round(biweeklySchedule!.find((q) => q.period === year * 26)?.balance ?? 0) }),
+      }
+    })
+  const emphasizeBaseline = frequency === 'monthly' && extras.length === 0
 
   const housingBudget = (inputs.income * (inputs.gdsPct / 100)) / 12 - inputs.propertyTaxMonthly - HEATING_MONTHLY
   const affordablePrincipal = Math.max(0, principalFromPayment(housingBudget, inputs.ratePct, inputs.years))
@@ -75,6 +92,22 @@ export const MortgageCalculator: React.FC = () => {
         ))}
       </div>
 
+      {mode === 'payment' && (
+        <div className="flex gap-2">
+          {(['monthly', 'biweekly'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setInput(TOOL_ID, 'frequency', f)}
+              className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
+                frequency === f ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {f === 'monthly' ? 'Monthly' : 'Biweekly (Accelerated)'}
+            </button>
+          ))}
+        </div>
+      )}
+
       {mode === 'payment' ? (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -83,48 +116,60 @@ export const MortgageCalculator: React.FC = () => {
             <CalculatorField label="Rate" suffix="%" step={0.05} value={inputs.ratePct} onChange={set('ratePct')} />
             <CalculatorField label="Amortization (Years)" min={1} max={35} value={inputs.years} onChange={set('years')} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ResultCard label="Monthly Payment" value={formatMoney(payment)} highlight />
-            <ResultCard label="Total Interest" value={formatMoney(scheduleTotalInterest(schedule))} />
-            <ResultCard label="Down Payment" value={formatMoney(downPayment)} />
-          </div>
-
-          <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[12px] uppercase tracking-wide text-text-secondary">Extra Payments</p>
-              <button type="button" onClick={() => setExtras([...extras, { id: crypto.randomUUID(), kind: 'recurring', amount: 200, fromYear: 1, toYear: inputs.years }])}
-                className="flex items-center gap-1 text-[13px] text-text-secondary hover:text-accent">
-                <Plus className="w-4 h-4" /> Add
-              </button>
-            </div>
-            {extras.length === 0 && <p className="text-[13px] text-text-secondary">None yet. Add recurring monthly extras for a range of years, or one-time lump sums.</p>}
-            {extras.map((e) => (
-              <div key={e.id} className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="text-[13px] font-medium text-text-secondary block mb-1">Type</label>
-                  <ThemedSelect value={e.kind} options={[{ value: 'recurring', label: 'Monthly Extra' }, { value: 'oneTime', label: 'One-Time Lump Sum' }]}
-                    onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, kind: v as ExtraPayment['kind'] } : x))} />
-                </div>
-                <CalculatorField label={e.kind === 'recurring' ? 'Amount / Month' : 'Amount'} prefix="$" step={100} value={e.amount}
-                  onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, amount: v } : x))} />
-                <CalculatorField label={e.kind === 'recurring' ? 'From Year' : 'In Year'} min={1} max={inputs.years} value={e.fromYear}
-                  onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, fromYear: v } : x))} />
-                {e.kind === 'recurring' ? (
-                  <CalculatorField label="To Year" min={e.fromYear} max={inputs.years} value={e.toYear}
-                    onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, toYear: v } : x))} />
-                ) : <div />}
-                <button type="button" aria-label="Remove extra payment" onClick={() => setExtras(extras.filter((x) => x.id !== e.id))}
-                  className="p-2 text-text-secondary hover:text-error self-end"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            ))}
-          </div>
-
-          {extras.length > 0 && (
+          {frequency === 'biweekly' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <ResultCard label="Interest Saved" value={formatMoney(interestSaved)} highlight />
-              <ResultCard label="Paid Off Sooner By" value={`${Math.floor(monthsSaved / 12)}y ${monthsSaved % 12}m`} />
-              <ResultCard label="New Payoff Time" value={`${Math.floor(scheduleWithExtras.length / 12)}y ${scheduleWithExtras.length % 12}m`} />
+              <ResultCard label="Biweekly Payment" value={formatMoney(payment / 2)} highlight />
+              <ResultCard label="New Payoff Time" value={`${Math.floor(biweeklyMonths / 12)}y ${biweeklyMonths % 12}m`} />
+              <ResultCard label="Interest Saved vs Monthly" value={formatMoney(biweeklyInterestSaved)} />
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ResultCard label="Monthly Payment" value={formatMoney(payment)} highlight />
+              <ResultCard label="Total Interest" value={formatMoney(scheduleTotalInterest(schedule))} />
+              <ResultCard label="Down Payment" value={formatMoney(downPayment)} />
+            </div>
+          )}
+
+          {frequency === 'monthly' && (
+            <>
+              <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] uppercase tracking-wide text-text-secondary">Extra Payments</p>
+                  <button type="button" onClick={() => setExtras([...extras, { id: crypto.randomUUID(), kind: 'recurring', amount: 200, fromYear: 1, toYear: inputs.years }])}
+                    className="flex items-center gap-1 text-[13px] text-text-secondary hover:text-accent">
+                    <Plus className="w-4 h-4" /> Add
+                  </button>
+                </div>
+                {extras.length === 0 && <p className="text-[13px] text-text-secondary">None yet. Add recurring monthly extras for a range of years, or one-time lump sums.</p>}
+                {extras.map((e) => (
+                  <div key={e.id} className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-3 items-end">
+                    <div>
+                      <label className="text-[13px] font-medium text-text-secondary block mb-1">Type</label>
+                      <ThemedSelect value={e.kind} options={[{ value: 'recurring', label: 'Monthly Extra' }, { value: 'oneTime', label: 'One-Time Lump Sum' }]}
+                        onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, kind: v as ExtraPayment['kind'] } : x))} />
+                    </div>
+                    <CalculatorField label={e.kind === 'recurring' ? 'Amount / Month' : 'Amount'} prefix="$" step={100} value={e.amount}
+                      onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, amount: v } : x))} />
+                    <CalculatorField label={e.kind === 'recurring' ? 'From Year' : 'In Year'} min={1} max={inputs.years} value={e.fromYear}
+                      onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, fromYear: v } : x))} />
+                    {e.kind === 'recurring' ? (
+                      <CalculatorField label="To Year" min={e.fromYear} max={inputs.years} value={e.toYear}
+                        onChange={(v) => setExtras(extras.map((x) => x.id === e.id ? { ...x, toYear: v } : x))} />
+                    ) : <div />}
+                    <button type="button" aria-label="Remove extra payment" onClick={() => setExtras(extras.filter((x) => x.id !== e.id))}
+                      className="p-2 text-text-secondary hover:text-error self-end"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                ))}
+              </div>
+
+              {extras.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ResultCard label="Interest Saved" value={formatMoney(interestSaved)} highlight />
+                  <ResultCard label="Paid Off Sooner By" value={`${Math.floor(monthsSaved / 12)}y ${monthsSaved % 12}m`} />
+                  <ResultCard label="New Payoff Time" value={`${Math.floor(scheduleWithExtras.length / 12)}y ${scheduleWithExtras.length % 12}m`} />
+                </div>
+              )}
+            </>
           )}
 
           <div className="themed-card rounded-lg p-4 h-[300px]">
@@ -137,10 +182,13 @@ export const MortgageCalculator: React.FC = () => {
                   formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
                   {...chartTooltipStyles}
                 />
-                <Area type="monotone" dataKey="baseline" stroke={extras.length > 0 ? 'var(--text-secondary)' : 'var(--accent)'}
-                  fill={extras.length > 0 ? 'var(--text-secondary)' : 'var(--accent)'} fillOpacity={extras.length > 0 ? 0.12 : 0.25} />
-                {extras.length > 0 && (
+                <Area type="monotone" dataKey="baseline" stroke={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'}
+                  fill={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'} fillOpacity={emphasizeBaseline ? 0.25 : 0.12} />
+                {frequency === 'monthly' && extras.length > 0 && (
                   <Area type="monotone" dataKey="withExtras" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
+                )}
+                {frequency === 'biweekly' && (
+                  <Area type="monotone" dataKey="biweekly" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
                 )}
               </AreaChart>
             </ResponsiveContainer>
