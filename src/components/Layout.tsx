@@ -11,10 +11,12 @@ import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
+import { useSWUpdate } from '../hooks/useSWUpdate'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
+  const swUpdate = useSWUpdate()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
     shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
@@ -131,7 +133,7 @@ export const Layout: React.FC = () => {
         })}
       </nav>
 
-      <UpdateToast />
+      <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
       <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>

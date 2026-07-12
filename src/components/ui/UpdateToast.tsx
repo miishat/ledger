@@ -1,38 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { RefreshCw } from 'lucide-react'
-import { useRegisterSW } from 'virtual:pwa-register/react'
 
-const CHECK_INTERVAL_MS = 60 * 60 * 1000 // hourly
-
-/** Shows a refresh prompt when a new deploy is waiting, and keeps long-lived
- *  tabs checking for updates (hourly + when the tab regains focus). */
-export const UpdateToast: React.FC = () => {
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | undefined>()
-
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegisteredSW(_url, reg) {
-      setRegistration(reg)
-    },
-  })
-
-  useEffect(() => {
-    if (!registration) return
-
-    const interval = setInterval(() => registration.update(), CHECK_INTERVAL_MS)
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') registration.update()
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
-    return () => {
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [registration])
-
+/** Shows a refresh prompt when a new deploy is waiting. Update detection
+ *  lives in useSWUpdate (owned by Layout). */
+export const UpdateToast: React.FC<{ needRefresh: boolean; onRefresh: () => void }> = ({ needRefresh, onRefresh }) => {
   if (!needRefresh) return null
 
   return (
@@ -43,7 +14,7 @@ export const UpdateToast: React.FC = () => {
     >
       <span className="text-[14px] text-text-primary">New version available</span>
       <button
-        onClick={() => updateServiceWorker(true)}
+        onClick={onRefresh}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium bg-[var(--color-accent)] text-[var(--color-bg-primary)] hover:opacity-90 transition-opacity"
       >
         <RefreshCw className="w-3.5 h-3.5" /> Refresh
