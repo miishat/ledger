@@ -62,7 +62,7 @@ export const Layout: React.FC = () => {
   ]
 
   return (
-    <div className="flex h-screen bg-transparent text-text-primary overflow-hidden relative">
+    <div className="flex h-dvh bg-transparent text-text-primary overflow-hidden relative">
       {/* Dynamic Theme Background Decorators */}
       <ThemeBackground theme={theme} />
 
@@ -111,14 +111,21 @@ export const Layout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-20 md:pb-8 relative z-10">
-        {/* Mobile Backup + Theme row */}
-        <div className="md:hidden flex items-center justify-center flex-wrap gap-3 mb-4">
-          <BackupControls />
-          <ThemeSelector />
-          <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
-            v{__APP_VERSION__} · What's New
-          </button>
+      <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-8 pb-24 md:pb-8 relative z-10">
+        {/* Mobile Backup + Theme rows */}
+        <div className="md:hidden flex flex-col items-center gap-2 mb-4">
+          <div className="flex items-center justify-center flex-wrap gap-3">
+            <BackupControls />
+            <ThemeSelector />
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
+              v{__APP_VERSION__} · What's New
+            </button>
+            <button onClick={() => setDisclaimerOpen(true)} className="text-[10px] text-text-secondary/80 hover:text-accent transition-colors">
+              Estimates Only — Not Financial Advice
+            </button>
+          </div>
         </div>
         <ErrorBoundary key={location.pathname}>
           <PageTransition>
