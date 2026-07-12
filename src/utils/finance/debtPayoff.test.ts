@@ -1,7 +1,8 @@
-import { simulatePayoff, type Debt } from './debtPayoff'
+import { minPaymentFor, simulatePayoff, type Debt } from './debtPayoff'
+import { monthlyPayment } from './amortization'
 
 const d = (id: string, balance: number, aprPct: number, minPayment: number): Debt => ({
-  id, name: id, balance, aprPct, minPayment,
+  id, name: id, balance, aprPct, type: 'loan', loanMode: 'payment', minPayment,
 })
 
 describe('simulatePayoff', () => {
@@ -80,5 +81,52 @@ describe('simulatePayoff', () => {
     expect(r.months).toBe(29)
     expect(r.totalInterest).toBeCloseTo(378.32876072075976, 6)
     expect(r.payoffOrder).toEqual(['OTHER', 'FOCUS'])
+  })
+})
+
+describe('minPaymentFor', () => {
+  it('credit card: 3% of balance', () => {
+    const cc: Debt = { id: 'c', name: 'c', balance: 5_000, aprPct: 21.99, type: 'creditCard' }
+    expect(minPaymentFor(cc, 5_000)).toBeCloseTo(150, 10)
+  })
+
+  it('credit card: $10 floor, capped at balance', () => {
+    const cc: Debt = { id: 'c', name: 'c', balance: 200, aprPct: 21.99, type: 'creditCard' }
+    expect(minPaymentFor(cc, 200)).toBe(10)
+    expect(minPaymentFor(cc, 6)).toBe(6) // can't pay more than you owe
+    expect(minPaymentFor(cc, 0)).toBe(0)
+  })
+
+  it('line of credit: interest-only', () => {
+    const loc: Debt = { id: 'l', name: 'l', balance: 12_000, aprPct: 6, type: 'lineOfCredit' }
+    expect(minPaymentFor(loc, 12_000)).toBeCloseTo(60, 10)
+  })
+
+  it('loan payment mode: the entered payment', () => {
+    const loan: Debt = { id: 'n', name: 'n', balance: 12_000, aprPct: 7.5, type: 'loan', loanMode: 'payment', minPayment: 300 }
+    expect(minPaymentFor(loan, 12_000)).toBe(300)
+  })
+
+  it('loan term mode: P&I payment from starting balance', () => {
+    const loan: Debt = { id: 'n', name: 'n', balance: 12_000, aprPct: 7.5, type: 'loan', loanMode: 'term', termYears: 4 }
+    expect(minPaymentFor(loan, 12_000)).toBeCloseTo(monthlyPayment(12_000, 7.5, 4), 10)
+  })
+})
+
+describe('simulatePayoff with dynamic minimums', () => {
+  it('credit card minimum declines with the balance and the budget stays fixed', () => {
+    const cc: Debt = { id: 'cc', name: 'cc', balance: 3_000, aprPct: 20, type: 'creditCard' }
+    // Fixed budget = month-1 min (3% of 3000 = 90) + 100 extra = 190/mo.
+    const r = simulatePayoff([cc], 100, 'avalanche')
+    expect(r.months).not.toBeNull()
+    // 190/mo against 3000 @ 20% retires in well under 2 years.
+    expect(r.months!).toBeLessThan(24)
+    expect(r.totalInterest).toBeGreaterThan(0)
+  })
+
+  it('interest-only LOC with zero extra never pays off', () => {
+    const loc: Debt = { id: 'loc', name: 'loc', balance: 10_000, aprPct: 8, type: 'lineOfCredit' }
+    const r = simulatePayoff([loc], 0, 'avalanche', 120)
+    expect(r.months).toBeNull()
   })
 })
