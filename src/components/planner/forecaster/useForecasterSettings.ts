@@ -4,7 +4,7 @@ import { useBudgetStore } from '../../../store/useBudgetStore'
 import { useCompensationStore } from '../../../store/useCompensationStore'
 import { averageMonthlyNetSavings } from '../../../store/budgetSelectors'
 import { compLumpSums } from '../../../utils/finance/compFeed'
-import { simulatePayoff, type Debt, type PayoffStrategy } from '../../../utils/finance/debtPayoff'
+import { minPaymentFor, simulatePayoff, type Debt, type PayoffStrategy } from '../../../utils/finance/debtPayoff'
 import type { LumpSum } from '../../../utils/finance/forecast'
 
 export const TOOL_ID = 'forecaster'
@@ -78,7 +78,7 @@ export function useForecasterSettings() {
       const extra = Number(debtInputs.extraMonthly ?? 0)
       const strategy = (debtInputs.strategy as PayoffStrategy) ?? 'avalanche'
       const result = simulatePayoff(debts, extra, strategy)
-      const totalMin = debts.reduce((s, d) => s + (d.minPayment ?? 0), 0)
+      const totalMin = debts.reduce((s, d) => s + minPaymentFor(d, d.balance), 0)
       autoFeed.debtDrag = { amount: totalMin + extra, untilMonth: result.months ?? horizonMonths }
     }
   }
