@@ -74,7 +74,7 @@ const SwapRow: React.FC<{
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[11px] text-text-secondary">
-            Swap in start price {swap.inStartPriceSource === 'manual' ? '(manual)' : fetchedStartPrice !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
+            Swap In Start Price {swap.inStartPriceSource === 'manual' ? '(manual)' : fetchedStartPrice !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
           </span>
           <div className="flex gap-1 items-center">
             <CalculatorField
