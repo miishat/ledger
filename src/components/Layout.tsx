@@ -12,15 +12,31 @@ import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
+import { DisclaimerModal } from './ui/DisclaimerModal'
+import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
   const swUpdate = useSWUpdate()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
+  // Captured once at mount: the last-seen-version effect below overwrites the key.
+  const [shouldShowNews] = useState(() =>
     shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
   )
+  const [disclaimerAcked, setDisclaimerAcked] = useState(() => localStorage.getItem(DISCLAIMER_ACK_KEY) !== null)
+  const [disclaimerOpen, setDisclaimerOpen] = useState(!disclaimerAcked)
+  // What's New waits until the disclaimer has been acknowledged.
+  const [whatsNewOpen, setWhatsNewOpen] = useState(shouldShowNews && disclaimerAcked)
+
+  const closeDisclaimer = () => {
+    setDisclaimerOpen(false)
+    if (!disclaimerAcked) {
+      localStorage.setItem(DISCLAIMER_ACK_KEY, new Date().toISOString())
+      setDisclaimerAcked(true)
+      if (shouldShowNews) setWhatsNewOpen(true)
+    }
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,6 +104,9 @@ export const Layout: React.FC = () => {
           <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
             v{__APP_VERSION__} · What's New
           </button>
+          <button onClick={() => setDisclaimerOpen(true)} className="text-[10px] text-text-secondary/80 hover:text-accent transition-colors">
+            Estimates Only — Not Financial Advice
+          </button>
         </div>
       </nav>
 
@@ -135,6 +154,7 @@ export const Layout: React.FC = () => {
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
       <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} swUpdate={swUpdate} />
+      <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
