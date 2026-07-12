@@ -1,31 +1,68 @@
-import React from 'react'
-import { X, Sparkles } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import changelog from '../../../CHANGELOG.md?raw'
+import type { SWUpdate } from '../../hooks/useSWUpdate'
 
 interface WhatsNewModalProps {
   isOpen: boolean
   onClose: () => void
+  swUpdate?: SWUpdate
 }
 
-/** Renders CHANGELOG.md (bundled at build time) in a readable panel. */
-export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
+interface VersionSection {
+  heading: string
+  body: string[]
+}
+
+/** CHANGELOG.md split into per-version sections, empty ones dropped. */
+function parseSections(): VersionSection[] {
+  const lines = changelog
+    .split('\n')
+    .filter((l) => !l.startsWith('# ') && !l.startsWith('All notable') && !l.startsWith('[Keep a') && !l.startsWith('pre-1.0'))
+  const sections: VersionSection[] = []
+  for (const line of lines) {
+    if (line.startsWith('## ')) sections.push({ heading: line.slice(3), body: [] })
+    else if (sections.length > 0) sections[sections.length - 1].body.push(line)
+  }
+  return sections.filter((s) => s.body.some((l) => l.trim().length > 0))
+}
+
+const SectionBody: React.FC<{ body: string[] }> = ({ body }) => (
+  <>
+    {body.map((line, i) => {
+      if (line.startsWith('### ')) return <h4 key={i} className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary mt-2">{line.slice(4)}</h4>
+      if (line.startsWith('- ')) return <p key={i} className="text-[13px] text-text-primary pl-3">• {line.slice(2)}</p>
+      return null
+    })}
+  </>
+)
+
+/** Renders CHANGELOG.md (bundled at build time): newest version expanded,
+ *  older versions collapsed. */
+export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, swUpdate }) => {
+  const sections = useMemo(() => parseSections(), [])
+  const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([0]))
+
   if (!isOpen) return null
 
-  // Minimal markdown rendering: ## sections, ### subsections, - bullets.
-  const allLines = changelog.split('\n').filter((l) => !l.startsWith('# ') && !l.startsWith('All notable') && !l.startsWith('[Keep a') && !l.startsWith('pre-1.0'))
+  const toggle = (i: number) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
 
-  // Drop "## " sections with no content before the next "## " heading (e.g. an empty [Unreleased]).
-  const lines = allLines.filter((line, i) => {
-    if (!line.startsWith('## ')) return true
-    const rest = allLines.slice(i + 1)
-    const nextSectionIdx = rest.findIndex((l) => l.startsWith('## '))
-    const body = nextSectionIdx === -1 ? rest : rest.slice(0, nextSectionIdx)
-    return body.some((l) => l.trim().length > 0)
-  })
+  const checkLabel =
+    swUpdate?.checkStatus === 'checking' ? 'Checking…'
+      : swUpdate?.checkStatus === 'upToDate' ? "You're up to date"
+      : swUpdate?.needRefresh ? 'Update available'
+      : swUpdate?.checkStatus === 'error' ? "Couldn't check — are you offline?"
+      : `v${__APP_VERSION__}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label="What's New">
-      <div className="themed-menu rounded-lg w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+      <div className="themed-menu rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-2">
           <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
             <Sparkles className="w-5 h-5 text-accent" /> What's New — v{__APP_VERSION__}
@@ -34,20 +71,47 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose })
             <X className="w-5 h-5" />
           </button>
         </div>
-        {lines.map((line, i) => {
-          if (line.startsWith('## ')) return <h3 key={i} className="text-[15px] font-semibold text-accent mt-4">{line.slice(3)}</h3>
-          if (line.startsWith('### ')) return <h4 key={i} className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary mt-2">{line.slice(4)}</h4>
-          if (line.startsWith('- ')) return <p key={i} className="text-[13px] text-text-primary pl-3">• {line.slice(2)}</p>
-          return null
-        })}
-        <p className="mt-5 pt-3 border-t border-border text-[12px] text-text-secondary text-center">
+
+        {sections.map((s, i) => (
+          <div key={s.heading} className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => toggle(i)}
+              aria-expanded={openSections.has(i)}
+              className="flex items-center justify-between gap-2 mt-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+            >
+              <span className="text-[15px] font-semibold text-accent">{s.heading}</span>
+              <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${openSections.has(i) ? 'rotate-180' : ''}`} />
+            </button>
+            {openSections.has(i) && <SectionBody body={s.body} />}
+          </div>
+        ))}
+
+        {swUpdate && (
+          <div className="flex items-center justify-between gap-3 mt-5 pt-3 border-t border-border">
+            <span className="text-[12px] text-text-secondary">{checkLabel}</span>
+            {swUpdate.needRefresh ? (
+              <button
+                onClick={swUpdate.refresh}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium bg-[var(--color-accent)] text-[var(--color-bg-primary)] hover:opacity-90 transition-opacity"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh Now
+              </button>
+            ) : (
+              <button
+                onClick={swUpdate.checkForUpdates}
+                disabled={swUpdate.checkStatus === 'checking'}
+                className="px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50"
+              >
+                Check for Updates
+              </button>
+            )}
+          </div>
+        )}
+
+        <p className="mt-3 pt-3 border-t border-border text-[12px] text-text-secondary text-center">
           Made by{' '}
-          <a
-            href="https://github.com/miishat"
-            target="_blank"
-            rel="noreferrer"
-            className="text-accent hover:underline"
-          >
+          <a href="https://github.com/miishat" target="_blank" rel="noreferrer" className="text-accent hover:underline">
             Mishat
           </a>
         </p>

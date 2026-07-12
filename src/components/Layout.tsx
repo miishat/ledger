@@ -134,7 +134,7 @@ export const Layout: React.FC = () => {
       </nav>
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
-      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
+      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} swUpdate={swUpdate} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   )
