@@ -14,14 +14,14 @@ afterEach(() => __resetProviders())
 
 describe('useCurrentPrice', () => {
   it('resolves a live price after mount', async () => {
-    __setProviders({ fetchYahooQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
+    __setProviders({ fetchQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
     const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
     await waitFor(() => expect(result.current.data?.value.price).toBe(199))
     expect(result.current.status).toBe('success')
   })
 
   it('setManual switches the source to override', async () => {
-    __setProviders({ fetchYahooQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
+    __setProviders({ fetchQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
     const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
     await waitFor(() => expect(result.current.data).toBeDefined())
     act(() => result.current.setManual(250))
@@ -36,7 +36,7 @@ describe('useCurrentPrice', () => {
   })
 
   it('ends in an error state when the provider rejects with no cache and no override', async () => {
-    __setProviders({ fetchYahooQuote: async () => { throw new Error('network down') } })
+    __setProviders({ fetchQuote: async () => { throw new Error('network down') } })
     const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
     await waitFor(() => expect(result.current.status).toBe('error'))
     expect(result.current.error).toBeTruthy()
@@ -44,7 +44,7 @@ describe('useCurrentPrice', () => {
   })
 
   it('reacts to an override set externally via the store (not through setManual)', async () => {
-    __setProviders({ fetchYahooQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
+    __setProviders({ fetchQuote: async () => ({ ticker: 'AAPL', exchange: 'NASDAQ', price: 199, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }) })
     const { result } = renderHook(() => useCurrentPrice('AAPL', 'NASDAQ'))
     await waitFor(() => expect(result.current.data?.value.price).toBe(199))
 

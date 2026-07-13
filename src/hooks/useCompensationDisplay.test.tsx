@@ -19,7 +19,7 @@ describe('useCompensationDisplay', () => {
   it('falls back to the manual companyCurrentPrice when no live price is available and conversion is off', async () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     __setProviders({
-      fetchYahooQuote: async () => { throw new Error('no data') },
+      fetchQuote: async () => { throw new Error('no data') },
       fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
     })
     const { result } = renderHook(() => useCompensationDisplay())
@@ -31,7 +31,7 @@ describe('useCompensationDisplay', () => {
   it('applies the live price even when CAD conversion is off (live price is independent of the toggle)', async () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     __setProviders({
-      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
       fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
     })
     const { result } = renderHook(() => useCompensationDisplay())
@@ -44,7 +44,7 @@ describe('useCompensationDisplay', () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     useCompensationStore.getState().toggleCadConversion()
     __setProviders({
-      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 100, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchQuote: async () => ({ ticker: 'AAPL', price: 100, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
       fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.35, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
     })
     const { result } = renderHook(() => useCompensationDisplay())
@@ -56,7 +56,7 @@ describe('useCompensationDisplay', () => {
   it('setManualPrice sets a manual override reflected in rawPrice', async () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     __setProviders({
-      fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
+      fetchQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD', asOf: '2026-07-01T00:00:00Z' }),
       fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
     })
     const { result } = renderHook(() => useCompensationDisplay())

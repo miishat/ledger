@@ -1,5 +1,5 @@
 import type { Currency, FetchStatus, FxRate, HistoricalPrice, Quote } from './types'
-import { fetchYahooHistorical, fetchYahooQuote } from './providers/yahoo'
+import { fetchAlphaVantageHistorical, fetchAlphaVantageQuote } from './providers/alphaVantage'
 import { fetchFxRate } from './providers/frankfurter'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { SingleFlight, minInterval } from './throttle'
@@ -19,11 +19,15 @@ export interface Resolved<T> {
 
 // Provider indirection for testability.
 interface Providers {
-  fetchYahooQuote: typeof fetchYahooQuote
-  fetchYahooHistorical: typeof fetchYahooHistorical
+  fetchQuote: typeof fetchAlphaVantageQuote
+  fetchHistorical: typeof fetchAlphaVantageHistorical
   fetchFxRate: typeof fetchFxRate
 }
-const defaultProviders: Providers = { fetchYahooQuote, fetchYahooHistorical, fetchFxRate }
+const defaultProviders: Providers = {
+  fetchQuote: fetchAlphaVantageQuote,
+  fetchHistorical: fetchAlphaVantageHistorical,
+  fetchFxRate,
+}
 let providers: Providers = { ...defaultProviders }
 export function __setProviders(p: Partial<Providers>): void { providers = { ...defaultProviders, ...p } }
 export function __resetProviders(): void { providers = { ...defaultProviders } }
@@ -32,6 +36,11 @@ const flight = new SingleFlight()
 
 function isStale(fetchedAt: string): boolean {
   return Date.now() - new Date(fetchedAt).getTime() > STALE_AFTER_MS
+}
+
+/** A quote fetched today (local calendar day) is considered fresh. See R9. */
+export function isQuoteFreshToday(fetchedAt: string): boolean {
+  return toDateKey(new Date(fetchedAt)) === todayKey()
 }
 
 export async function getCurrentPrice(
@@ -51,10 +60,15 @@ export async function getCurrentPrice(
     }
   }
 
+  const cached = store.quotes[key]
+  if (!opts?.force && cached && isQuoteFreshToday(cached.fetchedAt)) {
+    return { value: cached.value, source: 'cache', status: 'success', asOf: cached.fetchedAt, stale: false }
+  }
+
   const allowed = opts?.force || minInterval(key, MIN_FETCH_INTERVAL_MS)
   if (allowed) {
     try {
-      const quote = await flight.run(key, () => providers.fetchYahooQuote(ticker, exchange))
+      const quote = await flight.run(key, () => providers.fetchQuote(ticker, exchange))
       useMarketDataStore.getState().setQuote(quote)
       return { value: quote, source: 'live', status: 'success', asOf: quote.asOf, stale: false }
     } catch {
@@ -67,7 +81,7 @@ export async function getCurrentPrice(
 function fromQuoteCache(key: string, status: FetchStatus): Resolved<Quote> {
   const cached = useMarketDataStore.getState().quotes[key]
   if (!cached) throw new Error('No market data available')
-  return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: isStale(cached.fetchedAt) }
+  return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: !isQuoteFreshToday(cached.fetchedAt) }
 }
 
 export async function getHistoricalPrice(
@@ -81,7 +95,7 @@ export async function getHistoricalPrice(
   const allowed = minInterval(key, MIN_FETCH_INTERVAL_MS)
   if (allowed) {
     try {
-      const hist = await flight.run(key, () => providers.fetchYahooHistorical(ticker, exchange, dateKey))
+      const hist = await flight.run(key, () => providers.fetchHistorical(ticker, exchange, dateKey))
       useMarketDataStore.getState().setHistorical(hist)
       return { value: hist, source: 'live', status: 'success', asOf: hist.asOf, stale: false }
     } catch {

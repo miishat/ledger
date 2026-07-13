@@ -20,7 +20,7 @@ beforeEach(() => {
   useMarketDataStore.setState({ quotes: {}, historical: {}, fx: {}, overrides: {} })
   __resetMinInterval()
   __setProviders({
-    fetchYahooQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD' as const, asOf: '2026-07-01T00:00:00Z' }),
+    fetchQuote: async () => ({ ticker: 'AAPL', price: 150, currency: 'USD' as const, asOf: '2026-07-01T00:00:00Z' }),
     fetchFxRate: async () => ({ from: 'USD' as const, to: 'CAD' as const, rate: 1.35, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }),
   })
 })

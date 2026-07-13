@@ -34,6 +34,12 @@ export function useCurrentPrice(ticker: string, exchange?: string) {
     return () => { active = false }
   }, [resolve, override])
 
+  useEffect(() => {
+    const onOnline = () => resolve(() => mountedRef.current, true)
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [resolve])
+
   const refresh = useCallback((force?: boolean) => {
     resolve(() => mountedRef.current, force)
   }, [resolve])
@@ -72,6 +78,12 @@ export function useFxRate(from: Currency, to: Currency, date?: string) {
     let active = true
     resolve(() => active)
     return () => { active = false }
+  }, [resolve])
+
+  useEffect(() => {
+    const onOnline = () => resolve(() => mountedRef.current)
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
   }, [resolve])
 
   const refresh = useCallback(() => {
