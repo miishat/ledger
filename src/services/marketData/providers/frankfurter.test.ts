@@ -43,4 +43,10 @@ describe('fetchFxRate', () => {
     mockFetchOnce({}, false)
     await expect(fetchFxRate('USD', 'CAD')).rejects.toThrow()
   })
+
+  it('calls the .dev v1 endpoint (the .app domain 301s without CORS headers)', async () => {
+    mockFetchOnce({ amount: 1, base: 'USD', date: '2026-07-01', rates: { CAD: 1.36 } })
+    await fetchFxRate('USD', 'CAD')
+    expect(globalThis.fetch).toHaveBeenCalledWith('https://api.frankfurter.dev/v1/latest?from=USD&to=CAD')
+  })
 })

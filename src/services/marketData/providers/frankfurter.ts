@@ -1,7 +1,7 @@
 import type { Currency, FxRate } from '../types'
 import { toDateKey, todayKey } from '../dateKey'
 
-export const FRANKFURTER_BASE = 'https://api.frankfurter.app'
+export const FRANKFURTER_BASE = 'https://api.frankfurter.dev/v1'
 
 interface FrankfurterResponse {
   amount: number
