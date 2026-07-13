@@ -8,6 +8,7 @@ interface MarketDataState {
   historical: Record<string, Cached<HistoricalPrice>>
   fx: Record<string, Cached<FxRate>>
   overrides: Record<string, number>
+  apiKey?: string
 
   setQuote: (q: Quote) => void
   setHistorical: (h: HistoricalPrice) => void
@@ -18,6 +19,8 @@ interface MarketDataState {
   setOverride: (key: string, price: number) => void
   clearOverride: (key: string) => void
   getOverride: (key: string) => number | undefined
+  setApiKey: (key: string) => void
+  clearApiKey: () => void
 }
 
 const now = () => new Date().toISOString()
@@ -29,6 +32,7 @@ export const useMarketDataStore = create<MarketDataState>()(
       historical: {},
       fx: {},
       overrides: {},
+      apiKey: undefined,
 
       setQuote: (q) =>
         set((state) => ({
@@ -58,6 +62,8 @@ export const useMarketDataStore = create<MarketDataState>()(
           return { overrides: next }
         }),
       getOverride: (key) => get().overrides[key],
+      setApiKey: (key) => set({ apiKey: key.trim() || undefined }),
+      clearApiKey: () => set({ apiKey: undefined }),
     }),
     { name: 'ledger-market-data' },
   ),
