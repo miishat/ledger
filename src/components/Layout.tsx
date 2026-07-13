@@ -4,6 +4,7 @@ import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { ThemeSelector } from './theme/ThemeSelector'
 import { BackupControls } from './settings/BackupControls'
+import { MarketDataSettings } from './settings/MarketDataSettings'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
@@ -100,6 +101,7 @@ export const Layout: React.FC = () => {
         {/* Backup + Theme Dock */}
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
           <BackupControls />
+          <MarketDataSettings />
           <ThemeSelector />
           <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
             v{__APP_VERSION__} · What's New
@@ -116,6 +118,7 @@ export const Layout: React.FC = () => {
         <div className="md:hidden flex flex-col items-center gap-2 mb-4">
           <div className="flex items-center justify-center flex-wrap gap-3">
             <BackupControls />
+            <MarketDataSettings />
             <ThemeSelector />
           </div>
           <div className="flex items-center gap-4">
