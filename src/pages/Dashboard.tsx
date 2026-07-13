@@ -89,7 +89,7 @@ export const Dashboard: React.FC = () => {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Master Dashboard</h1>
-          <p className="text-[14px] text-text-secondary mt-1">Overview of your financial universe</p>
+          <p className="text-[14px] text-text-secondary mt-1">Overview of your financial universe.</p>
         </div>
       </div>
 

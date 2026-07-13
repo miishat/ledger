@@ -166,8 +166,8 @@ export const DebtPayoffCalculator: React.FC = () => {
         <ResultCard
           label="vs Other Strategy"
           value={other.totalInterest >= chosen.totalInterest
-            ? `saves ${formatMoney(other.totalInterest - chosen.totalInterest)}`
-            : `costs ${formatMoney(chosen.totalInterest - other.totalInterest)} more`}
+            ? `Saves ${formatMoney(other.totalInterest - chosen.totalInterest)}`
+            : `Costs ${formatMoney(chosen.totalInterest - other.totalInterest)} More`}
         />
       </div>
 

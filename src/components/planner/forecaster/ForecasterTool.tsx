@@ -140,13 +140,13 @@ export const ForecasterTool: React.FC = () => {
             settings.showReal ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
           }`}
         >
-          {settings.showReal ? "Real (today's dollars)" : 'Nominal'}
+          {settings.showReal ? "Real (Today's Dollars)" : 'Nominal'}
         </button>
         <button
           onClick={() => setSetting('view', settings.view === 'line' ? 'stacked' : 'line')}
           className="px-3 py-1.5 rounded-md text-[13px] font-medium border border-border text-text-secondary hover:text-text-primary transition-colors"
         >
-          {settings.view === 'line' ? 'Show contributions vs growth' : 'Show scenario bands'}
+          {settings.view === 'line' ? 'Show Contributions vs Growth' : 'Show Scenario Bands'}
         </button>
       </div>
 
