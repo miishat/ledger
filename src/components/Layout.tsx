@@ -106,9 +106,6 @@ export const Layout: React.FC = () => {
           <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
             v{__APP_VERSION__} · What's New
           </button>
-          <button onClick={() => setDisclaimerOpen(true)} className="text-[10px] text-text-secondary/80 hover:text-accent transition-colors">
-            Estimates Only — Not Financial Advice
-          </button>
         </div>
       </nav>
 
@@ -163,7 +160,7 @@ export const Layout: React.FC = () => {
       </nav>
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
-      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} swUpdate={swUpdate} />
+      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} onOpenDisclaimer={() => setDisclaimerOpen(true)} swUpdate={swUpdate} />
       <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>

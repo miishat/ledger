@@ -6,6 +6,7 @@ import type { SWUpdate } from '../../hooks/useSWUpdate'
 interface WhatsNewModalProps {
   isOpen: boolean
   onClose: () => void
+  onOpenDisclaimer: () => void
   swUpdate?: SWUpdate
 }
 
@@ -39,7 +40,7 @@ const SectionBody: React.FC<{ body: string[] }> = ({ body }) => (
 
 /** Renders CHANGELOG.md (bundled at build time): newest version expanded,
  *  older versions collapsed. */
-export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, swUpdate }) => {
+export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, onOpenDisclaimer, swUpdate }) => {
   const sections = useMemo(() => parseSections(), [])
   const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([0]))
 
@@ -61,7 +62,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, s
       : `v${__APP_VERSION__}`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label="What's New">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label="What's New">
       <div className="themed-menu rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-2">
           <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
@@ -115,6 +116,13 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, s
             Mishat
           </a>
         </p>
+
+        <button
+          onClick={() => { onClose(); onOpenDisclaimer() }}
+          className="mt-1 text-[10px] text-text-secondary/80 hover:text-accent transition-colors self-center"
+        >
+          Estimates Only · Not Financial Advice
+        </button>
       </div>
     </div>
   )
