@@ -6,6 +6,22 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-13
+
+### Added
+- Live stock prices via your own Alpha Vantage API key (free, 25 lookups a day); a new Market Data settings modal in the sidebar dock and mobile settings row lets you add and manage it. Quotes refresh at most once a day and update automatically when the app comes back online.
+
+### Changed
+- The "Estimates Only · Not Financial Advice" disclaimer link moved from the desktop sidebar into the What's New modal; mobile keeps its button.
+- What's New modal now has a blurred backdrop.
+- Em dashes removed app-wide, with wording adjusted case by case.
+
+### Fixed
+- Currency conversion rates work again: the Frankfurter API moved to api.frankfurter.dev/v1, and the old domain was silently breaking requests from the browser.
+
+### Removed
+- The Yahoo Finance provider, which never worked from a static site due to browser CORS restrictions.
+
 ## [0.4.0] - 2026-07-11
 
 ### Added
