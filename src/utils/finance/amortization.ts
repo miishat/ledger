@@ -1,6 +1,6 @@
 // Loan amortization math. Conventions: rates are PERCENT (6 = 6%), interest
 // compounds monthly at annualRate/12 (consumer-loan convention; Canadian
-// fixed mortgages legally use semi-annual compounding — difference is small
+// fixed mortgages legally use semi-annual compounding - difference is small
 // and documented here as a simplification), payments at end of month.
 
 export interface AmortizationPoint {
@@ -18,7 +18,7 @@ export function monthlyPayment(principal: number, annualRatePct: number, years: 
   return (principal * r) / (1 - Math.pow(1 + r, -n))
 }
 
-/** Largest principal a given monthly payment can service — inverse of monthlyPayment. */
+/** Largest principal a given monthly payment can service - inverse of monthlyPayment. */
 export function principalFromPayment(payment: number, annualRatePct: number, years: number): number {
   const n = Math.round(years * 12)
   if (n <= 0) return 0
@@ -96,7 +96,7 @@ export interface BiweeklyPoint {
   balance: number
 }
 
-/** Accelerated biweekly: pay monthlyPayment/2 every two weeks (26/yr — one
+/** Accelerated biweekly: pay monthlyPayment/2 every two weeks (26/yr - one
  *  extra monthly payment per year), interest accruing at annualRate/26 per
  *  period. This is the "biweekly" Canadian lenders offer; it retires the
  *  loan years early. */

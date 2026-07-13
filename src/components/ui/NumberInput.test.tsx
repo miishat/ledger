@@ -48,7 +48,7 @@ describe('NumberInput', () => {
     const input = screen.getByLabelText('amt')
     fireEvent.focus(input)
     fireEvent.change(input, { target: { value: '' } })
-    expect(input).toHaveValue('') // stays empty — no snap to 0
+    expect(input).toHaveValue('') // stays empty - no snap to 0
     fireEvent.blur(input)
     expect(onCommit).toHaveBeenLastCalledWith(0)
     expect(input).toHaveValue('0')

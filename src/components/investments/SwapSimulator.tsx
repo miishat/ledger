@@ -107,7 +107,7 @@ const SwapRow: React.FC<{
       {swap.inTicker.trim() !== '' && (
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
           <span className="inline-flex items-center gap-1">
-            Current price: {isLoadingCurrent ? <Skeleton className="h-4 w-16 inline-block" /> : (inCurrentPrice !== undefined ? inCurrentPrice.toFixed(2) : '—')}
+            Current price: {isLoadingCurrent ? <Skeleton className="h-4 w-16 inline-block" /> : (inCurrentPrice !== undefined ? inCurrentPrice.toFixed(2) : '-')}
             {isCurrentOverridden ? ' (manual)' : ''}
           </span>
           {current.status === 'error' && !isCurrentOverridden && (
@@ -147,16 +147,16 @@ const SwapRow: React.FC<{
           </div>
           <div>
             <p className="text-text-secondary">Original Return</p>
-            <p className="text-text-primary font-medium">{result ? formatMoney(result.originalReturn) : '—'}</p>
+            <p className="text-text-primary font-medium">{result ? formatMoney(result.originalReturn) : '-'}</p>
           </div>
           <div>
             <p className="text-text-secondary">New Return</p>
-            <p className="text-text-primary font-medium">{result ? formatMoney(result.newReturn) : '—'}</p>
+            <p className="text-text-primary font-medium">{result ? formatMoney(result.newReturn) : '-'}</p>
           </div>
           <div>
             <p className="text-text-secondary">Difference</p>
             <p className={`font-medium ${result ? (result.difference >= 0 ? 'text-accent' : 'text-error') : 'text-text-primary'}`}>
-              {result ? formatMoney(result.difference) : '—'}
+              {result ? formatMoney(result.difference) : '-'}
             </p>
           </div>
         </div>

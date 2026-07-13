@@ -1,4 +1,4 @@
-// 2026 Canadian personal income tax estimator — employee side only.
+// 2026 Canadian personal income tax estimator - employee side only.
 //
 // Sources (retrieved 2026-07-02):
 // - Brackets (federal + all provinces/territories, ON surtax): KPMG
@@ -7,7 +7,7 @@
 //   2026 (TaxTips.ca). Federal lowest rate is 14% for 2026.
 // - BPAs: TaxTips.ca 2026 non-refundable credits; QC BPA $18,952 from
 //   Finances Québec "Parameters of the Personal Income Tax System for 2026".
-// - CPP/CPP2/EI 2026: CRA release — YMPE $74,600, YAMPE $85,000, rates
+// - CPP/CPP2/EI 2026: CRA release - YMPE $74,600, YAMPE $85,000, rates
 //   5.95%/4.00%; EI 1.63% (QC 1.30%) on max insurable earnings $68,900.
 //
 // Simplifications (this is an estimator, not payroll): only the basic

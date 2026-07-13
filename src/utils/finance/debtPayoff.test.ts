@@ -19,7 +19,7 @@ describe('simulatePayoff', () => {
     // only passed under the buggy single-pass code that starved the small
     // debt of its minimum. Under the brief's 3-pass algorithm the small debt
     // amortizes to zero in ~10 months on its own $50 minimum no matter where
-    // the extra goes, so it always clears first — the assertion was
+    // the extra goes, so it always clears first - the assertion was
     // mathematically unsatisfiable. This fixture uses comparable balances so
     // the strategy genuinely decides the payoff order.
     const debts = () => [
@@ -57,7 +57,7 @@ describe('simulatePayoff', () => {
     // Reviewer counterexample: FOCUS has a small balance but a high APR, so
     // avalanche makes it the focus debt. OTHER is much larger with a lower
     // APR. With extraMonthly 0, budget === totalMin (100) exactly, so pass 3
-    // (extra to focus debt) never has anything to distribute — each debt
+    // (extra to focus debt) never has anything to distribute - each debt
     // must simply amortize at its own minimum. The old (buggy) single-pass
     // implementation instead poured the whole $100 budget into FOCUS first,
     // leaving OTHER's minimum unpaid in month 1 (balance would grow to

@@ -1,6 +1,6 @@
 // Extracts future compensation cash events as forecast lump sums.
 // RSU: real vest dates from generateVestEvents. Bonus: yearly at
-// pkg.cashBonusMonth. ESPP: SIMPLIFICATION — the store has no per-purchase
+// pkg.cashBonusMonth. ESPP: SIMPLIFICATION - the store has no per-purchase
 // dates, so the annual ESPP gain lands every 12 months from now.
 
 import {
@@ -50,12 +50,12 @@ export function compLumpSums(
     let bonusDate = new Date(now.getFullYear(), pkg.cashBonusMonth - 1, 1)
     let firstOffset = monthOffset(now, bonusDate)
     if (firstOffset < 0 || (firstOffset === 0 && bonusMonthEnd < now)) {
-      // Current year's bonus month has already passed — bump to next year.
+      // Current year's bonus month has already passed - bump to next year.
       bonusDate = new Date(now.getFullYear() + 1, pkg.cashBonusMonth - 1, 1)
       firstOffset = monthOffset(now, bonusDate)
     } else if (firstOffset === 0) {
       // Bonus month is the current calendar month and still ahead of (or on)
-      // now — genuinely future, but monthOffset truncates to 0. Route it to
+      // now - genuinely future, but monthOffset truncates to 0. Route it to
       // month 1, the forecaster's first consulted step, instead of dropping
       // it or skipping straight to next year.
       firstOffset = 1
@@ -65,7 +65,7 @@ export function compLumpSums(
     }
   }
 
-  // ESPP annual gain — simplified to every 12 months (no purchase dates in store).
+  // ESPP annual gain - simplified to every 12 months (no purchase dates in store).
   const espp = calcAnnualESPP(pkg)
   if (espp > 0) {
     for (let offset = 12; offset <= horizonMonths; offset += 12) {

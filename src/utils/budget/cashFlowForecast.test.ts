@@ -17,7 +17,7 @@ describe('forecastMonthEnd', () => {
   const txs = asRecord([
     tx('2026-07-01', 4000, 'income'),
     tx('2026-07-05', 1500, 'expense'),
-    tx('2026-06-30', 999, 'expense'), // other month — ignored
+    tx('2026-06-30', 999, 'expense'), // other month - ignored
   ])
 
   it('nets recorded flows and adds pending recurring items in-month', () => {

@@ -57,7 +57,7 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     icon: TrendingUp,
     component: ForecasterTool,
     info: {
-      howTo: 'Project your net worth forward. Start from your dashboard net worth or a manual balance, set monthly savings and assumptions, then read the FI Number, projected FI date, and Monte Carlo odds below the chart. FI Number is the portfolio size at which annual withdrawals at your chosen rate cover your annual spending — the point where work becomes optional.',
+      howTo: 'Project your net worth forward. Start from your dashboard net worth or a manual balance, set monthly savings and assumptions, then read the FI Number, projected FI date, and Monte Carlo odds below the chart. FI Number is the portfolio size at which annual withdrawals at your chosen rate cover your annual spending, the point where work becomes optional.',
       params: [
         { name: 'Starting Balance', description: 'Where the projection begins. Auto mode pulls your dashboard net worth; manual lets you type any figure.' },
         { name: 'Monthly Savings', description: 'How much you add every month across all accounts. Auto mode uses your average budget surplus over the last 3 months.' },
@@ -233,20 +233,20 @@ export const PLANNER_TOOLS: PlannerTool[] = [
         { name: 'Province', description: 'Your province of residence, which determines the provincial tax brackets applied.' },
         { name: 'RRSP Contribution', description: "Deducted from taxable income. Limit is 18% of last year's earned income up to the annual maximum." },
         { name: 'FHSA Contribution', description: 'First Home Savings Account deposits, deductible like RRSP. Annual limit $8,000.' },
-        { name: 'Marginal Rate', description: 'The tax rate applied to your next dollar earned — higher than your effective rate because Canada uses progressive tax brackets.' },
-        { name: 'Effective Rate', description: 'Your total tax as a percent of total income — the blended rate across all brackets, lower than your marginal rate.' },
+        { name: 'Marginal Rate', description: 'The tax rate applied to your next dollar earned. It is higher than your effective rate because Canada uses progressive tax brackets.' },
+        { name: 'Effective Rate', description: 'Your total tax as a percent of total income, the blended rate across all brackets, lower than your marginal rate.' },
       ],
     },
   },
   {
     id: 'inflation-adjuster',
     name: 'Inflation Adjuster',
-    description: "What today's dollars cost later — or what a future amount is worth today.",
+    description: "What today's dollars cost later, or what a future amount is worth today.",
     group: 'Utilities',
     icon: Hourglass,
     component: InflationAdjusterCalculator,
     info: {
-      howTo: "Convert money across time. Future Cost mode shows what today's amount will cost after years of inflation — useful for checking what a savings goal will really be worth when you reach it. Today's Value mode discounts a future amount back to present-day dollars.",
+      howTo: "Convert money across time. Future Cost mode shows what today's amount will cost after years of inflation. Useful for checking what a savings goal will really be worth when you reach it. Today's Value mode discounts a future amount back to present-day dollars.",
       params: [
         { name: 'Direction', description: "Today's $ → Future Cost projects forward; Future $ → Today's Value discounts back." },
         { name: 'Amount', description: 'The dollar amount to convert.' },

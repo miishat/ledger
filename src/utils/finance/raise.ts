@@ -1,4 +1,4 @@
-// "Is my raise a real raise?" — nominal vs inflation-adjusted (Fisher) raise.
+// "Is my raise a real raise?" - nominal vs inflation-adjusted (Fisher) raise.
 // All rates are PERCENT in and out.
 
 export function nominalRaisePct(oldSalary: number, newSalary: number): number {

@@ -112,7 +112,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
   )
 }
 
-/** Create flow: mirrors the Plan table — a planned budget plus a repeatable
+/** Create flow: mirrors the Plan table - a planned budget plus a repeatable
  *  list of ticker rows, each with its own allocation % and start price. */
 const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const addAnalysis = useAnalysisStore((s) => s.addAnalysis)

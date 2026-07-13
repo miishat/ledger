@@ -1,7 +1,7 @@
 // Broker CSV → holdings, following the src/utils/csvParser.ts pattern:
 // named parser configs with detect(headers) + parse(row), plus an
 // "unrecognized" result that the UI resolves with a generic column mapper.
-// Broker export formats drift — the named parsers cover the common IBKR
+// Broker export formats drift - the named parsers cover the common IBKR
 // and Wealthsimple holdings exports; the mapper is the guaranteed path.
 
 import Papa from 'papaparse'

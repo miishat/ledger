@@ -17,7 +17,7 @@ const transactions: Record<string, Transaction> = Object.fromEntries(
     tx('2026-05-15', 4000, 'income'),
     tx('2026-06-01', 2000, 'expense'),
     tx('2026-06-20', 4000, 'income'),
-    tx('2026-07-01', 999, 'expense'), // current month — excluded from averages
+    tx('2026-07-01', 999, 'expense'), // current month - excluded from averages
   ].map((t) => [t.id, t]),
 )
 

@@ -214,7 +214,7 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: var(--card-blur);
 }
 
-/* Floating menus (selects, date pickers) — always opaque, never blurred,
+/* Floating menus (selects, date pickers) - always opaque, never blurred,
    so they stay readable over gradient/glass backgrounds. */
 .themed-menu {
   background-color: var(--dropdown-bg);

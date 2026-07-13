@@ -1,7 +1,7 @@
 // Multi-debt payoff simulation. Each month: interest accrues (apr/12), every
 // live debt gets its CURRENT minimum payment (credit cards and LOCs recompute
 // theirs from the live balance; loans are fixed), and the rest of the fixed
-// monthly budget — extraMonthly plus month-1 minimums — goes to the focus
+// monthly budget - extraMonthly plus month-1 minimums - goes to the focus
 // debt: snowball = lowest balance first, avalanche = highest APR first.
 
 import { monthlyPayment } from './amortization'
@@ -19,7 +19,7 @@ export interface Debt {
   loanMode?: LoanMode
   /** Loan, payment mode: fixed monthly payment. */
   minPayment?: number
-  /** Loan, term mode: amortization years — payment derived via monthlyPayment(). */
+  /** Loan, term mode: amortization years - payment derived via monthlyPayment(). */
   termYears?: number
 }
 
@@ -82,7 +82,7 @@ export function simulatePayoff(
       d.balance += interest
       totalInterest += interest
     }
-    // 2. Minimum payments — every live debt gets its CURRENT minimum first.
+    // 2. Minimum payments - every live debt gets its CURRENT minimum first.
     let budget = extraMonthly + totalMin
     for (const d of live) {
       if (d.balance <= 0) continue

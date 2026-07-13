@@ -58,7 +58,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
     swUpdate?.checkStatus === 'checking' ? 'Checking…'
       : swUpdate?.checkStatus === 'upToDate' ? "You're up to date"
       : swUpdate?.needRefresh ? 'Update available'
-      : swUpdate?.checkStatus === 'error' ? "Couldn't check — are you offline?"
+      : swUpdate?.checkStatus === 'error' ? "Couldn't check. Are you offline?"
       : `v${__APP_VERSION__}`
 
   return (
@@ -66,7 +66,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
       <div className="themed-menu rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-2">
           <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
-            <Sparkles className="w-5 h-5 text-accent" /> What's New — v{__APP_VERSION__}
+            <Sparkles className="w-5 h-5 text-accent" /> What's New · v{__APP_VERSION__}
           </h2>
           <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent">
             <X className="w-5 h-5" />

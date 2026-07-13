@@ -123,7 +123,7 @@ export const Layout: React.FC = () => {
               v{__APP_VERSION__} · What's New
             </button>
             <button onClick={() => setDisclaimerOpen(true)} className="text-[10px] text-text-secondary/80 hover:text-accent transition-colors">
-              Estimates Only — Not Financial Advice
+              Estimates Only · Not Financial Advice
             </button>
           </div>
         </div>

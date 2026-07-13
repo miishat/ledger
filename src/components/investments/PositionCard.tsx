@@ -17,7 +17,7 @@ interface PositionCardProps {
   totals: { plannedAll: number; currentAll: number }
 }
 
-const pct = (v: number | null) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
+const pct = (v: number | null) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
 
 export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysisDate, position, totals }) => {
   const { updatePosition, removePosition, removeLot } = useAnalysisStore.getState()
@@ -119,7 +119,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ analysisId, analysis
             <div><p className="text-text-secondary">Invested</p><p className="text-text-primary font-medium">{formatMoney(invested)} <span className="text-text-secondary">({formatMoney(variance(position.plannedAmount, position.lots))} vs plan)</span></p></div>
             <div><p className="text-text-secondary">Value Now / P&L</p><p className="text-text-primary font-medium">{formatMoney(value)} · {pct(plPct(position.lots, currentPrice))} ({formatMoney(plDollars(position.lots, currentPrice))})</p></div>
             <div><p className="text-text-secondary">If Fully Executed</p><p className="text-text-primary font-medium">{formatMoney(counterfactual)}</p></div>
-            <div><p className="text-text-secondary">Avg Cost</p><p className="text-text-primary font-medium">{avgCostBasis(position.lots)?.toFixed(2) ?? '—'}</p></div>
+            <div><p className="text-text-secondary">Avg Cost</p><p className="text-text-primary font-medium">{avgCostBasis(position.lots)?.toFixed(2) ?? '-'}</p></div>
             <div><p className="text-text-secondary">Allocation at Start</p><p className="text-text-primary font-medium">{pct(allocationPct(position.plannedAmount, totals.plannedAll))}</p></div>
             <div><p className="text-text-secondary">Allocation Now</p><p className="text-text-primary font-medium">{pct(allocationPct(value, totals.currentAll))}</p></div>
             <div><p className="text-text-secondary">Acted</p><p className="text-text-primary font-medium">

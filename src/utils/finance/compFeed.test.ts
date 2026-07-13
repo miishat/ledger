@@ -43,7 +43,7 @@ describe('compLumpSums', () => {
 
   it('places an RSU vest later in the same calendar month as now at month 1, not dropped', () => {
     // now = 2026-07-02. Cliff of 6 months from a 2026-01-15 start lands on
-    // 2026-07-15 — strictly after `now` but in the same calendar month, so
+    // 2026-07-15 - strictly after `now` but in the same calendar month, so
     // monthOffset(now, vestDate) truncates to 0. Previously offset >= 1
     // filtered this out entirely; it should now surface at month 1.
     const pkg: CompensationPackage = {

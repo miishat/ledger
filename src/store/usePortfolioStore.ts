@@ -70,7 +70,7 @@ export const usePortfolioStore = create<PortfolioState>()(
     {
       name: 'ledger-portfolio',
       version: 1,
-      // v0 holdings predate accounts — adopt them into the Default account.
+      // v0 holdings predate accounts - adopt them into the Default account.
       migrate: (persisted, version) => {
         const state = persisted as { holdings?: Array<Record<string, unknown>>; importedAt?: string | null }
         if (version < 1 && Array.isArray(state.holdings)) {

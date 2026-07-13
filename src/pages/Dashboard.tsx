@@ -15,7 +15,7 @@ import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 // Canonical default widget order/ids, hoisted to module scope so it is a stable
 // reference across renders (ids are what get persisted/reordered, not the elements).
 // NOTE: 'net-worth' = NetWorthTrendWidget (the trend chart) and 'trend' = NetWorthWidget
-// (the point-in-time figure). This naming looks swapped but is deliberate/historical —
+// (the point-in-time figure). This naming looks swapped but is deliberate/historical -
 // these ids are persisted in stored layouts, so do NOT "fix" the pairing here, it would
 // orphan existing users' saved widget order.
 const DASHBOARD_WIDGET_IDS: string[] = [
