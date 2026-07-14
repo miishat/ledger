@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import changelog from '../../../CHANGELOG.md?raw'
 import type { SWUpdate } from '../../hooks/useSWUpdate'
+import { Sheet } from './Sheet'
 
 interface WhatsNewModalProps {
   isOpen: boolean
@@ -44,8 +45,6 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
   const sections = useMemo(() => parseSections(), [])
   const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([0]))
 
-  if (!isOpen) return null
-
   const toggle = (i: number) =>
     setOpenSections((prev) => {
       const next = new Set(prev)
@@ -62,68 +61,72 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
       : `v${__APP_VERSION__}`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label="What's New">
-      <div className="themed-menu rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
-            <Sparkles className="w-5 h-5 text-accent" /> What's New · v{__APP_VERSION__}
-          </h2>
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {sections.map((s, i) => (
-          <div key={s.heading} className="flex flex-col">
-            <button
-              type="button"
-              onClick={() => toggle(i)}
-              aria-expanded={openSections.has(i)}
-              className="flex items-center justify-between gap-2 mt-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
-            >
-              <span className="text-[15px] font-semibold text-accent">{s.heading}</span>
-              <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${openSections.has(i) ? 'rotate-180' : ''}`} />
-            </button>
-            {openSections.has(i) && <SectionBody body={s.body} />}
-          </div>
-        ))}
-
-        {swUpdate && (
-          <div className="flex items-center justify-between gap-3 mt-5 pt-3 border-t border-border">
-            <span className="text-[12px] text-text-secondary">{checkLabel}</span>
-            {swUpdate.needRefresh ? (
-              <button
-                onClick={swUpdate.refresh}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium bg-[var(--color-accent)] text-[var(--color-bg-primary)] hover:opacity-90 transition-opacity"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh Now
-              </button>
-            ) : (
-              <button
-                onClick={swUpdate.checkForUpdates}
-                disabled={swUpdate.checkStatus === 'checking'}
-                className="px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50"
-              >
-                Check for Updates
-              </button>
-            )}
-          </div>
-        )}
-
-        <p className="mt-3 pt-3 border-t border-border text-[12px] text-text-secondary text-center">
-          Made by{' '}
-          <a href="https://github.com/miishat" target="_blank" rel="noreferrer" className="text-accent hover:underline">
-            Mishat
-          </a>
-        </p>
-
-        <button
-          onClick={() => { onClose(); onOpenDisclaimer() }}
-          className="mt-1 text-[10px] text-text-secondary/80 hover:text-accent transition-colors self-center"
-        >
-          Estimates Only · Not Financial Advice
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel="What's New"
+      panelClassName="themed-menu rounded-lg w-full max-w-2xl p-6 flex flex-col gap-1"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
+          <Sparkles className="w-5 h-5 text-accent" /> What's New · v{__APP_VERSION__}
+        </h2>
+        <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent">
+          <X className="w-5 h-5" />
         </button>
       </div>
-    </div>
+
+      {sections.map((s, i) => (
+        <div key={s.heading} className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => toggle(i)}
+            aria-expanded={openSections.has(i)}
+            className="flex items-center justify-between gap-2 mt-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+          >
+            <span className="text-[15px] font-semibold text-accent">{s.heading}</span>
+            <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${openSections.has(i) ? 'rotate-180' : ''}`} />
+          </button>
+          {openSections.has(i) && <SectionBody body={s.body} />}
+        </div>
+      ))}
+
+      {swUpdate && (
+        <div className="flex items-center justify-between gap-3 mt-5 pt-3 border-t border-border">
+          <span className="text-[12px] text-text-secondary">{checkLabel}</span>
+          {swUpdate.needRefresh ? (
+            <button
+              onClick={swUpdate.refresh}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium bg-[var(--color-accent)] text-[var(--color-bg-primary)] hover:opacity-90 transition-opacity"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh Now
+            </button>
+          ) : (
+            <button
+              onClick={swUpdate.checkForUpdates}
+              disabled={swUpdate.checkStatus === 'checking'}
+              className="px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50"
+            >
+              Check for Updates
+            </button>
+          )}
+        </div>
+      )}
+
+      <p className="mt-3 pt-3 border-t border-border text-[12px] text-text-secondary text-center">
+        Made by{' '}
+        <a href="https://github.com/miishat" target="_blank" rel="noreferrer" className="text-accent hover:underline">
+          Mishat
+        </a>
+      </p>
+
+      <button
+        onClick={() => { onClose(); onOpenDisclaimer() }}
+        className="mt-1 text-[10px] text-text-secondary/80 hover:text-accent transition-colors self-center"
+      >
+        Estimates Only · Not Financial Advice
+      </button>
+    </Sheet>
   )
 }
