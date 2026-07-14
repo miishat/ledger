@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useHistoricalPrice } from '../../services/marketData'
 import { useAnalysisStore, type Position } from '../../store/useAnalysisStore'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
 import { TickerRowEditor, type DraftRow } from './TickerRowEditor'
+import { Sheet } from '../ui/Sheet'
 
 interface AnalysisModalProps {
   isOpen: boolean
@@ -57,7 +58,7 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="themed-card rounded-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">Add Position: {existing?.name ?? ''}</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
@@ -159,7 +160,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 w-full max-w-lg flex flex-col gap-4 max-h-[84vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="themed-card rounded-lg p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">New Analysis</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
@@ -229,24 +230,19 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 }
 
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, analysisId }) => {
-  useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh] overflow-y-auto" onClick={onClose} role="dialog" aria-modal="true" aria-label={analysisId ? 'Add position' : 'New analysis'}>
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel={analysisId ? 'Add position' : 'New analysis'}
+      panelClassName="w-full max-w-lg"
+    >
       {analysisId ? (
         <AddPositionModal analysisId={analysisId} onClose={onClose} />
       ) : (
         <NewAnalysisModal onClose={onClose} />
       )}
-    </div>
+    </Sheet>
   )
 }
