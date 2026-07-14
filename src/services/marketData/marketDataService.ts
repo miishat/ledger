@@ -8,6 +8,7 @@ import { toDateKey, todayKey } from './dateKey'
 
 export const MIN_FETCH_INTERVAL_MS = 60_000
 export const STALE_AFTER_MS = 15 * 60_000
+export const QUOTE_FRESH_MS = 4 * 60 * 60 * 1000
 
 export interface Resolved<T> {
   value: T
@@ -38,9 +39,9 @@ function isStale(fetchedAt: string): boolean {
   return Date.now() - new Date(fetchedAt).getTime() > STALE_AFTER_MS
 }
 
-/** A quote fetched today (local calendar day) is considered fresh. See R9. */
-export function isQuoteFreshToday(fetchedAt: string): boolean {
-  return toDateKey(new Date(fetchedAt)) === todayKey()
+/** A quote fetched within the last QUOTE_FRESH_MS is considered fresh. See R9. */
+export function isQuoteFresh(fetchedAt: string): boolean {
+  return Date.now() - new Date(fetchedAt).getTime() < QUOTE_FRESH_MS
 }
 
 export async function getCurrentPrice(
@@ -61,7 +62,7 @@ export async function getCurrentPrice(
   }
 
   const cached = store.quotes[key]
-  if (!opts?.force && cached && isQuoteFreshToday(cached.fetchedAt)) {
+  if (!opts?.force && cached && isQuoteFresh(cached.fetchedAt)) {
     return { value: cached.value, source: 'cache', status: 'success', asOf: cached.fetchedAt, stale: false }
   }
 
@@ -81,7 +82,7 @@ export async function getCurrentPrice(
 function fromQuoteCache(key: string, status: FetchStatus): Resolved<Quote> {
   const cached = useMarketDataStore.getState().quotes[key]
   if (!cached) throw new Error('No market data available')
-  return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: !isQuoteFreshToday(cached.fetchedAt) }
+  return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: !isQuoteFresh(cached.fetchedAt) }
 }
 
 export async function getHistoricalPrice(

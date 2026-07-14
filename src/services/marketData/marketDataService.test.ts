@@ -49,14 +49,15 @@ describe('getCurrentPrice', () => {
     await expect(getCurrentPrice('ZZZ', undefined, { force: true })).rejects.toThrow('No market data available')
   })
 
-  it('returns the cached quote without fetching when it was fetched today', async () => {
+  it('returns the cached quote without fetching when it was fetched 1 hour ago', async () => {
     const fetchQuote = vi.fn()
     __setProviders({ fetchQuote })
+    const oneHourAgo = new Date(Date.now() - 60 * 60_000).toISOString()
     useMarketDataStore.setState({
       quotes: {
         AAPL: {
-          value: { ticker: 'AAPL', price: 100, currency: 'USD', asOf: new Date().toISOString() },
-          fetchedAt: new Date().toISOString(),
+          value: { ticker: 'AAPL', price: 100, currency: 'USD', asOf: oneHourAgo },
+          fetchedAt: oneHourAgo,
         },
       },
     })
@@ -79,6 +80,21 @@ describe('getCurrentPrice', () => {
     const r = await getCurrentPrice('AAPL', undefined, { force: true })
     expect(fetchQuote).toHaveBeenCalled()
     expect(r.value.price).toBe(101)
+  })
+
+  it('re-fetches a quote cached 5 hours ago without needing force', async () => {
+    const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60_000).toISOString()
+    const fetchQuote = vi.fn().mockResolvedValue({ ticker: 'AAPL', price: 102, currency: 'USD', asOf: new Date().toISOString() })
+    __setProviders({ fetchQuote })
+    useMarketDataStore.setState({
+      quotes: {
+        AAPL: { value: { ticker: 'AAPL', price: 100, currency: 'USD', asOf: fiveHoursAgo }, fetchedAt: fiveHoursAgo },
+      },
+    })
+    const r = await getCurrentPrice('AAPL')
+    expect(fetchQuote).toHaveBeenCalled()
+    expect(r.source).toBe('live')
+    expect(r.value.price).toBe(102)
   })
 })
 

@@ -98,7 +98,7 @@ export const MarketDataSettings: React.FC = () => {
                 </a>
               </li>
               <li>Enter your name and email, click &quot;GET FREE API KEY&quot; - the key appears instantly on the page.</li>
-              <li>Paste it above and hit Save. The free plan allows 25 lookups per day, so prices refresh at most once a day.</li>
+              <li>Paste it above and hit Save. The free plan allows 25 lookups per day, so prices refresh automatically at most once every 4 hours.</li>
             </ol>
 
             <p className="text-[12px] text-text-secondary/80">Your key is stored only on this device.</p>

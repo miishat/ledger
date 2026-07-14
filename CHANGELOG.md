@@ -9,7 +9,7 @@ pre-1.0 beta.
 ## [0.5.0] - 2026-07-13
 
 ### Added
-- Live stock prices via your own Alpha Vantage API key (free, 25 lookups a day); a new Market Data settings modal in the sidebar dock and mobile settings row lets you add and manage it. Quotes refresh at most once a day and update automatically when the app comes back online.
+- Live stock prices via your own Alpha Vantage API key (free, 25 lookups a day); a new Market Data settings modal in the sidebar dock and mobile settings row lets you add and manage it. Quotes refresh automatically at most once every 4 hours (and when the app comes back online); the refresh button still updates on demand.
 
 ### Changed
 - The "Estimates Only · Not Financial Advice" disclaimer link moved from the desktop sidebar into the What's New modal; mobile keeps its button.

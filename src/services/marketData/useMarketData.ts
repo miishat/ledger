@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Currency, FetchStatus, FxRate, HistoricalPrice, Quote } from './types'
-import { getCurrentPrice, getFxRate, getHistoricalPrice, type Resolved } from './marketDataService'
+import { getCurrentPrice, getFxRate, getHistoricalPrice, QUOTE_FRESH_MS, type Resolved } from './marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { quoteKey } from './cacheKey'
 
@@ -35,9 +35,14 @@ export function useCurrentPrice(ticker: string, exchange?: string) {
   }, [resolve, override])
 
   useEffect(() => {
-    const onOnline = () => resolve(() => mountedRef.current, true)
+    const onOnline = () => resolve(() => mountedRef.current)
     window.addEventListener('online', onOnline)
     return () => window.removeEventListener('online', onOnline)
+  }, [resolve])
+
+  useEffect(() => {
+    const id = setInterval(() => resolve(() => mountedRef.current), QUOTE_FRESH_MS)
+    return () => clearInterval(id)
   }, [resolve])
 
   const refresh = useCallback((force?: boolean) => {
