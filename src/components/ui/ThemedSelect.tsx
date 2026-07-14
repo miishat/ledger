@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { Sheet } from './Sheet'
 
 export interface ThemedSelectOption {
   value: string
@@ -34,6 +36,7 @@ export function menuPlacement(
 /** Theme-aware replacement for native <select>. Styled like the planner
  *  ToolSwitcher menu: themed card, accent highlight. */
 export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, onChange, className = '' }) => {
+  const isDesktop = useIsDesktop()
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(0)
   const [placement, setPlacement] = useState({ openUp: false, maxHeight: 256 })
@@ -87,7 +90,7 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
         <span className="truncate">{selected?.label ?? ''}</span>
         <ChevronDown className={`w-4 h-4 shrink-0 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
+      {open && isDesktop && (
           <div
             role="listbox"
             style={{ maxHeight: placement.maxHeight }}
@@ -112,6 +115,27 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
               </button>
             ))}
           </div>
+      )}
+      {!isDesktop && (
+        <Sheet open={open} onClose={() => setOpen(false)} desktop="modal" ariaLabel="Select an option" panelClassName="w-full">
+          <div role="listbox" className="flex flex-col">
+            {options.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                role="option"
+                aria-selected={o.value === value}
+                onClick={() => commit(o.value)}
+                className={`flex items-center justify-between gap-2 px-3 py-3 text-left text-[15px] rounded ${
+                  o.value === value ? 'text-accent' : 'text-text-primary'
+                }`}
+              >
+                <span className="truncate">{o.label}</span>
+                {o.value === value && <Check className="w-4 h-4 shrink-0" />}
+              </button>
+            ))}
+          </div>
+        </Sheet>
       )}
     </div>
   )
