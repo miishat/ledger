@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ThemedDatePicker } from './ThemedDatePicker'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 describe('ThemedDatePicker', () => {
   it('shows the value and opens a calendar grid', () => {
@@ -30,5 +31,20 @@ describe('ThemedDatePicker', () => {
     fireEvent.click(screen.getByRole('button', { name: /2026-07-05/ }))
     expect(screen.getByRole('grid')).toBeTruthy()
     expect(screen.queryByTestId('overlay-backdrop')).toBeNull()
+  })
+
+  it('opens as a sheet on mobile and selects a day', async () => {
+    setMatchMedia(false)
+    const onChange = vi.fn()
+    const { getByRole, getByTestId, queryByTestId } = render(
+      <ThemedDatePicker value="2026-07-05" onChange={onChange} />
+    )
+    fireEvent.click(getByRole('button', { name: /2026-07-05/ }))
+    const panel = getByTestId('sheet-panel')
+    expect(panel).toBeInTheDocument()
+    expect(getByRole('grid')).toBeTruthy()
+    fireEvent.click(getByRole('gridcell', { name: '14' }))
+    expect(onChange).toHaveBeenCalledWith('2026-07-14')
+    await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
 })
