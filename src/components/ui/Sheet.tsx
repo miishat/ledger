@@ -23,6 +23,9 @@ interface SheetProps {
   children: React.ReactNode
 }
 
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 export const Sheet: React.FC<SheetProps> = ({
   open,
   onClose,
@@ -54,21 +57,57 @@ export const Sheet: React.FC<SheetProps> = ({
       lastFocused.current = document.activeElement as HTMLElement
       // focus first focusable, else the panel
       const el = panelRef.current
-      const focusable = el?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
+      const focusable = el?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
       ;(focusable ?? el)?.focus()
     } else {
       lastFocused.current?.focus?.()
     }
   }, [open])
 
+  // Focus trap: keep Tab/Shift+Tab cycling within the panel while open.
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      const el = panelRef.current
+      if (!el) return
+      const focusables = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+      if (focusables.length === 0) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
+
   // Desktop popover anchor position.
+  const POPOVER_MARGIN = 8
+  const POPOVER_FALLBACK_WIDTH = 320
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   useLayoutEffect(() => {
     if (!open || !isDesktop || desktop !== 'popover' || !anchorRef?.current) return
     const r = anchorRef.current.getBoundingClientRect()
-    setPos({ top: r.bottom + 8, left: r.left })
+    const panelWidth = panelRef.current?.getBoundingClientRect().width || POPOVER_FALLBACK_WIDTH
+    const panelHeight = panelRef.current?.getBoundingClientRect().height || 0
+    const maxLeft = window.innerWidth - POPOVER_MARGIN - panelWidth
+    const left = Math.min(Math.max(r.left, POPOVER_MARGIN), Math.max(maxLeft, POPOVER_MARGIN))
+    let top = r.bottom + POPOVER_MARGIN
+    if (panelHeight && top + panelHeight > window.innerHeight) {
+      const above = r.top - POPOVER_MARGIN - panelHeight
+      if (above >= POPOVER_MARGIN) top = above
+    }
+    setPos({ top, left })
   }, [open, isDesktop, desktop, anchorRef])
 
   if (typeof document === 'undefined') return null
@@ -175,14 +214,16 @@ export const Sheet: React.FC<SheetProps> = ({
           >
             <div className="sticky top-0 flex items-center justify-between px-4 pt-3 pb-2 bg-[var(--dropdown-bg)]">
               <span className="mx-auto h-1 w-10 rounded-full bg-border" aria-hidden="true" />
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={onClose}
-                className="absolute right-3 top-3 p-1 text-text-secondary hover:text-text-primary"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {dismissible && (
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={onClose}
+                  className="absolute right-3 top-3 p-1 text-text-secondary hover:text-text-primary"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
             <div className="px-4 pb-4">{children}</div>
           </motion.div>

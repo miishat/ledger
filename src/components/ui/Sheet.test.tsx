@@ -63,4 +63,61 @@ describe('Sheet', () => {
     unmount()
     expect(document.body.style.overflow).toBe('')
   })
+
+  it('does not render a mobile Close button when dismissible=false', () => {
+    setMatchMedia(false) // mobile
+    const onClose = vi.fn()
+    const { queryByLabelText } = render(
+      <Sheet open onClose={onClose} dismissible={false} ariaLabel="x">c</Sheet>
+    )
+    expect(queryByLabelText('Close')).toBeNull()
+  })
+
+  it('traps focus: Tab from last element cycles to first, Shift+Tab from first cycles to last', () => {
+    const { getByTestId, getByText } = render(
+      <Sheet open onClose={() => {}} ariaLabel="x">
+        <button>first</button>
+        <button>middle</button>
+        <button>last</button>
+      </Sheet>
+    )
+    const panel = getByTestId('sheet-panel')
+    const first = getByText('first')
+    const last = getByText('last')
+
+    last.focus()
+    expect(document.activeElement).toBe(last)
+    fireEvent.keyDown(panel, { key: 'Tab' })
+    expect(document.activeElement).toBe(first)
+
+    first.focus()
+    expect(document.activeElement).toBe(first)
+    fireEvent.keyDown(panel, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(last)
+  })
+
+  it('clamps popover position within the viewport near the right edge', () => {
+    setMatchMedia(true) // desktop
+    const originalInnerWidth = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 400 })
+
+    const anchor = document.createElement('button')
+    anchor.getBoundingClientRect = () =>
+      ({ left: 380, right: 400, top: 50, bottom: 70, width: 20, height: 20 }) as DOMRect
+    document.body.appendChild(anchor)
+    const anchorRef = { current: anchor }
+
+    const { getByTestId } = render(
+      <Sheet open onClose={() => {}} desktop="popover" anchorRef={anchorRef} ariaLabel="x">
+        popover body
+      </Sheet>
+    )
+    const panel = getByTestId('sheet-panel')
+    const left = parseFloat(panel.style.left)
+    expect(left).toBeGreaterThanOrEqual(8)
+    expect(left).toBeLessThanOrEqual(window.innerWidth)
+
+    document.body.removeChild(anchor)
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth })
+  })
 })
