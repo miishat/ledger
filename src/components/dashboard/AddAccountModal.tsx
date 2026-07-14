@@ -4,6 +4,7 @@ import { useAccountsStore } from '../../store/useAccountsStore';
 import type { AccountType } from '../../store/useAccountsStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
+import { Sheet } from '../ui/Sheet';
 
 interface Account {
   id: string;
@@ -40,17 +41,6 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
     }
   }, [isOpen, defaultType, editingAccount]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name) {
@@ -72,8 +62,13 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} role="dialog" aria-modal="true" aria-label={editingAccount ? 'Edit Account' : 'Add Account'}>
-      <div className="bg-bg-primary border border-border rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel={editingAccount ? 'Edit Account' : 'Add Account'}
+      panelClassName="bg-bg-primary border border-border rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+    >
         <div className="flex justify-between items-center p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">{editingAccount ? 'Edit Account' : 'Add Account'}</h2>
           <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
@@ -135,7 +130,6 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Sheet>
   );
 };

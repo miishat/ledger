@@ -1,6 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { vi } from 'vitest'
 import { TransactionModal } from './TransactionModal'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const seed = () =>
   useBudgetStore.setState({
@@ -31,5 +33,17 @@ describe('TransactionModal category filtering', () => {
     fireEvent.click(screen.getByRole('button', { name: /uncategorized|salary/i }))
     expect(screen.getByRole('option', { name: /salary/i })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /groceries/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('TransactionModal scrim dismissal', () => {
+  it('renders when open and closes via scrim', () => {
+    seed()
+    setMatchMedia(true)
+    const onClose = vi.fn()
+    const { getByTestId } = render(<TransactionModal isOpen onClose={onClose} />)
+    expect(getByTestId('sheet-panel')).toBeInTheDocument()
+    fireEvent.click(getByTestId('sheet-scrim'))
+    expect(onClose).toHaveBeenCalled()
   })
 })
