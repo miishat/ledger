@@ -52,13 +52,13 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
   }
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !isDesktop) return
     const onPointerDown = (e: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
     }
     window.addEventListener('pointerdown', onPointerDown)
     return () => window.removeEventListener('pointerdown', onPointerDown)
-  }, [open])
+  }, [open, isDesktop])
 
   const commit = (v: string) => {
     onChange(v)

@@ -25,13 +25,13 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
   const [viewMonth, setViewMonth] = useState(Number(initial.slice(5, 7)) - 1) // 0-based
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !isDesktop) return
     const onPointerDown = (e: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
     }
     window.addEventListener('pointerdown', onPointerDown)
     return () => window.removeEventListener('pointerdown', onPointerDown)
-  }, [open])
+  }, [open, isDesktop])
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const firstDow = new Date(viewYear, viewMonth, 1).getDay()

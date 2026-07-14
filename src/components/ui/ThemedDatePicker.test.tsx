@@ -47,4 +47,23 @@ describe('ThemedDatePicker', () => {
     expect(onChange).toHaveBeenCalledWith('2026-07-14')
     await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
+
+  it('navigates months inside the mobile sheet without closing it', () => {
+    setMatchMedia(false)
+    const { getByRole, getByTestId, queryByTestId, getByText } = render(
+      <ThemedDatePicker value="2026-07-05" onChange={() => {}} />
+    )
+    fireEvent.click(getByRole('button', { name: /2026-07-05/ }))
+    expect(getByTestId('sheet-panel')).toBeInTheDocument()
+    expect(getByText('July 2026')).toBeTruthy()
+
+    const nextButton = getByRole('button', { name: 'Next month' })
+    // Real browsers fire pointerdown before click; the outside-click-to-close
+    // effect must not treat a tap inside the portaled sheet as "outside".
+    fireEvent.pointerDown(nextButton)
+    fireEvent.click(nextButton)
+
+    expect(queryByTestId('sheet-panel')).not.toBeNull()
+    expect(getByText('August 2026')).toBeTruthy()
+  })
 })
