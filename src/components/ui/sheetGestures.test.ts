@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shouldDismissOnDragEnd } from './sheet'
+import { shouldDismissOnDragEnd } from './sheetGestures'
 
 describe('shouldDismissOnDragEnd', () => {
   it('dismisses when dragged past the offset threshold', () => {

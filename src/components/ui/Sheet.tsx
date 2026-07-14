@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-
 import { X } from 'lucide-react'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
-import { shouldDismissOnDragEnd } from './sheet.ts'
+import { shouldDismissOnDragEnd } from './sheetGestures'
 
 interface SheetProps {
   open: boolean
