@@ -6,7 +6,7 @@ import {
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
-import { pct } from './HoldingRow'
+import { pct } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
 
 interface HoldingCardProps {

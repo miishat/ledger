@@ -12,6 +12,7 @@ export function useMediaQuery(query: string): boolean {
     if (typeof window === 'undefined' || !('matchMedia' in window)) return
     const mql = window.matchMedia(query)
     const onChange = (e: MediaQueryListEvent | { matches: boolean }) => setMatches(e.matches)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing to a new matchMedia query on query-string change, not a render-loop
     setMatches(mql.matches)
     mql.addEventListener('change', onChange as (e: MediaQueryListEvent) => void)
     return () => mql.removeEventListener('change', onChange as (e: MediaQueryListEvent) => void)

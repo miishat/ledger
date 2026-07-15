@@ -6,6 +6,7 @@ import {
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
+import { pct } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
 
 interface HoldingRowProps {
@@ -14,8 +15,6 @@ interface HoldingRowProps {
   totalValueCad: number
   onPrice: (id: string, price: number) => void
 }
-
-export const pct = (v: number | null) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
 
 export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, totalValueCad, onPrice }) => {
   const live = useCurrentPrice(holding.ticker, holding.exchange)
