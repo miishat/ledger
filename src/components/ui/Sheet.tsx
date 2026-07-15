@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -26,6 +26,12 @@ interface SheetProps {
 const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
+// Module-level stack of currently-open Sheet instance ids, topmost last.
+// Mirrors useScrollLock's module-level ref-counting pattern so stacked
+// Sheets (e.g. a ThemedSelect's own Sheet opened inside a modal Sheet) can
+// tell which one is on top without any prop-drilled context.
+const openStack: string[] = []
+
 export const Sheet: React.FC<SheetProps> = ({
   open,
   onClose,
@@ -41,15 +47,33 @@ export const Sheet: React.FC<SheetProps> = ({
   const reduced = useReducedMotion()
   const panelRef = useRef<HTMLDivElement>(null)
   const lastFocused = useRef<HTMLElement | null>(null)
+  const instanceId = useId()
   useScrollLock(open)
 
-  // Escape to close.
+  // Register/unregister this instance on the shared stacking-order stack
+  // whenever it opens or closes (regardless of dismissibility — a
+  // non-dismissible Sheet still occupies the top layer and should still
+  // block Escape from reaching sheets stacked below it).
+  useEffect(() => {
+    if (!open) return
+    openStack.push(instanceId)
+    return () => {
+      const i = openStack.indexOf(instanceId)
+      if (i !== -1) openStack.splice(i, 1)
+    }
+  }, [open, instanceId])
+
+  // Escape closes only the topmost stacked Sheet.
   useEffect(() => {
     if (!open || !dismissible) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (openStack[openStack.length - 1] !== instanceId) return
+      onClose()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, dismissible, onClose])
+  }, [open, dismissible, onClose, instanceId])
 
   // Focus management: focus the panel on open, restore to trigger on close.
   useEffect(() => {

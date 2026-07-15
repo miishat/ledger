@@ -96,6 +96,34 @@ describe('Sheet', () => {
     expect(document.activeElement).toBe(last)
   })
 
+  it('Escape closes only the topmost of two stacked dismissible Sheets', () => {
+    const onCloseFirst = vi.fn()
+    const onCloseSecond = vi.fn()
+    render(
+      <>
+        <Sheet open onClose={onCloseFirst} ariaLabel="first">first</Sheet>
+        <Sheet open onClose={onCloseSecond} ariaLabel="second">second</Sheet>
+      </>
+    )
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onCloseSecond).toHaveBeenCalledOnce()
+    expect(onCloseFirst).not.toHaveBeenCalled()
+  })
+
+  it('a non-dismissible Sheet on top blocks Escape from reaching a dismissible Sheet below', () => {
+    const onCloseFirst = vi.fn()
+    const onCloseSecond = vi.fn()
+    render(
+      <>
+        <Sheet open onClose={onCloseFirst} ariaLabel="first">first</Sheet>
+        <Sheet open onClose={onCloseSecond} dismissible={false} ariaLabel="second">second</Sheet>
+      </>
+    )
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onCloseSecond).not.toHaveBeenCalled()
+    expect(onCloseFirst).not.toHaveBeenCalled()
+  })
+
   it('clamps popover position within the viewport near the right edge', () => {
     setMatchMedia(true) // desktop
     const originalInnerWidth = window.innerWidth
