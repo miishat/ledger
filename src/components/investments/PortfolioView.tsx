@@ -68,7 +68,7 @@ export const PortfolioView: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-                <div data-testid="portfolio-cards" className="md:hidden flex flex-col gap-3">
+                <div data-testid={`portfolio-cards-${account}`} className="md:hidden flex flex-col gap-3">
                   {rows.map((h) => (
                     <HoldingCard key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
                   ))}

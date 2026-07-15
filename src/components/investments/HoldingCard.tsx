@@ -7,6 +7,7 @@ import {
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 import { pct } from './HoldingRow'
+import { Skeleton } from '../ui/Skeleton'
 
 interface HoldingCardProps {
   holding: Holding
@@ -25,6 +26,7 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, fxUsdCad, tot
 
   const valueCad = toCad(marketValue(holding, price), holding.currency, fxUsdCad)
   const plDollars = holdingPlDollars(holding, price)
+  const isLoadingPrice = live.status === 'loading' && !live.data
 
   return (
     <div className="themed-card rounded-lg p-3 flex flex-col gap-2">
@@ -35,17 +37,30 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, fxUsdCad, tot
             {holding.currency}{live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
           </span>
         </div>
-        <span className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
-          {formatMoney(plDollars)} ({pct(holdingPlPct(holding, price))})
-        </span>
+        {isLoadingPrice ? (
+          <Skeleton className="h-4 w-20 inline-block" />
+        ) : (
+          <span className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
+            {formatMoney(plDollars)} ({pct(holdingPlPct(holding, price))})
+          </span>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
         <span className="text-text-secondary">Qty</span><span className="text-right tabular-nums">{holding.quantity}</span>
         <span className="text-text-secondary">Avg Cost</span><span className="text-right tabular-nums">{holding.avgCost.toFixed(2)}</span>
-        <span className="text-text-secondary">Price</span><span className="text-right tabular-nums">{price.toFixed(2)}</span>
-        <span className="text-text-secondary">Alloc</span><span className="text-right tabular-nums">{pct(allocationPct(valueCad, totalValueCad))}</span>
+        <span className="text-text-secondary">Price</span>
+        <span className="text-right tabular-nums">
+          {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
+        </span>
+        <span className="text-text-secondary">Alloc</span>
+        <span className="text-right tabular-nums">
+          {isLoadingPrice ? <Skeleton className="h-4 w-12 inline-block" /> : pct(allocationPct(valueCad, totalValueCad))}
+        </span>
         <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
-        <span className="text-text-secondary">Value</span><span className="text-right tabular-nums">{formatMoney(marketValue(holding, price))}</span>
+        <span className="text-text-secondary">Value</span>
+        <span className="text-right tabular-nums">
+          {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : formatMoney(marketValue(holding, price))}
+        </span>
       </div>
     </div>
   )
