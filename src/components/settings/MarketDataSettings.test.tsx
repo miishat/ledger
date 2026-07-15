@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MarketDataSettings } from './MarketDataSettings'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 afterEach(() => useMarketDataStore.getState().clearApiKey())
 
@@ -18,5 +19,14 @@ describe('MarketDataSettings', () => {
     fireEvent.click(screen.getByRole('button', { name: /market data/i }))
     const link = screen.getByRole('link', { name: /free api key/i })
     expect(link).toHaveAttribute('href', 'https://www.alphavantage.co/support/#api-key')
+  })
+
+  it('closes when the scrim is clicked (desktop)', async () => {
+    setMatchMedia(true)
+    render(<MarketDataSettings />)
+    fireEvent.click(screen.getByRole('button', { name: /market data/i }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('sheet-scrim'))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 })

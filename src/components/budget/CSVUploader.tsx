@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { parseCSV, type UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
@@ -7,6 +7,7 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { v4 as uuidv4 } from 'uuid';
 import type { TriageTransaction } from '../../types/triage';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { Sheet } from '../ui/Sheet';
 
 export const CSVUploader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,15 +110,6 @@ export const CSVUploader: React.FC = () => {
     setMapDesc('');
   };
 
-  useEffect(() => {
-    if (!mappingData) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMappingData(null);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mappingData]);
-
   return (
     <div className="flex flex-col gap-2">
       <input
@@ -137,9 +129,15 @@ export const CSVUploader: React.FC = () => {
       </button>
       {error && <span className="text-[12px] text-error text-center">{error}</span>}
 
-      {mappingData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" onClick={() => setMappingData(null)} role="dialog" aria-modal="true" aria-label="Map CSV Columns">
-          <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg w-[400px] border border-[var(--color-border)] shadow-xl flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+      <Sheet
+        open={!!mappingData}
+        onClose={() => setMappingData(null)}
+        desktop="modal"
+        ariaLabel="Map CSV Columns"
+        panelClassName="bg-[var(--color-bg-primary)] p-6 rounded-lg w-[400px] border border-[var(--color-border)] shadow-xl flex flex-col gap-4"
+      >
+        {mappingData && (
+          <>
             <div className="flex justify-between items-center">
               <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Map CSV Columns</h2>
               <button onClick={() => setMappingData(null)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"><X size={20} /></button>
@@ -180,9 +178,9 @@ export const CSVUploader: React.FC = () => {
             >
               Import Transactions
             </button>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Sheet>
     </div>
   );
 };

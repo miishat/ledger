@@ -30,7 +30,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const wrapperClass = isExpanded 
+  const getTransactionDisplay = (tx: Transaction) => ({
+    amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
+    amountPrefix: tx.type === 'income' ? '+' : '-',
+    categoryLabel: tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+  });
+
+  const wrapperClass = isExpanded
     ? "fixed inset-4 z-50 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col shadow-2xl animate-fade-in"
     : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]";
 
@@ -77,49 +83,92 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
         </div>
       ) : (
         <div className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : ''}`}>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border text-[12px] text-text-secondary">
-                <th className="pb-2 font-medium">Date</th>
-                <th className="pb-2 font-medium">Description</th>
-                <th className="pb-2 font-medium">Category</th>
-                <th className="pb-2 font-medium text-right">Amount</th>
-                <th className="pb-2 font-medium w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {txList.map(tx => (
-                <tr 
-                  key={tx.id} 
-                  className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
-                  onClick={() => setEditingTransaction(tx)}
-                >
-                  <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
-                  <td className="py-3 text-[14px]">{tx.description}</td>
-                  <td className="py-3 text-[14px]">
-                    <span className="px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px]">
-                      {tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized'}
-                    </span>
-                  </td>
-                  <td className={`py-3 text-[14px] font-medium text-right ${tx.type === 'income' ? 'text-accent' : 'text-text-primary'}`}>
-                    {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
-                  </td>
-                  <td className="py-3 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteTransaction(tx.id);
-                      }}
-                      aria-label="Delete transaction"
-                      className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
+          <div className="hidden md:block">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border text-[12px] text-text-secondary">
+                  <th className="pb-2 font-medium">Date</th>
+                  <th className="pb-2 font-medium">Description</th>
+                  <th className="pb-2 font-medium">Category</th>
+                  <th className="pb-2 font-medium text-right">Amount</th>
+                  <th className="pb-2 font-medium w-10"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {txList.map(tx => {
+                  const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+                  return (
+                  <tr
+                    key={tx.id}
+                    className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
+                    onClick={() => setEditingTransaction(tx)}
+                  >
+                    <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
+                    <td className="py-3 text-[14px]">{tx.description}</td>
+                    <td className="py-3 text-[14px]">
+                      <span className="px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px]">
+                        {categoryLabel}
+                      </span>
+                    </td>
+                    <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
+                      {amountPrefix}{formatMoney(tx.amount)}
+                    </td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTransaction(tx.id);
+                        }}
+                        aria-label="Delete transaction"
+                        className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
+            {txList.map(tx => {
+              const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+              return (
+              <div
+                key={tx.id}
+                data-testid={`transaction-card-${tx.id}`}
+                onClick={() => setEditingTransaction(tx)}
+                className="themed-card rounded-lg p-3 flex flex-col gap-2 cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
+                    <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
+                      {amountPrefix}{formatMoney(tx.amount)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTransaction(tx.id);
+                    }}
+                    aria-label="Delete transaction"
+                    className="p-3 -m-1 text-text-secondary hover:text-error transition-colors rounded-md hover:bg-bg-primary shrink-0"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between text-[12px] text-text-secondary">
+                  <span>{tx.date}</span>
+                  <span className="px-2 py-1 bg-bg-primary border border-border rounded-md">
+                    {categoryLabel}
+                  </span>
+                </div>
+              </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

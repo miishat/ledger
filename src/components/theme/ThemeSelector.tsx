@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { useThemeStore, type AppTheme } from '../../store/useThemeStore'
 import { LayoutGrid, Terminal, Gem, Sparkles, Layers } from 'lucide-react'
+import { Sheet } from '../ui/Sheet'
 
 const themeConfig: Record<AppTheme, { name: string; icon: React.ReactNode; color: string }> = {
   geometric: { name: 'Geometric Light', icon: <LayoutGrid size={16} />, color: 'bg-blue-500' },
@@ -14,43 +15,58 @@ const THEMES: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass'
 
 export const ThemeSelector: React.FC = () => {
   const { theme, setTheme } = useThemeStore()
+  const [open, setOpen] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const current = themeConfig[theme]
 
   return (
-    <div className="flex items-center gap-1 p-1 rounded-full bg-bg-secondary/70 border border-border backdrop-blur-md shadow-inner transition-all duration-300">
-      {THEMES.map((t) => {
-        const isActive = t === theme
-        const config = themeConfig[t]
+    <div className="relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={`Theme: ${current.name}`}
+        title="Theme"
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-bg-secondary/70 border border-border backdrop-blur-md shadow-inner text-text-secondary hover:text-accent transition-colors"
+      >
+        {current.icon}
+      </button>
 
-        return (
-          <button
-            key={t}
-            onClick={() => setTheme(t)}
-            className={`relative group flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
-              isActive ? 'bg-accent/15 ring-1 ring-accent shadow-sm' : 'hover:bg-bg-primary/60'
-            }`}
-            aria-label={config.name}
-            title={config.name}
-          >
-            <div className={`transition-colors duration-300 ${
-              isActive ? 'text-accent' : 'text-text-secondary group-hover:text-text-primary'
-            }`}>
-              {config.icon}
-            </div>
-
-            {/* Active Indicator dot */}
-            {isActive && (
-              <div className={`absolute -bottom-1 w-1 h-1 rounded-full ${config.color} shadow-[0_0_8px_rgba(var(--color-accent),0.5)]`} />
-            )}
-
-            {/* Tooltip */}
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-50">
-              <div className="bg-bg-secondary text-text-primary text-xs font-medium py-1 px-2 rounded whitespace-nowrap shadow-xl border border-border">
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        desktop="popover"
+        anchorRef={btnRef}
+        ariaLabel="Choose theme"
+        panelClassName="w-56 max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1"
+      >
+        <div role="menu" className="flex flex-col gap-1">
+          {THEMES.map((t) => {
+            const isActive = t === theme
+            const config = themeConfig[t]
+            return (
+              <button
+                key={t}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setTheme(t)
+                  setOpen(false)
+                }}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded text-left text-[14px] transition-colors ${
+                  isActive ? 'bg-accent/10 text-accent font-medium' : 'text-text-primary hover:bg-accent/10 hover:text-accent'
+                }`}
+              >
+                <span className={isActive ? 'text-accent' : 'text-text-secondary'}>{config.icon}</span>
                 {config.name}
-              </div>
-            </div>
-          </button>
-        )
-      })}
+                {isActive && <span className={`ml-auto w-1.5 h-1.5 rounded-full ${config.color}`} aria-hidden="true" />}
+              </button>
+            )
+          })}
+        </div>
+      </Sheet>
     </div>
   )
 }

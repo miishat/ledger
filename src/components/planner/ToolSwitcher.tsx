@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { PLANNER_GROUPS, PLANNER_TOOLS, type PlannerTool } from './toolRegistry'
+import { Sheet } from '../ui/Sheet'
 
 interface ToolSwitcherProps {
   current: PlannerTool
@@ -11,28 +12,13 @@ interface ToolSwitcherProps {
  *  between planner tools never requires a round-trip through the hub. */
 export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
-
   return (
-    <div ref={rootRef} className="relative">
+    <div className="relative">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -43,12 +29,16 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
         <ChevronDown className={`w-5 h-5 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && (
-          <div
-            role="menu"
-            className="absolute left-0 top-full mt-2 z-40 w-72 max-h-[70vh] overflow-y-auto themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1 animate-dropdown-in"
-          >
-            {PLANNER_GROUPS.map((group) => {
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        desktop="popover"
+        anchorRef={btnRef}
+        ariaLabel="Switch tool"
+        panelClassName="w-72 max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1"
+      >
+        <div role="menu" className="max-h-[70vh] overflow-y-auto flex flex-col gap-1">
+          {PLANNER_GROUPS.map((group) => {
               const tools = PLANNER_TOOLS.filter((t) => t.group === group)
               if (tools.length === 0) return null
               return (
@@ -78,8 +68,8 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
                 </div>
               )
             })}
-          </div>
-      )}
+        </div>
+      </Sheet>
     </div>
   )
 }

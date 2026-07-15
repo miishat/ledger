@@ -86,8 +86,19 @@ export const DebtPayoffCalculator: React.FC = () => {
         </div>
         {debts.map((d) => {
           const autoMin = minPaymentFor(d, d.balance)
+          const handleRemove = () => saveDebts(debts.filter((x) => x.id !== d.id))
           return (
             <div key={d.id} className="flex flex-col gap-3 border-b border-border pb-3 last:border-b-0">
+              <div data-testid="debt-card-header" className="flex items-center justify-between md:hidden">
+                <span className="text-[14px] font-medium text-text-primary">{d.name || 'Debt'}</span>
+                <button
+                  onClick={handleRemove}
+                  className="p-2 rounded-lg text-text-secondary hover:text-error transition-colors"
+                  aria-label={`Remove ${d.name}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-[2fr_1.4fr_1fr_1fr_auto] gap-3 items-end">
                 <label className="flex flex-col gap-1">
                   <span className="text-[13px] font-medium text-text-secondary">Name</span>
@@ -110,8 +121,8 @@ export const DebtPayoffCalculator: React.FC = () => {
                 <CalculatorField label="Balance" prefix="$" step={100} value={d.balance} onChange={(v) => updateDebt(d.id, { balance: v })} />
                 <CalculatorField label="APR" suffix="%" step={0.1} value={d.aprPct} onChange={(v) => updateDebt(d.id, { aprPct: v })} />
                 <button
-                  onClick={() => saveDebts(debts.filter((x) => x.id !== d.id))}
-                  className="self-end p-2 mb-2 rounded-lg text-text-secondary hover:text-error transition-colors"
+                  onClick={handleRemove}
+                  className="hidden md:flex self-end p-2 mb-2 rounded-lg text-text-secondary hover:text-error transition-colors"
                   aria-label={`Remove ${d.name}`}
                 >
                   <Trash2 className="w-4 h-4" />

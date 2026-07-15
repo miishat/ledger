@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { AnalysisModal } from './AnalysisModal'
 import { useAnalysisStore } from '../../store/useAnalysisStore'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 vi.mock('../../services/marketData', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -23,5 +24,13 @@ describe('AnalysisModal (new analysis)', () => {
     expect(a.positions[0].allocationPct).toBe(100)
     expect(a.positions[0].plannedAmount).toBe(10000)
     expect(a.positions[0].startPrice).toBe(150)
+  })
+
+  it('closes when the scrim is clicked (desktop)', () => {
+    setMatchMedia(true)
+    const onClose = vi.fn()
+    const { getByTestId } = render(<AnalysisModal isOpen onClose={onClose} />)
+    fireEvent.click(getByTestId('sheet-scrim'))
+    expect(onClose).toHaveBeenCalled()
   })
 })

@@ -1,6 +1,8 @@
+import { vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { CompensationModal } from './CompensationModal'
 import { useCompensationStore } from '../../store/useCompensationStore'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const initialCompState = useCompensationStore.getState()
 
@@ -71,5 +73,15 @@ describe('CompensationModal numeric field submission (NumberInput conversion)', 
     expect(grants).toHaveLength(1)
     expect(grants[0].grantShares).toBe(500)
     expect(grants[0].grantPrice).toBe(42)
+  })
+})
+
+describe('CompensationModal scrim dismissal', () => {
+  it('closes when the scrim is clicked (desktop)', () => {
+    setMatchMedia(true)
+    const onClose = vi.fn()
+    const { getByTestId } = render(<CompensationModal isOpen={true} onClose={onClose} />)
+    fireEvent.click(getByTestId('sheet-scrim'))
+    expect(onClose).toHaveBeenCalled()
   })
 })

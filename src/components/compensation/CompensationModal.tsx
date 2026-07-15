@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
+import { Sheet } from '../ui/Sheet'
 
 const MONTH_OPTIONS = [
   { value: '1', label: 'January' },
@@ -63,17 +64,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const [rsuCliffMonths, setRsuCliffMonths] = useState(12)
   const [rsuFrequency, setRsuFrequency] = useState<VestingFrequency>('monthly')
   const [editRsuGrantId, setEditRsuGrantId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
-
-  if (!isOpen) return null
 
   const handleSaveRSU = () => {
     if (!rsuGrantName || !rsuGrantShares || !rsuGrantPrice) return
@@ -169,8 +159,13 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const labelClass = "text-[12px] font-medium leading-none text-[var(--color-text-secondary)]"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-fade-in" onClick={onClose} role="dialog" aria-modal="true" aria-label="Edit Compensation Package">
-      <div className="w-full max-w-2xl bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden max-h-[90vh] overflow-y-auto flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel="Edit Compensation Package"
+      panelClassName="w-full max-w-2xl bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden flex flex-col"
+    >
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Edit Compensation Package</h2>
           <button
@@ -522,7 +517,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Sheet>
   )
 }

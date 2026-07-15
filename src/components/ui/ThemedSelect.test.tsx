@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemedSelect, menuPlacement } from './ThemedSelect'
+import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const options = [
   { value: 'a', label: 'Alpha' },
@@ -48,6 +49,18 @@ describe('ThemedSelect', () => {
     fireEvent.click(screen.getByRole('button', { name: /alpha/i }))
     expect(screen.getByRole('listbox')).toBeTruthy()
     expect(screen.queryByTestId('overlay-backdrop')).toBeNull()
+  })
+
+  it('opens options in a sheet on mobile and commits a selection', () => {
+    setMatchMedia(false)
+    const onChange = vi.fn()
+    const { getByRole, getByText, getByTestId } = render(
+      <ThemedSelect value="a" onChange={onChange} options={[{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }]} />
+    )
+    fireEvent.click(getByRole('button'))
+    expect(getByTestId('sheet-panel')).toBeInTheDocument()
+    fireEvent.click(getByText('Beta'))
+    expect(onChange).toHaveBeenCalledWith('b')
   })
 })
 
