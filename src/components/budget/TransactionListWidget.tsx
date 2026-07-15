@@ -30,7 +30,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const wrapperClass = isExpanded 
+  const getTransactionDisplay = (tx: Transaction) => ({
+    amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
+    amountPrefix: tx.type === 'income' ? '+' : '-',
+    categoryLabel: tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+  });
+
+  const wrapperClass = isExpanded
     ? "fixed inset-4 z-50 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col shadow-2xl animate-fade-in"
     : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[300px]";
 
@@ -89,7 +95,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                 </tr>
               </thead>
               <tbody>
-                {txList.map(tx => (
+                {txList.map(tx => {
+                  const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+                  return (
                   <tr
                     key={tx.id}
                     className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
@@ -99,11 +107,11 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                     <td className="py-3 text-[14px]">{tx.description}</td>
                     <td className="py-3 text-[14px]">
                       <span className="px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px]">
-                        {tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized'}
+                        {categoryLabel}
                       </span>
                     </td>
-                    <td className={`py-3 text-[14px] font-medium text-right ${tx.type === 'income' ? 'text-accent' : 'text-text-primary'}`}>
-                      {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                    <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
+                      {amountPrefix}{formatMoney(tx.amount)}
                     </td>
                     <td className="py-3 text-right">
                       <button
@@ -118,12 +126,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
           <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
-            {txList.map(tx => (
+            {txList.map(tx => {
+              const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+              return (
               <div
                 key={tx.id}
                 data-testid={`transaction-card-${tx.id}`}
@@ -133,8 +144,8 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center justify-between flex-1 min-w-0">
                     <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
-                    <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${tx.type === 'income' ? 'text-accent' : 'text-text-primary'}`}>
-                      {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                    <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
+                      {amountPrefix}{formatMoney(tx.amount)}
                     </span>
                   </div>
                   <button
@@ -151,11 +162,12 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                 <div className="flex items-center justify-between text-[12px] text-text-secondary">
                   <span>{tx.date}</span>
                   <span className="px-2 py-1 bg-bg-primary border border-border rounded-md">
-                    {tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized'}
+                    {categoryLabel}
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
