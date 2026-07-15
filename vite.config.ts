@@ -32,6 +32,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
     globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
   },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? 'dev'),
