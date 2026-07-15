@@ -23,7 +23,7 @@ export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
         desktop="popover"
         anchorRef={btnRef}
         ariaLabel={`${tool.name} help`}
-        panelClassName="w-[32rem] max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-4 flex flex-col gap-3"
+        panelClassName="w-[32rem] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto themed-menu rounded-lg shadow-xl p-4 flex flex-col gap-3"
       >
         <h3 className="text-[15px] font-semibold text-text-primary">{tool.name}</h3>
         <p className="text-[13px] text-text-secondary">{tool.info.howTo}</p>
