@@ -15,7 +15,7 @@ interface HoldingRowProps {
   onPrice: (id: string, price: number) => void
 }
 
-const pct = (v: number | null) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
+export const pct = (v: number | null) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`)
 
 export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, totalValueCad, onPrice }) => {
   const live = useCurrentPrice(holding.ticker, holding.exchange)

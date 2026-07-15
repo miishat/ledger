@@ -5,6 +5,7 @@ import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
 import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { HoldingRow } from './HoldingRow'
+import { HoldingCard } from './HoldingCard'
 import { PortfolioImport } from './PortfolioImport'
 import { EmptyState } from '../ui/EmptyState'
 
@@ -42,29 +43,36 @@ export const PortfolioView: React.FC = () => {
           {accountNames(holdings).map((account) => {
             const rows = holdings.filter((h) => h.account === account)
             return (
-              <div key={account} className="themed-card rounded-lg p-4 overflow-x-auto">
+              <div key={account} className="themed-card rounded-lg p-4">
                 <h3 className="text-[14px] font-semibold text-text-primary mb-2">
                   {account} <span className="text-text-secondary font-normal">({rows.length})</span>
                 </h3>
-                <table className="w-full text-[13px] min-w-[720px]">
-                  <thead>
-                    <tr className="text-left text-text-secondary border-b border-border">
-                      <th className="py-2 pr-3 font-medium">Holding</th>
-                      <th className="py-2 pr-3 font-medium text-right">Qty</th>
-                      <th className="py-2 pr-3 font-medium text-right">Avg Cost</th>
-                      <th className="py-2 pr-3 font-medium text-right">Price</th>
-                      <th className="py-2 pr-3 font-medium text-right">Book</th>
-                      <th className="py-2 pr-3 font-medium text-right">Value</th>
-                      <th className="py-2 pr-3 font-medium text-right">P/L</th>
-                      <th className="py-2 font-medium text-right">Alloc</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((h) => (
-                      <HoldingRow key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
-                    ))}
-                  </tbody>
-                </table>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-[13px] min-w-[720px]">
+                    <thead>
+                      <tr className="text-left text-text-secondary border-b border-border">
+                        <th className="py-2 pr-3 font-medium">Holding</th>
+                        <th className="py-2 pr-3 font-medium text-right">Qty</th>
+                        <th className="py-2 pr-3 font-medium text-right">Avg Cost</th>
+                        <th className="py-2 pr-3 font-medium text-right">Price</th>
+                        <th className="py-2 pr-3 font-medium text-right">Book</th>
+                        <th className="py-2 pr-3 font-medium text-right">Value</th>
+                        <th className="py-2 pr-3 font-medium text-right">P/L</th>
+                        <th className="py-2 font-medium text-right">Alloc</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((h) => (
+                        <HoldingRow key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div data-testid="portfolio-cards" className="md:hidden flex flex-col gap-3">
+                  {rows.map((h) => (
+                    <HoldingCard key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
+                  ))}
+                </div>
               </div>
             )
           })}
