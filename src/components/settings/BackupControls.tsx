@@ -33,16 +33,16 @@ export const BackupControls: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 w-full">
+    <div className="flex flex-col gap-2 w-full">
       <div className="flex gap-2">
         <button
           onClick={handleExport}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors"
         >
-          <Download className="w-4 h-4" /> Export
+          <Download className="w-4 h-4" /> Export data
         </button>
-        <label className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors cursor-pointer">
-          <Upload className="w-4 h-4" /> Import
+        <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors cursor-pointer">
+          <Upload className="w-4 h-4" /> Import backup
           <input type="file" accept="application/json" onChange={handleImport} className="sr-only" />
         </label>
       </div>
