@@ -6,7 +6,7 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
-## [0.5.0] - 2026-07-13
+## [0.5.0-beta] - 2026-07-13
 
 ### Added
 - Live stock prices via your own Alpha Vantage API key (free, 25 lookups a day); a new Market Data settings modal in the sidebar dock and mobile settings row lets you add and manage it. Quotes refresh automatically at most once every 4 hours (and when the app comes back online); the refresh button still updates on demand.
@@ -22,7 +22,7 @@ pre-1.0 beta.
 ### Removed
 - The Yahoo Finance provider, which never worked from a static site due to browser CORS restrictions.
 
-## [0.4.0] - 2026-07-11
+## [0.4.0-beta] - 2026-07-11
 
 ### Added
 - Debt Payoff: pick a debt type: Credit Card and Line of Credit minimums are calculated for you (3% of balance / interest-only, updated as the balance falls); Loans take either your known payment or your amortization term.
