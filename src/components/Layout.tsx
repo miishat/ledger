@@ -8,7 +8,7 @@ import { UpdateToast } from './ui/UpdateToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator, Settings } from 'lucide-react'
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator, Settings, Search } from 'lucide-react'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
@@ -69,11 +69,21 @@ export const Layout: React.FC = () => {
       {/* Sidebar Navigation */}
       <nav className="hidden md:flex w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
         <div>
-          <div className="p-6">
+          <div className="p-6 pb-3">
             <h1 className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</h1>
-            <p className="text-sm text-text-secondary mt-1 font-medium">Command Center</p>
           </div>
-          
+
+          <div className="px-4">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            >
+              <Search className="w-4 h-4" /> Search
+              <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-border text-text-secondary/80">⌘K</kbd>
+            </button>
+          </div>
+
           <div className="px-4 space-y-2 mt-4">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -85,7 +95,7 @@ export const Layout: React.FC = () => {
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex items-center px-4 py-3 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                     isActive
-                      ? 'bg-accent/10 text-accent font-semibold'
+                      ? 'bg-accent/10 text-accent font-semibold border-l-2 border-accent rounded-l-none'
                       : 'text-text-secondary hover:bg-bg-primary/50 hover:text-text-primary'
                   }`}
                 >
@@ -98,15 +108,18 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Settings Dock */}
-        <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
+        <div className="p-4 border-t border-border bg-bg-primary/20 flex items-center justify-between">
           <button
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
           >
             <Settings className="w-4 h-4" /> Settings
           </button>
-          <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
-            v{__APP_VERSION__} · What's New
+          <button
+            onClick={() => setWhatsNewOpen(true)}
+            className="text-[11px] text-text-secondary/70 hover:text-accent transition-colors pr-2"
+          >
+            v{__APP_VERSION__}
           </button>
         </div>
       </nav>

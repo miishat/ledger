@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 vi.mock('../hooks/useSWUpdate', () => ({
@@ -20,5 +20,21 @@ describe('Layout mobile chrome', () => {
     // padding reserves tab bar height + safe area on mobile:
     expect(main.className).toMatch(/pb-\[/) // custom bottom padding present
     expect(main.className).toMatch(/overflow-x-hidden|overflow-x-clip/)
+  })
+})
+
+describe('Layout desktop sidebar', () => {
+  it('has no tagline and opens the command palette from the search button', () => {
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+    expect(screen.queryByText('Command Center')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /search/i }))
+    expect(screen.getByPlaceholderText('Jump to a module or tool…')).toBeInTheDocument()
+  })
+
+  it('marks the active nav item with an accent bar', () => {
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+    const active = screen.getAllByRole('link', { name: /dashboard/i })
+      .find((l) => l.getAttribute('aria-current') === 'page')!
+    expect(active.className).toMatch(/border-l-2/)
   })
 })
