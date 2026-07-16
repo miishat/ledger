@@ -6,6 +6,13 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.6.1-beta] - 2026-07-16
+
+### Changed
+- Settings popup reorganized into cards: Appearance, Market data (key status badge, setup guide collapsed behind "How to get a free key"), Backup, and a compact About footer
+- Theme picker tiles now preview the app in each theme (header bar and sparkline in the theme's own colors)
+- Sidebar: new Search button reveals the Ctrl/Cmd+K command palette, active page gets an accent bar, settings dock flattened to one row, "Command Center" tagline removed
+
 ## [0.6.0-beta] - 2026-07-16
 
 ### Added
