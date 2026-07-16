@@ -19,4 +19,9 @@ describe('ThemeSwatchGrid', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Aurora Gradient/ }))
     expect(useThemeStore.getState().theme).toBe('aurora')
   })
+
+  it('renders a sparkline preview in every tile', () => {
+    const { container } = render(<ThemeSwatchGrid />)
+    expect(container.querySelectorAll('svg polyline')).toHaveLength(5)
+  })
 })
