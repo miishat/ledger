@@ -78,35 +78,36 @@ export const MortgageCalculator: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-2">
-        {(['payment', 'affordability'] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => setInput(TOOL_ID, 'mode', m)}
-            className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-              mode === m ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {m === 'payment' ? 'Payment' : 'Affordability'}
-          </button>
-        ))}
-      </div>
-
-      {mode === 'payment' && (
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
-          {(['monthly', 'biweekly'] as const).map((f) => (
+          {(['payment', 'affordability'] as const).map((m) => (
             <button
-              key={f}
-              onClick={() => setInput(TOOL_ID, 'frequency', f)}
+              key={m}
+              onClick={() => setInput(TOOL_ID, 'mode', m)}
               className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-                frequency === f ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+                mode === m ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
               }`}
             >
-              {f === 'monthly' ? 'Monthly' : 'Biweekly (Accelerated)'}
+              {m === 'payment' ? 'Payment' : 'Affordability'}
             </button>
           ))}
         </div>
-      )}
+        {mode === 'payment' && (
+          <div className="flex gap-2">
+            {(['monthly', 'biweekly'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setInput(TOOL_ID, 'frequency', f)}
+                className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
+                  frequency === f ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {f === 'monthly' ? 'Monthly' : 'Biweekly (Accelerated)'}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {mode === 'payment' ? (
         <>
