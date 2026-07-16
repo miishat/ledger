@@ -86,6 +86,14 @@ export const DebtPayoffCalculator: React.FC = () => {
         </div>
         {debts.map((d) => {
           const autoMin = minPaymentFor(d, d.balance)
+          // Second-row fields: 1 for card/LOC (min payment), 2 for loan+payment
+          // (mode select + payment), 3 for loan+term (select + years + computed).
+          const detailCols =
+            d.type !== 'loan'
+              ? 'md:grid-cols-[minmax(0,340px)]'
+              : (d.loanMode ?? 'payment') === 'payment'
+                ? 'md:grid-cols-[1.4fr_1fr]'
+                : 'md:grid-cols-[1.4fr_1fr_1fr]'
           const handleRemove = () => saveDebts(debts.filter((x) => x.id !== d.id))
           return (
             <div key={d.id} className="flex flex-col gap-3 border-b border-border pb-3 last:border-b-0">
@@ -128,7 +136,7 @@ export const DebtPayoffCalculator: React.FC = () => {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr] gap-3 items-end">
+              <div className={`grid grid-cols-1 ${detailCols} gap-3 items-end`}>
                 {d.type === 'loan' ? (
                   <>
                     <SelectField
