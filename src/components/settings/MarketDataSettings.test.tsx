@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MarketDataSection } from './MarketDataSettings'
+import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 
 describe('MarketDataSection', () => {
@@ -11,11 +11,30 @@ describe('MarketDataSection', () => {
     fireEvent.change(screen.getByLabelText('Alpha Vantage API Key'), { target: { value: 'demo-key-x3P' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(useMarketDataStore.getState().apiKey).toBe('demo-key-x3P')
-    expect(screen.getByText(/ends in …x3P/)).toBeInTheDocument()
   })
 
-  it('shows setup instructions with a link to claim a free key', () => {
+  it('collapses setup instructions behind a disclosure', () => {
     render(<MarketDataSection />)
-    expect(screen.getByRole('link', { name: 'Get a free API key' })).toHaveAttribute('href', 'https://www.alphavantage.co/support/#api-key')
+    const details = screen.getByText('How to get a free key').closest('details')!
+    expect(details.open).toBe(false)
+    expect(screen.getByRole('link', { name: 'Get a free API key' })).toHaveAttribute(
+      'href',
+      'https://www.alphavantage.co/support/#api-key'
+    )
+  })
+})
+
+describe('MarketDataStatusBadge', () => {
+  beforeEach(() => useMarketDataStore.getState().clearApiKey())
+
+  it('shows No key when unset', () => {
+    render(<MarketDataStatusBadge />)
+    expect(screen.getByText('No key')).toBeInTheDocument()
+  })
+
+  it('shows key tail when set', () => {
+    useMarketDataStore.getState().setApiKey('demo-key-x3P')
+    render(<MarketDataStatusBadge />)
+    expect(screen.getByText(/Key active …x3P/)).toBeInTheDocument()
   })
 })
