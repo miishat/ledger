@@ -42,6 +42,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   // reopened modal reflects the price the top bar shows. Deliberately NOT
   // keyed on rawPrice: a live refresh must not clobber mid-edit typing.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) setCompanyCurrentPrice(rawPrice || 100)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
