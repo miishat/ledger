@@ -3,6 +3,7 @@ import { Plus, NotebookText } from 'lucide-react'
 import { AnalysisCard } from '../components/investments/AnalysisCard'
 import { AnalysisModal } from '../components/investments/AnalysisModal'
 import { PortfolioView } from '../components/investments/PortfolioView'
+import { WheelView } from '../components/investments/wheel/WheelView'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
 import { quoteKey } from '../services/marketData'
@@ -16,7 +17,7 @@ export const Investments: React.FC = () => {
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [tab, setTab] = useState<'journal' | 'portfolio'>('journal')
+  const [tab, setTab] = useState<'journal' | 'portfolio' | 'wheel'>('journal')
 
   // Header totals use override > cached > start price (cards fetch live).
   const priceFor = (ticker: string, exchange: string | undefined, fallback: number) =>
@@ -36,7 +37,11 @@ export const Investments: React.FC = () => {
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Investments</h1>
           <p className="text-[14px] text-text-secondary mt-1">
-            {tab === 'journal' ? 'Your decision journal: what you analyzed, what you actually did, and how both performed.' : 'Your portfolio with live prices and allocations.'}
+            {tab === 'journal'
+              ? 'Your decision journal: what you analyzed, what you actually did, and how both performed.'
+              : tab === 'portfolio'
+                ? 'Your portfolio with live prices and allocations.'
+                : 'Wheel strategy: options premium, cost basis, and true breakeven per ticker.'}
           </p>
         </div>
         {tab === 'journal' && (
@@ -50,7 +55,7 @@ export const Investments: React.FC = () => {
       </header>
 
       <div className="flex gap-2">
-        {(['journal', 'portfolio'] as const).map((t) => (
+        {(['journal', 'portfolio', 'wheel'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -58,7 +63,7 @@ export const Investments: React.FC = () => {
               tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
             }`}
           >
-            {t === 'journal' ? 'Plan vs Actual' : 'Portfolio'}
+            {t === 'journal' ? 'Plan vs Actual' : t === 'portfolio' ? 'Portfolio' : 'Options'}
           </button>
         ))}
       </div>
@@ -96,8 +101,10 @@ export const Investments: React.FC = () => {
 
           <AnalysisModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </>
-      ) : (
+      ) : tab === 'portfolio' ? (
         <PortfolioView />
+      ) : (
+        <WheelView />
       )}
     </div>
   )
