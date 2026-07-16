@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Currency } from '../services/marketData'
 
 export interface Holding {
   id: string
@@ -10,7 +9,7 @@ export interface Holding {
   quantity: number
   /** Per-share cost basis in the holding's own currency. */
   avgCost: number
-  currency: Currency
+  currency: 'USD' | 'CAD'
   /** Broker account this row belongs to (user-supplied at import). */
   account: string
 }

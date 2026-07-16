@@ -5,7 +5,6 @@
 // and Wealthsimple holdings exports; the mapper is the guaranteed path.
 
 import Papa from 'papaparse'
-import type { Currency } from '../services/marketData'
 import type { Holding } from '../store/usePortfolioStore'
 
 export interface UnrecognizedPortfolioCSV {
@@ -20,7 +19,7 @@ export interface PortfolioParserConfig {
   parse: (row: Record<string, string>) => Omit<Holding, 'id' | 'account'> | null
 }
 
-function toCurrency(raw: string | undefined): Currency {
+function toCurrency(raw: string | undefined): 'USD' | 'CAD' {
   return raw?.trim().toUpperCase() === 'USD' ? 'USD' : 'CAD'
 }
 
