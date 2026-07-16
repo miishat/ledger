@@ -1,8 +1,8 @@
 import React from 'react'
-import { Settings, X } from 'lucide-react'
+import { Database, LineChart, Palette, Settings, X } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
 import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
-import { MarketDataSection } from './MarketDataSettings'
+import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
 
 interface SettingsSheetProps {
@@ -12,21 +12,35 @@ interface SettingsSheetProps {
   onOpenDisclaimer: () => void
 }
 
-const SectionHeading: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h3 className="text-[11px] uppercase tracking-wide text-text-secondary mt-4 mb-2 first:mt-0">{children}</h3>
+const SectionCard: React.FC<{ icon: React.ReactNode; title: string; badge?: React.ReactNode; children: React.ReactNode }> = ({
+  icon,
+  title,
+  badge,
+  children,
+}) => (
+  <section className="border border-border rounded-lg p-3">
+    <div className="flex items-center justify-between gap-2 mb-2.5">
+      <h3 className="flex items-center gap-1.5 text-[13px] font-medium text-text-primary">
+        <span className="text-text-secondary" aria-hidden="true">{icon}</span>
+        {title}
+      </h3>
+      {badge}
+    </div>
+    {children}
+  </section>
 )
 
-/** Single settings hub: Appearance, Market Data, Backup, About. Modal on
- *  desktop, bottom sheet on mobile. */
+/** Single settings hub: Appearance, Market data, Backup as section cards,
+ *  About as a footer row. Modal on desktop, bottom sheet on mobile. */
 export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onOpenWhatsNew, onOpenDisclaimer }) => (
   <Sheet
     open={open}
     onClose={onClose}
     desktop="modal"
     ariaLabel="Settings"
-    panelClassName="themed-menu rounded-lg w-full max-w-md p-6 flex flex-col max-h-[85dvh] overflow-y-auto"
+    panelClassName="themed-menu rounded-lg w-full max-w-md p-5 flex flex-col gap-3 max-h-[85dvh] overflow-y-auto"
   >
-    <div className="flex items-center justify-between mb-2">
+    <div className="flex items-center justify-between">
       <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
         <Settings className="w-5 h-5 text-accent" /> Settings
       </h2>
@@ -39,20 +53,22 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       </button>
     </div>
 
-    <SectionHeading>Appearance</SectionHeading>
-    <ThemeSwatchGrid />
+    <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance">
+      <ThemeSwatchGrid />
+    </SectionCard>
 
-    <SectionHeading>Market Data</SectionHeading>
-    <MarketDataSection />
+    <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market data" badge={<MarketDataStatusBadge />}>
+      <MarketDataSection />
+    </SectionCard>
 
-    <SectionHeading>Backup</SectionHeading>
-    <BackupControls />
+    <SectionCard icon={<Database className="w-4 h-4" />} title="Backup">
+      <BackupControls />
+    </SectionCard>
 
-    <SectionHeading>About</SectionHeading>
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex items-center justify-between pt-2 border-t border-border">
       <button
         onClick={() => { onClose(); onOpenWhatsNew() }}
-        className="text-[13px] text-text-secondary hover:text-accent transition-colors"
+        className="text-[12px] text-text-secondary hover:text-accent transition-colors"
       >
         v{__APP_VERSION__} · What's New
       </button>
@@ -60,7 +76,7 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
         onClick={() => { onClose(); onOpenDisclaimer() }}
         className="text-[12px] text-text-secondary/80 hover:text-accent transition-colors"
       >
-        Estimates Only · Not Financial Advice
+        Not financial advice
       </button>
     </div>
   </Sheet>
