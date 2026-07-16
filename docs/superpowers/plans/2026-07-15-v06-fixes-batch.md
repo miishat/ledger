@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship 8 approved items: live stock price in the compensation modal, a label fix, beta version labels, a 9-currency converter with a BDT fallback provider, mortgage toggle layout, a consolidated Settings hub (desktop dock + mobile tab bar), adaptive debt-payoff rows, and the global mobile scroll-cutoff fix.
+**Goal:** Ship 9 approved items: live stock price in the compensation modal, a label fix, beta version labels, a 9-currency converter with a BDT fallback provider, mortgage toggle layout, a consolidated Settings hub (desktop dock + mobile tab bar), adaptive debt-payoff rows, the global mobile scroll-cutoff fix, and a native port of the standalone wheel tracker as an "Options" tab in Investments (Tasks 11–14).
 
 **Architecture:** All work is inside the existing React 19 + Vite + Zustand + Tailwind v4 SPA. The FX change widens the `Currency` union and adds a provider router (Frankfurter primary, open.er-api.com fallback for BDT). The Settings hub replaces three separate dock controls with one `SettingsSheet` modal composed of refactored existing sections.
 
@@ -1138,7 +1138,1059 @@ git commit -m "docs: changelog entries for v0.6 fixes batch"
 
 ---
 
+---
+
+### Task 11: Wheel logic layer — types, calculations, IBKR activity parser
+
+**Files:**
+- Create: `src/utils/investments/wheel/types.ts`
+- Create: `src/utils/investments/wheel/calculations.ts`
+- Create: `src/utils/investments/wheel/calculations.test.ts`
+- Create: `src/utils/investments/wheel/ibkrActivityParser.ts`
+- Create: `src/utils/investments/wheel/ibkrActivityParser.test.ts`
+
+**Interfaces:**
+- Produces (Tasks 12–14 consume all of these):
+  - `TradeRecord`, `TickerState`, `TickerMap` from `types.ts`
+  - `calculateBreakeven(d: TickerState): number`, `calculateNetPL(d: TickerState, dynamicSpotPrice: number): number`, `formatCurr(val: number): string`
+  - `RawRow = (string | number)[]`, `processIBKR(rows: RawRow[]): TickerMap`, `mergeActivityRows(existingRows: RawRow[], newRows: RawRow[]): RawRow[]`
+- Source of truth: `C:\Users\misha\wheel_tracker\src\{types.ts,Calculations.ts,csvParser.ts}` and the dedupe logic in that repo's `src/App.tsx` (`processAggregatedData`). The code below is the port — trust it over re-deriving from the source, but the source is available for reference.
+
+- [ ] **Step 1: Create the types**
+
+Create `src/utils/investments/wheel/types.ts`:
+
+```ts
+export interface TradeRecord {
+  date: string
+  ticker: string
+  type: 'Option' | 'Equity'
+  action: string
+  quantity: number
+  price: number
+  proceeds: number
+  commFee: number
+  description: string
+  // Option specific
+  strike?: number
+  expiry?: string
+  callPut?: 'C' | 'P'
+}
+
+export interface TickerState {
+  ticker: string
+
+  // Stock tracking
+  opSharesHeld: number
+  displayCost: number // Raw equity cost, or IBKR cost-basis fallback
+  displayRealized: number // IBKR realized P/L for equity
+  currentPrice: number // Spot price parsed from the statement
+  marketValue: number // shares * currentPrice
+
+  // Option tracking
+  openPutContracts: number
+  openPutStrikeSum: number
+  premiumCollected: number
+
+  // True when opSharesHeld > 0 OR open option contracts exist
+  hasOpenPosition: boolean
+
+  history: TradeRecord[]
+}
+
+export type TickerMap = Record<string, TickerState>
+```
+
+- [ ] **Step 2: Write the failing calculations test**
+
+Create `src/utils/investments/wheel/calculations.test.ts`:
+
+```ts
+import { describe, expect, it } from 'vitest'
+import { calculateBreakeven, calculateNetPL, formatCurr } from './calculations'
+import type { TickerState } from './types'
+
+const base: TickerState = {
+  ticker: 'AAPL',
+  opSharesHeld: 0,
+  displayCost: 0,
+  displayRealized: 0,
+  currentPrice: 0,
+  marketValue: 0,
+  openPutContracts: 0,
+  openPutStrikeSum: 0,
+  premiumCollected: 0,
+  hasOpenPosition: false,
+  history: [],
+}
+
+describe('wheel calculations', () => {
+  it('computes breakeven and net P/L for a stock wheel', () => {
+    const d: TickerState = { ...base, opSharesHeld: 100, displayCost: 15001, premiumCollected: 248.95 }
+    expect(calculateBreakeven(d)).toBeCloseTo(147.5205, 4)
+    // spot 155: 15500 + 248.95 + 0 - 15001
+    expect(calculateNetPL(d, 155)).toBeCloseTo(747.95, 2)
+  })
+
+  it('options-only: keeps full premium at/above breakeven, loses below it', () => {
+    const d: TickerState = { ...base, openPutContracts: 2, openPutStrikeSum: 300, premiumCollected: 500, hasOpenPosition: true }
+    // breakeven = (300*100 - 500 - 0) / 200 = 147.5
+    expect(calculateBreakeven(d)).toBeCloseTo(147.5, 4)
+    expect(calculateNetPL(d, 150)).toBe(500)
+    // at 140: 500 - (147.5 - 140) * 200
+    expect(calculateNetPL(d, 140)).toBeCloseTo(-1000, 2)
+  })
+
+  it('breakeven is NaN with no shares and no open puts', () => {
+    expect(Number.isNaN(calculateBreakeven(base))).toBe(true)
+  })
+
+  it('formats currency with two decimals and N/A for NaN', () => {
+    expect(formatCurr(1234.5)).toBe('$1,234.50')
+    expect(formatCurr(NaN)).toBe('N/A')
+  })
+})
+```
+
+- [ ] **Step 3: Run it to verify it fails**
+
+Run: `npx vitest run src/utils/investments/wheel/calculations.test.ts`
+Expected: FAIL — `Cannot find module './calculations'`.
+
+- [ ] **Step 4: Implement calculations (verbatim port)**
+
+Create `src/utils/investments/wheel/calculations.ts`:
+
+```ts
+import type { TickerState } from './types'
+
+export function calculateBreakeven(d: TickerState): number {
+  if (d.opSharesHeld > 0) {
+    return (d.displayCost - d.premiumCollected - d.displayRealized) / d.opSharesHeld
+  } else if (d.openPutContracts > 0) {
+    const putShares = d.openPutContracts * 100
+    const totalStrikeObligation = d.openPutStrikeSum * 100
+    return (totalStrikeObligation - d.premiumCollected - d.displayRealized) / putShares
+  }
+  return NaN
+}
+
+export function calculateNetPL(d: TickerState, dynamicSpotPrice: number): number {
+  if (d.opSharesHeld > 0) {
+    const dynamicMarketValue = dynamicSpotPrice * d.opSharesHeld
+    return dynamicMarketValue + d.premiumCollected + d.displayRealized - d.displayCost
+  } else if (d.openPutContracts > 0) {
+    // Options-only math: above breakeven the puts expire worthless and the
+    // full premium is kept; below it, losses scale with the gap.
+    const breakeven = calculateBreakeven(d)
+    if (dynamicSpotPrice >= breakeven) {
+      return d.premiumCollected
+    }
+    const putShares = d.openPutContracts * 100
+    return d.premiumCollected - (breakeven - dynamicSpotPrice) * putShares
+  }
+
+  return d.marketValue + d.premiumCollected + d.displayRealized - d.displayCost
+}
+
+export function formatCurr(val: number): string {
+  if (isNaN(val)) return 'N/A'
+  return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+```
+
+- [ ] **Step 5: Run the calculations test to verify it passes**
+
+Run: `npx vitest run src/utils/investments/wheel/calculations.test.ts`
+Expected: PASS (4 tests).
+
+- [ ] **Step 6: Write the failing parser test**
+
+Create `src/utils/investments/wheel/ibkrActivityParser.test.ts`. IBKR activity-statement rows are positional arrays; the columns used are: `[0]` section, `[1]` 'Data', `[2]` 'Order'/'Summary', `[3]` asset class, `[5]` symbol, `[6]` date (trades) / quantity (open positions), `[7]` quantity (trades), `[8]` price, `[9]` cost basis (open positions), `[10]` proceeds (trades) / price (open positions), `[11]` comm/fee (trades) / market value (open positions).
+
+```ts
+import { describe, expect, it } from 'vitest'
+import { mergeActivityRows, processIBKR, type RawRow } from './ibkrActivityParser'
+
+const optionTrade: RawRow = ['Trades', 'Data', 'Order', 'Equity and Index Options', '', 'AAPL 19JAN26 150 P', '2026-01-02', -1, 2.5, '', 250, -1.05]
+const stockBuy: RawRow = ['Trades', 'Data', 'Order', 'Stocks', '', 'AAPL', '2026-01-05', 100, 150, '', -15000, -1]
+const openStock: RawRow = ['Open Positions', 'Data', 'Summary', 'Stocks', '', 'AAPL', 100, '', '', 15001, 155, 15500]
+const openPut: RawRow = ['Open Positions', 'Data', 'Summary', 'Equity and Index Options', '', 'AAPL 19JAN26 150 P', -1, '', '', '', '', '']
+
+describe('processIBKR', () => {
+  it('builds ticker state from trades and open positions', () => {
+    const map = processIBKR([optionTrade, stockBuy, openStock, openPut])
+    const aapl = map['AAPL']
+    expect(aapl).toBeDefined()
+    expect(aapl.opSharesHeld).toBe(100)
+    // Trade reconstruction matches held shares, so raw equity cost wins:
+    expect(aapl.displayCost).toBeCloseTo(15001, 2)
+    expect(aapl.premiumCollected).toBeCloseTo(248.95, 2)
+    expect(aapl.currentPrice).toBe(155)
+    expect(aapl.openPutContracts).toBe(1)
+    expect(aapl.openPutStrikeSum).toBe(150)
+    expect(aapl.hasOpenPosition).toBe(true)
+    expect(aapl.history).toHaveLength(2)
+  })
+})
+
+describe('mergeActivityRows', () => {
+  it('dedupes identical trade rows across uploads', () => {
+    const merged = mergeActivityRows([optionTrade, stockBuy], [optionTrade, stockBuy])
+    expect(merged.filter((r) => r[0] === 'Trades')).toHaveLength(2)
+  })
+
+  it('keeps open positions from the NEW upload only', () => {
+    const staleOpen: RawRow = ['Open Positions', 'Data', 'Summary', 'Stocks', '', 'AAPL', 999, '', '', 1, 1, 999]
+    const merged = mergeActivityRows([optionTrade, staleOpen], [openStock])
+    const openRows = merged.filter((r) => r[0] === 'Open Positions')
+    expect(openRows).toHaveLength(1)
+    expect(openRows[0][6]).toBe(100)
+  })
+
+  it('drops non-trade, non-open-position noise rows', () => {
+    const noise: RawRow = ['Statement', 'Data', 'Title', 'Activity Statement', '', '', '', '', '', '', '', '']
+    const merged = mergeActivityRows([], [noise, stockBuy])
+    expect(merged).toHaveLength(1)
+  })
+})
+```
+
+- [ ] **Step 7: Run it to verify it fails**
+
+Run: `npx vitest run src/utils/investments/wheel/ibkrActivityParser.test.ts`
+Expected: FAIL — `Cannot find module './ibkrActivityParser'`.
+
+- [ ] **Step 8: Implement the parser (port + extracted merge)**
+
+Create `src/utils/investments/wheel/ibkrActivityParser.ts`. `processIBKR` is a faithful port of the tool's `csvParser.ts`; `mergeActivityRows` is the dedupe/aggregation logic extracted from the tool's `App.tsx` `processAggregatedData` (trades dedupe by deterministic hash; Open Positions rows come only from the newest upload so positions move Open→Closed correctly):
+
+```ts
+import type { TickerMap } from './types'
+
+/** One positional row from an IBKR activity-statement CSV. */
+export type RawRow = (string | number)[]
+
+function normalizeNumber(val: unknown): number {
+  if (val === null || val === undefined || val === '') return 0
+  if (typeof val === 'number') return val
+  const n = parseFloat(String(val).replace(/,/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+function isTradeRow(row: RawRow): boolean {
+  return row[0] === 'Trades' && row[1] === 'Data' && row[2] === 'Order' &&
+    (row[3] === 'Equity and Index Options' || row[3] === 'Stocks')
+}
+
+function isOpenPositionRow(row: RawRow): boolean {
+  return row[0] === 'Open Positions' && row[1] === 'Data' && row[2] === 'Summary' &&
+    (row[3] === 'Equity and Index Options' || row[3] === 'Stocks')
+}
+
+/** Merge a new upload's rows into the stored rows: trades are deduped by a
+ *  deterministic hash; Open Positions snapshots come ONLY from the new
+ *  upload (the previous snapshot is discarded so closed wheels close). */
+export function mergeActivityRows(existingRows: RawRow[], newRows: RawRow[]): RawRow[] {
+  const uniqueTrades = new Map<string, RawRow>()
+  for (const row of [...existingRows, ...newRows]) {
+    if (!row || row.length < 12) continue
+    if (isTradeRow(row)) {
+      const hash = `${row[0]}_${row[3]}_${row[5]}_${row[6]}_${row[7]}_${row[8]}_${row[10]}`
+      uniqueTrades.set(hash, row)
+    }
+  }
+  const latestOpenPositions = newRows.filter((row) => row && row.length >= 12 && isOpenPositionRow(row))
+  return [...uniqueTrades.values(), ...latestOpenPositions]
+}
+
+/** Rebuild per-ticker wheel state from raw activity rows. Faithful port of
+ *  the standalone wheel tracker's csvParser. */
+export function processIBKR(rows: RawRow[]): TickerMap {
+  const stateTickers: TickerMap = {}
+
+  function initTicker(ticker: string) {
+    if (!stateTickers[ticker]) {
+      stateTickers[ticker] = {
+        ticker,
+        premiumCollected: 0,
+        opSharesHeld: 0,
+        displayCost: 0,
+        displayRealized: 0,
+        currentPrice: 0,
+        marketValue: 0,
+        openPutContracts: 0,
+        openPutStrikeSum: 0,
+        hasOpenPosition: false,
+        history: [],
+      }
+    }
+  }
+
+  // Temporary storage for chronologically reconstructing raw equity cost
+  const stockTrades: Record<string, Array<{ date: string; q: number; cashFlow: number }>> = {}
+  const opCostBasisMap: Record<string, number> = {}
+
+  rows.forEach((row) => {
+    if (!row || row.length < 12) return
+
+    // 1A. Options premium history
+    if (row[0] === 'Trades' && row[1] === 'Data' && row[2] === 'Order' && row[3] === 'Equity and Index Options') {
+      const optionString = String(row[5] ?? '')
+      if (!optionString) return
+
+      const baseTicker = optionString.split(' ')[0]
+      initTicker(baseTicker)
+
+      const proceeds = normalizeNumber(row[10])
+      const commFee = normalizeNumber(row[11])
+      stateTickers[baseTicker].premiumCollected += proceeds + commFee
+
+      stateTickers[baseTicker].history.push({
+        date: String(row[6]),
+        ticker: baseTicker,
+        type: 'Option',
+        action: 'Trade',
+        quantity: normalizeNumber(row[7]),
+        price: normalizeNumber(row[8]),
+        proceeds,
+        commFee,
+        description: optionString,
+      })
+    }
+
+    // 1B. Stock trade history (for raw equity cost reconstruction)
+    if (row[0] === 'Trades' && row[1] === 'Data' && row[2] === 'Order' && row[3] === 'Stocks') {
+      const baseTicker = String(row[5] ?? '')
+      if (!baseTicker) return
+
+      initTicker(baseTicker)
+      if (!stockTrades[baseTicker]) stockTrades[baseTicker] = []
+
+      const qty = normalizeNumber(row[7])
+      const proceeds = normalizeNumber(row[10])
+      const commFee = normalizeNumber(row[11])
+
+      stockTrades[baseTicker].push({ date: String(row[6]), q: qty, cashFlow: proceeds + commFee })
+
+      stateTickers[baseTicker].history.push({
+        date: String(row[6]),
+        ticker: baseTicker,
+        type: 'Equity',
+        action: 'Trade',
+        quantity: qty,
+        price: normalizeNumber(row[8]),
+        proceeds,
+        commFee,
+        description: baseTicker + ' Equity',
+      })
+    }
+
+    // 2A. Current stock holdings (open positions)
+    if (row[0] === 'Open Positions' && row[1] === 'Data' && row[2] === 'Summary' && row[3] === 'Stocks') {
+      const baseTicker = String(row[5] ?? '')
+      if (!baseTicker) return
+
+      initTicker(baseTicker)
+      stateTickers[baseTicker].opSharesHeld = normalizeNumber(row[6])
+      opCostBasisMap[baseTicker] = normalizeNumber(row[9])
+      stateTickers[baseTicker].currentPrice = normalizeNumber(row[10])
+      stateTickers[baseTicker].marketValue = normalizeNumber(row[11])
+    }
+
+    // 2B. Mark-to-market performance summary for holdings
+    if (typeof row[0] === 'string' && row[0].startsWith('Mark-to-Mar') && row[1] === 'Data' && row[2] === 'Stocks') {
+      const baseTicker = String(row[3] ?? '')
+      if (!baseTicker) return
+
+      initTicker(baseTicker)
+      const currentQuantity = normalizeNumber(row[5])
+      if (currentQuantity > 0) {
+        stateTickers[baseTicker].opSharesHeld = currentQuantity
+        stateTickers[baseTicker].currentPrice = normalizeNumber(row[7])
+        stateTickers[baseTicker].marketValue = currentQuantity * stateTickers[baseTicker].currentPrice
+      }
+    }
+
+    // 2C. Open option positions (put obligations)
+    if (row[0] === 'Open Positions' && row[1] === 'Data' && row[2] === 'Summary' && row[3] === 'Equity and Index Options') {
+      const optionString = String(row[5] ?? '')
+      if (!optionString) return
+
+      const baseTicker = optionString.split(' ')[0]
+      initTicker(baseTicker)
+
+      const qty = normalizeNumber(row[6])
+      if (qty !== 0) stateTickers[baseTicker].hasOpenPosition = true
+
+      const parts = optionString.split(' ')
+      if (parts.length >= 4) {
+        const strike = parseFloat(parts[2])
+        const type = parts[3].toUpperCase()
+        if (type === 'P' && qty < 0) {
+          stateTickers[baseTicker].openPutContracts += Math.abs(qty)
+          stateTickers[baseTicker].openPutStrikeSum += strike * Math.abs(qty)
+        }
+      }
+    }
+  })
+
+  // Finalize raw cost reconstruction (average-cost method over sorted trades)
+  Object.keys(stateTickers).forEach((ticker) => {
+    const d = stateTickers[ticker]
+    const trades = stockTrades[ticker] || []
+    trades.sort((a, b) => a.date.localeCompare(b.date))
+
+    let shares = 0
+    let rawCost = 0
+    let realizedPL = 0
+
+    trades.forEach((trade) => {
+      if (trade.q > 0) {
+        shares += trade.q
+        rawCost += -trade.cashFlow
+      } else if (trade.q < 0) {
+        const soldShares = Math.abs(trade.q)
+        const avgCost = shares > 0 ? rawCost / shares : 0
+        rawCost -= soldShares * avgCost
+        shares += trade.q
+        realizedPL += trade.cashFlow - soldShares * avgCost
+      }
+    })
+
+    // If the snapshot rows had no share count but trade history says we
+    // still hold shares, trust the reconstruction.
+    if (d.opSharesHeld === 0 && shares > 0) {
+      d.opSharesHeld = shares
+    }
+
+    if (Math.abs(shares - d.opSharesHeld) < 0.01) {
+      d.displayCost = rawCost
+      d.displayRealized = realizedPL
+    } else {
+      d.displayCost = opCostBasisMap[ticker] || 0
+      d.displayRealized = realizedPL
+    }
+
+    if (d.opSharesHeld > 0 || d.openPutContracts > 0) {
+      d.hasOpenPosition = true
+    }
+  })
+
+  return stateTickers
+}
+```
+
+- [ ] **Step 9: Run both test files to verify they pass**
+
+Run: `npx vitest run src/utils/investments/wheel`
+Expected: PASS (8 tests).
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add src/utils/investments/wheel
+git commit -m "feat(investments): port wheel tracker logic layer (types, calculations, IBKR parser)"
+```
+
+---
+
+### Task 12: useWheelStore + backup registration
+
+**Files:**
+- Create: `src/store/useWheelStore.ts`
+- Modify: `src/utils/backup.ts:5-16` (append key)
+- Test (update if broken): `src/utils/backup.test.ts`
+
+**Interfaces:**
+- Consumes: `mergeActivityRows`, `RawRow` from `src/utils/investments/wheel/ibkrActivityParser` (Task 11).
+- Produces: `useWheelStore` with state `{ rawRows: RawRow[], fileCount: number }` and actions `addRows(newRows: RawRow[], numFiles: number): void`, `clearAll(): void`. Persisted under localStorage key `ledger-wheel`. Task 13/14 consume this. Ticker states are NEVER persisted — always derived from `rawRows`.
+
+- [ ] **Step 1: Create the store**
+
+Create `src/store/useWheelStore.ts`:
+
+```ts
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { mergeActivityRows, type RawRow } from '../utils/investments/wheel/ibkrActivityParser'
+
+interface WheelState {
+  rawRows: RawRow[]
+  fileCount: number
+  addRows: (newRows: RawRow[], numFiles: number) => void
+  clearAll: () => void
+}
+
+/** Raw deduped IBKR activity rows are the source of truth; ticker states
+ *  are derived via processIBKR so parser fixes apply retroactively. */
+export const useWheelStore = create<WheelState>()(
+  persist(
+    (set) => ({
+      rawRows: [],
+      fileCount: 0,
+      addRows: (newRows, numFiles) =>
+        set((s) => ({
+          rawRows: mergeActivityRows(s.rawRows, newRows),
+          fileCount: s.fileCount + numFiles,
+        })),
+      clearAll: () => set({ rawRows: [], fileCount: 0 }),
+    }),
+    { name: 'ledger-wheel' },
+  ),
+)
+```
+
+- [ ] **Step 2: Register the key in backups**
+
+In `src/utils/backup.ts`, append `'ledger-wheel',` to the `BACKUP_KEYS` array (after `'ledger-dashboard-layout',`).
+
+- [ ] **Step 3: Run the backup tests**
+
+Run: `npx vitest run src/utils/backup.test.ts`
+Expected: PASS. If a test asserts the exact key list or count, add `'ledger-wheel'` to its expectation.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/store/useWheelStore.ts src/utils/backup.ts src/utils/backup.test.ts
+git commit -m "feat(investments): wheel store persisting raw activity rows; include in backups"
+```
+
+---
+
+### Task 13: WheelTickerCard + WheelLedgerSheet
+
+**Files:**
+- Create: `src/components/investments/wheel/WheelTickerCard.tsx`
+- Create: `src/components/investments/wheel/WheelLedgerSheet.tsx`
+
+**Interfaces:**
+- Consumes: `TickerState` (Task 11 types), `calculateBreakeven`/`calculateNetPL`/`formatCurr` (Task 11), `useCurrentPrice(ticker)` from `../../../services/marketData` (returns `{ data?: Resolved<Quote>, status, setManual(price), ... }`), `NumberInput` (`{ value, onCommit, className, placeholder? }`), `Sheet` (`{ open, onClose, desktop: 'modal', ariaLabel, panelClassName }`).
+- Produces:
+  - `WheelTickerCard: React.FC<{ data: TickerState; onViewDetails: (ticker: string) => void }>`
+  - `WheelLedgerSheet: React.FC<{ data: TickerState | null; onClose: () => void }>` (renders nothing meaningful when `data` is null; `open={data !== null}`). Task 14 consumes both.
+
+**Design notes (spec):** ledger idiom — `themed-card`, no framer-motion, no custom CSS. Spot price resolves override → live/cached quote → CSV-parsed fallback; typing writes the shared quote override via `setManual` (same mechanism Portfolio uses), so it persists app-wide. All USD. Copy summary keeps the emoji bullets but drops the "Generated by" footer.
+
+- [ ] **Step 1: Create the ticker card**
+
+Create `src/components/investments/wheel/WheelTickerCard.tsx`:
+
+```tsx
+import React, { useState } from 'react'
+import { Check, Copy, Eye } from 'lucide-react'
+import type { TickerState } from '../../../utils/investments/wheel/types'
+import { calculateBreakeven, calculateNetPL, formatCurr } from '../../../utils/investments/wheel/calculations'
+import { useCurrentPrice } from '../../../services/marketData'
+import { NumberInput } from '../../ui/NumberInput'
+
+interface WheelTickerCardProps {
+  data: TickerState
+  onViewDetails: (ticker: string) => void
+}
+
+const MetricRow: React.FC<{ label: string; value: React.ReactNode; tone?: 'positive' | 'negative' }> = ({ label, value, tone }) => (
+  <div className="flex justify-between items-center py-1.5">
+    <span className="text-[13px] text-text-secondary">{label}</span>
+    <span className={`text-[14px] font-medium ${tone === 'positive' ? 'text-success' : tone === 'negative' ? 'text-error' : 'text-text-primary'}`}>
+      {value}
+    </span>
+  </div>
+)
+
+export const WheelTickerCard: React.FC<WheelTickerCardProps> = ({ data, onViewDetails }) => {
+  const price = useCurrentPrice(data.ticker)
+  // override/live/cached quote wins; CSV-parsed statement price is the fallback
+  const spot = price.data?.value.price ?? data.currentPrice
+  const [copied, setCopied] = useState(false)
+
+  const breakeven = calculateBreakeven(data)
+  const netPL = calculateNetPL(data, spot)
+  const isStockWheel = data.opSharesHeld > 0
+
+  const handleCopy = () => {
+    const text =
+      `📈 ${data.ticker} Wheel Strategy Summary\n` +
+      `• Shares Held: ${isStockWheel ? data.opSharesHeld : '0'}\n` +
+      `• Cost of Shares: ${isStockWheel ? formatCurr(data.displayCost) : 'N/A'}\n` +
+      `• Premium Collected: ${formatCurr(data.premiumCollected)}\n` +
+      `• True Breakeven: ${Number.isNaN(breakeven) ? 'N/A' : formatCurr(breakeven)}\n` +
+      `• Current Spot Price: ${formatCurr(spot)}\n` +
+      `• Net P/L: ${formatCurr(netPL)}`
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="themed-card rounded-xl p-4 flex flex-col">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[16px] font-semibold text-text-primary">{data.ticker}</span>
+        {price.data?.source && (
+          <span className="text-[10px] uppercase text-text-secondary">{price.data.source}{price.data.stale ? ', stale' : ''}</span>
+        )}
+      </div>
+
+      <MetricRow label="Shares" value={isStockWheel ? data.opSharesHeld.toLocaleString() : '0'} />
+      <MetricRow label="Total Cost of Shares" value={isStockWheel ? formatCurr(data.displayCost) : 'N/A'} />
+      <MetricRow
+        label="Total Premium Collected"
+        value={formatCurr(data.premiumCollected)}
+        tone={data.premiumCollected >= 0 ? 'positive' : 'negative'}
+      />
+
+      <div className="flex justify-between items-center py-1.5">
+        <span className="text-[13px] text-text-secondary">Current Stock Price</span>
+        <NumberInput
+          value={spot}
+          onCommit={(v) => {
+            if (v > 0) price.setManual(v)
+          }}
+          className="w-24 bg-bg-primary/50 border border-border rounded-md px-2 py-1 text-[14px] text-text-primary text-right focus:border-accent focus:outline-none transition-colors"
+        />
+      </div>
+
+      <div className="mt-2 pt-2 border-t border-border">
+        <MetricRow label="True Breakeven Price" value={Number.isNaN(breakeven) ? 'N/A' : formatCurr(breakeven)} />
+        <MetricRow label="Net Profit/Loss" value={formatCurr(netPL)} tone={netPL >= 0 ? 'positive' : 'negative'} />
+      </div>
+
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={() => onViewDetails(data.ticker)}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors"
+        >
+          <Eye className="w-4 h-4" /> View Details
+        </button>
+        <button
+          onClick={handleCopy}
+          aria-label="Copy summary"
+          className="px-3 py-1.5 rounded-md border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors"
+        >
+          {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+(If `text-success` is not an existing utility in this codebase — check with `grep -rn "text-success" src | head -3` — use `text-[var(--success)]` instead, and same for `text-error` vs `text-[var(--error)]`; match whichever form the grep shows.)
+
+- [ ] **Step 2: Create the ledger sheet**
+
+Create `src/components/investments/wheel/WheelLedgerSheet.tsx`:
+
+```tsx
+import React from 'react'
+import { X } from 'lucide-react'
+import type { TickerState } from '../../../utils/investments/wheel/types'
+import { formatCurr } from '../../../utils/investments/wheel/calculations'
+import { Sheet } from '../../ui/Sheet'
+
+interface WheelLedgerSheetProps {
+  data: TickerState | null
+  onClose: () => void
+}
+
+export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClose }) => {
+  const sortedHistory = data ? [...data.history].sort((a, b) => a.date.localeCompare(b.date)) : []
+  const totalCashFlow = sortedHistory.reduce((s, h) => s + h.proceeds + h.commFee, 0)
+
+  return (
+    <Sheet
+      open={data !== null}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel="Detailed ledger"
+      panelClassName="themed-menu rounded-lg w-full max-w-3xl p-6 flex flex-col gap-3 max-h-[85dvh]"
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="text-[18px] font-semibold text-text-primary">{data?.ticker} Detailed Ledger</h2>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="text-text-secondary hover:text-accent rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="overflow-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-text-secondary border-b border-border">
+              <th className="py-2 pr-3 font-medium">Date</th>
+              <th className="py-2 pr-3 font-medium">Instrument</th>
+              <th className="py-2 pr-3 font-medium text-right">Qty</th>
+              <th className="py-2 pr-3 font-medium text-right">Price</th>
+              <th className="py-2 font-medium text-right">Net Cash Flow</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedHistory.map((h, i) => {
+              const cashflow = h.proceeds + h.commFee
+              return (
+                <tr key={i} className="border-b border-border/50 text-text-primary">
+                  <td className="py-2 pr-3 whitespace-nowrap">{h.date}</td>
+                  <td className="py-2 pr-3">{h.description}</td>
+                  <td className={`py-2 pr-3 text-right ${h.quantity > 0 ? 'text-success' : h.quantity < 0 ? 'text-error' : ''}`}>{h.quantity}</td>
+                  <td className="py-2 pr-3 text-right">{formatCurr(h.price)}</td>
+                  <td className={`py-2 text-right ${cashflow > 0 ? 'text-success' : cashflow < 0 ? 'text-error' : ''}`}>{formatCurr(cashflow)}</td>
+                </tr>
+              )
+            })}
+            <tr>
+              <td colSpan={4} className="py-2 pr-3 text-right font-semibold text-text-primary">Account Ledger Net Cash Flow:</td>
+              <td className={`py-2 text-right font-semibold ${totalCashFlow > 0 ? 'text-success' : totalCashFlow < 0 ? 'text-error' : 'text-text-primary'}`}>
+                {formatCurr(totalCashFlow)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Sheet>
+  )
+}
+```
+
+(Apply the same `text-success`/`text-error` utility check as Step 1.)
+
+- [ ] **Step 3: Typecheck**
+
+Run: `npx tsc --noEmit`
+Expected: PASS.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/investments/wheel
+git commit -m "feat(investments): wheel ticker card and detail ledger sheet"
+```
+
+---
+
+### Task 14: WheelView + Options tab in Investments + changelog
+
+**Files:**
+- Create: `src/components/investments/wheel/WheelView.tsx`
+- Modify: `src/pages/Investments.tsx:19,39,42,52-64,99-101`
+- Modify: `CHANGELOG.md` (Unreleased → Added)
+
+**Interfaces:**
+- Consumes: `useWheelStore` (Task 12), `processIBKR` + `calculateNetPL` (Task 11), `WheelTickerCard` + `WheelLedgerSheet` (Task 13), `EmptyState` (`{ icon, message, hint, action?: { label, onClick } }`), `SelectField` from `../planner/SelectField`, papaparse (already a dependency).
+- Produces: `WheelView: React.FC` (no props); the Investments tab union becomes `'journal' | 'portfolio' | 'wheel'` with the label "Options".
+
+- [ ] **Step 1: Create WheelView**
+
+Create `src/components/investments/wheel/WheelView.tsx`:
+
+```tsx
+import React, { useMemo, useState } from 'react'
+import Papa from 'papaparse'
+import { CircleDollarSign, FileUp, Search, Trash2 } from 'lucide-react'
+import { useWheelStore } from '../../../store/useWheelStore'
+import { processIBKR, type RawRow } from '../../../utils/investments/wheel/ibkrActivityParser'
+import { calculateNetPL } from '../../../utils/investments/wheel/calculations'
+import type { TickerState } from '../../../utils/investments/wheel/types'
+import { WheelTickerCard } from './WheelTickerCard'
+import { WheelLedgerSheet } from './WheelLedgerSheet'
+import { EmptyState } from '../../ui/EmptyState'
+import { SelectField } from '../../planner/SelectField'
+
+type SortMode = 'alpha' | 'plHighToLow' | 'plLowToHigh'
+
+export const WheelView: React.FC = () => {
+  const { rawRows, fileCount, addRows, clearAll } = useWheelStore()
+  const [status, setStatus] = useState<string | null>(null)
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'active' | 'closed'>('active')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortMode, setSortMode] = useState<SortMode>('alpha')
+
+  const tickers = useMemo(
+    () => Object.values(processIBKR(rawRows)).sort((a, b) => a.ticker.localeCompare(b.ticker)),
+    [rawRows],
+  )
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setStatus('Parsing CSV(s)…')
+
+    let newRows: RawRow[] = []
+    let processed = 0
+    Array.from(files).forEach((file) => {
+      Papa.parse<RawRow>(file, {
+        skipEmptyLines: true,
+        complete: (results) => {
+          newRows = [...newRows, ...results.data]
+          processed++
+          if (processed === files.length) {
+            addRows(newRows, files.length)
+            setStatus(null)
+          }
+        },
+        error: () => setStatus('Error parsing one or more CSVs.'),
+      })
+    })
+    e.target.value = ''
+  }
+
+  const handleClear = () => {
+    if (confirm('Clear all wheel tracker data? This cannot be undone.')) {
+      clearAll()
+      setSelectedTicker(null)
+    }
+  }
+
+  const filterAndSort = (arr: TickerState[]) => {
+    let out = arr
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      out = out.filter((t) => t.ticker.toLowerCase().includes(q))
+    }
+    return [...out].sort((a, b) => {
+      if (sortMode === 'alpha') return a.ticker.localeCompare(b.ticker)
+      const plA = calculateNetPL(a, a.currentPrice)
+      const plB = calculateNetPL(b, b.currentPrice)
+      return sortMode === 'plHighToLow' ? plB - plA : plA - plB
+    })
+  }
+
+  const activeStockWheels = filterAndSort(tickers.filter((t) => t.opSharesHeld > 0))
+  const optionsOnlyWheels = filterAndSort(tickers.filter((t) => t.opSharesHeld === 0 && t.hasOpenPosition))
+  const closedWheels = filterAndSort(tickers.filter((t) => t.opSharesHeld === 0 && !t.hasOpenPosition))
+
+  if (tickers.length === 0) {
+    return (
+      <div className="themed-card rounded-lg p-10">
+        <EmptyState
+          icon={CircleDollarSign}
+          message="No wheel data yet"
+          hint="Upload one or more Interactive Brokers Activity Statement CSVs to track options premium, cost basis, and true breakeven per ticker."
+        />
+        <div className="flex justify-center mt-4">
+          <label className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity cursor-pointer">
+            <FileUp className="w-4 h-4" /> Upload CSVs
+            <input type="file" accept=".csv" multiple onChange={handleFileUpload} className="sr-only" />
+          </label>
+        </div>
+        {status && <p className="text-[13px] text-text-secondary text-center mt-3">{status}</p>}
+      </div>
+    )
+  }
+
+  const section = (title: string, items: TickerState[]) =>
+    items.length > 0 && (
+      <div className="flex flex-col gap-3">
+        <h2 className="text-[16px] font-semibold text-text-primary">{title}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {items.map((t) => (
+            <WheelTickerCard key={t.ticker} data={t} onViewDetails={setSelectedTicker} />
+          ))}
+        </div>
+      </div>
+    )
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <span className="text-[13px] text-text-secondary">
+          {fileCount} statement{fileCount === 1 ? '' : 's'} aggregated · {tickers.length} tickers
+          {status && <span className="ml-2">{status}</span>}
+        </span>
+        <div className="flex gap-2">
+          <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors cursor-pointer">
+            <FileUp className="w-4 h-4" /> Add CSVs
+            <input type="file" accept=".csv" multiple onChange={handleFileUpload} className="sr-only" />
+          </label>
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] border border-border text-text-secondary hover:text-error hover:border-error transition-colors"
+          >
+            <Trash2 className="w-4 h-4" /> Clear
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex items-end gap-3 flex-wrap">
+          <label className="flex flex-col gap-1">
+            <span className="text-[13px] font-medium text-text-secondary">Search</span>
+            <div className="flex items-center gap-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 focus-within:border-accent transition-colors">
+              <Search className="w-4 h-4 text-text-secondary" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tickers…"
+                className="bg-transparent outline-none text-[14px] text-text-primary w-36"
+              />
+            </div>
+          </label>
+          <SelectField
+            label="Sort"
+            value={sortMode}
+            onChange={(v) => setSortMode(v as SortMode)}
+            options={[
+              { value: 'alpha', label: 'Alphabetical (A-Z)' },
+              { value: 'plHighToLow', label: 'Highest Net P/L' },
+              { value: 'plLowToHigh', label: 'Lowest Net P/L' },
+            ]}
+          />
+        </div>
+        <div className="flex gap-2">
+          {(['active', 'closed'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setViewMode(m)}
+              className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
+                viewMode === m ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {m === 'active' ? 'Active Wheels' : 'History (Closed)'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {viewMode === 'active' ? (
+        <>
+          {section('Active Stock Wheels', activeStockWheels)}
+          {section('Cash-Secured Puts (Options Only)', optionsOnlyWheels)}
+          {activeStockWheels.length === 0 && optionsOnlyWheels.length === 0 && (
+            <p className="text-[13px] text-text-secondary text-center">No matching active positions found.</p>
+          )}
+        </>
+      ) : (
+        <>
+          {section('Closed Wheels (History)', closedWheels)}
+          {closedWheels.length === 0 && (
+            <p className="text-[13px] text-text-secondary text-center">No matching closed positions found.</p>
+          )}
+        </>
+      )}
+
+      <WheelLedgerSheet
+        data={selectedTicker ? tickers.find((t) => t.ticker === selectedTicker) ?? null : null}
+        onClose={() => setSelectedTicker(null)}
+      />
+    </div>
+  )
+}
+```
+
+(Check `EmptyState`'s actual props first — `grep -n "interface EmptyStateProps" -A 8 src/components/ui/EmptyState.tsx`. If `action` is required or `icon` takes a different shape, adapt the empty-state call; the Investments journal empty state at `src/pages/Investments.tsx:82-87` is the reference usage.)
+
+- [ ] **Step 2: Add the tab to Investments**
+
+In `src/pages/Investments.tsx`:
+
+1. Add the import:
+
+```tsx
+import { WheelView } from '../components/investments/wheel/WheelView'
+```
+
+2. Line 19 — widen the tab state:
+
+```tsx
+  const [tab, setTab] = useState<'journal' | 'portfolio' | 'wheel'>('journal')
+```
+
+3. Line 39 — the subtitle ternary becomes a lookup. Replace:
+
+```tsx
+            {tab === 'journal' ? 'Your decision journal: what you analyzed, what you actually did, and how both performed.' : 'Your portfolio with live prices and allocations.'}
+```
+
+with:
+
+```tsx
+            {tab === 'journal'
+              ? 'Your decision journal: what you analyzed, what you actually did, and how both performed.'
+              : tab === 'portfolio'
+                ? 'Your portfolio with live prices and allocations.'
+                : 'Wheel strategy: options premium, cost basis, and true breakeven per ticker.'}
+```
+
+4. Lines 52–64 — the tab buttons map over three tabs with a label lookup:
+
+```tsx
+      <div className="flex gap-2">
+        {(['journal', 'portfolio', 'wheel'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
+              tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            {t === 'journal' ? 'Plan vs Actual' : t === 'portfolio' ? 'Portfolio' : 'Options'}
+          </button>
+        ))}
+      </div>
+```
+
+5. Lines 99–101 — the content branch gains the wheel case. Replace:
+
+```tsx
+      ) : (
+        <PortfolioView />
+      )}
+```
+
+with:
+
+```tsx
+      ) : tab === 'portfolio' ? (
+        <PortfolioView />
+      ) : (
+        <WheelView />
+      )}
+```
+
+(The "New Analysis" header button is already gated on `tab === 'journal'` — no change.)
+
+- [ ] **Step 3: Run the investments tests + typecheck**
+
+Run: `npx vitest run src/components/investments src/pages && npx tsc --noEmit`
+Expected: PASS. If a Portfolio/Investments test asserts exactly two tab buttons, update it to three.
+
+- [ ] **Step 4: Changelog entry**
+
+In `CHANGELOG.md` under `## [Unreleased]` → `### Added`, append:
+
+```markdown
+- Options tab in Investments: wheel strategy tracker ported from the standalone tool — upload IBKR activity statement CSVs to see per-ticker premium collected, true breakeven, and live-price Net P/L (PDF export not carried over)
+```
+
+- [ ] **Step 5: Visual verification**
+
+Dev server → Investments → Options tab:
+- Empty state shows the upload CTA; upload a real IBKR activity statement CSV (or two — verify dedupe keeps totals stable when re-uploading the same file).
+- Cards show shares/cost/premium/breakeven/Net P/L; with the Alpha Vantage key set, spot price auto-fills live (source tag visible); typing a spot price persists across reload (it's a quote override).
+- View Details opens the ledger sheet with the trade table and running total; works as a bottom sheet at 375px mobile.
+- Active/Closed toggle, search, and all three sort modes behave; Clear (with confirm) empties the tab; Export backup from Settings includes `ledger-wheel` (inspect the downloaded JSON).
+
+- [ ] **Step 6: Full suite + commit**
+
+Run: `npx vitest run && npx eslint src --max-warnings 0`
+Expected: PASS.
+
+```bash
+git add src/components/investments/wheel/WheelView.tsx src/pages/Investments.tsx CHANGELOG.md
+git commit -m "feat(investments): Options tab with wheel strategy tracker"
+```
+
+---
+
 ## Task dependency notes
 
-- Task 4 depends on Task 3 (CURRENCIES, fxRouter). Task 9 depends on Task 8 (ThemeSwatchGrid). Everything else is independent; Tasks 1, 2, 5, 6, 7 can run in any order or in parallel worktrees.
+- Task 4 depends on Task 3 (CURRENCIES, fxRouter). Task 9 depends on Task 8 (ThemeSwatchGrid). Wheel tasks are strictly ordered: 11 → 12 → 13 → 14.
+- The wheel chain (11–14) is independent of Tasks 1–10 and can execute before, after, or in parallel with them; it only shares `CHANGELOG.md` and `src/utils/backup.ts` (trivial merge surfaces).
+- Everything else is independent; Tasks 1, 2, 5, 6, 7 can run in any order or in parallel worktrees.
 - Task 7's mobile verification should be re-checked after Task 9 (the top row removal changes mobile page tops, not bottoms, but confirm no regression).
+- Task 10 (full-suite verification) should run LAST, after whichever of the other chains lands finally — re-run it if the wheel tasks land after it.
