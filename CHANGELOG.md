@@ -6,6 +6,8 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.6.0-beta] - 2026-07-16
+
 ### Added
 - Options tab in Investments: wheel strategy tracker ported from the standalone tool — upload IBKR activity statement CSVs to see per-ticker premium collected, true breakeven, and live-price Net P/L (PDF export not carried over)
 - Currency converter now supports USD, CAD, EUR, GBP, AUD, JPY, KRW, INR and BDT with From/To selectors (BDT via a fallback rate source, latest rates only)
