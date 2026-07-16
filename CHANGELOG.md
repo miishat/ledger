@@ -8,6 +8,19 @@ pre-1.0 beta.
 
 ### Added
 - Options tab in Investments: wheel strategy tracker ported from the standalone tool — upload IBKR activity statement CSVs to see per-ticker premium collected, true breakeven, and live-price Net P/L (PDF export not carried over)
+- Currency converter now supports USD, CAD, EUR, GBP, AUD, JPY, KRW, INR and BDT with From/To selectors (BDT via a fallback rate source, latest rates only)
+- Settings hub: theme picker, market data key, backup and about consolidated into one sheet (gear in the sidebar dock / a new Settings tab on mobile)
+
+### Changed
+- Theme picker shows preview swatch cards for all themes
+- Mortgage payment-frequency toggle moved beside the Payment/Affordability toggle
+- 0.4.0 and 0.5.0 releases relabeled as betas
+
+### Fixed
+- Edit Compensation modal pre-fills the live stock price instead of a stale manual value
+- Debt payoff rows no longer leave empty columns for credit cards, lines of credit and payment-mode loans
+- Mobile: pages scroll fully clear of the bottom tab bar
+- Planner date picker placeholder capitalization ("Select Date")
 
 ## [0.5.0-beta] - 2026-07-13
 
