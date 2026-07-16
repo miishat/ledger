@@ -1,6 +1,6 @@
 import type { Currency, FetchStatus, FxRate, HistoricalPrice, Quote } from './types'
 import { fetchAlphaVantageHistorical, fetchAlphaVantageQuote } from './providers/alphaVantage'
-import { fetchFxRate } from './providers/frankfurter'
+import { fetchFxRateRouted } from './providers/fxRouter'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { SingleFlight, minInterval } from './throttle'
 import { fxKey, historicalKey, quoteKey } from './cacheKey'
@@ -22,12 +22,12 @@ export interface Resolved<T> {
 interface Providers {
   fetchQuote: typeof fetchAlphaVantageQuote
   fetchHistorical: typeof fetchAlphaVantageHistorical
-  fetchFxRate: typeof fetchFxRate
+  fetchFxRate: typeof fetchFxRateRouted
 }
 const defaultProviders: Providers = {
   fetchQuote: fetchAlphaVantageQuote,
   fetchHistorical: fetchAlphaVantageHistorical,
-  fetchFxRate,
+  fetchFxRate: fetchFxRateRouted,
 }
 let providers: Providers = { ...defaultProviders }
 export function __setProviders(p: Partial<Providers>): void { providers = { ...defaultProviders, ...p } }

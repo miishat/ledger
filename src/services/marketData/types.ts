@@ -1,4 +1,5 @@
-export type Currency = 'USD' | 'CAD'
+export const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY', 'KRW', 'INR', 'BDT'] as const
+export type Currency = (typeof CURRENCIES)[number]
 
 export interface Quote {
   ticker: string
