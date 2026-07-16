@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 
 /** Compact key-status pill, rendered by SettingsSheet in the card header. */
@@ -60,8 +61,9 @@ export const MarketDataSection: React.FC = () => {
         )}
       </div>
 
-      <details className="text-[13px]">
-        <summary className="cursor-pointer text-accent hover:underline list-none [&::-webkit-details-marker]:hidden select-none">
+      <details className="text-[13px] group">
+        <summary className="flex items-center gap-1 cursor-pointer text-accent hover:underline list-none [&::-webkit-details-marker]:hidden select-none">
+          <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" aria-hidden="true" />
           How to get a free key
         </summary>
         <ol className="mt-2 text-text-secondary list-decimal list-inside flex flex-col gap-1.5">

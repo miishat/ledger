@@ -23,5 +23,6 @@ describe('ThemeSwatchGrid', () => {
   it('renders a sparkline preview in every tile', () => {
     const { container } = render(<ThemeSwatchGrid />)
     expect(container.querySelectorAll('svg polyline')).toHaveLength(5)
+    expect(container.querySelectorAll('svg polyline')[2]).toHaveAttribute('stroke', '#d4a853')
   })
 })
