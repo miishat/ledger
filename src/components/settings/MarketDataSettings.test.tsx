@@ -1,32 +1,21 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { MarketDataSettings } from './MarketDataSettings'
+import { describe, expect, it, beforeEach } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MarketDataSection } from './MarketDataSettings'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
-import { setMatchMedia } from '../../test-utils/matchMedia'
 
-afterEach(() => useMarketDataStore.getState().clearApiKey())
+describe('MarketDataSection', () => {
+  beforeEach(() => useMarketDataStore.getState().clearApiKey())
 
-describe('MarketDataSettings', () => {
-  it('opens the modal and saves a key', () => {
-    render(<MarketDataSettings />)
-    fireEvent.click(screen.getByRole('button', { name: /market data/i }))
-    fireEvent.change(screen.getByLabelText(/api key/i), { target: { value: 'MYKEY1' } })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    expect(useMarketDataStore.getState().apiKey).toBe('MYKEY1')
+  it('saves a key', () => {
+    render(<MarketDataSection />)
+    fireEvent.change(screen.getByLabelText('Alpha Vantage API Key'), { target: { value: 'demo-key-x3P' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(useMarketDataStore.getState().apiKey).toBe('demo-key-x3P')
+    expect(screen.getByText(/ends in …x3P/)).toBeInTheDocument()
   })
 
   it('shows setup instructions with a link to claim a free key', () => {
-    render(<MarketDataSettings />)
-    fireEvent.click(screen.getByRole('button', { name: /market data/i }))
-    const link = screen.getByRole('link', { name: /free api key/i })
-    expect(link).toHaveAttribute('href', 'https://www.alphavantage.co/support/#api-key')
-  })
-
-  it('closes when the scrim is clicked (desktop)', async () => {
-    setMatchMedia(true)
-    render(<MarketDataSettings />)
-    fireEvent.click(screen.getByRole('button', { name: /market data/i }))
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    fireEvent.click(screen.getByTestId('sheet-scrim'))
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    render(<MarketDataSection />)
+    expect(screen.getByRole('link', { name: 'Get a free API key' })).toHaveAttribute('href', 'https://www.alphavantage.co/support/#api-key')
   })
 })

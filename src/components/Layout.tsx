@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
-import { ThemeSelector } from './theme/ThemeSelector'
-import { BackupControls } from './settings/BackupControls'
-import { MarketDataSettings } from './settings/MarketDataSettings'
+import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator } from 'lucide-react'
+import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator, Settings } from 'lucide-react'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
@@ -21,6 +19,7 @@ export const Layout: React.FC = () => {
   const location = useLocation()
   const swUpdate = useSWUpdate()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   // Captured once at mount: the last-seen-version effect below overwrites the key.
   const [shouldShowNews] = useState(() =>
     shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
@@ -98,11 +97,14 @@ export const Layout: React.FC = () => {
           </div>
         </div>
 
-        {/* Backup + Theme Dock */}
+        {/* Settings Dock */}
         <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col items-center gap-3 pb-6">
-          <BackupControls />
-          <MarketDataSettings />
-          <ThemeSelector />
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
+          >
+            <Settings className="w-4 h-4" /> Settings
+          </button>
           <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
             v{__APP_VERSION__} · What's New
           </button>
@@ -111,22 +113,6 @@ export const Layout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 overflow-auto overflow-x-hidden p-4 sm:p-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8">
-        {/* Mobile Backup + Theme rows */}
-        <div className="md:hidden flex flex-col items-center gap-2 mb-4">
-          <div className="flex items-center justify-center flex-wrap gap-3">
-            <BackupControls />
-            <MarketDataSettings />
-            <ThemeSelector />
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setWhatsNewOpen(true)} className="text-[11px] text-text-secondary hover:text-accent transition-colors">
-              v{__APP_VERSION__} · What's New
-            </button>
-            <button onClick={() => setDisclaimerOpen(true)} className="text-[10px] text-text-secondary/80 hover:text-accent transition-colors">
-              Estimates Only · Not Financial Advice
-            </button>
-          </div>
-        </div>
         <ErrorBoundary key={location.pathname}>
           <PageTransition>
             <Outlet />
@@ -157,12 +143,27 @@ export const Layout: React.FC = () => {
             </Link>
           )
         })}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="Settings"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
+        >
+          <Settings className="w-5 h-5" />
+          Settings
+        </button>
       </nav>
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
       <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} onOpenDisclaimer={() => setDisclaimerOpen(true)} swUpdate={swUpdate} />
       <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenWhatsNew={() => setWhatsNewOpen(true)}
+        onOpenDisclaimer={() => setDisclaimerOpen(true)}
+      />
     </div>
   )
 }
