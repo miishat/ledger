@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
+import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
@@ -29,12 +30,21 @@ interface CompensationModalProps {
 
 export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const { primaryPackage, setPrimaryPackage, addRSUGrant, updateRSUGrant } = useCompensationStore()
+  const { rawPrice, priceSource } = useCompensationDisplay()
 
   const [activeTab, setActiveTab] = useState<'base' | 'equity' | 'benefits'>('base')
 
   // Global Stock Price
-  const [companyCurrentPrice, setCompanyCurrentPrice] = useState(primaryPackage.companyCurrentPrice || 100)
+  const [companyCurrentPrice, setCompanyCurrentPrice] = useState(rawPrice || 100)
   const [companyTicker, setCompanyTicker] = useState(primaryPackage.companyTicker || '')
+
+  // Re-seed from the live/override price each time the modal opens, so a
+  // reopened modal reflects the price the top bar shows. Deliberately NOT
+  // keyed on rawPrice: a live refresh must not clobber mid-edit typing.
+  useEffect(() => {
+    if (isOpen) setCompanyCurrentPrice(rawPrice || 100)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary)
@@ -196,6 +206,11 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               onCommit={setCompanyCurrentPrice}
               className={inputClass}
             />
+            {(priceSource === 'live' || priceSource === 'cache') && (
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                Pre-filled from the live {companyTicker.trim().toUpperCase() || 'ticker'} price — edit to override.
+              </p>
+            )}
           </div>
         </div>
 
