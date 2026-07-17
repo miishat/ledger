@@ -1,7 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ForecasterTool } from './ForecasterTool'
+import { usePlannerStore } from '../../../store/usePlannerStore'
+
+// The forecaster reads/writes usePlannerStore, a persisted module singleton.
+// Reset its inputs after each test so goal/setting changes don't leak into
+// the next test in this file.
+afterEach(() => {
+  usePlannerStore.getState().resetTool('forecaster')
+})
 
 describe('ForecasterTool source labels', () => {
   it('shows friendly auto/manual labels instead of auto:<hint>', () => {
