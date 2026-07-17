@@ -49,7 +49,9 @@ export const ReallocationModal: React.FC<ReallocationModalProps> = ({
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     const date =
-      todayKey === selectedMonth ? today.toISOString().slice(0, 10) : `${selectedMonth}-01`;
+      todayKey === selectedMonth
+        ? `${todayKey}-${String(today.getDate()).padStart(2, '0')}`
+        : `${selectedMonth}-01`;
     addReallocation({
       id: crypto.randomUUID(),
       fromCategoryId,
