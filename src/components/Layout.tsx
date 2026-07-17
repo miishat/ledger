@@ -8,7 +8,8 @@ import { UpdateToast } from './ui/UpdateToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
-import { LayoutDashboard, Wallet, TrendingUp, PieChart, Calculator, Settings, Search } from 'lucide-react'
+import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search } from 'lucide-react'
+import { LedgerMark } from './ui/LedgerMark'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
@@ -53,12 +54,14 @@ export const Layout: React.FC = () => {
     localStorage.setItem(LAST_SEEN_VERSION_KEY, __APP_VERSION__)
   }, [])
 
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)
+
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Budgeting', path: '/budget', icon: Wallet },
     { name: 'Investments', path: '/investments', icon: TrendingUp },
-    { name: 'Planner', path: '/planner', icon: PieChart },
-    { name: 'Compensation', path: '/compensation', icon: Calculator },
+    { name: 'Planner', path: '/planner', icon: Calculator },
+    { name: 'Compensation', path: '/compensation', icon: Briefcase },
   ]
 
   return (
@@ -69,7 +72,8 @@ export const Layout: React.FC = () => {
       {/* Sidebar Navigation */}
       <nav className="hidden md:flex w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
         <div>
-          <div className="p-6 pb-3">
+          <div className="p-6 pb-3 flex items-center gap-2.5">
+            <LedgerMark size={26} className="text-accent shrink-0" />
             <h1 className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</h1>
           </div>
 
@@ -80,7 +84,7 @@ export const Layout: React.FC = () => {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Search className="w-4 h-4" /> Search
-              <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-border text-text-secondary/80">⌘K</kbd>
+              <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
             </button>
           </div>
 
@@ -117,6 +121,8 @@ export const Layout: React.FC = () => {
           </button>
           <button
             onClick={() => setWhatsNewOpen(true)}
+            title="What's New"
+            aria-label={`Version ${__APP_VERSION__}. Open What's New`}
             className="text-[11px] text-text-secondary/70 hover:text-accent transition-colors pr-2"
           >
             v{__APP_VERSION__}

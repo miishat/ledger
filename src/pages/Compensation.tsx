@@ -41,7 +41,7 @@ export const Compensation: React.FC = () => {
     <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
       <header className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Total Compensation Calculator</h1>
+          <h1 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Compensation</h1>
           <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">
             Analyze your base salary, bonuses, equity, and benefits to understand your true earning potential.
           </p>

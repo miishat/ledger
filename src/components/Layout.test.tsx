@@ -28,7 +28,7 @@ describe('Layout desktop sidebar', () => {
     render(<MemoryRouter><Layout /></MemoryRouter>)
     expect(screen.queryByText('Command Center')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
-    expect(screen.getByPlaceholderText('Jump to a module or tool…')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Jump to a page or tool…')).toBeInTheDocument()
   })
 
   it('marks the active nav item with an accent bar', () => {

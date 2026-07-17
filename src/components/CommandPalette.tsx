@@ -43,7 +43,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         <Search className="w-4 h-4 text-text-secondary" />
         <input
           className="flex-1 bg-transparent text-text-primary text-[15px] outline-none placeholder:text-text-secondary"
-          placeholder="Jump to a module or tool…"
+          placeholder="Jump to a page or tool…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setSelected(0) }}
           onKeyDown={onKeyDown}

@@ -24,12 +24,16 @@ export const Budgeting: React.FC = () => {
 
   const [tab, setTab] = useState<'overview' | 'insights' | 'transactions' | 'setup'>('overview');
 
-  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().substring(0, 7));
+  // Local-time month key: toISOString() is UTC, which rolls a local first-of-month
+  // back to the previous month in UTC+ timezones.
+  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+  const [selectedMonth, setSelectedMonth] = useState(() => monthKey(new Date()));
+  const currentMonth = monthKey(new Date());
 
   const shiftMonth = (delta: number) => {
     const [year, month] = selectedMonth.split('-').map(Number);
-    const date = new Date(year, month - 1 + delta, 1);
-    setSelectedMonth(date.toISOString().substring(0, 7));
+    setSelectedMonth(monthKey(new Date(year, month - 1 + delta, 1)));
   };
   
   const formattedMonth = new Date(`${selectedMonth}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -44,7 +48,7 @@ export const Budgeting: React.FC = () => {
     <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
       <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Budgeting Module</h1>
+          <h1 className="text-[24px] font-semibold text-text-primary">Budgeting</h1>
           <p className="text-[14px] text-text-secondary mt-1">
             Manage your income, track expenses, and view your cash flow.
           </p>
@@ -59,13 +63,21 @@ export const Budgeting: React.FC = () => {
               <ChevronLeft size={16} />
             </button>
             <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
-            <button 
-              onClick={() => shiftMonth(1)} 
+            <button
+              onClick={() => shiftMonth(1)}
               className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
               aria-label="Next Month"
             >
               <ChevronRight size={16} />
             </button>
+            {selectedMonth !== currentMonth && (
+              <button
+                onClick={() => setSelectedMonth(currentMonth)}
+                className="px-2 py-1 rounded-md text-[12px] font-medium text-accent hover:bg-bg-primary transition-all duration-200"
+              >
+                Today
+              </button>
+            )}
           </div>
           <CSVUploader />
           <button

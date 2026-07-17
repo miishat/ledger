@@ -88,8 +88,8 @@ export const Dashboard: React.FC = () => {
     <div className="p-6 min-h-full w-full">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Master Dashboard</h1>
-          <p className="text-[14px] text-text-secondary mt-1">Overview of your financial universe.</p>
+          <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>
+          <p className="text-[14px] text-text-secondary mt-1">All your accounts, balances, and trends in one place.</p>
         </div>
       </div>
 
