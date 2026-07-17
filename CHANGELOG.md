@@ -6,6 +6,18 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.0-beta] - 2026-07-17
+
+### Added
+- Budget paradigms are now functional: pick Ledger Custom, Zero-Based, Target-Based, or the 50/30/20 Rule in Budget Setup and the Budgeting page enforces it with status banners (unassigned dollars, buffer health, or needs/wants/savings ratios)
+- Zero-Based overspending shows a Cover button that moves budget from another category via a new reallocation dialog; the setup tab lists the month's reallocations with delete
+- 50/30/20 mode adds Need / Want / Savings chips on expense groups to classify spending
+- Compensation: a Gross / After-Tax toggle on the Total Compensation widget estimates take-home pay using the Salary & Tax calculator's math and your saved province, with net monthly and biweekly figures
+- A "Full breakdown in Salary & Tax" link pre-fills the calculator with your total compensation (asking before replacing a different saved income)
+
+### Fixed
+- PWA app icon now shows the new logo on fresh installs (icon files renamed so installs stop serving the cached old lightning icon; existing installs may need a reinstall)
+
 ## [0.6.2-beta] - 2026-07-17
 
 ### Added
