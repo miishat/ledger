@@ -6,6 +6,21 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.6.2-beta] - 2026-07-17
+
+### Added
+- New logo: an L that doubles as chart axes with a rising trend line. In the sidebar next to the wordmark (drawn in the active theme's accent), as the favicon, and in the app icons (gold on black)
+- Budgeting: a Today button jumps back to the current month after paging away
+
+### Changed
+- Page headers now match the sidebar labels: Dashboard, Budgeting, Compensation (previously "Master Dashboard", "Budgeting Module", "Total Compensation Calculator")
+- Planner and Compensation swapped nav icons: the calculator now marks the calculators page, Compensation gets a briefcase
+- The search shortcut hint shows Ctrl K on Windows and ⌘K on Mac; the sidebar version number explains it opens What's New
+
+### Fixed
+- Negative net worth reads -$210,000.00 instead of $-210,000.00
+- Budgeting month arrows no longer stick on the same month in timezones ahead of UTC
+
 ## [0.6.1-beta] - 2026-07-16
 
 ### Changed
@@ -66,7 +81,7 @@ pre-1.0 beta.
 - New Analysis dialog no longer shakes while typing a ticker or exchange.
 - Mobile pages no longer get cut off behind the bottom navigation bar.
 
-## [0.3-beta] - 2026-07-10
+## [0.3.0-beta] - 2026-07-10
 
 ### Added
 - "New version available" toast: the app now tells you when an update is ready instead of silently serving an old build.
@@ -88,7 +103,7 @@ pre-1.0 beta.
 - The New Analysis dialog no longer shakes while typing.
 - Budgeting page no longer scrolls sideways on mobile.
 
-## [0.2-beta] - 2026-07-06
+## [0.2.0-beta] - 2026-07-06
 
 ### Added
 - Plan vs Actual tracking for investment analyses: planned budget with per-ticker allocation %, trade lots, swap what-if simulator.
@@ -102,7 +117,7 @@ pre-1.0 beta.
 - Net worth trend Y-axis starts at the data range instead of zero.
 - Forecaster source labels; expenses widget $0 layout.
 
-## [0.1-beta] - 2026-07-01
+## [0.1.0-beta] - 2026-07-01
 
 ### Added
 - Initial release: Dashboard, Budgeting (transactions, categories, insights), Investments, Planner tools, Compensation tracking.
