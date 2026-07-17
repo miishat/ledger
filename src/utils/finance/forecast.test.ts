@@ -51,3 +51,35 @@ describe('buildForecast', () => {
     expect(f[24].base).toBe(10_000 + 12 * 600 + 12 * 1_000)
   })
 })
+
+describe('real contributed/growth series', () => {
+  it('deflates contributed and growth by the same deflator as real', () => {
+    const points = buildForecast({
+      startBalance: 100000,
+      monthlySavings: 1000,
+      annualReturnPct: 7,
+      annualInflationPct: 3,
+      contributionStepUpPct: 0,
+      years: 2,
+    })
+    const p = points[24]
+    const deflator = Math.pow(1.03, 24 / 12)
+    expect(p.contributedReal).toBeCloseTo(p.contributed / deflator, 6)
+    expect(p.growthReal).toBeCloseTo(p.growth / deflator, 6)
+    // stack identity holds in real terms too
+    expect(p.contributedReal + p.growthReal).toBeCloseTo(p.real, 6)
+  })
+
+  it('month 0 has contributedReal = startBalance and growthReal = 0', () => {
+    const points = buildForecast({
+      startBalance: 50000,
+      monthlySavings: 0,
+      annualReturnPct: 5,
+      annualInflationPct: 2,
+      contributionStepUpPct: 0,
+      years: 1,
+    })
+    expect(points[0].contributedReal).toBe(50000)
+    expect(points[0].growthReal).toBe(0)
+  })
+})
