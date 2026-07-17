@@ -200,23 +200,22 @@ export const ForecasterTool: React.FC = () => {
 
       {/* Goals + life events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-3">
-          <ListEditor<Goal>
-            title="Goals (Net-Worth Targets)"
-            items={goals}
-            columns={[
-              { key: 'label', label: 'Goal', type: 'text' },
-              { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 },
-            ]}
-            makeNew={() => ({ id: `g${Date.now()}`, label: 'New goal', amount: 100000 })}
-            onChange={saveGoals}
-          />
-          {goalMarkers.map((g) => (
-            <p key={g.label} className="text-[13px] text-text-secondary">
-              {g.label} ({formatMoney(g.amount)}): <span className="text-text-primary">{formatMonthsOut(g.month)}</span>
-            </p>
-          ))}
-        </div>
+        <ListEditor<Goal>
+          title="Goals (Net-Worth Targets)"
+          items={goals}
+          columns={[
+            { key: 'label', label: 'Goal', type: 'text' },
+            { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 },
+          ]}
+          makeNew={() => ({ id: `g${Date.now()}`, label: 'New goal', amount: 100000 })}
+          onChange={saveGoals}
+          renderExtra={(g) => (
+            <>
+              <span className="text-[13px] font-medium text-text-secondary">Projected</span>
+              <span className="text-[15px] text-text-primary py-2">{formatMonthsOut(monthsToReach(points, g.amount))}</span>
+            </>
+          )}
+        />
         <ListEditor<LifeEvent>
           title="Life Events (Negative = Cost, Positive = Windfall)"
           items={events}
@@ -227,6 +226,12 @@ export const ForecasterTool: React.FC = () => {
           ]}
           makeNew={() => ({ id: `e${Date.now()}`, label: 'House down payment', yearsFromNow: 3, amount: -100000 })}
           onChange={saveEvents}
+          renderExtra={(e) => (
+            <>
+              <span className="text-[13px] font-medium text-text-secondary">Lands</span>
+              <span className="text-[15px] text-text-primary py-2">{formatMonthsOut(Math.max(1, Math.round(e.yearsFromNow * 12)))}</span>
+            </>
+          )}
         />
       </div>
 
