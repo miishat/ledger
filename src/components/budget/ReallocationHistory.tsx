@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowRight, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
 
@@ -7,6 +7,7 @@ export const ReallocationHistory: React.FC<{ selectedMonth: string }> = ({ selec
   const reallocations = useBudgetStore((s) => s.reallocations);
   const categories = useBudgetStore((s) => s.categories);
   const deleteReallocation = useBudgetStore((s) => s.deleteReallocation);
+  const [collapsed, setCollapsed] = useState(false);
 
   const rows = Object.values(reallocations)
     .filter((r) => r.date.startsWith(selectedMonth))
@@ -18,8 +19,20 @@ export const ReallocationHistory: React.FC<{ selectedMonth: string }> = ({ selec
 
   return (
     <div className="bg-bg-secondary border border-border rounded-xl p-6 flex flex-col gap-3">
-      <h2 className="text-[16px] font-semibold text-text-primary">Reallocations This Month</h2>
-      {rows.map((r) => (
+      <button
+        type="button"
+        onClick={() => setCollapsed(!collapsed)}
+        aria-expanded={!collapsed}
+        className="flex items-center gap-2 text-left"
+      >
+        {collapsed ? (
+          <ChevronRight size={18} className="text-text-secondary" />
+        ) : (
+          <ChevronDown size={18} className="text-text-secondary" />
+        )}
+        <h2 className="text-[16px] font-semibold text-text-primary">Reallocations This Month</h2>
+      </button>
+      {!collapsed && rows.map((r) => (
         <div key={r.id} className="flex items-center gap-3 text-[13px] border-b border-border/30 pb-2 last:border-0 last:pb-0">
           <span className="text-text-primary">{name(r.fromCategoryId)}</span>
           <ArrowRight size={14} className="text-text-secondary shrink-0" />

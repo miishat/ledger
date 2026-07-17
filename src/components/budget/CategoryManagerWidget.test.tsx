@@ -39,3 +39,67 @@ describe('CategoryManagerWidget paradigm controls', () => {
     expect(screen.queryByRole('button', { name: /class to want/ })).toBeNull()
   })
 })
+
+describe('CategoryManagerWidget overspend gating', () => {
+  it('Zero-Based: shows Cover button for a zero-target category with spending, and opens the dialog', () => {
+    useBudgetStore.setState({
+      paradigm: 'Zero-Based',
+      budgetSetupCollapsed: false,
+      transactions: {
+        t1: { id: 't1', date: '2026-07-05', amount: 40, categoryId: 'c1', description: 'Groceries', type: 'expense' },
+      },
+      reallocations: {},
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+      },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 0 },
+      },
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    const coverButton = screen.getByRole('button', { name: 'Cover' })
+    expect(coverButton).toBeInTheDocument()
+    fireEvent.click(coverButton)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('Target-Based: shows "absorbed by buffer" and no Cover button for an overspent category', () => {
+    useBudgetStore.setState({
+      paradigm: 'Target-Based',
+      budgetSetupCollapsed: false,
+      transactions: {
+        t1: { id: 't1', date: '2026-07-05', amount: 150, categoryId: 'c1', description: 'Groceries', type: 'expense' },
+      },
+      reallocations: {},
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+      },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 100 },
+      },
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    expect(screen.getByText(/absorbed by buffer/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cover' })).toBeNull()
+  })
+
+  it('Ledger Custom: shows neither the Cover button nor the absorbed-by-buffer note', () => {
+    useBudgetStore.setState({
+      paradigm: 'Ledger Custom',
+      budgetSetupCollapsed: false,
+      transactions: {
+        t1: { id: 't1', date: '2026-07-05', amount: 150, categoryId: 'c1', description: 'Groceries', type: 'expense' },
+      },
+      reallocations: {},
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+      },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 100 },
+      },
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    expect(screen.queryByRole('button', { name: 'Cover' })).toBeNull()
+    expect(screen.queryByText(/absorbed by buffer/i)).toBeNull()
+  })
+})

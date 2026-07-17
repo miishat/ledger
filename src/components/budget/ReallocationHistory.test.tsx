@@ -30,4 +30,11 @@ describe('ReallocationHistory', () => {
     const { container } = render(<ReallocationHistory selectedMonth="2026-01" />)
     expect(container.firstChild).toBeNull()
   })
+
+  it('hides rows after collapsing the history', () => {
+    render(<ReallocationHistory selectedMonth="2026-07" />)
+    expect(screen.getByText(/Food/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Reallocations This Month/i }))
+    expect(screen.queryByText(/Food/)).toBeNull()
+  })
 })
