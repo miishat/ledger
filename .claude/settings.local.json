@@ -26,7 +26,9 @@
       "Bash(echo \"---exit $?---\")",
       "Bash(git check-ignore *)",
       "Bash(rm .claude/settings.json)",
-      "Bash(python -c \"import json; json.load\\(open\\('.claude/settings.local.json'\\)\\); print\\('valid json'\\)\")"
+      "Bash(python -c \"import json; json.load\\(open\\('.claude/settings.local.json'\\)\\); print\\('valid json'\\)\")",
+      "Bash(git checkout *)",
+      "Bash(.claude/skills/subagent-driven-development/scripts/task-brief docs/superpowers/plans/2026-07-02-phase-1-foundation.md 1)"
     ],
     "deny": [
       "Read(.env)",
