@@ -17,7 +17,7 @@ export const NetWorthWidget: React.FC = () => {
         <div className="text-[36px] font-bold leading-[1.1] text-text-primary mb-2">
           <AnimatedNumber
             value={netWorth}
-            format={(n) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            format={(n) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           />
         </div>
         <div className="flex items-center text-accent font-medium">
