@@ -1,7 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { CompHeroWidget } from './CompHeroWidget'
-import { useCompensationStore } from '../../store/useCompensationStore'
+import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { usePlannerStore } from '../../store/usePlannerStore'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { __resetMinInterval } from '../../services/marketData/throttle'
 
@@ -26,5 +28,39 @@ describe('CompHeroWidget with CAD conversion', () => {
     // total comp includes at least the converted base salary; sanity check it renders without crashing
     // and shows the "Total Annual Compensation" label once resolved.
     await waitFor(() => expect(screen.getByText(/Total Annual Compensation/i)).toBeInTheDocument())
+  })
+})
+
+describe('CompHeroWidget after-tax toggle', () => {
+  beforeEach(() => {
+    usePlannerStore.setState({ inputs: {} })
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100_000, pastSalaryChanges: [], rsuGrants: [] },
+    })
+  })
+
+  const renderWidget = () =>
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+
+  it('shows gross label by default and after-tax when toggled', () => {
+    renderWidget()
+    expect(screen.getByText('Total Annual Compensation')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    expect(screen.getByText('Est. After-Tax Compensation')).toBeInTheDocument()
+    expect(screen.getByText(/Net Monthly/)).toBeInTheDocument()
+    expect(screen.getByText(/RRSP match is actually tax-sheltered/)).toBeInTheDocument()
+  })
+
+  it('persists the toggle in the store', () => {
+    renderWidget()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    expect(useCompensationStore.getState().showAfterTax).toBe(true)
   })
 })
