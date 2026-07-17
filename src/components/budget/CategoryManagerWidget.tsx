@@ -3,6 +3,7 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
+import { ReallocationModal } from './ReallocationModal';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
@@ -36,6 +37,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
     toggleBudgetSetup
   } = useBudgetStore();
 
+  const [coverTarget, setCoverTarget] = useState<{ id: string; overage: number } | null>(null);
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
@@ -234,6 +236,18 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-error' : 'text-text-secondary'}`}>
                                   ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - effectiveTarget).toFixed(0)} over)`}
                                 </span>
+                                {isOverBudget && paradigm === 'Zero-Based' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setCoverTarget({ id: cat.id, overage: actualAmount - effectiveTarget })}
+                                    className="px-2 py-0.5 rounded text-[11px] font-medium border border-error/60 text-error hover:bg-error/10 transition-colors"
+                                  >
+                                    Cover
+                                  </button>
+                                )}
+                                {isOverBudget && paradigm === 'Target-Based' && (
+                                  <span className="text-[11px] text-orange-500">absorbed by buffer</span>
+                                )}
                                 {effectiveTarget > 0 && (
                                   <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
                                     <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
@@ -340,6 +354,16 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
+      )}
+
+      {coverTarget && (
+        <ReallocationModal
+          isOpen
+          onClose={() => setCoverTarget(null)}
+          toCategoryId={coverTarget.id}
+          defaultAmount={coverTarget.overage}
+          selectedMonth={selectedMonth}
+        />
       )}
     </div>
   );
