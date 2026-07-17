@@ -1,9 +1,13 @@
-export type BudgetingParadigm = 'Target-Based' | 'Zero-Based' | 'Ledger Custom';
+export type BudgetingParadigm = 'Ledger Custom' | 'Zero-Based' | 'Target-Based' | '50/30/20';
+
+export type BudgetClass = 'need' | 'want' | 'savings';
 
 export interface CategoryGroup {
   id: string;
   name: string;
   kind: 'income' | 'expense';
+  /** 50/30/20 bucket for expense groups. Unclassified counts as need. */
+  budgetClass?: BudgetClass;
 }
 
 export interface Category {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   BudgetingParadigm,
+  BudgetClass,
   Category,
   CategoryGroup,
   Reallocation,
@@ -28,6 +29,40 @@ export function migrateBudgetState(persisted: unknown, version: number): unknown
     ]),
   )
   return { ...state, categoryGroups }
+}
+
+const VALID_PARADIGMS: readonly string[] = ['Ledger Custom', 'Zero-Based', 'Target-Based', '50/30/20'];
+const SEED_CLASS_BY_NAME: Record<string, BudgetClass> = {
+  housing: 'need',
+  necessities: 'need',
+  food: 'need',
+  entertainment: 'want',
+  shopping: 'want',
+};
+
+/** v2 -> v3: paradigm becomes one of the four real values (Envelope and any
+ *  unknown value fall back to Ledger Custom); known seeded expense groups get
+ *  a 50/30/20 budgetClass. Explicit classes are never overwritten. */
+export function migrateBudgetStateV3(persisted: unknown): unknown {
+  const state = persisted as {
+    paradigm?: string;
+    categoryGroups?: Record<string, CategoryGroup>;
+  };
+  const paradigm = VALID_PARADIGMS.includes(state?.paradigm ?? '')
+    ? state.paradigm
+    : 'Ledger Custom';
+  const categoryGroups = state?.categoryGroups
+    ? Object.fromEntries(
+        Object.entries(state.categoryGroups).map(([id, g]) => {
+          const seeded = SEED_CLASS_BY_NAME[g.name?.toLowerCase?.() ?? ''];
+          if (g.kind === 'expense' && !g.budgetClass && seeded) {
+            return [id, { ...g, budgetClass: seeded }];
+          }
+          return [id, g];
+        }),
+      )
+    : state?.categoryGroups;
+  return { ...state, paradigm, categoryGroups };
 }
 
 interface BudgetState {
@@ -144,11 +179,11 @@ export const useBudgetStore = create<BudgetState>()(
         return {
           categoryGroups: {
             'g-2': { id: 'g-2', name: 'Income', kind: 'income' },
-            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing', kind: 'expense' },
-            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment', kind: 'expense' },
-            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities', kind: 'expense' },
-            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping', kind: 'expense' },
-            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food', kind: 'expense' }
+            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment', kind: 'expense', budgetClass: 'want' },
+            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities', kind: 'expense', budgetClass: 'need' },
+            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping', kind: 'expense', budgetClass: 'want' },
+            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food', kind: 'expense', budgetClass: 'need' }
           },
           categories: {
             'c-6': { id: 'c-6', groupId: 'g-2', name: 'Salary', targetAmount: 0 },
@@ -178,14 +213,15 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: 'ledger-budget',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         const persisted = persistedState as Partial<BudgetState>;
         const withDefaults = {
           ...persisted,
           budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
         };
-        return migrateBudgetState(withDefaults, version) as Partial<BudgetState>;
+        const v2 = migrateBudgetState(withDefaults, version);
+        return (version >= 3 ? v2 : migrateBudgetStateV3(v2)) as Partial<BudgetState>;
       },
     }
   )
