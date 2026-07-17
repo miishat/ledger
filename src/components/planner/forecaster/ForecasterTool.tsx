@@ -51,7 +51,7 @@ const AutoField: React.FC<{
 )
 
 export const ForecasterTool: React.FC = () => {
-  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved } = useForecasterSettings()
+  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax } = useForecasterSettings()
   const history = useAccountsStore((s) => s.history)
 
   const eventLumps: LumpSum[] = events.map((e) => ({
@@ -120,6 +120,34 @@ export const ForecasterTool: React.FC = () => {
               {autoFeed.debtDrag ? `Debt Drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'Debt Drag Off'}
             </button>
           </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSetting('compTaxEnabled', !settings.compTaxEnabled)}
+              className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+                settings.compTaxEnabled ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
+              }`}
+            >
+              {settings.compTaxEnabled ? 'After-Tax Comp Events' : 'Gross Comp Events'}
+            </button>
+            {settings.compTaxEnabled ? (
+              <button
+                onClick={() => setSetting('compTaxAuto', !settings.compTaxAuto)}
+                className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+                  settings.compTaxAuto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
+                }`}
+              >
+                {settings.compTaxAuto ? `Marginal ${compTax.ratePct.toFixed(0)}% (${compTax.province})` : 'Manual Rate'}
+              </button>
+            ) : null}
+          </div>
+          {settings.compTaxEnabled && !settings.compTaxAuto ? (
+            <CalculatorField label="" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
+          ) : null}
+          {settings.compTaxEnabled ? (
+            <p className="text-[11px] text-text-secondary">
+              Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
+            </p>
+          ) : null}
         </div>
       </div>
 
