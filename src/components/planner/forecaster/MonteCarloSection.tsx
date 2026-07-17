@@ -6,7 +6,7 @@ import { probabilityOfSuccess, runMonteCarlo } from '../../../utils/finance/mont
 import type { LumpSum } from '../../../utils/finance/forecast'
 import { CalculatorField } from '../CalculatorField'
 import { ResultCard } from '../ResultCard'
-import { formatMoney } from '../format'
+import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 
 interface MonteCarloSectionProps {
@@ -51,21 +51,23 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
         <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
         <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
       </div>
-      <div className="themed-card rounded-lg p-4 h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data}>
-            <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
-            <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <YAxis width={72} tickFormatter={(v: number) => formatMoney(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <Tooltip
-              formatter={(value, name) => [formatMoney(Number(value)), String(name) === 'w1090' ? 'P10–P90 width' : String(name).toUpperCase()]}
-              {...chartTooltipStyles}
-            />
-            <Area type="monotone" dataKey="p10" stackId="fan" stroke="none" fill="transparent" name="p10" />
-            <Area type="monotone" dataKey="w1090" stackId="fan" stroke="none" fill="var(--accent)" fillOpacity={0.18} name="w1090" />
-            <Line type="monotone" dataKey="p50" stroke="var(--accent)" strokeWidth={2} dot={false} name="p50" />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <div className="themed-card rounded-lg p-4">
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data}>
+              <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
+              <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+              <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+              <Tooltip
+                formatter={(value, name) => [formatMoney(Number(value)), String(name) === 'w1090' ? 'P10–P90 width' : String(name).toUpperCase()]}
+                {...chartTooltipStyles}
+              />
+              <Area type="monotone" dataKey="p10" stackId="fan" stroke="none" fill="transparent" name="p10" />
+              <Area type="monotone" dataKey="w1090" stackId="fan" stroke="none" fill="var(--accent)" fillOpacity={0.18} name="w1090" />
+              <Line type="monotone" dataKey="p50" stroke="var(--accent)" strokeWidth={2} dot={false} name="p50" />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
         <p className="text-[12px] text-text-secondary mt-2">
           500 seeded simulations. Shaded band spans the 10th to 90th percentile.
         </p>

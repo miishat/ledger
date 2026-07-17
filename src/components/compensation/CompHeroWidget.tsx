@@ -11,9 +11,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useNavigate } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
+import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
+import { usePlannerStore } from '../../store/usePlannerStore'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -57,11 +62,30 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     return null;
   };
 
-  const { timeMode, setTimeMode } = useCompensationStore()
+  const navigate = useNavigate()
+  const { timeMode, setTimeMode, showAfterTax, toggleAfterTax, useCadConversion } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
 
   const totalComp = calcTotalComp(primaryPackage, timeMode)
+  const { takeHome, province, deductionPct } = useTakeHomeEstimate(totalComp)
+  const hasStockComp = primaryPackage.rsuGrants.length > 0 || primaryPackage.esppContributionPercent > 0
+
+  const openSalaryTax = () => {
+    const { inputs, setInput } = usePlannerStore.getState()
+    const saved = inputs['salary-tax']?.income
+    const total = Math.round(totalComp)
+    const differs = typeof saved === 'number' && Math.round(saved) !== total
+    if (differs) {
+      const ok = window.confirm(
+        `Replace the income saved in Salary & Tax (${saved.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}) with your total compensation (${total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })})?`,
+      )
+      if (ok) setInput('salary-tax', 'income', total)
+    } else {
+      setInput('salary-tax', 'income', total)
+    }
+    navigate('/planner/salary-tax')
+  }
 
   if (totalComp === 0) {
     return (
@@ -167,6 +191,22 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               Monthly Cash Flow View
             </button>
           </div>
+
+          {/* Gross / After-Tax Toggle */}
+          <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
+            <button
+              onClick={() => showAfterTax && toggleAfterTax()}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${!showAfterTax ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              Gross
+            </button>
+            <button
+              onClick={() => !showAfterTax && toggleAfterTax()}
+              className={`px-3 py-1 rounded-[4px] text-[12px] font-medium transition-colors ${showAfterTax ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              After-Tax
+            </button>
+          </div>
         </div>
       </div>
 
@@ -201,9 +241,11 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[24px] font-semibold text-[var(--color-text-primary)]">
-                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalComp)}
+                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(showAfterTax ? takeHome.net : totalComp)}
               </span>
-              <span className="text-[12px] text-[var(--color-text-secondary)]">Total Annual Compensation</span>
+              <span className="text-[12px] text-[var(--color-text-secondary)]">
+                {showAfterTax ? 'Est. After-Tax Compensation' : 'Total Annual Compensation'}
+              </span>
             </div>
           </>
         ) : (
@@ -225,6 +267,42 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           </ResponsiveContainer>
         )}
       </div>
+
+      {showAfterTax && (
+        <div className="mt-4 flex flex-col gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+            <div className="rounded-lg border border-[var(--color-border)] p-3">
+              <p className="text-[12px] text-[var(--color-text-secondary)]">Effective Deductions</p>
+              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">{deductionPct.toFixed(1)}%</p>
+            </div>
+            <div className="rounded-lg border border-[var(--color-border)] p-3">
+              <p className="text-[12px] text-[var(--color-text-secondary)]">Net Monthly</p>
+              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(takeHome.net / 12)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-[var(--color-border)] p-3">
+              <p className="text-[12px] text-[var(--color-text-secondary)]">Net Biweekly</p>
+              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(takeHome.net / 26)}
+              </p>
+            </div>
+          </div>
+          <p className="text-[12px] text-[var(--color-text-secondary)]">
+            Estimate. Treats all compensation as {PROVINCIAL_TAX[province].name} employment income for the
+            year. RRSP match is actually tax-sheltered; ESPP and RSU values assume sale at vest.
+            {!useCadConversion && hasStockComp && ' Stock components are in USD; brackets assume CAD.'}
+          </p>
+          <button
+            type="button"
+            onClick={openSalaryTax}
+            className="self-start flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:underline"
+          >
+            <ExternalLink size={14} />
+            Full breakdown in Salary & Tax
+          </button>
+        </div>
+      )}
     </div>
   )
 }

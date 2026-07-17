@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   BudgetingParadigm,
+  BudgetClass,
   Category,
   CategoryGroup,
   Reallocation,
@@ -28,6 +29,40 @@ export function migrateBudgetState(persisted: unknown, version: number): unknown
     ]),
   )
   return { ...state, categoryGroups }
+}
+
+const VALID_PARADIGMS: readonly string[] = ['Ledger Custom', 'Zero-Based', 'Target-Based', '50/30/20'];
+const SEED_CLASS_BY_NAME: Record<string, BudgetClass> = {
+  housing: 'need',
+  necessities: 'need',
+  food: 'need',
+  entertainment: 'want',
+  shopping: 'want',
+};
+
+/** v2 -> v3: paradigm becomes one of the four real values (Envelope and any
+ *  unknown value fall back to Ledger Custom); known seeded expense groups get
+ *  a 50/30/20 budgetClass. Explicit classes are never overwritten. */
+export function migrateBudgetStateV3(persisted: unknown): unknown {
+  const state = persisted as {
+    paradigm?: string;
+    categoryGroups?: Record<string, CategoryGroup>;
+  };
+  const paradigm = VALID_PARADIGMS.includes(state?.paradigm ?? '')
+    ? state.paradigm
+    : 'Ledger Custom';
+  const categoryGroups = state?.categoryGroups
+    ? Object.fromEntries(
+        Object.entries(state.categoryGroups).map(([id, g]) => {
+          const seeded = SEED_CLASS_BY_NAME[g.name?.toLowerCase?.() ?? ''];
+          if (g.kind === 'expense' && !g.budgetClass && seeded) {
+            return [id, { ...g, budgetClass: seeded }];
+          }
+          return [id, g];
+        }),
+      )
+    : state?.categoryGroups;
+  return { ...state, paradigm, categoryGroups };
 }
 
 interface BudgetState {
@@ -144,11 +179,11 @@ export const useBudgetStore = create<BudgetState>()(
         return {
           categoryGroups: {
             'g-2': { id: 'g-2', name: 'Income', kind: 'income' },
-            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing', kind: 'expense' },
-            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment', kind: 'expense' },
-            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities', kind: 'expense' },
-            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping', kind: 'expense' },
-            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food', kind: 'expense' }
+            'b7ca0301-94c8-4c58-98d5-b94a61294a24': { id: 'b7ca0301-94c8-4c58-98d5-b94a61294a24', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+            '02d13ccd-9d3a-4585-ada4-5c3b9041b539': { id: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Entertainment', kind: 'expense', budgetClass: 'want' },
+            '6252c9d2-7035-4a58-baf2-ef4d78de6a43': { id: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Necessities', kind: 'expense', budgetClass: 'need' },
+            '616e0658-95ed-4db7-97bc-0810b94b849b': { id: '616e0658-95ed-4db7-97bc-0810b94b849b', name: 'Shopping', kind: 'expense', budgetClass: 'want' },
+            'dc29db87-cfde-4c89-91e1-36a9436f6e5a': { id: 'dc29db87-cfde-4c89-91e1-36a9436f6e5a', name: 'Food', kind: 'expense', budgetClass: 'need' }
           },
           categories: {
             'c-6': { id: 'c-6', groupId: 'g-2', name: 'Salary', targetAmount: 0 },
@@ -178,14 +213,15 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: 'ledger-budget',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         const persisted = persistedState as Partial<BudgetState>;
         const withDefaults = {
           ...persisted,
           budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
         };
-        return migrateBudgetState(withDefaults, version) as Partial<BudgetState>;
+        const v2 = migrateBudgetState(withDefaults, version);
+        return (version >= 3 ? v2 : migrateBudgetStateV3(v2)) as Partial<BudgetState>;
       },
     }
   )
@@ -193,10 +229,25 @@ export const useBudgetStore = create<BudgetState>()(
 
 // Dynamic computation selectors
 
+export interface CategoryStat {
+  id: string;
+  effectiveTarget: number;
+  spent: number;
+  overspend: number; // max(spent - effectiveTarget, 0)
+}
+
 export interface MonthlyBudgetStats {
   spent: number;
   remaining: number;
   unallocated: number;
+  perCategory: Record<string, CategoryStat>; // expense categories only
+  zeroBased: { unassigned: number; overspentCategoryIds: string[] };
+  targetBased: { buffer: number; negative: boolean };
+  fiftyThirtyTwenty: {
+    needsSpent: number; wantsSpent: number; savingsSpent: number;
+    needsPct: number; wantsPct: number; savingsPct: number; // of month income, 0 when income is 0
+    hasUnclassified: boolean;
+  };
 }
 
 export function getMonthlyBudgetStats(
@@ -206,54 +257,96 @@ export function getMonthlyBudgetStats(
 ): MonthlyBudgetStats {
   let spent = 0;
   let totalIncome = 0;
-  let totalTarget = 0;
-  
-  // Create a month string like 'YYYY-MM'
+
   const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
 
-  // Calculate total spent and income for the month
+  const perCategorySpent: Record<string, number> = {};
   Object.values(state.transactions).forEach((tx) => {
-    if (tx.date.startsWith(monthStr)) {
-      if (tx.type === 'expense') {
-        spent += tx.amount;
-      } else if (tx.type === 'income') {
-        totalIncome += tx.amount;
+    if (!tx.date.startsWith(monthStr)) return;
+    if (tx.type === 'expense') {
+      spent += tx.amount;
+      if (tx.categoryId) {
+        perCategorySpent[tx.categoryId] = (perCategorySpent[tx.categoryId] ?? 0) + tx.amount;
       }
+    } else if (tx.type === 'income') {
+      totalIncome += tx.amount;
     }
   });
 
-  // Calculate Effective Targets (Base + Reallocs In - Reallocs Out)
+  // Effective targets: base + reallocations in - reallocations out (this month).
   const categoryEffectiveTargets: Record<string, number> = {};
-  Object.values(state.categories).forEach(cat => {
+  Object.values(state.categories).forEach((cat) => {
     categoryEffectiveTargets[cat.id] = cat.targetAmount;
   });
-
-  Object.values(state.reallocations).forEach(realloc => {
-    if (realloc.date.startsWith(monthStr)) {
-      if (categoryEffectiveTargets[realloc.fromCategoryId] !== undefined) {
-        categoryEffectiveTargets[realloc.fromCategoryId] -= realloc.amount;
-      }
-      if (categoryEffectiveTargets[realloc.toCategoryId] !== undefined) {
-        categoryEffectiveTargets[realloc.toCategoryId] += realloc.amount;
-      }
+  Object.values(state.reallocations).forEach((realloc) => {
+    if (!realloc.date.startsWith(monthStr)) return;
+    if (categoryEffectiveTargets[realloc.fromCategoryId] !== undefined) {
+      categoryEffectiveTargets[realloc.fromCategoryId] -= realloc.amount;
+    }
+    if (categoryEffectiveTargets[realloc.toCategoryId] !== undefined) {
+      categoryEffectiveTargets[realloc.toCategoryId] += realloc.amount;
     }
   });
 
-  totalTarget = Object.values(categoryEffectiveTargets).reduce((sum, amt) => sum + amt, 0);
+  const totalTarget = Object.values(categoryEffectiveTargets).reduce((sum, amt) => sum + amt, 0);
+  const unallocated = totalIncome - totalTarget;
+  const remaining = totalTarget - spent;
 
-  let unallocated = totalIncome - totalTarget;
-  let remaining = totalTarget - spent;
+  // Per-category stats for expense categories only.
+  const perCategory: Record<string, CategoryStat> = {};
+  Object.values(state.categories).forEach((cat) => {
+    const group = state.categoryGroups[cat.groupId];
+    if (group?.kind !== 'expense') return;
+    const catSpent = perCategorySpent[cat.id] ?? 0;
+    const effectiveTarget = categoryEffectiveTargets[cat.id] ?? cat.targetAmount;
+    perCategory[cat.id] = {
+      id: cat.id,
+      effectiveTarget,
+      spent: catSpent,
+      overspend: Math.max(catSpent - effectiveTarget, 0),
+    };
+  });
 
-  // Enforce Paradigm Math
-  if (state.paradigm === 'Zero-Based') {
-    // In Zero-Based, unallocated MUST strictly be Income minus Targets.
-    // If they overspend a category, it doesn't automatically reduce unallocated.
-    // They must manually reallocate.
-  }
+  const overspentCategoryIds = Object.values(perCategory)
+    .filter((c) => c.overspend > 0)
+    .map((c) => c.id);
+  const totalOverspend = Object.values(perCategory).reduce((sum, c) => sum + c.overspend, 0);
+
+  // 50/30/20 buckets. Unclassified expense groups count as need. Expense
+  // transactions without a category also count as need.
+  let needsSpent = 0;
+  let wantsSpent = 0;
+  let savingsSpent = 0;
+  let hasUnclassified = false;
+  Object.values(state.transactions).forEach((tx) => {
+    if (tx.type !== 'expense' || !tx.date.startsWith(monthStr)) return;
+    const cat = tx.categoryId ? state.categories[tx.categoryId] : undefined;
+    const group = cat ? state.categoryGroups[cat.groupId] : undefined;
+    const cls = group?.budgetClass;
+    if (cls === 'want') wantsSpent += tx.amount;
+    else if (cls === 'savings') savingsSpent += tx.amount;
+    else needsSpent += tx.amount;
+  });
+  Object.values(state.categoryGroups).forEach((g) => {
+    if (g.kind === 'expense' && !g.budgetClass) hasUnclassified = true;
+  });
+  const pct = (v: number) => (totalIncome > 0 ? (v / totalIncome) * 100 : 0);
 
   return {
     spent,
     remaining,
     unallocated,
+    perCategory,
+    zeroBased: { unassigned: unallocated, overspentCategoryIds },
+    targetBased: { buffer: unallocated - totalOverspend, negative: unallocated - totalOverspend < 0 },
+    fiftyThirtyTwenty: {
+      needsSpent,
+      wantsSpent,
+      savingsSpent,
+      needsPct: pct(needsSpent),
+      wantsPct: pct(wantsSpent),
+      savingsPct: pct(savingsSpent),
+      hasUnclassified,
+    },
   };
 }

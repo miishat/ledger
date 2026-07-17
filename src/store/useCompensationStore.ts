@@ -216,6 +216,7 @@ interface CompensationState {
   compareMode: boolean
   timeMode: TimeMode
   useCadConversion: boolean
+  showAfterTax: boolean
 
   setPrimaryPackage: (updates: Partial<CompensationPackage>) => void
   setComparePackage: (pkg: CompensationPackage | null) => void
@@ -225,9 +226,10 @@ interface CompensationState {
   removeRSUGrant: (id: string) => void
   updateRSUGrant: (id: string, updates: Partial<RSUGrant>) => void
   toggleCadConversion: () => void
+  toggleAfterTax: () => void
 }
 
-const defaultPrimaryPackage: CompensationPackage = {
+export const defaultPrimaryPackage: CompensationPackage = {
   id: 'primary',
   name: 'Current Offer',
   companyCurrentPrice: 100,
@@ -251,6 +253,7 @@ export const useCompensationStore = create<CompensationState>()(
       compareMode: false,
       timeMode: 'current-year',
       useCadConversion: false,
+      showAfterTax: false,
 
       setPrimaryPackage: (updates) =>
         set((state) => ({
@@ -260,6 +263,7 @@ export const useCompensationStore = create<CompensationState>()(
       toggleCompareMode: () => set((state) => ({ compareMode: !state.compareMode })),
       setTimeMode: (mode) => set({ timeMode: mode }),
       toggleCadConversion: () => set((state) => ({ useCadConversion: !state.useCadConversion })),
+      toggleAfterTax: () => set((state) => ({ showAfterTax: !state.showAfterTax })),
       addRSUGrant: (grant) =>
         set((state) => ({
           primaryPackage: {

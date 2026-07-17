@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
-import { useBudgetStore } from '../../store/useBudgetStore';
+import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore';
 import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
+import { ReallocationModal } from './ReallocationModal';
+import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
+
+export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
+  'Ledger Custom': 'Freeform tracking. Targets are informational; nothing is enforced.',
+  'Zero-Based': 'Every dollar gets assigned. Overspending must be covered by moving budget from another category.',
+  'Target-Based': 'Targets are soft ceilings. Overspending is absorbed by your unallocated buffer.',
+  '50/30/20': 'Aim to spend about 50% of income on needs, 30% on wants, and 20% toward savings.',
+};
+
+const BUDGET_CLASSES: BudgetClass[] = ['need', 'want', 'savings'];
 
 interface CategoryManagerWidgetProps {
   selectedMonth: string;
 }
 
 export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ selectedMonth }) => {
+  const state = useBudgetStore();
   const {
     transactions,
     paradigm,
@@ -21,10 +33,12 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
     deleteCategory,
     addCategoryGroup,
     deleteCategoryGroup,
+    updateCategoryGroup,
     budgetSetupCollapsed,
     toggleBudgetSetup
-  } = useBudgetStore();
+  } = state;
 
+  const [coverTarget, setCoverTarget] = useState<{ id: string; overage: number } | null>(null);
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
@@ -33,6 +47,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
 
   const groups = Object.values(categoryGroups);
   const catList = Object.values(categories);
+
+  const [statsYear, statsMonth] = selectedMonth.split('-').map(Number);
+  const stats = getMonthlyBudgetStats(state, statsYear, statsMonth - 1);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,19 +105,24 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         </button>
 
         {!budgetSetupCollapsed && (
-          <div className="flex items-center gap-3">
-            <label className="text-[14px] text-text-secondary">Paradigm:</label>
-            <ThemedSelect
-              value={paradigm}
-              onChange={(v) => setParadigm(v as any)}
-              className="min-w-[180px]"
-              options={[
-                { value: 'Ledger Custom', label: 'Ledger Custom' },
-                { value: 'Zero-Based', label: 'Zero-Based' },
-                { value: 'Envelope', label: 'Envelope System' },
-                { value: '50/30/20', label: '50/30/20 Rule' },
-              ]}
-            />
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-3">
+              <label className="text-[14px] text-text-secondary">Paradigm:</label>
+              <ThemedSelect
+                value={paradigm}
+                onChange={(v) => setParadigm(v as BudgetingParadigm)}
+                className="min-w-[180px]"
+                options={[
+                  { value: 'Ledger Custom', label: 'Ledger Custom' },
+                  { value: 'Zero-Based', label: 'Zero-Based' },
+                  { value: 'Target-Based', label: 'Target-Based' },
+                  { value: '50/30/20', label: '50/30/20 Rule' },
+                ]}
+              />
+            </div>
+            <p className="text-[12px] text-text-secondary max-w-[420px] text-right">
+              {PARADIGM_DESCRIPTIONS[paradigm]}
+            </p>
           </div>
         )}
       </div>
@@ -123,6 +145,25 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   <span className="text-[12px] font-medium text-text-secondary bg-bg-secondary px-2 rounded-full border border-border">
                     {isIncomeGroup ? `$${groupEarned.toFixed(0)} earned` : `$${groupTotal.toFixed(0)}`}
                   </span>
+                  {paradigm === '50/30/20' && !isIncomeGroup && (
+                    <div className="flex items-center gap-1">
+                      {BUDGET_CLASSES.map((cls) => (
+                        <button
+                          key={cls}
+                          type="button"
+                          aria-label={`Set ${group.name} class to ${cls}`}
+                          onClick={() => updateCategoryGroup(group.id, { budgetClass: cls })}
+                          className={`px-2 py-0.5 rounded-full text-[11px] border transition-colors capitalize ${
+                            group.budgetClass === cls
+                              ? 'border-accent text-accent bg-accent/10'
+                              : 'border-border text-text-secondary hover:text-text-primary'
+                          }`}
+                        >
+                          {cls}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {groupCats.length === 0 && (
                   <button 
@@ -199,6 +240,18 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-error' : 'text-text-secondary'}`}>
                                   ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - effectiveTarget).toFixed(0)} over)`}
                                 </span>
+                                {paradigm === 'Zero-Based' && (stats.perCategory[cat.id]?.overspend ?? 0) > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setCoverTarget({ id: cat.id, overage: stats.perCategory[cat.id].overspend })}
+                                    className="px-2 py-0.5 rounded text-[11px] font-medium border border-error/60 text-error hover:bg-error/10 transition-colors"
+                                  >
+                                    Cover
+                                  </button>
+                                )}
+                                {paradigm === 'Target-Based' && (stats.perCategory[cat.id]?.overspend ?? 0) > 0 && (
+                                  <span className="text-[11px] text-orange-500">absorbed by buffer</span>
+                                )}
                                 {effectiveTarget > 0 && (
                                   <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
                                     <div className={`h-full ${progressColor} transition-all`} style={{ width: `${progressPercentage}%` }}></div>
@@ -305,6 +358,16 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
+      )}
+
+      {coverTarget && (
+        <ReallocationModal
+          isOpen
+          onClose={() => setCoverTarget(null)}
+          toCategoryId={coverTarget.id}
+          defaultAmount={coverTarget.overage}
+          selectedMonth={selectedMonth}
+        />
       )}
     </div>
   );

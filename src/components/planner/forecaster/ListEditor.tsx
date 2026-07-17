@@ -1,3 +1,4 @@
+import type React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 
 export interface ListEditorColumn<T> {
@@ -13,11 +14,14 @@ interface ListEditorProps<T extends { id: string }> {
   columns: ListEditorColumn<T>[]
   makeNew: () => T
   onChange: (next: T[]) => void
+  renderExtra?: (item: T) => React.ReactNode
 }
 
-export function ListEditor<T extends { id: string }>({ title, items, columns, makeNew, onChange }: ListEditorProps<T>) {
+export function ListEditor<T extends { id: string }>({ title, items, columns, makeNew, onChange, renderExtra }: ListEditorProps<T>) {
   const update = (id: string, key: string, value: string | number) =>
     onChange(items.map((it) => (it.id === id ? { ...it, [key]: value } : it)))
+  const cellCount = columns.length + (renderExtra ? 1 : 0) + 1
+  const mdCols = { 3: 'md:grid-cols-3', 4: 'md:grid-cols-4', 5: 'md:grid-cols-5' }[cellCount] ?? 'md:grid-cols-4'
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -31,7 +35,7 @@ export function ListEditor<T extends { id: string }>({ title, items, columns, ma
       </div>
       {items.length === 0 && <p className="text-[13px] text-text-secondary">Nothing yet.</p>}
       {items.map((it) => (
-        <div key={it.id} className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end border-b border-border pb-3 last:border-b-0">
+        <div key={it.id} className={`grid grid-cols-2 ${mdCols} gap-3 items-end border-b border-border pb-3 last:border-b-0`}>
           {columns.map((c) => (
             <label key={c.key} className="flex flex-col gap-1">
               <span className="text-[13px] font-medium text-text-secondary">{c.label}</span>
@@ -44,6 +48,7 @@ export function ListEditor<T extends { id: string }>({ title, items, columns, ma
               />
             </label>
           ))}
+          {renderExtra ? <div className="flex flex-col gap-1">{renderExtra(it)}</div> : null}
           <button
             onClick={() => onChange(items.filter((x) => x.id !== it.id))}
             className="justify-self-start p-2 rounded-lg text-text-secondary hover:text-error transition-colors"

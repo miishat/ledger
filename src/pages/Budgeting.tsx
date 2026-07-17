@@ -15,6 +15,8 @@ import { SankeyWidget } from '../components/budget/SankeyWidget';
 import { SpendingHeatmapWidget } from '../components/budget/SpendingHeatmapWidget';
 import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget';
 import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget';
+import { ParadigmBanner } from '../components/budget/ParadigmBanner';
+import { ReallocationHistory } from '../components/budget/ReallocationHistory';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -103,6 +105,8 @@ export const Budgeting: React.FC = () => {
         ))}
       </div>
 
+      <ParadigmBanner selectedMonth={selectedMonth} />
+
       {tab === 'overview' && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -143,6 +147,8 @@ export const Budgeting: React.FC = () => {
       {tab === 'setup' && (
         <>
           <CategoryManagerWidget selectedMonth={selectedMonth} />
+
+          <ReallocationHistory selectedMonth={selectedMonth} />
 
           <CategorizationRulesWidget />
         </>

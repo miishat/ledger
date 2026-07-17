@@ -51,7 +51,7 @@ const AutoField: React.FC<{
 )
 
 export const ForecasterTool: React.FC = () => {
-  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved } = useForecasterSettings()
+  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax } = useForecasterSettings()
   const history = useAccountsStore((s) => s.history)
 
   const eventLumps: LumpSum[] = events.map((e) => ({
@@ -120,6 +120,34 @@ export const ForecasterTool: React.FC = () => {
               {autoFeed.debtDrag ? `Debt Drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'Debt Drag Off'}
             </button>
           </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSetting('compTaxEnabled', !settings.compTaxEnabled)}
+              className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+                settings.compTaxEnabled ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
+              }`}
+            >
+              {settings.compTaxEnabled ? 'After-Tax Comp Events' : 'Gross Comp Events'}
+            </button>
+            {settings.compTaxEnabled ? (
+              <button
+                onClick={() => setSetting('compTaxAuto', !settings.compTaxAuto)}
+                className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+                  settings.compTaxAuto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
+                }`}
+              >
+                {settings.compTaxAuto ? `Marginal ${compTax.ratePct.toFixed(0)}% (${compTax.province})` : 'Manual Rate'}
+              </button>
+            ) : null}
+          </div>
+          {settings.compTaxEnabled && !settings.compTaxAuto ? (
+            <CalculatorField label="" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
+          ) : null}
+          {settings.compTaxEnabled ? (
+            <p className="text-[11px] text-text-secondary">
+              Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -172,23 +200,22 @@ export const ForecasterTool: React.FC = () => {
 
       {/* Goals + life events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-3">
-          <ListEditor<Goal>
-            title="Goals (Net-Worth Targets)"
-            items={goals}
-            columns={[
-              { key: 'label', label: 'Goal', type: 'text' },
-              { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 },
-            ]}
-            makeNew={() => ({ id: `g${Date.now()}`, label: 'New goal', amount: 100000 })}
-            onChange={saveGoals}
-          />
-          {goalMarkers.map((g) => (
-            <p key={g.label} className="text-[13px] text-text-secondary">
-              {g.label} ({formatMoney(g.amount)}): <span className="text-text-primary">{formatMonthsOut(g.month)}</span>
-            </p>
-          ))}
-        </div>
+        <ListEditor<Goal>
+          title="Goals (Net-Worth Targets)"
+          items={goals}
+          columns={[
+            { key: 'label', label: 'Goal', type: 'text' },
+            { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 },
+          ]}
+          makeNew={() => ({ id: `g${Date.now()}`, label: 'New goal', amount: 100000 })}
+          onChange={saveGoals}
+          renderExtra={(g) => (
+            <>
+              <span className="text-[13px] font-medium text-text-secondary">Projected</span>
+              <span className="text-[15px] text-text-primary py-2">{formatMonthsOut(monthsToReach(points, g.amount))}</span>
+            </>
+          )}
+        />
         <ListEditor<LifeEvent>
           title="Life Events (Negative = Cost, Positive = Windfall)"
           items={events}
@@ -199,6 +226,12 @@ export const ForecasterTool: React.FC = () => {
           ]}
           makeNew={() => ({ id: `e${Date.now()}`, label: 'House down payment', yearsFromNow: 3, amount: -100000 })}
           onChange={saveEvents}
+          renderExtra={(e) => (
+            <>
+              <span className="text-[13px] font-medium text-text-secondary">Lands</span>
+              <span className="text-[15px] text-text-primary py-2">{formatMonthsOut(Math.max(1, Math.round(e.yearsFromNow * 12)))}</span>
+            </>
+          )}
         />
       </div>
 

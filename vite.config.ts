@@ -21,9 +21,9 @@ export default defineConfig({
         start_url: '.',
         scope: '.',
         icons: [
-          { src: 'icon-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512x512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icon-192x192-v2.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512x512-v2.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-512x512-maskable-v2.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       }
     })

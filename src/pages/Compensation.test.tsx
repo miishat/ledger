@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { Compensation } from './Compensation'
 import { useCompensationStore } from '../store/useCompensationStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
@@ -28,7 +29,7 @@ afterEach(() => __resetProviders())
 
 describe('Compensation page - live price + CAD toggle', () => {
   it('shows a Convert to CAD toggle that flips the store flag', async () => {
-    render(<Compensation />)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
     const toggle = screen.getByRole('button', { name: /convert to cad/i })
     expect(useCompensationStore.getState().useCadConversion).toBe(false)
     fireEvent.click(toggle)
@@ -36,7 +37,7 @@ describe('Compensation page - live price + CAD toggle', () => {
   })
 
   it('shows a refresh price control', () => {
-    render(<Compensation />)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
     expect(screen.getByRole('button', { name: /refresh price/i })).toBeInTheDocument()
   })
 })

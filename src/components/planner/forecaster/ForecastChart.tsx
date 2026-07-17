@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import type { NetWorthSnapshot } from '../../../store/useAccountsStore'
 import type { ForecastPoint } from '../../../utils/finance/forecast'
-import { formatMoney } from '../format'
+import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 
 interface GoalMarker {
@@ -34,14 +34,18 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
   // Downsample forecast to quarterly points to keep the chart light.
   const future = points
     .filter((p) => p.month % 3 === 0)
-    .map((p) => ({
-      month: p.month,
-      projected: Math.round(showReal ? p.real : p.base),
-      conservative: Math.round(p.conservative),
-      optimistic: Math.round(p.optimistic),
-      contributed: Math.round(p.contributed),
-      growth: Math.round(Math.max(0, p.growth)),
-    }))
+    .map((p) => {
+      const growthActual = Math.round(showReal ? p.growthReal : p.growth)
+      return {
+        month: p.month,
+        projected: Math.round(showReal ? p.real : p.base),
+        conservative: Math.round(p.conservative),
+        optimistic: Math.round(p.optimistic),
+        contributed: Math.round(showReal ? p.contributedReal : p.contributed),
+        growthActual,
+        growth: Math.max(0, growthActual),
+      }
+    })
   const data = [...past, ...future]
 
   const axisProps = {
@@ -61,16 +65,22 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             tickFormatter={(m: number) => `${(m / 12).toFixed(0)}y`}
             {...axisProps}
           />
-          <YAxis width={72} tickFormatter={(v: number) => formatMoney(v)} {...axisProps} />
+          <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} {...axisProps} />
           <Tooltip
             labelFormatter={(m) => {
               const month = Number(m)
               return month < 0 ? `${-month}mo ago` : `+${(month / 12).toFixed(1)}y`
             }}
-            formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
+            formatter={(value, name, item) => {
+              if (String(name) === 'Growth') {
+                const actual = (item?.payload as { growthActual?: number } | undefined)?.growthActual
+                return [formatMoney(actual ?? Number(value)), 'Growth']
+              }
+              return [formatMoney(Number(value)), String(name)]
+            }}
             {...chartTooltipStyles}
           />
-          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" label={{ value: 'today', fill: 'var(--text-secondary)', fontSize: 11 }} />
+          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" label={{ value: 'today', fill: 'var(--text-secondary)', fontSize: 11, position: 'insideTopLeft' }} />
           {view === 'line' ? (
             <>
               <Area type="monotone" dataKey="optimistic" stroke="none" fill="var(--accent)" fillOpacity={0.12} name="Optimistic" />
