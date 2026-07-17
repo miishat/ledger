@@ -229,10 +229,25 @@ export const useBudgetStore = create<BudgetState>()(
 
 // Dynamic computation selectors
 
+export interface CategoryStat {
+  id: string;
+  effectiveTarget: number;
+  spent: number;
+  overspend: number; // max(spent - effectiveTarget, 0)
+}
+
 export interface MonthlyBudgetStats {
   spent: number;
   remaining: number;
   unallocated: number;
+  perCategory: Record<string, CategoryStat>; // expense categories only
+  zeroBased: { unassigned: number; overspentCategoryIds: string[] };
+  targetBased: { buffer: number; negative: boolean };
+  fiftyThirtyTwenty: {
+    needsSpent: number; wantsSpent: number; savingsSpent: number;
+    needsPct: number; wantsPct: number; savingsPct: number; // of month income, 0 when income is 0
+    hasUnclassified: boolean;
+  };
 }
 
 export function getMonthlyBudgetStats(
@@ -242,54 +257,96 @@ export function getMonthlyBudgetStats(
 ): MonthlyBudgetStats {
   let spent = 0;
   let totalIncome = 0;
-  let totalTarget = 0;
-  
-  // Create a month string like 'YYYY-MM'
+
   const monthStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
 
-  // Calculate total spent and income for the month
+  const perCategorySpent: Record<string, number> = {};
   Object.values(state.transactions).forEach((tx) => {
-    if (tx.date.startsWith(monthStr)) {
-      if (tx.type === 'expense') {
-        spent += tx.amount;
-      } else if (tx.type === 'income') {
-        totalIncome += tx.amount;
+    if (!tx.date.startsWith(monthStr)) return;
+    if (tx.type === 'expense') {
+      spent += tx.amount;
+      if (tx.categoryId) {
+        perCategorySpent[tx.categoryId] = (perCategorySpent[tx.categoryId] ?? 0) + tx.amount;
       }
+    } else if (tx.type === 'income') {
+      totalIncome += tx.amount;
     }
   });
 
-  // Calculate Effective Targets (Base + Reallocs In - Reallocs Out)
+  // Effective targets: base + reallocations in - reallocations out (this month).
   const categoryEffectiveTargets: Record<string, number> = {};
-  Object.values(state.categories).forEach(cat => {
+  Object.values(state.categories).forEach((cat) => {
     categoryEffectiveTargets[cat.id] = cat.targetAmount;
   });
-
-  Object.values(state.reallocations).forEach(realloc => {
-    if (realloc.date.startsWith(monthStr)) {
-      if (categoryEffectiveTargets[realloc.fromCategoryId] !== undefined) {
-        categoryEffectiveTargets[realloc.fromCategoryId] -= realloc.amount;
-      }
-      if (categoryEffectiveTargets[realloc.toCategoryId] !== undefined) {
-        categoryEffectiveTargets[realloc.toCategoryId] += realloc.amount;
-      }
+  Object.values(state.reallocations).forEach((realloc) => {
+    if (!realloc.date.startsWith(monthStr)) return;
+    if (categoryEffectiveTargets[realloc.fromCategoryId] !== undefined) {
+      categoryEffectiveTargets[realloc.fromCategoryId] -= realloc.amount;
+    }
+    if (categoryEffectiveTargets[realloc.toCategoryId] !== undefined) {
+      categoryEffectiveTargets[realloc.toCategoryId] += realloc.amount;
     }
   });
 
-  totalTarget = Object.values(categoryEffectiveTargets).reduce((sum, amt) => sum + amt, 0);
+  const totalTarget = Object.values(categoryEffectiveTargets).reduce((sum, amt) => sum + amt, 0);
+  const unallocated = totalIncome - totalTarget;
+  const remaining = totalTarget - spent;
 
-  let unallocated = totalIncome - totalTarget;
-  let remaining = totalTarget - spent;
+  // Per-category stats for expense categories only.
+  const perCategory: Record<string, CategoryStat> = {};
+  Object.values(state.categories).forEach((cat) => {
+    const group = state.categoryGroups[cat.groupId];
+    if (group?.kind !== 'expense') return;
+    const catSpent = perCategorySpent[cat.id] ?? 0;
+    const effectiveTarget = categoryEffectiveTargets[cat.id] ?? cat.targetAmount;
+    perCategory[cat.id] = {
+      id: cat.id,
+      effectiveTarget,
+      spent: catSpent,
+      overspend: Math.max(catSpent - effectiveTarget, 0),
+    };
+  });
 
-  // Enforce Paradigm Math
-  if (state.paradigm === 'Zero-Based') {
-    // In Zero-Based, unallocated MUST strictly be Income minus Targets.
-    // If they overspend a category, it doesn't automatically reduce unallocated.
-    // They must manually reallocate.
-  }
+  const overspentCategoryIds = Object.values(perCategory)
+    .filter((c) => c.overspend > 0)
+    .map((c) => c.id);
+  const totalOverspend = Object.values(perCategory).reduce((sum, c) => sum + c.overspend, 0);
+
+  // 50/30/20 buckets. Unclassified expense groups count as need. Expense
+  // transactions without a category also count as need.
+  let needsSpent = 0;
+  let wantsSpent = 0;
+  let savingsSpent = 0;
+  let hasUnclassified = false;
+  Object.values(state.transactions).forEach((tx) => {
+    if (tx.type !== 'expense' || !tx.date.startsWith(monthStr)) return;
+    const cat = tx.categoryId ? state.categories[tx.categoryId] : undefined;
+    const group = cat ? state.categoryGroups[cat.groupId] : undefined;
+    const cls = group?.budgetClass;
+    if (cls === 'want') wantsSpent += tx.amount;
+    else if (cls === 'savings') savingsSpent += tx.amount;
+    else needsSpent += tx.amount;
+  });
+  Object.values(state.categoryGroups).forEach((g) => {
+    if (g.kind === 'expense' && !g.budgetClass) hasUnclassified = true;
+  });
+  const pct = (v: number) => (totalIncome > 0 ? (v / totalIncome) * 100 : 0);
 
   return {
     spent,
     remaining,
     unallocated,
+    perCategory,
+    zeroBased: { unassigned: unallocated, overspentCategoryIds },
+    targetBased: { buffer: unallocated - totalOverspend, negative: unallocated - totalOverspend < 0 },
+    fiftyThirtyTwenty: {
+      needsSpent,
+      wantsSpent,
+      savingsSpent,
+      needsPct: pct(needsSpent),
+      wantsPct: pct(wantsSpent),
+      savingsPct: pct(savingsSpent),
+      hasUnclassified,
+    },
   };
 }
