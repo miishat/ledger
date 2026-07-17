@@ -11,11 +11,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useNavigate } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
 import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
+import { usePlannerStore } from '../../store/usePlannerStore'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -59,6 +62,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     return null;
   };
 
+  const navigate = useNavigate()
   const { timeMode, setTimeMode, showAfterTax, toggleAfterTax, useCadConversion } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
@@ -66,6 +70,22 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   const totalComp = calcTotalComp(primaryPackage, timeMode)
   const { takeHome, province, deductionPct } = useTakeHomeEstimate(totalComp)
   const hasStockComp = primaryPackage.rsuGrants.length > 0 || primaryPackage.esppContributionPercent > 0
+
+  const openSalaryTax = () => {
+    const { inputs, setInput } = usePlannerStore.getState()
+    const saved = inputs['salary-tax']?.income
+    const total = Math.round(totalComp)
+    const differs = typeof saved === 'number' && Math.round(saved) !== total
+    if (differs) {
+      const ok = window.confirm(
+        `Replace the income saved in Salary & Tax (${saved.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}) with your total compensation (${total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })})?`,
+      )
+      if (ok) setInput('salary-tax', 'income', total)
+    } else {
+      setInput('salary-tax', 'income', total)
+    }
+    navigate('/planner/salary-tax')
+  }
 
   if (totalComp === 0) {
     return (
@@ -273,6 +293,14 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
             year. RRSP match is actually tax-sheltered; ESPP and RSU values assume sale at vest.
             {!useCadConversion && hasStockComp && ' Stock components are in USD; brackets assume CAD.'}
           </p>
+          <button
+            type="button"
+            onClick={openSalaryTax}
+            className="self-start flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:underline"
+          >
+            <ExternalLink size={14} />
+            Full breakdown in Salary & Tax
+          </button>
         </div>
       )}
     </div>

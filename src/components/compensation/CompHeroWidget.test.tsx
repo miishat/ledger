@@ -1,4 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { CompHeroWidget } from './CompHeroWidget'
 import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
@@ -24,7 +25,11 @@ describe('CompHeroWidget with CAD conversion', () => {
   it('reflects the FX-converted total when conversion is on', async () => {
     useCompensationStore.getState().setPrimaryPackage({ baseSalary: 100000, companyCurrentPrice: 100 })
     useCompensationStore.getState().toggleCadConversion()
-    render(<CompHeroWidget />)
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
     // total comp includes at least the converted base salary; sanity check it renders without crashing
     // and shows the "Total Annual Compensation" label once resolved.
     await waitFor(() => expect(screen.getByText(/Total Annual Compensation/i)).toBeInTheDocument())
@@ -62,5 +67,36 @@ describe('CompHeroWidget after-tax toggle', () => {
     renderWidget()
     fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
     expect(useCompensationStore.getState().showAfterTax).toBe(true)
+  })
+
+  describe('CompHeroWidget salary-tax deep link', () => {
+    it('writes income and navigates without confirm when no saved income', () => {
+      renderWidget()
+      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
+      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
+    })
+
+    it('asks before overwriting a different saved income and respects cancel', () => {
+      usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000, province: 'BC' } } })
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+      renderWidget()
+      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
+      expect(confirmSpy).toHaveBeenCalledOnce()
+      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(55_000) // untouched
+      expect(usePlannerStore.getState().inputs['salary-tax']?.province).toBe('BC') // never touched
+      confirmSpy.mockRestore()
+    })
+
+    it('overwrites on confirm accept', () => {
+      usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000 } } })
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+      renderWidget()
+      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
+      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
+      confirmSpy.mockRestore()
+    })
   })
 })
