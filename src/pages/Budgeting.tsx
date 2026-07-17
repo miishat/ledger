@@ -15,6 +15,7 @@ import { SankeyWidget } from '../components/budget/SankeyWidget';
 import { SpendingHeatmapWidget } from '../components/budget/SpendingHeatmapWidget';
 import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget';
 import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget';
+import { ParadigmBanner } from '../components/budget/ParadigmBanner';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -102,6 +103,8 @@ export const Budgeting: React.FC = () => {
           </button>
         ))}
       </div>
+
+      <ParadigmBanner selectedMonth={selectedMonth} />
 
       {tab === 'overview' && (
         <>
