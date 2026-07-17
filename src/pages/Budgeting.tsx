@@ -16,6 +16,7 @@ import { SpendingHeatmapWidget } from '../components/budget/SpendingHeatmapWidge
 import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget';
 import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget';
 import { ParadigmBanner } from '../components/budget/ParadigmBanner';
+import { ReallocationHistory } from '../components/budget/ReallocationHistory';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -146,6 +147,8 @@ export const Budgeting: React.FC = () => {
       {tab === 'setup' && (
         <>
           <CategoryManagerWidget selectedMonth={selectedMonth} />
+
+          <ReallocationHistory selectedMonth={selectedMonth} />
 
           <CategorizationRulesWidget />
         </>
