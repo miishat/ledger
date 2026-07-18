@@ -8,8 +8,8 @@ import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
   'Ledger Custom': 'Freeform tracking. Targets are informational; nothing is enforced.',
-  'Zero-Based': 'Every dollar gets assigned. Overspending must be covered by moving budget from another category.',
-  'Target-Based': 'Targets are soft ceilings. Overspending is absorbed by your unallocated buffer.',
+  'Zero-Based': 'Every dollar gets a job; cover overspending from another category.',
+  'Target-Based': 'Targets are soft ceilings; overspending draws from your buffer.',
   '50/30/20': 'Spend ~50% of income on needs, 30% on wants, 20% toward savings.',
 };
 

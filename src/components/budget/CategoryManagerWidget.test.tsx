@@ -39,8 +39,10 @@ describe('CategoryManagerWidget paradigm controls', () => {
     expect(screen.queryByRole('button', { name: /class to want/ })).toBeNull()
   })
 
-  it('50/30/20 description is short enough for one line', () => {
-    expect(PARADIGM_DESCRIPTIONS['50/30/20'].length).toBeLessThanOrEqual(70)
+  it('every paradigm description is short enough for one line', () => {
+    for (const desc of Object.values(PARADIGM_DESCRIPTIONS)) {
+      expect(desc.length).toBeLessThanOrEqual(70)
+    }
   })
 })
 
