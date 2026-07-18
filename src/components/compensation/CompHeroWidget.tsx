@@ -19,6 +19,7 @@ import { chartTooltipStyles } from '../../utils/chartTheme'
 import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
 import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
 import { usePlannerStore } from '../../store/usePlannerStore'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -66,6 +67,9 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   const { timeMode, setTimeMode, showAfterTax, toggleAfterTax, useCadConversion } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
+  const [replacePrompt, setReplacePrompt] = useState<{ saved: number; total: number } | null>(null)
+  const fmtCad = (n: number) =>
+    n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })
 
   const totalComp = calcTotalComp(primaryPackage, timeMode)
   const { takeHome, province, deductionPct } = useTakeHomeEstimate(totalComp)
@@ -75,15 +79,19 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     const { inputs, setInput } = usePlannerStore.getState()
     const saved = inputs['salary-tax']?.income
     const total = Math.round(totalComp)
-    const differs = typeof saved === 'number' && Math.round(saved) !== total
-    if (differs) {
-      const ok = window.confirm(
-        `Replace the income saved in Salary & Tax (${saved.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}) with your total compensation (${total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })})?`,
-      )
-      if (ok) setInput('salary-tax', 'income', total)
-    } else {
-      setInput('salary-tax', 'income', total)
+    if (typeof saved === 'number' && Math.round(saved) !== total) {
+      setReplacePrompt({ saved, total })
+      return
     }
+    setInput('salary-tax', 'income', total)
+    navigate('/planner/salary-tax')
+  }
+
+  const finishSalaryTax = (replace: boolean) => {
+    if (replace && replacePrompt) {
+      usePlannerStore.getState().setInput('salary-tax', 'income', replacePrompt.total)
+    }
+    setReplacePrompt(null)
     navigate('/planner/salary-tax')
   }
 
@@ -303,6 +311,19 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           </button>
         </div>
       )}
+      <ConfirmDialog
+        open={replacePrompt !== null}
+        title="Replace saved income?"
+        message={
+          replacePrompt
+            ? `Salary & Tax currently uses ${fmtCad(replacePrompt.saved)}. Replace it with your total compensation of ${fmtCad(replacePrompt.total)}?`
+            : ''
+        }
+        confirmLabel="Replace"
+        cancelLabel="Keep Saved"
+        onConfirm={() => finishSalaryTax(true)}
+        onCancel={() => finishSalaryTax(false)}
+      />
     </div>
   )
 }
