@@ -55,4 +55,19 @@ describe('ParadigmBanner', () => {
     expect(screen.getByText(/Wants 0%/)).toBeInTheDocument()
     expect(screen.getByText(/Savings 0%/)).toBeInTheDocument()
   })
+
+  it('50/30/20: renders the ratio bar as a full-width sibling of the icon row', () => {
+    seed('50/30/20', 1000)
+    const { container } = render(<ParadigmBanner selectedMonth="2026-07" />)
+    const bar = container.querySelector('[data-testid="ratio-bar"]') as HTMLElement
+    expect(bar).not.toBeNull()
+    // the bar must not be nested inside the icon+text flex row
+    expect(bar.parentElement?.className).not.toContain('items-start')
+  })
+
+  it('50/30/20: bar track renders even when all buckets are 0%', () => {
+    seed('50/30/20', 0) // no income: pcts all 0
+    const { container } = render(<ParadigmBanner selectedMonth="2026-07" />)
+    expect(container.querySelector('[data-testid="ratio-bar"]')).not.toBeNull()
+  })
 })

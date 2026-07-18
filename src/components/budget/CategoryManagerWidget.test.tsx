@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { CategoryManagerWidget } from './CategoryManagerWidget'
+import { CategoryManagerWidget, PARADIGM_DESCRIPTIONS } from './CategoryManagerWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
 
 beforeEach(() => {
@@ -37,6 +37,10 @@ describe('CategoryManagerWidget paradigm controls', () => {
     useBudgetStore.setState({ paradigm: 'Zero-Based' })
     render(<CategoryManagerWidget selectedMonth="2026-07" />)
     expect(screen.queryByRole('button', { name: /class to want/ })).toBeNull()
+  })
+
+  it('50/30/20 description is short enough for one line', () => {
+    expect(PARADIGM_DESCRIPTIONS['50/30/20'].length).toBeLessThanOrEqual(70)
   })
 })
 
