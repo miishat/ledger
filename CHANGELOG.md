@@ -6,6 +6,20 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.1-beta] - 2026-07-18
+
+### Added
+- Net-Worth / FIRE Forecaster chart now has a legend naming each series (Projected line, Conservative to Optimistic band, Contributed vs Growth areas, Actual history)
+- Compensation: switching to Monthly Cash Flow View with After-Tax on shows a note explaining the bars stay gross (monthly withholding varies too much to estimate honestly)
+
+### Changed
+- Confirmation popups are now themed in-app dialogs instead of browser popups: replacing the Salary & Tax income from Compensation, clearing all transactions in Budgeting, and clearing wheel tracker data in Investments
+- Forecaster: the comp event tax controls (after-tax toggle, marginal or manual rate) moved behind a small gear popover next to the Comp Events and Debt Drag toggles
+- Budgeting: every paradigm description now fits on one line, and the 50/30/20 status bar spans the full width of its banner
+
+### Fixed
+- Forecaster: in Real (Today's Dollars) mode the conservative and optimistic scenario bands are now inflation-deflated like the projected line, so the projection no longer dips below its own conservative band
+
 ## [0.7.0-beta] - 2026-07-17
 
 ### Added
