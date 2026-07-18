@@ -1,5 +1,4 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { CompHeroWidget } from './CompHeroWidget'
 import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
