@@ -83,3 +83,37 @@ describe('real contributed/growth series', () => {
     expect(points[0].growthReal).toBe(0)
   })
 })
+
+describe('real scenario bands', () => {
+  it('deflates conservative and optimistic by the same deflator as real', () => {
+    const points = buildForecast({
+      startBalance: 100000,
+      monthlySavings: 1000,
+      annualReturnPct: 7,
+      annualInflationPct: 2.5,
+      contributionStepUpPct: 0,
+      years: 2,
+      scenarioSpreadPct: 2,
+    })
+    const p = points[24]
+    const deflator = Math.pow(1.025, 24 / 12)
+    expect(p.conservativeReal).toBeCloseTo(p.conservative / deflator, 6)
+    expect(p.optimisticReal).toBeCloseTo(p.optimistic / deflator, 6)
+    // the real projected value must sit inside its real band
+    expect(p.real).toBeGreaterThan(p.conservativeReal)
+    expect(p.real).toBeLessThan(p.optimisticReal)
+  })
+
+  it('month 0 real bands equal the start balance', () => {
+    const points = buildForecast({
+      startBalance: 50000,
+      monthlySavings: 0,
+      annualReturnPct: 5,
+      annualInflationPct: 2,
+      contributionStepUpPct: 0,
+      years: 1,
+    })
+    expect(points[0].conservativeReal).toBe(50000)
+    expect(points[0].optimisticReal).toBe(50000)
+  })
+})

@@ -69,6 +69,16 @@ describe('CompHeroWidget after-tax toggle', () => {
     expect(useCompensationStore.getState().showAfterTax).toBe(true)
   })
 
+  it('shows a gross-only note in monthly view when After-Tax is on', () => {
+    renderWidget()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Cash Flow View' }))
+    expect(screen.getByText(/monthly bars are shown gross/i)).toBeInTheDocument()
+    // switching back to gross hides it
+    fireEvent.click(screen.getByRole('button', { name: 'Gross' }))
+    expect(screen.queryByText(/monthly bars are shown gross/i)).toBeNull()
+  })
+
   describe('CompHeroWidget salary-tax deep link', () => {
     it('writes income and navigates without confirm when no saved income', () => {
       renderWidget()
@@ -77,26 +87,24 @@ describe('CompHeroWidget after-tax toggle', () => {
       expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
     })
 
-    it('asks before overwriting a different saved income and respects cancel', () => {
+    it('asks before overwriting a different saved income and respects Keep Saved', () => {
       usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000, province: 'BC' } } })
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
       renderWidget()
       fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
       fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
-      expect(confirmSpy).toHaveBeenCalledOnce()
+      expect(screen.getByText('Replace saved income?')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Keep Saved' }))
       expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(55_000) // untouched
       expect(usePlannerStore.getState().inputs['salary-tax']?.province).toBe('BC') // never touched
-      confirmSpy.mockRestore()
     })
 
-    it('overwrites on confirm accept', () => {
+    it('overwrites on Replace', () => {
       usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000 } } })
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
       renderWidget()
       fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
       fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
+      fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
       expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
-      confirmSpy.mockRestore()
     })
   })
 })

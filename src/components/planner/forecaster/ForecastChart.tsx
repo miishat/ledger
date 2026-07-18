@@ -39,8 +39,8 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
       return {
         month: p.month,
         projected: Math.round(showReal ? p.real : p.base),
-        conservative: Math.round(p.conservative),
-        optimistic: Math.round(p.optimistic),
+        conservative: Math.round(showReal ? p.conservativeReal : p.conservative),
+        optimistic: Math.round(showReal ? p.optimisticReal : p.optimistic),
         contributed: Math.round(showReal ? p.contributedReal : p.contributed),
         growthActual,
         growth: Math.max(0, growthActual),
@@ -53,9 +53,41 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
     tick: { fill: 'var(--text-secondary)', fontSize: 12 },
   }
 
+  const projectedLabel = showReal ? 'Projected (real)' : 'Projected'
+
   return (
-    <div className="themed-card rounded-lg p-4 h-[380px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="themed-card rounded-lg p-4 h-[380px] flex flex-col">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-[11px] text-text-secondary">
+        {view === 'line' ? (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 rounded" style={{ backgroundColor: 'var(--accent)' }} />
+              {projectedLabel}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent)', opacity: 0.25 }} />
+              Conservative to Optimistic band
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--text-secondary)', opacity: 0.4 }} />
+              Contributed
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent)', opacity: 0.5 }} />
+              Growth
+            </span>
+          </>
+        )}
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 rounded" style={{ backgroundColor: 'var(--text-primary)' }} />
+          Actual
+        </span>
+      </div>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
@@ -85,7 +117,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             <>
               <Area type="monotone" dataKey="optimistic" stroke="none" fill="var(--accent)" fillOpacity={0.12} name="Optimistic" />
               <Area type="monotone" dataKey="conservative" stroke="none" fill="var(--bg-primary)" fillOpacity={0.9} name="Conservative" />
-              <Line type="monotone" dataKey="projected" stroke="var(--accent)" strokeWidth={2} dot={false} name={showReal ? 'Projected (real)' : 'Projected'} />
+              <Line type="monotone" dataKey="projected" stroke="var(--accent)" strokeWidth={2} dot={false} name={projectedLabel} />
             </>
           ) : (
             <>
@@ -107,6 +139,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             ))}
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </div>
   )
 }

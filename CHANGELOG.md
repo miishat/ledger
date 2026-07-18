@@ -14,9 +14,13 @@ pre-1.0 beta.
 - 50/30/20 mode adds Need / Want / Savings chips on expense groups to classify spending
 - Compensation: a Gross / After-Tax toggle on the Total Compensation widget estimates take-home pay using the Salary & Tax calculator's math and your saved province, with net monthly and biweekly figures
 - A "Full breakdown in Salary & Tax" link pre-fills the calculator with your total compensation (asking before replacing a different saved income)
+- Net-Worth / FIRE Forecaster: goals and life events show their projected calendar date inside the list cards
+- Forecaster comp events can be taxed: an After-Tax toggle applies your marginal rate (auto-detected with province, or a manual rate); RSU/ESPP treated as employment income
 
 ### Fixed
 - PWA app icon now shows the new logo on fresh installs (icon files renamed so installs stop serving the cached old lightning icon; existing installs may need a reinstall)
+- Forecaster: stacked Contributions vs Growth view now respects Real (Today's Dollars) mode; the "today" label stays anchored to the today line; y-axis uses compact labels ($1.5M instead of $1,500,000)
+- Forecaster: Monte Carlo footnote sits inside its card instead of overflowing it
 
 ## [0.6.2-beta] - 2026-07-17
 

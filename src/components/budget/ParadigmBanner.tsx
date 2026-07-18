@@ -3,20 +3,27 @@ import { AlertTriangle, Info } from 'lucide-react';
 import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
 
-const Banner: React.FC<{ tone: 'info' | 'warn'; children: React.ReactNode }> = ({ tone, children }) => (
+const Banner: React.FC<{ tone: 'info' | 'warn'; children: React.ReactNode; footer?: React.ReactNode }> = ({
+  tone,
+  children,
+  footer,
+}) => (
   <div
-    className={`flex items-start gap-2 rounded-lg border px-4 py-3 text-[13px] ${
+    className={`rounded-lg border px-4 py-3 text-[13px] ${
       tone === 'warn'
         ? 'border-error/50 bg-error/10 text-text-primary'
         : 'border-border bg-bg-secondary text-text-primary'
     }`}
   >
-    {tone === 'warn' ? (
-      <AlertTriangle size={16} className="text-error shrink-0 mt-0.5" />
-    ) : (
-      <Info size={16} className="text-text-secondary shrink-0 mt-0.5" />
-    )}
-    <div className="flex flex-col gap-2 min-w-0 flex-1">{children}</div>
+    <div className="flex items-start gap-2">
+      {tone === 'warn' ? (
+        <AlertTriangle size={16} className="text-error shrink-0 mt-0.5" />
+      ) : (
+        <Info size={16} className="text-text-secondary shrink-0 mt-0.5" />
+      )}
+      <div className="flex flex-col gap-2 min-w-0 flex-1">{children}</div>
+    </div>
+    {footer && <div className="mt-2">{footer}</div>}
   </div>
 );
 
@@ -74,18 +81,22 @@ export const ParadigmBanner: React.FC<{ selectedMonth: string }> = ({ selectedMo
     { label: 'Savings', pct: f.savingsPct, target: 20, color: 'bg-accent/40' },
   ];
   return (
-    <Banner tone="info">
+    <Banner
+      tone="info"
+      footer={
+        <div data-testid="ratio-bar" className="flex w-full h-2 rounded overflow-hidden bg-bg-primary/50">
+          {buckets.map((b) => (
+            <div key={b.label} className={b.color} style={{ width: `${Math.min(b.pct, 100)}%` }} />
+          ))}
+        </div>
+      }
+    >
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {buckets.map((b) => (
           <span key={b.label} className={b.pct > b.target ? 'text-error' : ''}>
             {b.label} {Math.round(b.pct)}%
             <span className="text-text-secondary"> / {b.target}% target</span>
           </span>
-        ))}
-      </div>
-      <div className="flex w-full h-2 rounded overflow-hidden bg-bg-primary/50">
-        {buckets.map((b) => (
-          <div key={b.label} className={b.color} style={{ width: `${Math.min(b.pct, 100)}%` }} />
         ))}
       </div>
       {f.hasUnclassified && (

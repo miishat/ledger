@@ -6,6 +6,7 @@ import { Trash2, Maximize2, Minimize2, Receipt } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface TransactionListWidgetProps {
   selectedMonth: string;
@@ -20,6 +21,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const txList = Object.values(transactions)
     .filter(tx => tx.date.startsWith(selectedMonth))
@@ -56,12 +58,8 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
             ]}
           />
           {txList.length > 0 && (
-            <button 
-              onClick={() => {
-                if (window.confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-                  clearAllTransactions();
-                }
-              }}
+            <button
+              onClick={() => setConfirmClearOpen(true)}
               className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/30 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
               title="Clear All Transactions"
             >
@@ -172,10 +170,23 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
         </div>
       )}
 
-      <TransactionModal 
-        isOpen={!!editingTransaction} 
-        onClose={() => setEditingTransaction(null)} 
-        initialTransaction={editingTransaction} 
+      <TransactionModal
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        initialTransaction={editingTransaction}
+      />
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear all transactions?"
+        message="Every transaction will be deleted. This cannot be undone."
+        confirmLabel="Clear All"
+        tone="danger"
+        onConfirm={() => {
+          clearAllTransactions();
+          setConfirmClearOpen(false);
+        }}
+        onCancel={() => setConfirmClearOpen(false)}
       />
     </div>
   );

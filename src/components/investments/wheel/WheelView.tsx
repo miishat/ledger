@@ -9,6 +9,7 @@ import { WheelTickerCard } from './WheelTickerCard'
 import { WheelLedgerSheet } from './WheelLedgerSheet'
 import { EmptyState } from '../../ui/EmptyState'
 import { SelectField } from '../../planner/SelectField'
+import { ConfirmDialog } from '../../ui/ConfirmDialog'
 
 type SortMode = 'alpha' | 'plHighToLow' | 'plLowToHigh'
 
@@ -19,6 +20,7 @@ export const WheelView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'active' | 'closed'>('active')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false)
 
   const tickers = useMemo(
     () => Object.values(processIBKR(rawRows)).sort((a, b) => a.ticker.localeCompare(b.ticker)),
@@ -49,12 +51,7 @@ export const WheelView: React.FC = () => {
     e.target.value = ''
   }
 
-  const handleClear = () => {
-    if (confirm('Clear all wheel tracker data? This cannot be undone.')) {
-      clearAll()
-      setSelectedTicker(null)
-    }
-  }
+  const handleClear = () => setConfirmClearOpen(true)
 
   const filterAndSort = (arr: TickerState[]) => {
     let out = arr
@@ -186,6 +183,20 @@ export const WheelView: React.FC = () => {
       <WheelLedgerSheet
         data={selectedTicker ? tickers.find((t) => t.ticker === selectedTicker) ?? null : null}
         onClose={() => setSelectedTicker(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear wheel data?"
+        message="All wheel tracker data will be deleted. This cannot be undone."
+        confirmLabel="Clear Data"
+        tone="danger"
+        onConfirm={() => {
+          clearAll()
+          setSelectedTicker(null)
+          setConfirmClearOpen(false)
+        }}
+        onCancel={() => setConfirmClearOpen(false)}
       />
     </div>
   )

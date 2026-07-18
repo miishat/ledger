@@ -31,6 +31,8 @@ export interface ForecastPoint {
   growth: number
   contributedReal: number
   growthReal: number
+  conservativeReal: number
+  optimisticReal: number
 }
 
 export function buildForecast(config: ForecastConfig): ForecastPoint[] {
@@ -56,6 +58,8 @@ export function buildForecast(config: ForecastConfig): ForecastPoint[] {
     growth: 0,
     contributedReal: config.startBalance,
     growthReal: 0,
+    conservativeReal: config.startBalance,
+    optimisticReal: config.startBalance,
   }]
 
   let balBase = config.startBalance
@@ -87,6 +91,8 @@ export function buildForecast(config: ForecastConfig): ForecastPoint[] {
       growth: balBase - contributed,
       contributedReal: contributed / deflator,
       growthReal: (balBase - contributed) / deflator,
+      conservativeReal: balCons / deflator,
+      optimisticReal: balOpt / deflator,
     })
   }
   return points
