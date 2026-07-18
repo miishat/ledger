@@ -69,6 +69,16 @@ describe('CompHeroWidget after-tax toggle', () => {
     expect(useCompensationStore.getState().showAfterTax).toBe(true)
   })
 
+  it('shows a gross-only note in monthly view when After-Tax is on', () => {
+    renderWidget()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Cash Flow View' }))
+    expect(screen.getByText(/monthly bars are shown gross/i)).toBeInTheDocument()
+    // switching back to gross hides it
+    fireEvent.click(screen.getByRole('button', { name: 'Gross' }))
+    expect(screen.queryByText(/monthly bars are shown gross/i)).toBeNull()
+  })
+
   describe('CompHeroWidget salary-tax deep link', () => {
     it('writes income and navigates without confirm when no saved income', () => {
       renderWidget()

@@ -276,6 +276,13 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
         )}
       </div>
 
+      {view === 'monthly' && showAfterTax && (
+        <p className="mt-2 text-[12px] text-[var(--color-text-secondary)]">
+          Monthly bars are shown gross. Withholding varies too much month to month to estimate
+          honestly; after-tax figures below are annual estimates.
+        </p>
+      )}
+
       {showAfterTax && (
         <div className="mt-4 flex flex-col gap-2">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
