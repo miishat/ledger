@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
+import { Settings2 } from 'lucide-react'
 import { useAccountsStore } from '../../../store/useAccountsStore'
 import { buildForecast, type LumpSum } from '../../../utils/finance/forecast'
 import { coastFiNumber, fiNumber, monthsToReach } from '../../../utils/finance/fire'
@@ -9,6 +10,7 @@ import { ForecastChart } from './ForecastChart'
 import { ListEditor } from './ListEditor'
 import { MonteCarloSection } from './MonteCarloSection'
 import { useForecasterSettings, type Goal, type LifeEvent } from './useForecasterSettings'
+import { Sheet } from '../../ui/Sheet'
 
 function formatMonthsOut(m: number | null): string {
   if (m === null) return 'Beyond horizon'
@@ -53,6 +55,8 @@ const AutoField: React.FC<{
 export const ForecasterTool: React.FC = () => {
   const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax } = useForecasterSettings()
   const history = useAccountsStore((s) => s.history)
+  const gearRef = useRef<HTMLButtonElement>(null)
+  const [taxOpen, setTaxOpen] = useState(false)
 
   const eventLumps: LumpSum[] = events.map((e) => ({
     month: Math.max(1, Math.round(e.yearsFromNow * 12)),
@@ -102,7 +106,7 @@ export const ForecasterTool: React.FC = () => {
         />
         <div className="flex flex-col gap-1">
           <span className="text-[13px] font-medium text-text-secondary">Comp Events / Debt Drag</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-stretch">
             <button
               onClick={() => setSetting('autoComp', !settings.autoComp)}
               className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
@@ -119,11 +123,28 @@ export const ForecasterTool: React.FC = () => {
             >
               {autoFeed.debtDrag ? `Debt Drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'Debt Drag Off'}
             </button>
+            <button
+              ref={gearRef}
+              aria-label="Comp event tax settings"
+              onClick={() => setTaxOpen(true)}
+              className={`px-2 rounded-lg border transition-colors ${
+                settings.compTaxEnabled ? 'border-accent text-accent' : 'border-border text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              <Settings2 size={14} />
+            </button>
           </div>
-          <div className="flex gap-2">
+          <Sheet
+            open={taxOpen}
+            onClose={() => setTaxOpen(false)}
+            desktop="popover"
+            anchorRef={gearRef}
+            ariaLabel="Comp event tax settings"
+            panelClassName="themed-menu rounded-lg p-4 w-[280px] flex flex-col gap-2"
+          >
             <button
               onClick={() => setSetting('compTaxEnabled', !settings.compTaxEnabled)}
-              className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+              className={`text-[12px] px-2 py-2 rounded-lg border transition-colors ${
                 settings.compTaxEnabled ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
@@ -132,22 +153,20 @@ export const ForecasterTool: React.FC = () => {
             {settings.compTaxEnabled ? (
               <button
                 onClick={() => setSetting('compTaxAuto', !settings.compTaxAuto)}
-                className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
+                className={`text-[12px] px-2 py-2 rounded-lg border transition-colors ${
                   settings.compTaxAuto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
                 }`}
               >
                 {settings.compTaxAuto ? `Marginal ${compTax.ratePct.toFixed(0)}% (${compTax.province})` : 'Manual Rate'}
               </button>
             ) : null}
-          </div>
-          {settings.compTaxEnabled && !settings.compTaxAuto ? (
-            <CalculatorField label="" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
-          ) : null}
-          {settings.compTaxEnabled ? (
+            {settings.compTaxEnabled && !settings.compTaxAuto ? (
+              <CalculatorField label="Manual Rate" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
+            ) : null}
             <p className="text-[11px] text-text-secondary">
               Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
             </p>
-          ) : null}
+          </Sheet>
         </div>
       </div>
 

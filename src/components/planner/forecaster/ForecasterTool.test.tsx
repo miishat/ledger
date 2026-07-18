@@ -21,10 +21,19 @@ describe('ForecasterTool source labels', () => {
 })
 
 describe('ForecasterTool comp tax controls', () => {
-  it('shows the after-tax comp events toggle and caveat by default', () => {
+  it('hides tax controls behind the gear popover', () => {
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    // tax controls not in the main row anymore
+    expect(screen.queryByText('After-Tax Comp Events')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
     expect(screen.getByText('After-Tax Comp Events')).toBeTruthy()
     expect(screen.getByText(/Comp events taxed at your marginal rate/i)).toBeTruthy()
+  })
+
+  it('keeps the two primary pills in the row', () => {
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    expect(screen.getByText(/Comp Events (On|Off)/)).toBeTruthy()
+    expect(screen.getByText(/Debt Drag (Off|On|\$)/)).toBeTruthy()
   })
 })
 
