@@ -7,6 +7,8 @@ import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
 import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
 import { NumberInput } from '../components/ui/NumberInput'
+import { fxKey, todayKey } from '../services/marketData'
+import { useMarketDataStore } from '../store/useMarketDataStore'
 
 export const Compensation: React.FC = () => {
   const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
@@ -19,12 +21,21 @@ export const Compensation: React.FC = () => {
     rawPrice,
     fxRate,
     fxStatus,
+    fxAvailable,
+    fxDate,
+    fxSource,
+    fxStale,
     priceStatus,
     priceSource,
     priceStale,
     refreshPrice,
     setManualPrice,
   } = useCompensationDisplay()
+
+  const fxOverrideKey = fxKey('USD', 'CAD', todayKey())
+  const fxOverride = useMarketDataStore((s) => s.overrides[fxOverrideKey])
+  const setOverride = useMarketDataStore((s) => s.setOverride)
+  const clearOverride = useMarketDataStore((s) => s.clearOverride)
 
   const totalComp = calcTotalComp(pkg, timeMode)
   const isPopulated = totalComp > 0
@@ -86,18 +97,48 @@ export const Compensation: React.FC = () => {
             </form>
           </div>
 
-          <button
-            type="button"
-            onClick={toggleCadConversion}
-            aria-pressed={useCadConversion}
-            className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
-              useCadConversion
-                ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
-                : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:text-[var(--color-text-primary)]'
-            }`}
-          >
-            {useCadConversion ? `Convert to CAD: ON (1 USD = ${fxRate.toFixed(4)} CAD${fxStatus === 'loading' ? ', updating…' : ''})` : 'Convert to CAD: OFF'}
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={toggleCadConversion}
+              aria-pressed={useCadConversion}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
+                useCadConversion
+                  ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
+                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              {useCadConversion
+                ? fxAvailable
+                  ? `Convert to CAD: ON (1 USD = ${fxRate.toFixed(4)} CAD${
+                      fxSource === 'override' ? ', manual' : fxStale && fxDate ? `, as of ${fxDate}` : ''
+                    }${fxStatus === 'loading' ? ', updating…' : ''})`
+                  : 'Convert to CAD: ON (rate unavailable, set a manual rate)'
+                : 'Convert to CAD: OFF'}
+            </button>
+
+            {useCadConversion && (
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+                  Manual rate
+                  <NumberInput
+                    value={fxOverride ?? 0}
+                    placeholder={fxAvailable ? fxRate.toFixed(4) : '1.3700'}
+                    onCommit={(v) => { if (v > 0) setOverride(fxOverrideKey, v) }}
+                    className="w-24 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
+                  />
+                </label>
+                {fxOverride !== undefined && (
+                  <button
+                    onClick={() => clearOverride(fxOverrideKey)}
+                    className="text-[12px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+                  >
+                    Use live
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

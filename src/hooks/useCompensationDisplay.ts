@@ -15,6 +15,7 @@ export function useCompensationDisplay() {
   // Live/override/cached USD price when a ticker is set; otherwise fall back
   // to the manually-entered companyCurrentPrice already stored on the package.
   const rawPrice = price.data?.value.price ?? primaryPackage.companyCurrentPrice
+  const fxAvailable = fx.data !== undefined
   const fxRate = fx.data?.value.rate ?? 1
 
   const basePkg = useMemo(
@@ -22,9 +23,11 @@ export function useCompensationDisplay() {
     [primaryPackage, rawPrice],
   )
 
+  // CAD conversion only engages when a real rate exists; otherwise the
+  // package stays in USD and the UI says the rate is unavailable.
   const pkg = useMemo(
-    () => convertPackageToCad(basePkg, fxRate, useCadConversion),
-    [basePkg, fxRate, useCadConversion],
+    () => convertPackageToCad(basePkg, fxRate, useCadConversion && fxAvailable),
+    [basePkg, fxRate, useCadConversion, fxAvailable],
   )
 
   const refreshPrice = useCallback((force?: boolean) => price.refresh(force), [price])
@@ -36,6 +39,11 @@ export function useCompensationDisplay() {
     rawPrice,
     fxRate,
     fxStatus: fx.status as FetchStatus,
+    fxAvailable,
+    fxDate: fx.data?.value.date,
+    fxSource: fx.data?.source,
+    fxStale: fx.data?.stale ?? false,
+    refreshFx: fx.refresh,
     priceStatus: price.status as FetchStatus,
     priceSource: price.data?.source,
     priceStale: price.data?.stale ?? false,

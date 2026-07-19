@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Currency, FetchStatus, FxRate, HistoricalPrice, Quote } from './types'
 import { getCurrentPrice, getFxRate, getHistoricalPrice, QUOTE_FRESH_MS, type Resolved } from './marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
-import { quoteKey } from './cacheKey'
+import { quoteKey, fxKey } from './cacheKey'
+import { toDateKey, todayKey } from './dateKey'
 
 export function useCurrentPrice(ticker: string, exchange?: string) {
   const [data, setData] = useState<Resolved<Quote>>()
@@ -72,6 +73,9 @@ export function useFxRate(from: Currency, to: Currency, date?: string) {
     return () => { mountedRef.current = false }
   }, [])
 
+  const overrideKey = fxKey(from, to, date ? toDateKey(date) : todayKey())
+  const override = useMarketDataStore((s) => s.overrides[overrideKey])
+
   const resolve = useCallback((active: () => boolean) => {
     Promise.resolve().then(() => { if (active()) setStatus('loading') })
     getFxRate(from, to, date)
@@ -83,7 +87,7 @@ export function useFxRate(from: Currency, to: Currency, date?: string) {
     let active = true
     resolve(() => active)
     return () => { active = false }
-  }, [resolve])
+  }, [resolve, override])
 
   useEffect(() => {
     const onOnline = () => resolve(() => mountedRef.current)
