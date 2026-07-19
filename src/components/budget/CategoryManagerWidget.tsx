@@ -4,6 +4,8 @@ import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
 import { ReallocationModal } from './ReallocationModal';
+import { totalMonthlyBudget } from '../../store/budgetSelectors';
+import { formatMoney } from '../planner/format';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
@@ -126,6 +128,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
+
+      {!budgetSetupCollapsed && (
+        <p className="text-[13px] text-text-secondary mb-4">
+          Total monthly budget:{' '}
+          <span className="font-semibold text-text-primary">
+            {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
+          </span>
+        </p>
+      )}
 
       {!budgetSetupCollapsed && (
       <div className="columns-1 md:columns-2 gap-6">

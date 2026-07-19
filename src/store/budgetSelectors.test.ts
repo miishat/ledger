@@ -5,6 +5,8 @@ import {
   monthlyExpenseTotal,
   monthlyIncomeTotal,
 } from './budgetSelectors'
+import { totalMonthlyBudget } from './budgetSelectors'
+import type { Category, CategoryGroup } from '../types/budget'
 
 function tx(date: string, amount: number, type: 'expense' | 'income'): Transaction {
   return { id: `${date}-${amount}-${type}`, date, amount, description: 't', type }
@@ -45,5 +47,26 @@ describe('averages over completed months', () => {
   it('averages net savings (income − expenses)', () => {
     // May 2500 + June 2000 over 2 = 2250
     expect(averageMonthlyNetSavings(transactions, 2, ref)).toBe(2250)
+  })
+})
+
+describe('totalMonthlyBudget', () => {
+  const groups: Record<string, CategoryGroup> = {
+    g1: { id: 'g1', name: 'Housing', kind: 'expense' },
+    g2: { id: 'g2', name: 'Income', kind: 'income' },
+  }
+  const categories: Record<string, Category> = {
+    c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 1021 },
+    c2: { id: 'c2', groupId: 'g1', name: 'Utilities', targetAmount: 200 },
+    c3: { id: 'c3', groupId: 'g2', name: 'Salary', targetAmount: 5000 },
+    c4: { id: 'c4', groupId: 'g1', name: 'Untargeted', targetAmount: 0 },
+  }
+
+  it('sums expense category targets and ignores income categories', () => {
+    expect(totalMonthlyBudget(categories, groups)).toBe(1221)
+  })
+
+  it('returns 0 with no categories', () => {
+    expect(totalMonthlyBudget({}, {})).toBe(0)
   })
 })
