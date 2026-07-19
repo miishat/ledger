@@ -4,23 +4,25 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { categoryMonthlySeries } from '../../utils/budget/categoryStats'
 import { formatMoney } from '../planner/format'
-import type { MonthRange } from '../../utils/budget/period'
+import { isSingleMonth, monthsInRange, type MonthRange } from '../../utils/budget/period'
 
-// TEMPORARY: bridges to single-month internals until Task 5 lands real range logic.
+const rangeTotal = (series: { month: string; total: number }[], range: MonthRange) =>
+  series.filter((p) => p.month >= range.from && p.month <= range.to).reduce((s, p) => s + p.total, 0)
+
 export const CategoryTrendsWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
-  const selectedMonth = range.to
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
-  const refDate = new Date(`${selectedMonth}-15T12:00:00`)
+  const monthsBack = Math.max(6, monthsInRange(range))
+  const refDate = new Date(`${range.to}-15T12:00:00`)
 
   const rows = Object.values(categories)
-    .map((cat) => ({ cat, series: categoryMonthlySeries(transactions, cat.id, 6, refDate) }))
+    .map((cat) => ({ cat, series: categoryMonthlySeries(transactions, cat.id, monthsBack, refDate) }))
     .filter(({ series }) => series.some((p) => p.total > 0))
-    .sort((a, b) => b.series[5].total - a.series[5].total)
+    .sort((a, b) => b.series[b.series.length - 1].total - a.series[a.series.length - 1].total)
     .slice(0, 8)
 
   return (
-    <WidgetWrapper title="Category Trends (6 Months)">
+    <WidgetWrapper title={`Category Trends (${monthsBack} Months)`}>
       {rows.length === 0 ? (
         <p className="text-[13px] text-text-secondary mt-2">No categorized spending yet.</p>
       ) : (
@@ -35,7 +37,9 @@ export const CategoryTrendsWidget: React.FC<{ range: MonthRange }> = ({ range })
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <span className="w-20 text-right text-text-primary">{formatMoney(series[5].total)}</span>
+              <span className="w-20 text-right text-text-primary">
+                {formatMoney(isSingleMonth(range) ? series[series.length - 1].total : rangeTotal(series, range))}
+              </span>
             </div>
           ))}
         </div>
