@@ -6,6 +6,24 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.2-beta] - 2026-07-19
+
+### Added
+- Budgeting: shared bills. Mark an expense as shared, set your share (50/33/25% quick buttons), and name who owes you; only your share counts in the budget. An Owed to Me widget tracks per-person balances with one-click settle-up, and income can be marked as a reimbursement so paybacks never inflate your income
+- Budgeting: period picker on the Budgeting page (This month, Last month, Last 3/6/12 months, Year to date); Overview and Insights widgets aggregate over the chosen range, and the spending calendar becomes a month-by-month grid for multi-month periods
+- Budgeting: Budget vs. Actual shows your total monthly budget with its own progress bar, plus an Unbudgeted spending row so money outside targeted categories is visible; the Setup tab shows the same total
+- Budgeting: Clear All button on the triage inbox with a confirm dialog
+- Investments: the Portfolio tab now recognizes IBKR PortfolioAnalyst report CSVs: key statistics, benchmark comparison chart and table, allocations by asset class/sector/region, performance by symbol, dividends and projected income, and fees, with an optional one-click holdings update from the report's open positions
+
+### Changed
+- Compensation: the USD to CAD conversion now shows where its rate came from (live, cached with date, or manual) and offers an inline manual-rate field; the app falls back to the most recent known rate instead of silently converting at 1.0 when the rate service is unreachable
+
+### Fixed
+- Investments: uploading an Activity Statement in the Options tab can no longer hang on "Parsing CSV(s)"; the upload reports how many rows were added or what went wrong
+- Budgeting: Income Flow chart no longer clips category labels on the left side
+- Clicking buttons and inputs no longer draws the browser's default white focus box in dark themes; keyboard navigation shows a themed accent ring instead
+- Luxury theme: Save buttons and RSU preset buttons now use black text on the gold accent for readability
+
 ## [0.7.1-beta] - 2026-07-18
 
 ### Added
