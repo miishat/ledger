@@ -5,6 +5,8 @@ import { ThemedSelect } from '../ui/ThemedSelect';
 import { ThemedDatePicker } from '../ui/ThemedDatePicker';
 import { NumberInput } from '../ui/NumberInput';
 import { Sheet } from '../ui/Sheet';
+import { formatMoney } from '../planner/format';
+import { sharedPeople } from '../../utils/budget/sharedExpenses';
 
 import type { Transaction } from '../../types/budget';
 
@@ -22,6 +24,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
   const categories = useBudgetStore((state) => state.categories);
   const categoryGroups = useBudgetStore((state) => state.categoryGroups);
+  const transactions = useBudgetStore((state) => state.transactions);
 
   const [type, setType] = useState<TransactionType>('expense');
 
@@ -35,6 +38,14 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
 
+  const [isShared, setIsShared] = useState(false);
+  const [totalPaid, setTotalPaid] = useState<number>(0);
+  const [sharedWith, setSharedWith] = useState<string>('');
+  const [isReimbursement, setIsReimbursement] = useState(false);
+  const [reimbursementFrom, setReimbursementFrom] = useState<string>('');
+
+  const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
+
   React.useEffect(() => {
     if (initialTransaction) {
       setType(initialTransaction.type);
@@ -42,12 +53,22 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       setCategory(initialTransaction.categoryId || '');
       setDate(initialTransaction.date);
       setDescription(initialTransaction.description || '');
+      setIsShared(!!initialTransaction.shared);
+      setTotalPaid(initialTransaction.shared?.totalAmount ?? 0);
+      setSharedWith(initialTransaction.shared?.sharedWith ?? '');
+      setIsReimbursement(!!initialTransaction.reimbursement);
+      setReimbursementFrom(initialTransaction.reimbursement?.from ?? '');
     } else {
       setType('expense');
       setAmount(0);
       setCategory(categoryList.length > 0 ? categoryList[0].id : '');
       setDate(new Date().toISOString().split('T')[0]);
       setDescription('');
+      setIsShared(false);
+      setTotalPaid(0);
+      setSharedWith('');
+      setIsReimbursement(false);
+      setReimbursementFrom('');
     }
   }, [initialTransaction, isOpen, categories]);
 
@@ -69,13 +90,24 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
     e.preventDefault();
     if (amount <= 0) return;
 
+    const sharedField =
+      type === 'expense' && isShared && totalPaid > amount && sharedWith.trim()
+        ? { totalAmount: totalPaid, sharedWith: sharedWith.trim() }
+        : undefined;
+    const reimbursementField =
+      type === 'income' && isReimbursement && reimbursementFrom.trim()
+        ? { from: reimbursementFrom.trim() }
+        : undefined;
+
     if (initialTransaction) {
       updateTransaction(initialTransaction.id, {
         type,
         amount,
         categoryId: category,
         date,
-        description
+        description,
+        shared: sharedField,
+        reimbursement: reimbursementField
       });
     } else {
       addTransaction({
@@ -84,7 +116,9 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
         amount,
         categoryId: category,
         date,
-        description
+        description,
+        shared: sharedField,
+        reimbursement: reimbursementField
       });
     }
 
@@ -94,6 +128,11 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
     setCategory(categoryList.length > 0 ? categoryList[0].id : '');
     setDate(new Date().toISOString().split('T')[0]);
     setDescription('');
+    setIsShared(false);
+    setTotalPaid(0);
+    setSharedWith('');
+    setIsReimbursement(false);
+    setReimbursementFrom('');
     onClose();
   };
 
@@ -163,6 +202,81 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
               placeholder="0.00"
             />
           </div>
+
+          {type === 'expense' && (
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={isShared}
+                  onChange={(e) => setIsShared(e.target.checked)}
+                  className="accent-[var(--color-accent)]"
+                />
+                Shared bill (I paid for others too)
+              </label>
+              {isShared && (
+                <div className="flex flex-col gap-2 pl-1 border-l-2 border-[var(--color-border)] ml-1">
+                  <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Total I paid</label>
+                  <NumberInput
+                    value={totalPaid}
+                    onCommit={setTotalPaid}
+                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    placeholder="0.00"
+                  />
+                  <div className="flex gap-2">
+                    {[0.5, 1 / 3, 0.25].map((f, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setAmount(Math.round(totalPaid * f * 100) / 100)}
+                        className="px-2 py-1 rounded-md text-[12px] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] transition-colors"
+                      >
+                        My share {['50%', '33%', '25%'][i]}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">
+                    Amount above is your share; the rest ({formatMoney(Math.max(0, totalPaid - amount))}) is owed to you.
+                  </p>
+                  <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Shared with</label>
+                  <input
+                    type="text"
+                    list="shared-people"
+                    value={sharedWith}
+                    onChange={(e) => setSharedWith(e.target.value)}
+                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    placeholder="e.g. Alex, roommates"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {type === 'income' && (
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={isReimbursement}
+                  onChange={(e) => setIsReimbursement(e.target.checked)}
+                  className="accent-[var(--color-accent)]"
+                />
+                Reimbursement for a shared bill (not income)
+              </label>
+              {isReimbursement && (
+                <input
+                  type="text"
+                  list="shared-people"
+                  value={reimbursementFrom}
+                  onChange={(e) => setReimbursementFrom(e.target.value)}
+                  className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                  placeholder="Who paid you back?"
+                />
+              )}
+            </div>
+          )}
+          <datalist id="shared-people">
+            {peopleSuggestions.map((p) => <option key={p} value={p} />)}
+          </datalist>
 
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
