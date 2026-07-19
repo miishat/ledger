@@ -113,6 +113,51 @@ describe('getFxRate', () => {
   })
 })
 
+describe('getFxRate fallback', () => {
+  const yesterdayRate = {
+    from: 'USD' as const, to: 'CAD' as const, rate: 1.37,
+    date: '2026-07-17', asOf: '2026-07-17T20:00:00Z',
+  }
+
+  it('falls back to the newest prior-day cached rate when the fetch fails', async () => {
+    useMarketDataStore.getState().setFx(yesterdayRate)
+    __setProviders({ fetchFxRate: async () => { throw new Error('network down') } })
+    const r = await getFxRate('USD', 'CAD')
+    expect(r.value.rate).toBe(1.37)
+    expect(r.value.date).toBe('2026-07-17')
+    expect(r.stale).toBe(true)
+    expect(r.status).toBe('error')
+  })
+
+  it('falls back to a prior-day manual override when no cache exists', async () => {
+    useMarketDataStore.getState().setOverride('USD-CAD@2026-07-16', 1.4)
+    __setProviders({ fetchFxRate: async () => { throw new Error('network down') } })
+    const r = await getFxRate('USD', 'CAD')
+    expect(r.value.rate).toBe(1.4)
+    expect(r.source).toBe('override')
+    expect(r.stale).toBe(true)
+  })
+
+  it('prefers the newer entry when both cache and override exist', async () => {
+    useMarketDataStore.getState().setOverride('USD-CAD@2026-07-10', 1.5)
+    useMarketDataStore.getState().setFx(yesterdayRate)
+    __setProviders({ fetchFxRate: async () => { throw new Error('network down') } })
+    const r = await getFxRate('USD', 'CAD')
+    expect(r.value.rate).toBe(1.37)
+  })
+
+  it('does not fall back across dates for explicit historical requests', async () => {
+    useMarketDataStore.getState().setFx(yesterdayRate)
+    __setProviders({ fetchFxRate: async () => { throw new Error('network down') } })
+    await expect(getFxRate('USD', 'CAD', '2026-01-05')).rejects.toThrow('No market data available')
+  })
+
+  it('still throws when the pair has never been seen', async () => {
+    __setProviders({ fetchFxRate: async () => { throw new Error('network down') } })
+    await expect(getFxRate('USD', 'CAD')).rejects.toThrow('No market data available')
+  })
+})
+
 describe('getHistoricalPrice', () => {
   it('returns cache when present without refetching in-window', async () => {
     __setProviders({

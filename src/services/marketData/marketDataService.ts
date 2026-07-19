@@ -138,14 +138,57 @@ export async function getFxRate(
       useMarketDataStore.getState().setFx(rate)
       return { value: rate, source: 'live', status: 'success', asOf: rate.asOf, stale: false }
     } catch {
-      return fromFxCache(key, 'error')
+      return fromFxCache(from, to, key, 'error', date === undefined)
     }
   }
-  return fromFxCache(key, 'stale')
+  return fromFxCache(from, to, key, 'stale', date === undefined)
 }
 
-function fromFxCache(key: string, status: FetchStatus): Resolved<FxRate> {
+/** Newest cached rate or manual override for the pair across ALL dates.
+ *  Used only for non-historical requests when today's data is missing. */
+function latestFxForPair(
+  from: Currency,
+  to: Currency,
+): { rate: number; date: string; fetchedAt: string; source: 'cache' | 'override' } | undefined {
+  const state = useMarketDataStore.getState()
+  const prefix = `${from.trim().toUpperCase()}-${to.trim().toUpperCase()}@`
+  let best: { rate: number; date: string; fetchedAt: string; source: 'cache' | 'override' } | undefined
+  for (const [key, cached] of Object.entries(state.fx)) {
+    if (!key.startsWith(prefix)) continue
+    const date = key.slice(prefix.length)
+    if (!best || date > best.date) {
+      best = { rate: cached.value.rate, date, fetchedAt: cached.fetchedAt, source: 'cache' }
+    }
+  }
+  for (const [key, rate] of Object.entries(state.overrides)) {
+    if (!key.startsWith(prefix)) continue
+    const date = key.slice(prefix.length)
+    if (!best || date > best.date) {
+      best = { rate, date, fetchedAt: new Date().toISOString(), source: 'override' }
+    }
+  }
+  return best
+}
+
+function fromFxCache(
+  from: Currency,
+  to: Currency,
+  key: string,
+  status: FetchStatus,
+  allowCrossDateFallback: boolean,
+): Resolved<FxRate> {
   const cached = useMarketDataStore.getState().fx[key]
-  if (!cached) throw new Error('No market data available')
-  return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: isStale(cached.fetchedAt) }
+  if (cached) {
+    return { value: cached.value, source: 'cache', status, asOf: cached.fetchedAt, stale: isStale(cached.fetchedAt) }
+  }
+  if (allowCrossDateFallback) {
+    const fb = latestFxForPair(from, to)
+    if (fb) {
+      return {
+        value: { from, to, rate: fb.rate, date: fb.date, asOf: fb.fetchedAt },
+        source: fb.source, status, asOf: fb.fetchedAt, stale: true,
+      }
+    }
+  }
+  throw new Error('No market data available')
 }
