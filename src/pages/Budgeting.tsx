@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { monthKeyOf, rangeOf, shiftMonthKey, type Period, type PeriodPreset } from '../utils/budget/period';
+import { ThemedSelect } from '../components/ui/ThemedSelect';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
@@ -27,19 +29,18 @@ export const Budgeting: React.FC = () => {
 
   const [tab, setTab] = useState<'overview' | 'insights' | 'transactions' | 'setup'>('overview');
 
-  // Local-time month key: toISOString() is UTC, which rolls a local first-of-month
-  // back to the previous month in UTC+ timezones.
-  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-
-  const [selectedMonth, setSelectedMonth] = useState(() => monthKey(new Date()));
-  const currentMonth = monthKey(new Date());
+  const currentMonth = monthKeyOf(new Date());
+  const [period, setPeriod] = useState<Period>({ kind: 'month', month: currentMonth });
+  const range = rangeOf(period);
 
   const shiftMonth = (delta: number) => {
-    const [year, month] = selectedMonth.split('-').map(Number);
-    setSelectedMonth(monthKey(new Date(year, month - 1 + delta, 1)));
+    if (period.kind !== 'month') return;
+    setPeriod({ kind: 'month', month: shiftMonthKey(period.month, delta) });
   };
-  
-  const formattedMonth = new Date(`${selectedMonth}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const formattedMonth = period.kind === 'month'
+    ? new Date(`${period.month}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : `${range.from} to ${range.to}`;
 
   React.useEffect(() => {
     if (Object.keys(categories).length === 0) {
@@ -57,31 +58,53 @@ export const Budgeting: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
-            <button 
-              onClick={() => shiftMonth(-1)} 
-              className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
-              aria-label="Previous Month"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
-            <button
-              onClick={() => shiftMonth(1)}
-              className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
-              aria-label="Next Month"
-            >
-              <ChevronRight size={16} />
-            </button>
-            {selectedMonth !== currentMonth && (
+          <ThemedSelect
+            value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
+            onChange={(v) => {
+              if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
+              else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
+              else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
+            }}
+            className="text-[13px]"
+            options={[
+              ...(period.kind === 'month' && period.month !== currentMonth
+                ? [{ value: 'pickedMonth', label: formattedMonth }]
+                : []),
+              { value: 'thisMonth', label: 'This month' },
+              { value: 'lastMonth', label: 'Last month' },
+              { value: 'last3', label: 'Last 3 months' },
+              { value: 'last6', label: 'Last 6 months' },
+              { value: 'last12', label: 'Last 12 months' },
+              { value: 'ytd', label: 'Year to date' },
+            ]}
+          />
+          {period.kind === 'month' && (
+            <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
               <button
-                onClick={() => setSelectedMonth(currentMonth)}
-                className="px-2 py-1 rounded-md text-[12px] font-medium text-accent hover:bg-bg-primary transition-all duration-200"
+                onClick={() => shiftMonth(-1)}
+                className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                aria-label="Previous Month"
               >
-                Today
+                <ChevronLeft size={16} />
               </button>
-            )}
-          </div>
+              <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
+              <button
+                onClick={() => shiftMonth(1)}
+                className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                aria-label="Next Month"
+              >
+                <ChevronRight size={16} />
+              </button>
+              {period.month !== currentMonth && (
+                <button
+                  onClick={() => setPeriod({ kind: 'month', month: currentMonth })}
+                  className="px-2 py-1 rounded-md text-[12px] font-medium text-accent hover:bg-bg-primary transition-all duration-200"
+                >
+                  Today
+                </button>
+              )}
+            </div>
+          )}
           <CSVUploader />
           <button
             onClick={() => setIsModalOpen(true)}
@@ -106,19 +129,19 @@ export const Budgeting: React.FC = () => {
         ))}
       </div>
 
-      <ParadigmBanner selectedMonth={selectedMonth} />
+      <ParadigmBanner selectedMonth={range.to} />
 
       {tab === 'overview' && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <IncomeWidget selectedMonth={selectedMonth} />
-            <ExpenseWidget selectedMonth={selectedMonth} />
-            <MonthlySummaryWidget selectedMonth={selectedMonth} />
+            <IncomeWidget range={range} />
+            <ExpenseWidget range={range} />
+            <MonthlySummaryWidget range={range} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <BudgetProgressWidget selectedMonth={selectedMonth} />
-            <SankeyWidget selectedMonth={selectedMonth} />
+            <BudgetProgressWidget range={range} />
+            <SankeyWidget range={range} />
           </div>
 
           <OwedToMeWidget />
@@ -129,12 +152,12 @@ export const Budgeting: React.FC = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SubscriptionsWidget />
-            <AnomalyAlertsWidget selectedMonth={selectedMonth} />
+            <AnomalyAlertsWidget range={range} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SpendingHeatmapWidget selectedMonth={selectedMonth} />
-            <CategoryTrendsWidget selectedMonth={selectedMonth} />
+            <SpendingHeatmapWidget range={range} />
+            <CategoryTrendsWidget range={range} />
           </div>
         </>
       )}
@@ -143,15 +166,15 @@ export const Budgeting: React.FC = () => {
         <>
           <TriageInboxWidget />
 
-          <TransactionListWidget selectedMonth={selectedMonth} />
+          <TransactionListWidget range={range} />
         </>
       )}
 
       {tab === 'setup' && (
         <>
-          <CategoryManagerWidget selectedMonth={selectedMonth} />
+          <CategoryManagerWidget selectedMonth={range.to} />
 
-          <ReallocationHistory selectedMonth={selectedMonth} />
+          <ReallocationHistory selectedMonth={range.to} />
 
           <CategorizationRulesWidget />
         </>

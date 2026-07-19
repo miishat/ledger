@@ -5,17 +5,18 @@ import { detectRecurring } from '../../utils/budget/recurring';
 import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
+import { inRange, isSingleMonth, monthKeyOf, type MonthRange } from '../../utils/budget/period';
 
 interface MonthlySummaryWidgetProps {
-  selectedMonth: string; // YYYY-MM
+  range: MonthRange;
 }
 
-export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ selectedMonth }) => {
+export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
 
   const transactionsList = Object.values(transactions);
 
-  const thisMonthTransactions = transactionsList.filter(t => t.date.startsWith(selectedMonth));
+  const thisMonthTransactions = transactionsList.filter(t => inRange(t.date, range));
 
   const totalIncome = thisMonthTransactions
     .filter(t => countsAsIncome(t))
@@ -29,7 +30,8 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
   const isPositive = netChange >= 0;
 
   const today = new Date().toISOString().slice(0, 10);
-  const forecast = forecastMonthEnd(transactions, detectRecurring(transactions), selectedMonth, today);
+  const showForecast = isSingleMonth(range) && range.to === monthKeyOf(new Date());
+  const forecast = forecastMonthEnd(transactions, detectRecurring(transactions), range.to, today);
   const pendingSummary = forecast.pending
     .slice(0, 5)
     .map((p) => `${p.expectedDate}: ${p.type === 'income' ? '+' : '-'}${formatMoney(p.amount)} ${p.description}`)
@@ -59,18 +61,20 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
             </span>
           </div>
 
-          <div
-            className="flex justify-between items-center text-sm"
-            title={pendingSummary || 'No pending recurring items detected'}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-accent/50"></div>
-              <span className="text-text-secondary">Projected Net</span>
+          {showForecast && (
+            <div
+              className="flex justify-between items-center text-sm"
+              title={pendingSummary || 'No pending recurring items detected'}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent/50"></div>
+                <span className="text-text-secondary">Projected Net</span>
+              </div>
+              <span className={`font-medium ${forecast.projectedNet >= 0 ? 'text-text-primary' : 'text-error'}`}>
+                {forecast.projectedNet >= 0 ? '+' : '-'}{formatMoney(Math.abs(forecast.projectedNet))}
+              </span>
             </div>
-            <span className={`font-medium ${forecast.projectedNet >= 0 ? 'text-text-primary' : 'text-error'}`}>
-              {forecast.projectedNet >= 0 ? '+' : '-'}{formatMoney(Math.abs(forecast.projectedNet))}
-            </span>
-          </div>
+          )}
         </div>
 
         <div className="flex justify-between items-end mt-auto">

@@ -4,8 +4,11 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { detectAnomalies } from '../../utils/budget/categoryStats'
 import { formatMoney } from '../planner/format'
+import type { MonthRange } from '../../utils/budget/period'
 
-export const AnomalyAlertsWidget: React.FC<{ selectedMonth: string }> = ({ selectedMonth }) => {
+// TEMPORARY: bridges to single-month internals until Task 4 lands real range logic.
+export const AnomalyAlertsWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
+  const selectedMonth = range.to
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const refDate = new Date(`${selectedMonth}-15T12:00:00`)

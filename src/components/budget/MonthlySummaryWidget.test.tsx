@@ -4,7 +4,8 @@ import { MonthlySummaryWidget } from './MonthlySummaryWidget'
 
 describe('MonthlySummaryWidget', () => {
   it('shows a Projected Net row matching the summary row style', () => {
-    render(<MonthlySummaryWidget selectedMonth={new Date().toISOString().slice(0, 7)} />)
+    const month = new Date().toISOString().slice(0, 7)
+    render(<MonthlySummaryWidget range={{ from: month, to: month }} />)
     expect(screen.getByText('Projected Net')).toBeTruthy()
   })
 })

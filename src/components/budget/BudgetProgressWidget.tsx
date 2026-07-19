@@ -4,9 +4,12 @@ import { useBudgetStore } from '../../store/useBudgetStore'
 import { categoryMonthlyTotal } from '../../utils/budget/categoryStats'
 import { formatMoney } from '../planner/format'
 import { totalMonthlyBudget } from '../../store/budgetSelectors'
+import type { MonthRange } from '../../utils/budget/period'
 
 // Pace: expected-by-today = target × (day / days-in-month); >110% = over.
-export const BudgetProgressWidget: React.FC<{ selectedMonth: string }> = ({ selectedMonth }) => {
+// TEMPORARY: bridges to single-month internals until Task 3 lands real range logic.
+export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
+  const selectedMonth = range.to
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)

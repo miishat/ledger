@@ -7,12 +7,13 @@ import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { inRange, type MonthRange } from '../../utils/budget/period';
 
 interface TransactionListWidgetProps {
-  selectedMonth: string;
+  range: MonthRange;
 }
 
-export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ selectedMonth }) => {
+export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
@@ -24,7 +25,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const txList = Object.values(transactions)
-    .filter(tx => tx.date.startsWith(selectedMonth))
+    .filter(tx => inRange(tx.date, range))
     .filter(tx => {
       if (selectedCategoryId === '') return true;
       if (selectedCategoryId === 'uncategorized') return !tx.categoryId;

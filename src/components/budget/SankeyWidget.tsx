@@ -6,6 +6,7 @@ import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
+import { inRange, type MonthRange } from '../../utils/budget/period'
 
 function renderSankeyNode(budgetIdx: number) {
   return ({ x, y, width, height, index, payload }: SankeyNodeProps) => {
@@ -31,7 +32,7 @@ function renderSankeyNode(budgetIdx: number) {
   }
 }
 
-export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMonth }) => {
+export const SankeyWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
@@ -39,7 +40,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
   const incomeByCat = new Map<string, number>()
   const expenseByGroup = new Map<string, number>()
   for (const t of Object.values(transactions)) {
-    if (!t.date.startsWith(selectedMonth)) continue
+    if (!inRange(t.date, range)) continue
     if (t.type === 'income') {
       if (!countsAsIncome(t)) continue
       const name = (t.categoryId && categories[t.categoryId]?.name) || 'Other income'

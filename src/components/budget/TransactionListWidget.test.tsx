@@ -10,7 +10,7 @@ beforeEach(() => {
 
 describe('TransactionListWidget mobile layout', () => {
   it('lets the header row wrap instead of overflowing the card', () => {
-    render(<TransactionListWidget selectedMonth="2026-07" />)
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     const headerRow = screen.getByText('All Transactions').parentElement as HTMLElement
     expect(headerRow.className).toContain('flex-wrap')
   })
@@ -27,7 +27,7 @@ describe('TransactionListWidget mobile layout', () => {
         },
       },
     })
-    render(<TransactionListWidget selectedMonth="2026-07" />)
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     const table = screen.getByRole('table')
     const del = within(table).getByLabelText('Delete transaction')
     const classes = del.className.split(/\s+/)
@@ -48,7 +48,7 @@ describe('TransactionListWidget mobile layout', () => {
         },
       },
     })
-    const { container } = render(<TransactionListWidget selectedMonth="2026-07" />)
+    const { container } = render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
 
     const cards = container.querySelector('[data-testid="transactions-cards"]')
     expect(cards).not.toBeNull()

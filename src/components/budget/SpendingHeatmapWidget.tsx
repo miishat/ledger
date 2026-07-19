@@ -3,10 +3,13 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
+import type { MonthRange } from '../../utils/budget/period'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
-export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ selectedMonth }) => {
+// TEMPORARY: bridges to single-month internals until Task 4 lands real range logic.
+export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
+  const selectedMonth = range.to
   const transactions = useBudgetStore((s) => s.transactions)
 
   const byDay = new Map<number, number>()

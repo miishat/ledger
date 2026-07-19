@@ -2,18 +2,19 @@ import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
+import { inRange, isSingleMonth, type MonthRange } from '../../utils/budget/period';
 
 interface ExpenseWidgetProps {
-  selectedMonth: string; // YYYY-MM
+  range: MonthRange;
 }
 
-export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) => {
+export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
-  
+
   const transactionsList = Object.values(transactions);
-  
-  const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth));
+
+  const expensesThisMonth = transactionsList.filter(t => t.type === 'expense' && inRange(t.date, range));
   
   const totalExpense = expensesThisMonth.reduce((sum, t) => sum + t.amount, 0);
   
@@ -34,7 +35,7 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ selectedMonth }) =
       <div className="flex flex-col gap-4 mt-4 h-full">
         <div className="flex items-baseline gap-2">
           <span className="text-[28px] font-bold text-error">{formatMoney(totalExpense)}</span>
-          <span className="text-[12px] text-text-secondary">This Month</span>
+          <span className="text-[12px] text-text-secondary">{isSingleMonth(range) ? 'This Month' : `${range.from} to ${range.to}`}</span>
         </div>
         
         {sortedCategories.length > 0 && (
