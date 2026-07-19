@@ -24,6 +24,11 @@ export interface Transaction {
   categoryId?: string;
   description: string;
   type: 'expense' | 'income';
+  /** Shared bill: amount is YOUR share; totalAmount is what you actually paid.
+   *  The difference is owed to you by sharedWith. */
+  shared?: { totalAmount: number; sharedWith: string };
+  /** Income that pays back a shared bill; excluded from income totals. */
+  reimbursement?: { from: string };
 }
 
 export interface Reallocation {
