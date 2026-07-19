@@ -103,6 +103,12 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           <div>
             <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
             <p className="text-[14px] text-text-secondary mt-1">Configure your budgeting style and monthly targets.</p>
+            <p className="text-[13px] text-text-secondary mt-1">
+              Total monthly budget:{' '}
+              <span className="font-semibold text-text-primary">
+                {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
+              </span>
+            </p>
           </div>
         </button>
 
@@ -128,15 +134,6 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
-
-      {!budgetSetupCollapsed && (
-        <p className="text-[13px] text-text-secondary mb-4">
-          Total monthly budget:{' '}
-          <span className="font-semibold text-text-primary">
-            {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
-          </span>
-        </p>
-      )}
 
       {!budgetSetupCollapsed && (
       <div className="columns-1 md:columns-2 gap-6">
