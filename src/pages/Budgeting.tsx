@@ -17,6 +17,7 @@ import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget'
 import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget';
 import { ParadigmBanner } from '../components/budget/ParadigmBanner';
 import { ReallocationHistory } from '../components/budget/ReallocationHistory';
+import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -119,6 +120,8 @@ export const Budgeting: React.FC = () => {
             <BudgetProgressWidget selectedMonth={selectedMonth} />
             <SankeyWidget selectedMonth={selectedMonth} />
           </div>
+
+          <OwedToMeWidget />
         </>
       )}
 

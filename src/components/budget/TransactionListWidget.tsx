@@ -36,6 +36,11 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
     amountPrefix: tx.type === 'income' ? '+' : '-',
     categoryLabel: tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+    badge: tx.shared
+      ? `shared · ${tx.shared.sharedWith}`
+      : tx.reimbursement
+        ? `reimb · ${tx.reimbursement.from}`
+        : null,
   });
 
   const wrapperClass = isExpanded
@@ -94,7 +99,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
               </thead>
               <tbody>
                 {txList.map(tx => {
-                  const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+                  const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
                   return (
                   <tr
                     key={tx.id}
@@ -107,6 +112,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                       <span className="px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px]">
                         {categoryLabel}
                       </span>
+                      {badge && (
+                        <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
+                      )}
                     </td>
                     <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
                       {amountPrefix}{formatMoney(tx.amount)}
@@ -131,7 +139,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
           </div>
           <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
             {txList.map(tx => {
-              const { amountClass, amountPrefix, categoryLabel } = getTransactionDisplay(tx);
+              const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
               return (
               <div
                 key={tx.id}
@@ -159,8 +167,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ se
                 </div>
                 <div className="flex items-center justify-between text-[12px] text-text-secondary">
                   <span>{tx.date}</span>
-                  <span className="px-2 py-1 bg-bg-primary border border-border rounded-md">
-                    {categoryLabel}
+                  <span className="flex items-center">
+                    <span className="px-2 py-1 bg-bg-primary border border-border rounded-md">
+                      {categoryLabel}
+                    </span>
+                    {badge && (
+                      <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
+                    )}
                   </span>
                 </div>
               </div>
