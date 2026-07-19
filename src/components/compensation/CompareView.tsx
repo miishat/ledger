@@ -254,7 +254,7 @@ export function CompareView() {
 
             <button
               onClick={handleCalculate}
-              className="mt-2 w-full py-2 bg-[var(--color-accent)] text-white rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              className="mt-2 w-full py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               Calculate Comparison
             </button>

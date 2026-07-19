@@ -372,21 +372,21 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   <button
                     type="button"
                     onClick={() => setRsuPreset('4yr-1yr-cliff')}
-                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === '4yr-1yr-cliff' ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === '4yr-1yr-cliff' ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     4-Year with 1-Year Cliff
                   </button>
                   <button
                     type="button"
                     onClick={() => setRsuPreset('3yr-no-cliff')}
-                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === '3yr-no-cliff' ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === '3yr-no-cliff' ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     3-Year, No Cliff
                   </button>
                   <button
                     type="button"
                     onClick={() => setRsuPreset('custom')}
-                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === 'custom' ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                    className={`min-h-[44px] px-4 py-2 rounded-md text-[14px] font-medium transition-colors ${rsuPreset === 'custom' ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
                     Custom Schedule
                   </button>

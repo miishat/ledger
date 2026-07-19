@@ -124,7 +124,7 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-accent text-white rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+              className="px-4 py-2 bg-accent text-[var(--color-bg-primary)] rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
             >
               {editingAccount ? 'Save Changes' : 'Add Account'}
             </button>
