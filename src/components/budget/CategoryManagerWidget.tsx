@@ -6,6 +6,7 @@ import { NumberInput } from '../ui/NumberInput';
 import { ReallocationModal } from './ReallocationModal';
 import { totalMonthlyBudget } from '../../store/budgetSelectors';
 import { formatMoney } from '../planner/format';
+import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
@@ -83,7 +84,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
   );
   
   const thisMonthIncome = Object.values(transactions).filter(
-    t => t.type === 'income' && t.date.startsWith(selectedMonth)
+    t => countsAsIncome(t) && t.date.startsWith(selectedMonth)
   );
 
   return (
