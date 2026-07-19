@@ -5,6 +5,8 @@ import { forecastMonthEnd } from './cashFlowForecast'
 let id = 0
 const tx = (date: string, amount: number, type: 'expense' | 'income'): Transaction =>
   ({ id: `t${id++}`, date, amount, description: 'x', type })
+const reimbursementTx = (date: string, amount: number): Transaction =>
+  ({ id: `t${id++}`, date, amount, description: 'x', type: 'income', reimbursement: { from: 'Roommate' } })
 const asRecord = (list: Transaction[]) => Object.fromEntries(list.map((t) => [t.id, t]))
 
 const recurringItem = (over: Partial<RecurringItem>): RecurringItem => ({
@@ -37,6 +39,19 @@ describe('forecastMonthEnd', () => {
     expect(f.expectedOut).toBe(1000)
     expect(f.projectedNet).toBe(4000)
     expect(f.pending.map((p) => p.description).sort()).toEqual(['PAYROLL', 'RENT'])
+  })
+
+  it('excludes reimbursement income from netSoFar and projectedNet', () => {
+    const withoutReimbursement = forecastMonthEnd(txs, [], '2026-07', '2026-07-10')
+
+    const txsWithReimbursement = asRecord([
+      ...Object.values(txs),
+      reimbursementTx('2026-07-06', 300),
+    ])
+    const withReimbursement = forecastMonthEnd(txsWithReimbursement, [], '2026-07', '2026-07-10')
+
+    expect(withReimbursement.netSoFar).toBe(withoutReimbursement.netSoFar)
+    expect(withReimbursement.projectedNet).toBe(withoutReimbursement.projectedNet)
   })
 
   it('projects multiple occurrences of short-interval items within the month', () => {

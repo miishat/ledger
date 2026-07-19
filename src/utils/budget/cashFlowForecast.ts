@@ -22,6 +22,7 @@ export function forecastMonthEnd(
   let netSoFar = 0
   for (const t of Object.values(transactions)) {
     if (!t.date.startsWith(month) || t.date > today) continue
+    if (t.type === 'income' && t.reimbursement) continue
     netSoFar += t.type === 'income' ? t.amount : -t.amount
   }
 
