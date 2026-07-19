@@ -1,9 +1,10 @@
-import React from 'react';
-import { Check, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Trash2, X } from 'lucide-react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { formatMoney } from '../planner/format';
 
 export const TriageInboxWidget: React.FC = () => {
@@ -12,9 +13,11 @@ export const TriageInboxWidget: React.FC = () => {
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
   const approveAll = useTriageStore((state) => state.approveAll);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
-  
+  const clearAll = useTriageStore((state) => state.clearAll);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
   const categories = useBudgetStore((state) => state.categories);
-  
+
   const txList = Object.values(pendingTransactions).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const categoryList = Object.values(categories);
 
@@ -22,7 +25,13 @@ export const TriageInboxWidget: React.FC = () => {
 
   return (
     <WidgetWrapper title={`Triage Inbox (${txList.length})`}>
-      <div className="flex justify-end mt-2">
+      <div className="flex justify-end gap-2 mt-2">
+        <button
+          onClick={() => setConfirmClearOpen(true)}
+          className="text-[13px] font-medium text-error hover:opacity-80 transition-opacity flex items-center gap-1 bg-error/10 px-2 py-1 rounded-md"
+        >
+          <Trash2 size={14} /> Clear All
+        </button>
         <button
           onClick={approveAll}
           className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
@@ -72,6 +81,18 @@ export const TriageInboxWidget: React.FC = () => {
           </div>
         ))}
       </div>
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear triage inbox?"
+        message={`Discard ${txList.length} pending transaction${txList.length === 1 ? '' : 's'}? Nothing will be added to your budget. This cannot be undone.`}
+        confirmLabel="Clear All"
+        tone="danger"
+        onConfirm={() => {
+          clearAll();
+          setConfirmClearOpen(false);
+        }}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </WidgetWrapper>
   );
 };
