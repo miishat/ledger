@@ -30,25 +30,39 @@ export const WheelView: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
+    const fileArr = Array.from(files)
+    e.target.value = ''
     setStatus('Parsing CSV(s)…')
 
-    let newRows: RawRow[] = []
-    let processed = 0
-    Array.from(files).forEach((file) => {
-      Papa.parse(file, {
-        skipEmptyLines: true,
-        complete: (results) => {
-          newRows = [...newRows, ...(results.data as RawRow[])]
-          processed++
-          if (processed === files.length) {
-            addRows(newRows, files.length)
-            setStatus(null)
-          }
-        },
-        error: () => setStatus('Error parsing one or more CSVs.'),
-      })
+    Promise.all(
+      fileArr.map(
+        (file) =>
+          new Promise<{ rows: RawRow[]; failed: boolean }>((resolve) => {
+            Papa.parse(file, {
+              skipEmptyLines: true,
+              complete: (results) => resolve({ rows: results.data as RawRow[], failed: false }),
+              error: () => resolve({ rows: [], failed: true }),
+            })
+          }),
+      ),
+    ).then((parsed) => {
+      try {
+        const failed = parsed.filter((p) => p.failed).length
+        const newRows = parsed.flatMap((p) => p.rows)
+        const before = useWheelStore.getState().rawRows.length
+        addRows(newRows, fileArr.length - failed)
+        const added = useWheelStore.getState().rawRows.length - before
+        if (failed === fileArr.length) {
+          setStatus('Could not read the selected file(s).')
+        } else if (added <= 0) {
+          setStatus('No new IBKR activity rows found (already imported, or not an Activity Statement CSV).')
+        } else {
+          setStatus(`Added ${added} activity rows${failed > 0 ? ` (${failed} file(s) failed)` : ''}.`)
+        }
+      } catch (err) {
+        setStatus(`Import failed: ${err instanceof Error ? err.message : 'unknown error'}`)
+      }
     })
-    e.target.value = ''
   }
 
   const handleClear = () => setConfirmClearOpen(true)
