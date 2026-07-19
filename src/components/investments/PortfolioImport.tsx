@@ -1,12 +1,15 @@
 import React, { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import {
-  mapPortfolioRows, parsePortfolioCSV, type ColumnMapping, type UnrecognizedPortfolioCSV,
+  mapPortfolioRows, parsePortfolioText, type ColumnMapping, type UnrecognizedPortfolioCSV,
 } from '../../utils/portfolioCsv'
 import {
   DEFAULT_ACCOUNT, usePortfolioStore, type Holding, type ImportMode,
 } from '../../store/usePortfolioStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
+import { isPortfolioAnalystCsv, parsePortfolioAnalyst, type PAReport } from '../../utils/investments/ibkrPortfolioAnalyst'
+import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 const selectCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
@@ -17,14 +20,29 @@ const MODE_LABELS: Record<ImportMode, string> = {
   add: 'Add as new rows',
 }
 
+/** Stock/ETF long positions from the report, as importable holdings. */
+function holdingsFromReport(report: PAReport): Omit<Holding, 'id' | 'account'>[] {
+  return report.openPositions
+    .filter((p) => (p.instrument === 'Stocks' || p.instrument === 'ETFs') && p.quantity > 0 && p.costBasis > 0)
+    .map((p) => ({
+      ticker: p.symbol.toUpperCase(),
+      name: p.description || undefined,
+      quantity: p.quantity,
+      avgCost: p.costBasis / p.quantity,
+      currency: p.currency === 'USD' ? ('USD' as const) : ('CAD' as const),
+    }))
+}
+
 export const PortfolioImport: React.FC = () => {
   const importHoldings = usePortfolioStore((s) => s.importHoldings)
+  const setReport = usePortfolioReportStore((s) => s.setReport)
   const fileRef = useRef<HTMLInputElement>(null)
   const [account, setAccount] = useState(DEFAULT_ACCOUNT)
   const [mode, setMode] = useState<ImportMode>('replace')
   const [pending, setPending] = useState<UnrecognizedPortfolioCSV | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping>({ ticker: '', quantity: '', totalCost: '', currency: '' })
   const [message, setMessage] = useState('')
+  const [holdingsPrompt, setHoldingsPrompt] = useState<Omit<Holding, 'id' | 'account'>[] | null>(null)
 
   const doImport = (rows: Omit<Holding, 'id' | 'account'>[], via: string) => {
     const acct = account.trim() || DEFAULT_ACCOUNT
@@ -35,7 +53,20 @@ export const PortfolioImport: React.FC = () => {
 
   const onFile = async (file: File) => {
     setMessage('')
-    const result = await parsePortfolioCSV(file)
+    const text = await file.text()
+    if (isPortfolioAnalystCsv(text)) {
+      try {
+        const report = parsePortfolioAnalyst(text)
+        setReport(report)
+        const rows = holdingsFromReport(report)
+        setMessage(`PortfolioAnalyst report imported (${report.period}).`)
+        if (rows.length > 0) setHoldingsPrompt(rows)
+      } catch (err) {
+        setMessage(`Could not parse PortfolioAnalyst report: ${err instanceof Error ? err.message : 'unknown error'}`)
+      }
+      return
+    }
+    const result = parsePortfolioText(text)
     if ('unrecognized' in result) {
       setPending(result)
       setMapping({ ticker: result.headers[0] ?? '', quantity: '', totalCost: '', currency: '' })
@@ -93,7 +124,7 @@ export const PortfolioImport: React.FC = () => {
         {message && <span className="text-[13px] text-text-secondary">{message}</span>}
       </div>
       <p className="text-[12px] text-text-secondary">
-        Interactive Brokers and Wealthsimple exports are detected automatically; anything else opens the column mapper.
+        Interactive Brokers holdings, Wealthsimple, and IBKR PortfolioAnalyst reports are detected automatically; anything else opens the column mapper.
         "Replace" clears only the selected account; other accounts are untouched.
       </p>
 
@@ -136,6 +167,18 @@ export const PortfolioImport: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={holdingsPrompt !== null}
+        title="Update holdings too?"
+        message={`The report contains ${holdingsPrompt?.length ?? 0} stock/ETF positions. Replace the "${account.trim() || DEFAULT_ACCOUNT}" account's holdings with them? The report itself is already saved either way.`}
+        confirmLabel="Update holdings"
+        onConfirm={() => {
+          if (holdingsPrompt) importHoldings(account.trim() || DEFAULT_ACCOUNT, 'replace', holdingsPrompt)
+          setHoldingsPrompt(null)
+        }}
+        onCancel={() => setHoldingsPrompt(null)}
+      />
     </div>
   )
 }
