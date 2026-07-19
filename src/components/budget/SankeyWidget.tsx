@@ -9,8 +9,11 @@ import { chartTooltipStyles } from '../../utils/chartTheme'
 function renderSankeyNode(budgetIdx: number) {
   return ({ x, y, width, height, index, payload }: SankeyNodeProps) => {
     const isOut = index >= budgetIdx
+    const name = String(payload.name)
+    const label = name.length > 16 ? `${name.slice(0, 15)}…` : name
     return (
       <g>
+        <title>{name}</title>
         <rect x={x} y={y} width={width} height={height} fill="var(--accent)" stroke="var(--border-color)" />
         <text
           x={isOut ? x + width + 6 : x - 6}
@@ -20,7 +23,7 @@ function renderSankeyNode(budgetIdx: number) {
           fill="var(--text-primary)"
           fontSize={12}
         >
-          {payload.name}
+          {label}
         </text>
       </g>
     )
@@ -76,7 +79,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
           <Sankey
             data={{ nodes, links }}
             nodePadding={24}
-            margin={{ top: 10, right: 100, bottom: 10, left: 10 }}
+            margin={{ top: 10, right: 100, bottom: 10, left: 100 }}
             link={{ stroke: 'var(--accent)', strokeOpacity: 0.35 }}
             node={renderSankeyNode(budgetIdx)}
           >
