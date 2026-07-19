@@ -4,6 +4,7 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { detectRecurring } from '../../utils/budget/recurring';
 import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast';
 import { formatMoney } from '../planner/format';
+import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 
 interface MonthlySummaryWidgetProps {
   selectedMonth: string; // YYYY-MM
@@ -17,7 +18,7 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ sele
   const thisMonthTransactions = transactionsList.filter(t => t.date.startsWith(selectedMonth));
 
   const totalIncome = thisMonthTransactions
-    .filter(t => t.type === 'income')
+    .filter(t => countsAsIncome(t))
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpense = thisMonthTransactions

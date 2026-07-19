@@ -3,6 +3,7 @@
 // useBudgetStore.getState().transactions or any snapshot.
 
 import type { Category, CategoryGroup, Transaction } from '../types/budget'
+import { countsAsIncome } from '../utils/budget/sharedExpenses'
 
 export function monthlyExpenseTotal(
   transactions: Record<string, Transaction>,
@@ -18,7 +19,7 @@ export function monthlyIncomeTotal(
   month: string,
 ): number {
   return Object.values(transactions)
-    .filter((t) => t.type === 'income' && t.date.startsWith(month))
+    .filter((t) => countsAsIncome(t) && t.date.startsWith(month))
     .reduce((sum, t) => sum + t.amount, 0)
 }
 

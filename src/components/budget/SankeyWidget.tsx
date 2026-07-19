@@ -5,6 +5,7 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 
 function renderSankeyNode(budgetIdx: number) {
   return ({ x, y, width, height, index, payload }: SankeyNodeProps) => {
@@ -40,6 +41,7 @@ export const SankeyWidget: React.FC<{ selectedMonth: string }> = ({ selectedMont
   for (const t of Object.values(transactions)) {
     if (!t.date.startsWith(selectedMonth)) continue
     if (t.type === 'income') {
+      if (!countsAsIncome(t)) continue
       const name = (t.categoryId && categories[t.categoryId]?.name) || 'Other income'
       incomeByCat.set(name, (incomeByCat.get(name) ?? 0) + t.amount)
     } else {

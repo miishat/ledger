@@ -2,6 +2,7 @@ import React from 'react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
+import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 
 interface IncomeWidgetProps {
   selectedMonth: string; // YYYY-MM
@@ -13,7 +14,7 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ selectedMonth }) => 
   const transactionsList = Object.values(transactions);
   
   const totalIncome = transactionsList
-    .filter(t => t.type === 'income' && t.date.startsWith(selectedMonth))
+    .filter(t => countsAsIncome(t) && t.date.startsWith(selectedMonth))
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (

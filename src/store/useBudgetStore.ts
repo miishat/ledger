@@ -269,7 +269,7 @@ export function getMonthlyBudgetStats(
         perCategorySpent[tx.categoryId] = (perCategorySpent[tx.categoryId] ?? 0) + tx.amount;
       }
     } else if (tx.type === 'income') {
-      totalIncome += tx.amount;
+      if (!tx.reimbursement) totalIncome += tx.amount;
     }
   });
 

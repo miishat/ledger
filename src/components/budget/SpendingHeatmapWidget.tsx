@@ -2,6 +2,7 @@ import React from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
+import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
@@ -18,7 +19,7 @@ export const SpendingHeatmapWidget: React.FC<{ selectedMonth: string }> = ({ sel
 
   const incomeByDay = new Map<number, number>()
   for (const t of Object.values(transactions)) {
-    if (t.type !== 'income' || !t.date.startsWith(selectedMonth)) continue
+    if (!countsAsIncome(t) || !t.date.startsWith(selectedMonth)) continue
     const day = Number(t.date.slice(8, 10))
     incomeByDay.set(day, (incomeByDay.get(day) ?? 0) + t.amount)
   }
