@@ -3,14 +3,46 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { formatMoney } from '../planner/format'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
-import type { MonthRange } from '../../utils/budget/period'
+import { isSingleMonth, monthKeysInRange, inRange, type MonthRange } from '../../utils/budget/period'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
-// TEMPORARY: bridges to single-month internals until Task 4 lands real range logic.
 export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
-  const selectedMonth = range.to
   const transactions = useBudgetStore((s) => s.transactions)
+
+  if (!isSingleMonth(range)) {
+    const monthKeys = monthKeysInRange(range)
+    const byMonth = new Map<string, number>()
+    for (const t of Object.values(transactions)) {
+      if (t.type !== 'expense' || !inRange(t.date, range)) continue
+      const k = t.date.slice(0, 7)
+      byMonth.set(k, (byMonth.get(k) ?? 0) + t.amount)
+    }
+    const max = Math.max(0, ...byMonth.values())
+    return (
+      <WidgetWrapper title="Spending by Month">
+        <div className="grid grid-cols-4 gap-1 mt-2 text-[11px]">
+          {monthKeys.map((k) => {
+            const spend = byMonth.get(k) ?? 0
+            const opacity = max > 0 ? 0.15 + 0.85 * (spend / max) : 0
+            return (
+              <div
+                key={k}
+                title={`${k}: ${formatMoney(spend)} spent`}
+                className="rounded flex flex-col items-center justify-center border border-border text-text-primary py-3 gap-1"
+                style={{ backgroundColor: spend > 0 ? `color-mix(in srgb, var(--accent) ${Math.round(opacity * 100)}%, transparent)` : 'transparent' }}
+              >
+                <span>{k}</span>
+                <span className="text-[10px] text-text-secondary">{formatMoney(spend)}</span>
+              </div>
+            )
+          })}
+        </div>
+      </WidgetWrapper>
+    )
+  }
+
+  const selectedMonth = range.from
 
   const byDay = new Map<number, number>()
   for (const t of Object.values(transactions)) {
