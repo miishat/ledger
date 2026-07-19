@@ -38,11 +38,15 @@ export const WheelView: React.FC = () => {
       fileArr.map(
         (file) =>
           new Promise<{ rows: RawRow[]; failed: boolean }>((resolve) => {
-            Papa.parse(file, {
-              skipEmptyLines: true,
-              complete: (results) => resolve({ rows: results.data as RawRow[], failed: false }),
-              error: () => resolve({ rows: [], failed: true }),
-            })
+            try {
+              Papa.parse(file, {
+                skipEmptyLines: true,
+                complete: (results) => resolve({ rows: results.data as RawRow[], failed: false }),
+                error: () => resolve({ rows: [], failed: true }),
+              })
+            } catch {
+              resolve({ rows: [], failed: true })
+            }
           }),
       ),
     ).then((parsed) => {
@@ -55,13 +59,17 @@ export const WheelView: React.FC = () => {
         if (failed === fileArr.length) {
           setStatus('Could not read the selected file(s).')
         } else if (added <= 0) {
-          setStatus('No new IBKR activity rows found (already imported, or not an Activity Statement CSV).')
+          setStatus(
+            `No new IBKR activity rows found (already imported, or not an Activity Statement CSV).${failed > 0 ? ` (${failed} file(s) failed)` : ''}`,
+          )
         } else {
           setStatus(`Added ${added} activity rows${failed > 0 ? ` (${failed} file(s) failed)` : ''}.`)
         }
       } catch (err) {
         setStatus(`Import failed: ${err instanceof Error ? err.message : 'unknown error'}`)
       }
+    }).catch((err) => {
+      setStatus(`Import failed: ${err instanceof Error ? err.message : 'unknown error'}`)
     })
   }
 
