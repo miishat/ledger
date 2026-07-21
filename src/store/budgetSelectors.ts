@@ -4,6 +4,7 @@
 
 import type { Category, CategoryGroup, Transaction } from '../types/budget'
 import { countsAsIncome } from '../utils/budget/sharedExpenses'
+import { monthlyEquivalent } from '../utils/budget/cadence'
 
 export function monthlyExpenseTotal(
   transactions: Record<string, Transaction>,
@@ -58,12 +59,13 @@ export function averageMonthlyNetSavings(
   return total / monthsBack
 }
 
-/** Sum of expense-category monthly targets. Income categories excluded. */
+/** Sum of expense-category monthly budget contributions. Annual categories
+ *  contribute one twelfth. Income categories excluded. */
 export function totalMonthlyBudget(
   categories: Record<string, Category>,
   categoryGroups: Record<string, CategoryGroup>,
 ): number {
   return Object.values(categories)
     .filter((c) => categoryGroups[c.groupId]?.kind === 'expense')
-    .reduce((sum, c) => sum + c.targetAmount, 0)
+    .reduce((sum, c) => sum + monthlyEquivalent(c), 0)
 }

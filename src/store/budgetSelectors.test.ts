@@ -70,3 +70,16 @@ describe('totalMonthlyBudget', () => {
     expect(totalMonthlyBudget({}, {})).toBe(0)
   })
 })
+
+describe('totalMonthlyBudget with mixed cadence', () => {
+  it('counts an annual category at one twelfth per month', () => {
+    const categoryGroups = {
+      g1: { id: 'g1', name: 'Travel', kind: 'expense' as const },
+    }
+    const categories = {
+      c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 1000 },
+      c2: { id: 'c2', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' as const },
+    }
+    expect(totalMonthlyBudget(categories, categoryGroups)).toBe(1200)
+  })
+})

@@ -8,6 +8,7 @@ import type {
   Reallocation,
   Transaction,
 } from '../types/budget';
+import { monthlyEquivalent } from '../utils/budget/cadence';
 
 /** v1 -> v2: category groups gain a kind. Existing groups are classified by
  *  the old name heuristic once; from then on kind is explicit. */
@@ -273,10 +274,11 @@ export function getMonthlyBudgetStats(
     }
   });
 
-  // Effective targets: base + reallocations in - reallocations out (this month).
+  // Effective targets: monthly contribution + reallocations in - reallocations
+  // out (this month). Annual categories contribute one twelfth.
   const categoryEffectiveTargets: Record<string, number> = {};
   Object.values(state.categories).forEach((cat) => {
-    categoryEffectiveTargets[cat.id] = cat.targetAmount;
+    categoryEffectiveTargets[cat.id] = monthlyEquivalent(cat);
   });
   Object.values(state.reallocations).forEach((realloc) => {
     if (!realloc.date.startsWith(monthStr)) return;
@@ -298,7 +300,7 @@ export function getMonthlyBudgetStats(
     const group = state.categoryGroups[cat.groupId];
     if (group?.kind !== 'expense') return;
     const catSpent = perCategorySpent[cat.id] ?? 0;
-    const effectiveTarget = categoryEffectiveTargets[cat.id] ?? cat.targetAmount;
+    const effectiveTarget = categoryEffectiveTargets[cat.id] ?? monthlyEquivalent(cat);
     perCategory[cat.id] = {
       id: cat.id,
       effectiveTarget,
