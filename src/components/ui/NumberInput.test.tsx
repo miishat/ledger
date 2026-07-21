@@ -81,4 +81,36 @@ describe('NumberInput', () => {
     fireEvent.change(input, { target: { value: '0.5' } })
     expect(onCommit).toHaveBeenLastCalledWith(0.5)
   })
+
+  it('rounds the display to maxDecimals without changing the value', () => {
+    render(<NumberInput aria-label="amt" value={336.82176} maxDecimals={3} onCommit={() => {}} />)
+    expect(screen.getByLabelText('amt')).toHaveValue('336.822')
+  })
+
+  it('trims trailing zeros so a whole number stays whole', () => {
+    render(<NumberInput aria-label="amt" value={100} maxDecimals={3} onCommit={() => {}} />)
+    expect(screen.getByLabelText('amt')).toHaveValue('100')
+  })
+
+  it('seeds the edit buffer with the rounded string on focus', () => {
+    render(<NumberInput aria-label="amt" value={336.82176} maxDecimals={3} onCommit={() => {}} />)
+    const input = screen.getByLabelText('amt')
+    fireEvent.focus(input)
+    expect(input).toHaveValue('336.822')
+  })
+
+  it('commits full typed precision even when maxDecimals is set', () => {
+    const onCommit = vi.fn()
+    render(<NumberInput aria-label="amt" value={0} maxDecimals={3} onCommit={onCommit} />)
+    const input = screen.getByLabelText('amt')
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: '336.82176' } })
+    expect(input).toHaveValue('336.82176')
+    expect(onCommit).toHaveBeenLastCalledWith(336.82176)
+  })
+
+  it('does not leak maxDecimals to the DOM', () => {
+    render(<NumberInput aria-label="amt" value={5} maxDecimals={3} onCommit={() => {}} />)
+    expect(screen.getByLabelText('amt')).not.toHaveAttribute('maxDecimals')
+  })
 })

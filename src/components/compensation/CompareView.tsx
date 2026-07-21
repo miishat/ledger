@@ -118,7 +118,7 @@ export function CompareView() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-3 mb-1">
               <label className={labelClass}>Company Stock Price ($)</label>
-              <NumberInput value={compareCompanyCurrentPrice} onCommit={setCompareCompanyCurrentPrice} className={inputClass} />
+              <NumberInput value={compareCompanyCurrentPrice} onCommit={setCompareCompanyCurrentPrice} maxDecimals={3} className={inputClass} />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -148,7 +148,7 @@ export function CompareView() {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Lock-In Price ($)</label>
-                <NumberInput value={compareEsppLockedInPrice} onCommit={setCompareEsppLockedInPrice} className={inputClass} />
+                <NumberInput value={compareEsppLockedInPrice} onCommit={setCompareEsppLockedInPrice} maxDecimals={3} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className={labelClass}>Lock-In End Date</label>
@@ -181,7 +181,7 @@ export function CompareView() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Grant Price ($)</label>
-                  <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} className={inputClass} />
+                  <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} maxDecimals={3} className={inputClass} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className={labelClass}>Grant Start Date</label>

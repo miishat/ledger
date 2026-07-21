@@ -205,6 +205,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             <NumberInput
               value={companyCurrentPrice}
               onCommit={setCompanyCurrentPrice}
+              maxDecimals={3}
               className={inputClass}
             />
             {(priceSource === 'live' || priceSource === 'cache') && (
@@ -339,6 +340,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   <NumberInput
                     value={rsuGrantPrice}
                     onCommit={setRsuGrantPrice}
+                    maxDecimals={3}
                     className={inputClass}
                   />
                 </div>
@@ -493,6 +495,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   <NumberInput
                     value={esppLockedInPrice}
                     onCommit={setEsppLockedInPrice}
+                    maxDecimals={3}
                     className={inputClass}
                   />
                 </div>
