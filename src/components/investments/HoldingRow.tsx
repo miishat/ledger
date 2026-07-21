@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useCurrentPrice } from '../../services/marketData'
 import type { Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, holdingPlDollars, holdingPlPct, marketValue, toCad,
+  bookValue, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
@@ -11,12 +11,12 @@ import { Skeleton } from '../ui/Skeleton'
 
 interface HoldingRowProps {
   holding: Holding
-  fxUsdCad: number
+  rates: FxRates
   totalValueCad: number
   onPrice: (id: string, price: number) => void
 }
 
-export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, totalValueCad, onPrice }) => {
+export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalValueCad, onPrice }) => {
   const live = useCurrentPrice(holding.ticker, holding.exchange)
   const price = live.data?.value.price ?? holding.avgCost
 
@@ -24,7 +24,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, fxUsdCad, total
     onPrice(holding.id, price) // parent keeps last-reported price; guarded upstream
   }, [holding.id, price, onPrice])
 
-  const valueCad = toCad(marketValue(holding, price), holding.currency, fxUsdCad)
+  const valueCad = toCad(marketValue(holding, price), holding.currency, rates) ?? 0
 
   return (
     <tr className="border-b border-border last:border-b-0">

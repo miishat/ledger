@@ -28,7 +28,7 @@ export const PortfolioRollupWidget: React.FC = () => {
     holding: h,
     price: overrides[quoteKey(h.ticker, h.exchange)] ?? quotes[quoteKey(h.ticker, h.exchange)]?.value.price ?? h.avgCost,
   }))
-  const t = portfolioTotals(rows, fx.data?.value.rate ?? 1)
+  const t = portfolioTotals(rows, { USD: fx.data?.value.rate ?? 1 })
 
   return (
     <WidgetWrapper title="Portfolio">

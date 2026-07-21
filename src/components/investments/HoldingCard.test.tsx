@@ -31,7 +31,7 @@ describe('HoldingCard', () => {
     })
 
     const { container } = render(
-      <HoldingCard holding={buildHolding()} fxUsdCad={1} totalValueCad={1000} onPrice={() => {}} />,
+      <HoldingCard holding={buildHolding()} rates={{ USD: 1 }} totalValueCad={1000} onPrice={() => {}} />,
     )
 
     // avgCost (100.00) must not appear as the rendered "current price" — it still
@@ -50,7 +50,7 @@ describe('HoldingCard', () => {
     })
 
     const { container } = render(
-      <HoldingCard holding={buildHolding()} fxUsdCad={1} totalValueCad={1000} onPrice={() => {}} />,
+      <HoldingCard holding={buildHolding()} rates={{ USD: 1 }} totalValueCad={1000} onPrice={() => {}} />,
     )
 
     expect(container.textContent).toContain('150.00')

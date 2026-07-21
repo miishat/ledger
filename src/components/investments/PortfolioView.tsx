@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { Trash2, Landmark } from 'lucide-react'
 import { useFxRate } from '../../services/marketData'
 import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
-import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
+import { portfolioTotals, type FxRates } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
@@ -16,6 +16,7 @@ export const PortfolioView: React.FC = () => {
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
   const fx = useFxRate('USD', 'CAD')
   const fxUsdCad = fx.data?.value.rate ?? 1
+  const rates: FxRates = { USD: fxUsdCad }
 
   const [prices, setPrices] = useState<Record<string, number>>({})
   const onPrice = useCallback((id: string, price: number) => {
@@ -23,7 +24,7 @@ export const PortfolioView: React.FC = () => {
   }, [])
 
   const rows = holdings.map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
-  const totals = portfolioTotals(rows, fxUsdCad)
+  const totals = portfolioTotals(rows, rates)
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,14 +65,14 @@ export const PortfolioView: React.FC = () => {
                     </thead>
                     <tbody>
                       {rows.map((h) => (
-                        <HoldingRow key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
+                        <HoldingRow key={h.id} holding={h} rates={rates} totalValueCad={totals.valueCad} onPrice={onPrice} />
                       ))}
                     </tbody>
                   </table>
                 </div>
                 <div data-testid={`portfolio-cards-${account}`} className="md:hidden flex flex-col gap-3">
                   {rows.map((h) => (
-                    <HoldingCard key={h.id} holding={h} fxUsdCad={fxUsdCad} totalValueCad={totals.valueCad} onPrice={onPrice} />
+                    <HoldingCard key={h.id} holding={h} rates={rates} totalValueCad={totals.valueCad} onPrice={onPrice} />
                   ))}
                 </div>
               </div>
