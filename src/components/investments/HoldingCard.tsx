@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react'
 import { useCurrentPrice } from '../../services/marketData'
+import type { Currency } from '../../services/marketData/types'
 import type { Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
+  bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
@@ -13,18 +14,28 @@ interface HoldingCardProps {
   holding: Holding
   rates: FxRates
   totalValueCad: number
-  onPrice: (id: string, price: number) => void
+  onPrice: (id: string, price: number, currency: Currency | null) => void
 }
 
 export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
   const live = useCurrentPrice(holding.ticker, holding.exchange)
-  const price = live.data?.value.price ?? holding.avgCost
+  const quoteCurrency = live.data?.value.currency ?? holding.currency
+  const nativePrice = live.data?.value.price ?? holding.avgCost
+
+  // The quote's currency is authoritative for the price; convert it into the
+  // holding's currency so value and P/L compare against the cost basis.
+  const converted =
+    quoteCurrency === holding.currency
+      ? nativePrice
+      : convertAmount(nativePrice, quoteCurrency, holding.currency, rates)
+  const priceUnconvertible = converted === null
+  const price = converted ?? nativePrice
 
   useEffect(() => {
-    onPrice(holding.id, price) // parent keeps last-reported price; guarded upstream
-  }, [holding.id, price, onPrice])
+    onPrice(holding.id, price, quoteCurrency) // parent keeps last-reported price; guarded upstream
+  }, [holding.id, price, quoteCurrency, onPrice])
 
-  const valueCad = toCad(marketValue(holding, price), holding.currency, rates) ?? 0
+  const valueCad = toCad(marketValue(holding, price), holding.currency, rates)
   const plDollars = holdingPlDollars(holding, price)
   const isLoadingPrice = live.status === 'loading' && !live.data
 
@@ -34,7 +45,11 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         <div>
           <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
           <span className="block text-[11px] text-text-secondary">
-            {holding.currency}{live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
+            <span>{holding.currency ?? 'Set currency'}</span>
+            {priceUnconvertible && quoteCurrency ? (
+              <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency}`}> · unconverted</span>
+            ) : null}
+            {live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
           </span>
         </div>
         {isLoadingPrice ? (
@@ -53,8 +68,10 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
           {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
         </span>
         <span className="text-text-secondary">Alloc</span>
-        <span className="text-right tabular-nums">
-          {isLoadingPrice ? <Skeleton className="h-4 w-12 inline-block" /> : pct(allocationPct(valueCad, totalValueCad))}
+        <span data-testid="allocation-cell" className="text-right tabular-nums">
+          {isLoadingPrice
+            ? <Skeleton className="h-4 w-12 inline-block" />
+            : valueCad === null ? '-' : pct(allocationPct(valueCad, totalValueCad))}
         </span>
         <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
         <span className="text-text-secondary">Value</span>

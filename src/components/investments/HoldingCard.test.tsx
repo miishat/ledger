@@ -9,7 +9,7 @@ vi.mock('../../services/marketData', () => ({
   useCurrentPrice: useCurrentPriceMock,
 }))
 
-function buildHolding(): Holding {
+function buildHolding(overrides: Partial<Holding> = {}): Holding {
   return {
     id: 'h-1',
     ticker: 'AAPL',
@@ -17,6 +17,7 @@ function buildHolding(): Holding {
     avgCost: 100,
     currency: 'USD',
     account: 'Default',
+    ...overrides,
   }
 }
 
@@ -56,5 +57,28 @@ describe('HoldingCard', () => {
     expect(container.textContent).toContain('150.00')
     const skeletons = container.querySelectorAll('[aria-hidden="true"].animate-pulse')
     expect(skeletons.length).toBe(0)
+  })
+
+  it('shows no allocation rather than 0% when the holding cannot be converted', () => {
+    useCurrentPriceMock.mockReturnValue({
+      data: undefined,
+      status: 'idle',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+
+    const { getByTestId, getByText } = render(
+      <HoldingCard
+        holding={buildHolding({ currency: null })}
+        rates={{}}
+        totalValueCad={1000}
+        onPrice={() => {}}
+      />,
+    )
+
+    expect(getByTestId('allocation-cell')).toHaveTextContent('-')
+    expect(getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
+    expect(getByText('Set currency')).toBeInTheDocument()
   })
 })

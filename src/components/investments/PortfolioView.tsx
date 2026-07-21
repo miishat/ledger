@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Trash2, Landmark } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
+import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
 import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
@@ -16,11 +17,16 @@ export const PortfolioView: React.FC = () => {
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
 
   const [prices, setPrices] = useState<Record<string, number>>({})
-  const onPrice = useCallback((id: string, price: number) => {
+  const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
+  const onPrice = useCallback((id: string, price: number, currency: Currency | null) => {
     setPrices((prev) => (prev[id] === price ? prev : { ...prev, [id]: price }))
+    setQuoteCurrencies((prev) => (prev[id] === currency ? prev : { ...prev, [id]: currency }))
   }, [])
 
-  const currencies = useMemo(() => holdings.map((h) => h.currency), [holdings])
+  const currencies = useMemo(
+    () => [...holdings.map((h) => h.currency), ...Object.values(quoteCurrencies)],
+    [holdings, quoteCurrencies],
+  )
   const fx = useFxRates(currencies)
   const rates = fx.rates
 
