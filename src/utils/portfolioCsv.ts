@@ -22,7 +22,7 @@ export interface PortfolioParserConfig {
 
 /** The broker's currency code when we support it, else null. Never guesses:
  *  a wrong guess silently values a foreign position at par against CAD. */
-function toCurrency(raw: string | undefined): Currency | null {
+export function toCurrency(raw: string | undefined): Currency | null {
   const code = raw?.trim().toUpperCase()
   if (!code) return null
   return (CURRENCIES as readonly string[]).includes(code) ? (code as Currency) : null
