@@ -66,6 +66,12 @@ describe('useFxRates', () => {
     expect(result.current.missing).toEqual(['GBP'])
   })
 
+  it('reports the source of a resolved currency', async () => {
+    const { result } = renderHook(() => useFxRates(['USD']))
+    await waitFor(() => expect(result.current.rates.USD).toBeCloseTo(1.37, 5))
+    expect(result.current.sources.USD).toBe('live')
+  })
+
   it('is idle for an empty list', async () => {
     const { result } = renderHook(() => useFxRates([]))
     await waitFor(() => expect(result.current.status).toBe('idle'))

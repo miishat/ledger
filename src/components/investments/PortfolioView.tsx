@@ -99,7 +99,9 @@ export const PortfolioView: React.FC = () => {
             <p className="text-[12px] text-text-secondary">
               Imported {importedAt ? new Date(importedAt).toLocaleString() : 'never'}
               {Object.keys(rates).length > 0
-                ? ` · rates into CAD: ${Object.entries(rates).map(([c, r]) => `${c} ${r.toFixed(4)}`).join(', ')}`
+                ? ` · rates into CAD: ${Object.entries(rates)
+                  .map(([c, r]) => `${c} ${r.toFixed(4)}${fx.sources[c as Currency] ? ` (${fx.sources[c as Currency]})` : ''}`)
+                  .join(', ')}`
                 : ''}
               {fx.stale ? ' (stale)' : ''}
             </p>

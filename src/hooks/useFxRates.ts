@@ -16,6 +16,7 @@ export function useFxRates(currencies: (Currency | null)[]) {
   const key = useMemo(() => ratesKey(currencies), [currencies])
 
   const [rates, setRates] = useState<FxRates>({})
+  const [sources, setSources] = useState<Partial<Record<Currency, 'override' | 'live' | 'cache'>>>({})
   const [status, setStatus] = useState<FetchStatus>('idle')
   const [stale, setStale] = useState(false)
   const mountedRef = useRef(true)
@@ -29,7 +30,7 @@ export function useFxRates(currencies: (Currency | null)[]) {
     const list = key ? (key.split(',') as Currency[]) : []
     if (list.length === 0) {
       Promise.resolve().then(() => {
-        if (active()) { setRates({}); setStatus('idle'); setStale(false) }
+        if (active()) { setRates({}); setSources({}); setStatus('idle'); setStale(false) }
       })
       return
     }
@@ -43,15 +44,18 @@ export function useFxRates(currencies: (Currency | null)[]) {
     ).then((entries) => {
       if (!active()) return
       const next: FxRates = {}
+      const nextSources: Partial<Record<Currency, 'override' | 'live' | 'cache'>> = {}
       let anyStale = false
       let anyResolved = false
       for (const [c, r] of entries) {
         if (!r) continue
         next[c] = r.value.rate
+        nextSources[c] = r.source
         anyResolved = true
         if (r.stale) anyStale = true
       }
       setRates(next)
+      setSources(nextSources)
       setStale(anyStale)
       setStatus(anyResolved ? 'success' : 'error')
     })
@@ -73,8 +77,8 @@ export function useFxRates(currencies: (Currency | null)[]) {
 
   const missing = useMemo(() => {
     const list = key ? (key.split(',') as Currency[]) : []
-    return list.filter((c) => c !== 'CAD' && rates[c] === undefined)
+    return list.filter((c) => rates[c] === undefined)
   }, [key, rates])
 
-  return { rates, missing, status, stale, refresh }
+  return { rates, sources, missing, status, stale, refresh }
 }

@@ -3,6 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import { PortfolioView } from './PortfolioView'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
+import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
+import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { __resetMinInterval } from '../../services/marketData/throttle'
 
 vi.mock('../../services/marketData', () => ({
   useCurrentPrice: () => ({ data: undefined, status: 'idle', refresh: () => {}, setManual: () => {}, clearManual: () => {} }),
@@ -92,5 +95,32 @@ describe('multi-currency totals', () => {
     render(<PortfolioView />)
     expect(await screen.findByText('Total Invested (CAD)')).toBeInTheDocument()
     expect(screen.queryByText(/excluded, no FX rate/)).not.toBeInTheDocument()
+  })
+})
+
+describe('FX provenance footer', () => {
+  beforeEach(() => {
+    useMarketDataStore.setState({ quotes: {}, historical: {}, fx: {}, overrides: {} })
+    __resetMinInterval()
+    __setProviders({
+      fetchFxRate: async (from, to) => ({
+        from, to, rate: 1.3712, date: '2026-07-21', asOf: '2026-07-21T00:00:00.000Z',
+      }) as never,
+    })
+  })
+
+  afterEach(() => {
+    __resetProviders()
+  })
+
+  it('shows each resolved currency alongside its rate source', async () => {
+    usePortfolioStore.setState({
+      holdings: [
+        { id: '1', ticker: 'AAPL', quantity: 10, avgCost: 50, currency: 'USD', account: 'A' },
+      ],
+      importedAt: '2026-07-21T00:00:00.000Z',
+    })
+    render(<PortfolioView />)
+    expect(await screen.findByText(/USD 1\.3712 \(live\)/)).toBeInTheDocument()
   })
 })
