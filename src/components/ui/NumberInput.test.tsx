@@ -113,4 +113,28 @@ describe('NumberInput', () => {
     render(<NumberInput aria-label="amt" value={5} maxDecimals={3} onCommit={() => {}} />)
     expect(screen.getByLabelText('amt')).not.toHaveAttribute('maxDecimals')
   })
+
+  it('does not commit the rounded value when focusing and blurring without typing', () => {
+    const onCommit = vi.fn()
+    render(<Controlled initial={336.82176} onCommit={onCommit} />)
+    const input = screen.getByLabelText('amt')
+    // Add maxDecimals to the Controlled component by re-rendering with the prop
+    // Actually, we need to use the NumberInput directly with maxDecimals
+    const onCommit2 = vi.fn()
+    render(<NumberInput aria-label="amt2" value={336.82176} maxDecimals={3} onCommit={onCommit2} />)
+    const input2 = screen.getByLabelText('amt2')
+    fireEvent.focus(input2)
+    fireEvent.blur(input2)
+    expect(onCommit2).not.toHaveBeenCalled()
+  })
+
+  it('commits full typed precision on blur even with maxDecimals set', () => {
+    const onCommit = vi.fn()
+    render(<NumberInput aria-label="amt" value={0} maxDecimals={3} onCommit={onCommit} />)
+    const input = screen.getByLabelText('amt')
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: '336.82176' } })
+    fireEvent.blur(input)
+    expect(onCommit).toHaveBeenLastCalledWith(336.82176)
+  })
 })
