@@ -82,7 +82,7 @@ describe('portfolioTotals', () => {
       [
         { holding: h({ id: '1', currency: 'CAD', quantity: 1, avgCost: 100 }), price: 120 },
         { holding: h({ id: '2', currency: 'USD', quantity: 1, avgCost: 100 }), price: 100 },
-        { holding: h({ id: '3', currency: 'EUR' as Holding['currency'], quantity: 1, avgCost: 100 }), price: 100 },
+        { holding: h({ id: '3', currency: 'EUR', quantity: 1, avgCost: 100 }), price: 100 },
       ],
       rates,
     )
@@ -95,7 +95,7 @@ describe('portfolioTotals', () => {
     const totals = portfolioTotals(
       [
         { holding: h({ id: '1', currency: 'CAD', quantity: 1, avgCost: 100 }), price: 120 },
-        { holding: h({ id: '2', currency: 'GBP' as Holding['currency'], quantity: 1, avgCost: 100 }), price: 100 },
+        { holding: h({ id: '2', currency: 'GBP', quantity: 1, avgCost: 100 }), price: 100 },
       ],
       rates,
     )

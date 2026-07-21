@@ -6,6 +6,7 @@
 
 import Papa from 'papaparse'
 import type { Holding } from '../store/usePortfolioStore'
+import { CURRENCIES, type Currency } from '../services/marketData/types'
 
 export interface UnrecognizedPortfolioCSV {
   unrecognized: true
@@ -19,8 +20,12 @@ export interface PortfolioParserConfig {
   parse: (row: Record<string, string>) => Omit<Holding, 'id' | 'account'> | null
 }
 
-function toCurrency(raw: string | undefined): 'USD' | 'CAD' {
-  return raw?.trim().toUpperCase() === 'USD' ? 'USD' : 'CAD'
+/** The broker's currency code when we support it, else null. Never guesses:
+ *  a wrong guess silently values a foreign position at par against CAD. */
+function toCurrency(raw: string | undefined): Currency | null {
+  const code = raw?.trim().toUpperCase()
+  if (!code) return null
+  return (CURRENCIES as readonly string[]).includes(code) ? (code as Currency) : null
 }
 
 function positive(raw: string | undefined): number | null {
