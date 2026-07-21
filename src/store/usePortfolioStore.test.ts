@@ -1,4 +1,4 @@
-import { accountNames, usePortfolioStore, type Holding } from './usePortfolioStore'
+import { accountNames, usePortfolioStore, migratePortfolioState, type Holding } from './usePortfolioStore'
 
 const initialState = usePortfolioStore.getState()
 beforeEach(() => {
@@ -67,5 +67,50 @@ describe('usePortfolioStore', () => {
     expect(s.holdings).toHaveLength(1)
     expect(s.holdings[0].account).toBe('Default')
     expect(s.holdings[0].ticker).toBe('VFV')
+  })
+})
+
+describe('v1 to v2 currency review migration', () => {
+  it('flags a review when holdings already exist', () => {
+    const migrated = migratePortfolioState(
+      { holdings: [{ id: '1', ticker: 'AAA', quantity: 1, avgCost: 1, currency: 'CAD', account: 'A' }], importedAt: 'x' },
+      1,
+    ) as { currencyReviewPending: boolean }
+    expect(migrated.currencyReviewPending).toBe(true)
+  })
+
+  it('does not flag an empty portfolio', () => {
+    const migrated = migratePortfolioState({ holdings: [], importedAt: null }, 1) as { currencyReviewPending: boolean }
+    expect(migrated.currencyReviewPending).toBe(false)
+  })
+
+  it('still adopts pre-account holdings into the default account', () => {
+    const migrated = migratePortfolioState(
+      { holdings: [{ id: '1', ticker: 'AAA', quantity: 1, avgCost: 1, currency: 'CAD' }], importedAt: 'x' },
+      0,
+    ) as { holdings: { account: string }[] }
+    expect(migrated.holdings[0].account).toBe('Default')
+  })
+})
+
+describe('setHoldingCurrency', () => {
+  it('updates one holding and leaves the rest alone', () => {
+    usePortfolioStore.setState({
+      holdings: [
+        { id: '1', ticker: 'AAA', quantity: 1, avgCost: 1, currency: null, account: 'A' },
+        { id: '2', ticker: 'BBB', quantity: 1, avgCost: 1, currency: 'USD', account: 'A' },
+      ],
+    })
+    usePortfolioStore.getState().setHoldingCurrency('1', 'EUR')
+    expect(usePortfolioStore.getState().holdings[0].currency).toBe('EUR')
+    expect(usePortfolioStore.getState().holdings[1].currency).toBe('USD')
+  })
+})
+
+describe('dismissCurrencyReview', () => {
+  it('clears the pending flag', () => {
+    usePortfolioStore.setState({ currencyReviewPending: true })
+    usePortfolioStore.getState().dismissCurrencyReview()
+    expect(usePortfolioStore.getState().currencyReviewPending).toBe(false)
   })
 })
