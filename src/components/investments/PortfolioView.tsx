@@ -15,6 +15,8 @@ export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
   const importedAt = usePortfolioStore((s) => s.importedAt)
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
+  const currencyReviewPending = usePortfolioStore((s) => s.currencyReviewPending)
+  const dismissCurrencyReview = usePortfolioStore((s) => s.dismissCurrencyReview)
 
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
@@ -43,6 +45,20 @@ export const PortfolioView: React.FC = () => {
         </div>
       ) : (
         <>
+          {currencyReviewPending && (
+            <div className="themed-card rounded-lg p-3 border border-error/40 flex items-start justify-between gap-3">
+              <p className="text-[13px] text-text-secondary">
+                Holdings imported before v0.7.3 stored every foreign currency as CAD. Re-import the account, or set the currency on any row that looks wrong.
+              </p>
+              <button
+                onClick={dismissCurrencyReview}
+                className="text-[12px] text-text-secondary hover:text-accent transition-colors shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total Invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Value Now (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>

@@ -14,6 +14,8 @@ interface ThemedSelectProps {
   options: ThemedSelectOption[]
   onChange: (value: string) => void
   className?: string
+  /** Accessible name for the trigger, for selects with no visible label. */
+  ariaLabel?: string
 }
 
 const MENU_MAX = 256 // px, matches previous max-h-64
@@ -35,7 +37,7 @@ export function menuPlacement(
 
 /** Theme-aware replacement for native <select>. Styled like the planner
  *  ToolSwitcher menu: themed card, accent highlight. */
-export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, onChange, className = '' }) => {
+export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, onChange, className = '', ariaLabel }) => {
   const isDesktop = useIsDesktop()
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState(0)
@@ -81,6 +83,7 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
       <button
         id={id}
         type="button"
+        aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openListbox())}

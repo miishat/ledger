@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useCurrentPrice } from '../../services/marketData'
-import type { Currency } from '../../services/marketData/types'
-import type { Holding } from '../../store/usePortfolioStore'
+import { CURRENCIES, type Currency } from '../../services/marketData/types'
+import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import {
   bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
@@ -9,6 +9,7 @@ import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 import { pct } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
+import { ThemedSelect } from '../ui/ThemedSelect'
 
 interface HoldingCardProps {
   holding: Holding
@@ -18,6 +19,7 @@ interface HoldingCardProps {
 }
 
 export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
+  const setHoldingCurrency = usePortfolioStore((s) => s.setHoldingCurrency)
   const live = useCurrentPrice(holding.ticker, holding.exchange)
   const quoteCurrency = live.data?.value.currency ?? holding.currency
   const nativePrice = live.data?.value.price ?? holding.avgCost
@@ -45,7 +47,16 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         <div>
           <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
           <span className="block text-[11px] text-text-secondary">
-            <span>{holding.currency ?? 'Set currency'}</span>
+            <ThemedSelect
+              value={holding.currency ?? ''}
+              onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}
+              ariaLabel={`Currency for ${holding.ticker}`}
+              className="!w-auto !px-1.5 !py-0 !text-[11px] !rounded"
+              options={[
+                { value: '', label: 'Set currency' },
+                ...CURRENCIES.map((c) => ({ value: c, label: c })),
+              ]}
+            />
             {priceUnconvertible && quoteCurrency ? (
               <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency}`}> · unconverted</span>
             ) : null}
