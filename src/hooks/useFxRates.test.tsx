@@ -1,11 +1,29 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { useFxRates } from './useFxRates'
+import { useFxRates, ratesKey } from './useFxRates'
 import { __resetProviders, __setProviders } from '../services/marketData/marketDataService'
 import { useMarketDataStore } from '../store/useMarketDataStore'
 import { __resetMinInterval } from '../services/marketData/throttle'
 
 const fx = (from: string, to: string, rate: number) => ({
   from, to, rate, date: '2026-07-21', asOf: '2026-07-21T00:00:00.000Z',
+})
+
+describe('ratesKey', () => {
+  it('is order independent', () => {
+    expect(ratesKey(['USD', 'EUR'])).toBe(ratesKey(['EUR', 'USD']))
+  })
+
+  it('drops nulls and collapses duplicates', () => {
+    expect(ratesKey(['USD', null, 'USD'])).toBe('USD')
+  })
+
+  it('is empty for an empty list', () => {
+    expect(ratesKey([])).toBe('')
+  })
+
+  it('does not special-case CAD out of the key', () => {
+    expect(ratesKey(['CAD'])).toBe('CAD')
+  })
 })
 
 describe('useFxRates', () => {
@@ -54,7 +72,15 @@ describe('useFxRates', () => {
     expect(result.current.rates).toEqual({})
   })
 
-  it('does not refetch when the array identity changes but the contents do not', async () => {
+  // This does NOT pin down key-normalization by itself: the market-data
+  // service's own FX cache means a genuine refetch on the second render
+  // would also leave `calls` unchanged (the provider call is skipped either
+  // way once the pair is cached). That guarantee is covered directly by the
+  // `ratesKey` unit tests above. This test only confirms the hook keeps
+  // working, without error or a stuck status, when callers pass a fresh
+  // array of unchanged content on every render, which is the realistic
+  // calling pattern this hook needs to tolerate.
+  it('resolves without error when the caller passes a new array each render', async () => {
     const calls: string[] = []
     __setProviders({
       fetchFxRate: async (from, to) => {

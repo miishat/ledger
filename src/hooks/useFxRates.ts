@@ -3,14 +3,17 @@ import { getFxRate } from '../services/marketData/marketDataService'
 import type { Currency, FetchStatus } from '../services/marketData/types'
 import type { FxRates } from '../utils/investments/portfolioMetrics'
 
+/** Sorted, deduplicated, null-free key for a currency list, so callers may
+ *  pass a freshly built array every render without retriggering the effect. */
+export function ratesKey(currencies: (Currency | null)[]): string {
+  return Array.from(new Set(currencies.filter((c): c is Currency => c !== null))).sort().join(',')
+}
+
 /** Resolves a CAD rate for every distinct non-null currency in `currencies`.
  *  The list is normalized to a sorted deduplicated key, so callers may pass a
  *  freshly built array on every render without triggering a refetch. */
 export function useFxRates(currencies: (Currency | null)[]) {
-  const key = useMemo(
-    () => Array.from(new Set(currencies.filter((c): c is Currency => c !== null))).sort().join(','),
-    [currencies],
-  )
+  const key = useMemo(() => ratesKey(currencies), [currencies])
 
   const [rates, setRates] = useState<FxRates>({})
   const [status, setStatus] = useState<FetchStatus>('idle')
