@@ -66,4 +66,24 @@ describe('BudgetProgressWidget annual section', () => {
     // Vacation appears once, in the annual section, not among the monthly bars.
     expect(screen.getAllByText('Vacation')).toHaveLength(1)
   })
+
+  it('anchors pace to the viewed month, not the wall clock', () => {
+    // Clock is July 2026, but viewing June 2026 (a past month).
+    vi.setSystemTime(new Date(2026, 6, 15)) // 15 July 2026, seven months elapsed in real time
+    seed({ spentOnVacation: 600 })
+    render(<BudgetProgressWidget range={{ from: '2026-06', to: '2026-06' }} />)
+    // Pace should be anchored to June (six months), not July (seven months).
+    // Expected for June: 2400 * 6/12 = $1,200
+    expect(screen.getByText(/Set aside \$1,200 by now/)).toBeInTheDocument()
+  })
+
+  it('handles viewing a past year without using current elapsed months', () => {
+    // Clock is July 2026, viewing June 2025 (a past year).
+    vi.setSystemTime(new Date(2026, 6, 15)) // 15 July 2026
+    seed({ spentOnVacation: 600 })
+    render(<BudgetProgressWidget range={{ from: '2025-06', to: '2025-06' }} />)
+    // Pace should be anchored to June 2025 (six months into that year), not the full year.
+    // Expected for June 2025: 2400 * 6/12 = $1,200, not $2,400
+    expect(screen.getByText(/Set aside \$1,200 by now/)).toBeInTheDocument()
+  })
 })

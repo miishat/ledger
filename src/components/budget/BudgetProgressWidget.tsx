@@ -17,7 +17,7 @@ function paceOf(spent: number, expected: number): Pace {
 
 const paceLabel = (p: Pace) => (p === 'over' ? 'over pace' : p === 'under' ? 'under pace' : 'on pace')
 
-// Pace: expected-by-today = target x (day / days-in-month); >110% = over.
+// Pace: expected-by-today = target × (day / days-in-month); >110% = over.
 // Pace prorating only applies when the range is exactly the current single month.
 // Annual categories are tracked separately against calendar-year spend.
 export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
@@ -54,16 +54,23 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
 
   // Annual rows: calendar-year spend for the year containing range.to,
   // counted through the viewed month.
+  // Pace is anchored to the viewed month, not the wall clock, so the spend
+  // window and the expected contribution always share one reference point.
   const year = y
-  const elapsed = elapsedMonthsInYear(year, new Date())
+  const elapsed = elapsedMonthsInYear(year, new Date(y, m - 1, 1))
   const yearRange: MonthRange = { from: `${year}-01`, to: range.to }
+  const yearSpentByCategory = new Map<string, number>()
+  for (const t of Object.values(transactions)) {
+    if (t.type === 'expense' && inRange(t.date, yearRange)) {
+      const key = t.categoryId ?? ''
+      yearSpentByCategory.set(key, (yearSpentByCategory.get(key) ?? 0) + t.amount)
+    }
+  }
   const annualRows = withTarget
     .filter(isAnnual)
     .map((c) => {
       const annual = annualTarget(c)
-      const spent = Object.values(transactions)
-        .filter((t) => t.type === 'expense' && t.categoryId === c.id && inRange(t.date, yearRange))
-        .reduce((s, t) => s + t.amount, 0)
+      const spent = yearSpentByCategory.get(c.id) ?? 0
       const expected = setAsideExpected(annual, elapsed)
       return { c, spent, annual, expected, pace: paceOf(spent, expected) }
     })
