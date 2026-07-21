@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import { PortfolioView } from './PortfolioView'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -64,5 +64,31 @@ describe('PortfolioView', () => {
 
     expect(acc2Cards.textContent).toContain('VFV')
     expect(acc2Cards.textContent).not.toContain('AAPL')
+  })
+})
+
+describe('multi-currency totals', () => {
+  it('flags holdings excluded from the CAD totals', async () => {
+    usePortfolioStore.setState({
+      holdings: [
+        { id: '1', ticker: 'ENB', quantity: 10, avgCost: 50, currency: 'CAD', account: 'A' },
+        { id: '2', ticker: 'XXX', quantity: 10, avgCost: 50, currency: null, account: 'A' },
+      ],
+      importedAt: '2026-07-21T00:00:00.000Z',
+    })
+    render(<PortfolioView />)
+    expect(await screen.findByText(/1 holding excluded, no FX rate/)).toBeInTheDocument()
+  })
+
+  it('says nothing about exclusions when every currency resolves', async () => {
+    usePortfolioStore.setState({
+      holdings: [
+        { id: '1', ticker: 'ENB', quantity: 10, avgCost: 50, currency: 'CAD', account: 'A' },
+      ],
+      importedAt: '2026-07-21T00:00:00.000Z',
+    })
+    render(<PortfolioView />)
+    expect(await screen.findByText('Total Invested (CAD)')).toBeInTheDocument()
+    expect(screen.queryByText(/excluded, no FX rate/)).not.toBeInTheDocument()
   })
 })

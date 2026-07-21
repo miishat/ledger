@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Trash2, Landmark } from 'lucide-react'
-import { useFxRate } from '../../services/marketData'
+import { useFxRates } from '../../hooks/useFxRates'
 import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
-import { portfolioTotals, type FxRates } from '../../utils/investments/portfolioMetrics'
+import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
@@ -14,14 +14,15 @@ export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
   const importedAt = usePortfolioStore((s) => s.importedAt)
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
-  const fx = useFxRate('USD', 'CAD')
-  const fxUsdCad = fx.data?.value.rate ?? 1
-  const rates: FxRates = { USD: fxUsdCad }
 
   const [prices, setPrices] = useState<Record<string, number>>({})
   const onPrice = useCallback((id: string, price: number) => {
     setPrices((prev) => (prev[id] === price ? prev : { ...prev, [id]: price }))
   }, [])
+
+  const currencies = useMemo(() => holdings.map((h) => h.currency), [holdings])
+  const fx = useFxRates(currencies)
+  const rates = fx.rates
 
   const rows = holdings.map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
   const totals = portfolioTotals(rows, rates)
@@ -39,7 +40,17 @@ export const PortfolioView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total Invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Value Now (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total P/L</p><p className={`text-[22px] font-semibold ${totals.plCad >= 0 ? 'text-accent' : 'text-error'}`}>{formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}</p></div>
+            <div className="themed-card rounded-lg p-4">
+              <p className="text-[12px] uppercase text-text-secondary">Total P/L</p>
+              <p className={`text-[22px] font-semibold ${totals.plCad >= 0 ? 'text-accent' : 'text-error'}`}>
+                {formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}
+              </p>
+              {totals.excludedCount > 0 && (
+                <p className="text-[11px] text-error mt-1">
+                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} excluded, no FX rate
+                </p>
+              )}
+            </div>
           </div>
 
           {accountNames(holdings).map((account) => {
@@ -80,8 +91,11 @@ export const PortfolioView: React.FC = () => {
           })}
           <div className="flex items-center justify-between">
             <p className="text-[12px] text-text-secondary">
-              Imported {importedAt ? new Date(importedAt).toLocaleString() : 'never'} · USD→CAD {fxUsdCad.toFixed(4)}
-              {fx.data ? ` (${fx.data.source}${fx.data.stale ? ', stale' : ''})` : ''}
+              Imported {importedAt ? new Date(importedAt).toLocaleString() : 'never'}
+              {Object.keys(rates).length > 0
+                ? ` · rates into CAD: ${Object.entries(rates).map(([c, r]) => `${c} ${r.toFixed(4)}`).join(', ')}`
+                : ''}
+              {fx.stale ? ' (stale)' : ''}
             </p>
             <button onClick={clearHoldings} className="flex items-center gap-1 text-[12px] text-text-secondary hover:text-error transition-colors">
               <Trash2 className="w-3.5 h-3.5" /> Clear portfolio
