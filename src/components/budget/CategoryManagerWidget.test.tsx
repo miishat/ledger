@@ -109,3 +109,31 @@ describe('CategoryManagerWidget overspend gating', () => {
     expect(screen.queryByText(/absorbed by buffer/i)).toBeNull()
   })
 })
+
+describe('cadence toggle', () => {
+  it('switches an expense category to annual and persists it', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Travel', kind: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Vacation', targetAmount: 200 } },
+      transactions: {},
+      reallocations: {},
+      budgetSetupCollapsed: false,
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-04" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Budget Vacation annually' }))
+    expect(useBudgetStore.getState().categories.c1.cadence).toBe('annual')
+  })
+
+  it('switches back to monthly', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Travel', kind: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' } },
+      transactions: {},
+      reallocations: {},
+      budgetSetupCollapsed: false,
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-04" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Budget Vacation monthly' }))
+    expect(useBudgetStore.getState().categories.c1.cadence).toBe('monthly')
+  })
+})
