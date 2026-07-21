@@ -9,6 +9,7 @@ const Controlled = (props: {
   onCommit?: (n: number) => void
   min?: number
   max?: number
+  maxDecimals?: number
 }) => {
   const [v, setV] = useState(props.initial)
   return (
@@ -17,6 +18,7 @@ const Controlled = (props: {
       value={v}
       min={props.min}
       max={props.max}
+      maxDecimals={props.maxDecimals}
       onCommit={(n) => {
         setV(n)
         props.onCommit?.(n)
@@ -116,16 +118,11 @@ describe('NumberInput', () => {
 
   it('does not commit the rounded value when focusing and blurring without typing', () => {
     const onCommit = vi.fn()
-    render(<Controlled initial={336.82176} onCommit={onCommit} />)
+    render(<Controlled initial={336.82176} onCommit={onCommit} maxDecimals={3} />)
     const input = screen.getByLabelText('amt')
-    // Add maxDecimals to the Controlled component by re-rendering with the prop
-    // Actually, we need to use the NumberInput directly with maxDecimals
-    const onCommit2 = vi.fn()
-    render(<NumberInput aria-label="amt2" value={336.82176} maxDecimals={3} onCommit={onCommit2} />)
-    const input2 = screen.getByLabelText('amt2')
-    fireEvent.focus(input2)
-    fireEvent.blur(input2)
-    expect(onCommit2).not.toHaveBeenCalled()
+    fireEvent.focus(input)
+    fireEvent.blur(input)
+    expect(onCommit).not.toHaveBeenCalled()
   })
 
   it('commits full typed precision on blur even with maxDecimals set', () => {

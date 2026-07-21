@@ -59,6 +59,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         if (!Number.isNaN(parsed)) onCommit(clamp(parsed))
       }}
       onBlur={() => {
+        // Only commit when the buffer actually changed. Focus seeds the
+        // rounded string, so committing an untouched buffer would write the
+        // rounded value back and defeat display-only rounding.
         if (text !== null && text !== display(value, maxDecimals)) {
           const parsed = parseFloat(text)
           onCommit(clamp(Number.isNaN(parsed) ? 0 : parsed))
