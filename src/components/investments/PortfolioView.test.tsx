@@ -9,13 +9,15 @@ vi.mock('../../services/marketData', () => ({
   useFxRate: () => ({ data: undefined, status: 'idle', refresh: () => {} }),
 }))
 
+// CAD so useFxRates resolves without a network call (CAD-to-CAD is 1
+// unconditionally); avoids these render-only tests making a real FX request.
 function buildHolding(overrides: Partial<Holding> = {}): Holding {
   return {
     id: 'h-1',
     ticker: 'AAPL',
     quantity: 10,
     avgCost: 100,
-    currency: 'USD',
+    currency: 'CAD',
     account: 'Default',
     ...overrides,
   }
