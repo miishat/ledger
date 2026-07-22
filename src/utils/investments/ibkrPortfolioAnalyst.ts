@@ -53,13 +53,13 @@ function num(raw: unknown): number {
 }
 
 export function isPortfolioAnalystCsv(text: string): boolean {
-  return text.replace(/^﻿/, '').startsWith('Introduction,')
+  return text.replace(/^\uFEFF/, '').startsWith('Introduction,')
 }
 
 type Rec = Record<string, string>
 
 export function parsePortfolioAnalyst(text: string): PAReport {
-  const rows = Papa.parse<string[]>(text.replace(/^﻿/, ''), { skipEmptyLines: true }).data
+  const rows = Papa.parse<string[]>(text.replace(/^\uFEFF/, ''), { skipEmptyLines: true }).data
 
   const report: PAReport = {
     period: '', baseCurrency: '',

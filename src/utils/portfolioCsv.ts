@@ -90,7 +90,7 @@ export function parsePortfolioText(
   const results = Papa.parse<Record<string, string>>(text, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (h) => h.replace(/^﻿/, '').trim(),
+    transformHeader: (h) => h.replace(/^\uFEFF/, '').trim(),
   })
   const headers = results.meta.fields ?? []
   const parser = PORTFOLIO_PARSERS.find((p) => p.detect(headers))

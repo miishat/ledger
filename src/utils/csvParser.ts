@@ -59,8 +59,8 @@ export const PARSERS: BankParserConfig[] = [
       const expense = parseFloat(row[2]);
       const income = parseFloat(row[3]);
 
-      let amount = 0;
-      let type: 'income' | 'expense' = 'expense';
+      let amount: number;
+      let type: 'income' | 'expense';
 
       if (!isNaN(expense)) {
         amount = expense;
