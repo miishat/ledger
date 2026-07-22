@@ -5,6 +5,7 @@ import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore } from '../../store/usePortfolioStore'
 import { portfolioTotals } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
+import { AllocationChart } from './AllocationChart'
 import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
 import { PortfolioImport } from './PortfolioImport'
@@ -84,6 +85,8 @@ export const PortfolioView: React.FC = () => {
               )}
             </div>
           </div>
+
+          <AllocationChart rows={rows} rates={rates} />
 
           {accountNames(holdings).map((account) => {
             const rows = holdings.filter((h) => h.account === account)

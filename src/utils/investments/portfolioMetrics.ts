@@ -86,3 +86,33 @@ export function portfolioTotals(
     excludedCount,
   }
 }
+
+export type AllocationBy = 'holding' | 'account' | 'currency'
+
+export interface AllocationSlice {
+  name: string
+  valueCad: number
+  pct: number
+}
+
+/** Slices of CAD market value, largest first. Holdings whose currency has no
+ *  rate are dropped entirely, so percentages always sum to 100. */
+export function allocationBreakdown(
+  rows: { holding: Holding; price: number }[],
+  rates: FxRates,
+  by: AllocationBy,
+): AllocationSlice[] {
+  const byName = new Map<string, number>()
+  let total = 0
+  for (const { holding, price } of rows) {
+    const value = toCad(marketValue(holding, price), holding.currency, rates)
+    if (value === null) continue
+    const name =
+      by === 'holding' ? holding.ticker : by === 'account' ? holding.account : (holding.currency as string)
+    byName.set(name, (byName.get(name) ?? 0) + value)
+    total += value
+  }
+  return [...byName.entries()]
+    .map(([name, valueCad]) => ({ name, valueCad, pct: total > 0 ? (valueCad / total) * 100 : 0 }))
+    .sort((a, b) => b.valueCad - a.valueCad)
+}

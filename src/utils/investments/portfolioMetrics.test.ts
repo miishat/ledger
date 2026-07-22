@@ -1,6 +1,6 @@
 import type { Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, portfolioTotals, toCad, type FxRates,
+  allocationBreakdown, bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, portfolioTotals, toCad, type FxRates,
 } from './portfolioMetrics'
 
 const h = (over: Partial<Holding>): Holding => ({
@@ -102,5 +102,45 @@ describe('portfolioTotals', () => {
     expect(totals.investedCad).toBe(100)
     expect(totals.valueCad).toBe(120)
     expect(totals.excludedCount).toBe(1)
+  })
+})
+
+describe('allocationBreakdown', () => {
+  const rows = [
+    { holding: h({ id: '1', ticker: 'ENB', currency: 'CAD', account: 'RRSP', quantity: 1, avgCost: 1 }), price: 100 },
+    { holding: h({ id: '2', ticker: 'AAPL', currency: 'USD', account: 'TFSA', quantity: 1, avgCost: 1 }), price: 100 },
+    { holding: h({ id: '3', ticker: 'MSFT', currency: 'USD', account: 'TFSA', quantity: 1, avgCost: 1 }), price: 100 },
+  ]
+
+  it('groups by holding, largest first', () => {
+    const slices = allocationBreakdown(rows, rates, 'holding')
+    expect(slices.map((s) => s.name)).toEqual(['AAPL', 'MSFT', 'ENB'])
+    expect(slices[0].valueCad).toBeCloseTo(137, 5)
+  })
+
+  it('groups by account and sums within each', () => {
+    const slices = allocationBreakdown(rows, rates, 'account')
+    expect(slices[0].name).toBe('TFSA')
+    expect(slices[0].valueCad).toBeCloseTo(274, 5)
+  })
+
+  it('groups by currency', () => {
+    const slices = allocationBreakdown(rows, rates, 'currency')
+    expect(slices.map((s) => s.name)).toEqual(['USD', 'CAD'])
+  })
+
+  it('percentages sum to 100', () => {
+    const total = allocationBreakdown(rows, rates, 'holding').reduce((s, x) => s + x.pct, 0)
+    expect(total).toBeCloseTo(100, 5)
+  })
+
+  it('labels a null currency and drops it from the totals', () => {
+    const withUnknown = [
+      ...rows,
+      { holding: h({ id: '4', ticker: 'XXX', currency: null, account: 'TFSA', quantity: 1, avgCost: 1 }), price: 100 },
+    ]
+    const slices = allocationBreakdown(withUnknown, rates, 'currency')
+    expect(slices.map((s) => s.name)).not.toContain('Unknown')
+    expect(slices.reduce((s, x) => s + x.pct, 0)).toBeCloseTo(100, 5)
   })
 })
