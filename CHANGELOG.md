@@ -13,6 +13,7 @@ pre-1.0 beta.
 
 ### Changed
 - Budgeting: the Income Flow chart is now Cash Flow, a colored diagram that traces each income source into your spending groups and, when you spend less than you earn, into a Savings outlet so the money you kept is visible
+- Budgeting: the Income widget now breaks down by source (Salary, RSU, and so on) and the Expenses widget groups spending by category group (Housing, Food, and so on) instead of individual categories
 - Budgeting: annual budget rows no longer show the "set aside by now" line; they show what you have spent and what is left for the year
 - Tooling: eslint now ignores the .claude tooling directory, so lint reports only real application issues
 
