@@ -52,13 +52,19 @@ export const PortfolioView: React.FC = () => {
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }))
 
-  // valueCadOf/plCadOf fold an unconvertible holding to 0 rather than
-  // dropping it, so account subtotals sum to the same total the portfolio
-  // header shows (an unconvertible holding contributes nothing either way).
+  // An unconvertible holding (its live quote came back in a currency with no
+  // rate) must be explicitly excluded here via unconvertibleIds, the same
+  // flag HoldingRow uses to decide whether to show a dash. The `?? 0` alone
+  // does NOT catch this case: toCad(value, h.currency, rates) only returns
+  // null when h.currency itself lacks a rate, and rateToCad('CAD', ...) is
+  // hardcoded to 1, so a CAD holding whose USD quote has no USD rate would
+  // still resolve to a non-null (wrong) CAD figure computed from the raw,
+  // unconverted USD price. Explicitly zeroing it here keeps the subtotal
+  // consistent with portfolioTotals, which drops such holdings entirely.
   const valueCadOf = (h: Holding) =>
-    toCad(marketValue(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0
+    unconvertibleIds[h.id] ? 0 : (toCad(marketValue(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
   const plCadOf = (h: Holding) =>
-    toCad(holdingPlDollars(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0
+    unconvertibleIds[h.id] ? 0 : (toCad(holdingPlDollars(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
 
   const sortRows = (list: Holding[]) => {
     const dir = sort.desc ? -1 : 1
