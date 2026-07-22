@@ -21,7 +21,17 @@ describe('PortfolioReport', () => {
 
   it('reveals the fee detail when its section is expanded', () => {
     render(<PortfolioReport />)
+    fireEvent.click(screen.getByRole('button', { name: /PortfolioAnalyst Report/ }))
     fireEvent.click(screen.getByRole('button', { name: /Fees/ }))
     expect(screen.getByText('Commission')).toBeInTheDocument()
+  })
+
+  describe('collapsed by default', () => {
+    it('hides the report body until the header is clicked', () => {
+      render(<PortfolioReport />)
+      expect(screen.queryByText('Ending NAV')).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: /PortfolioAnalyst Report/ }))
+      expect(screen.getByText('Ending NAV')).toBeInTheDocument()
+    })
   })
 })
