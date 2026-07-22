@@ -6,6 +6,21 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.3-beta] - 2026-07-21
+
+### Added
+- Budgeting: categories can be budgeted annually instead of monthly; a /mo /yr toggle on the Setup tab lets you pick the cadence. Annual categories like vacations are tracked against calendar-year spend in their own Annual budgets section, with a set-aside pace line showing what you should have put aside by now, while still contributing one twelfth to each month's budget total
+- Investments: the Portfolio tab now has an allocation donut above your holdings, with a toggle to group by holding, by account, or by currency
+- Investments: holdings table columns are now sortable, each account shows a value and P/L subtotal, and each row has an allocation micro-bar
+
+### Changed
+- Investments: portfolio holdings now support every currency your broker reports, not just USD and CAD. Each currency is converted to CAD with its own live rate; a live quote in a different currency than your cost basis is converted correctly; and holdings whose currency has no available rate are shown in their own currency and clearly excluded from the CAD totals instead of being silently miscounted. You can set a holding's currency inline if an import got it wrong
+- Investments: the PortfolioAnalyst report was reworked around a summary hero, allocation donuts, and a top contributors and detractors chart, and it is collapsed by default so it no longer stretches the page
+
+### Fixed
+- Compensation: converted stock prices now display to three decimals instead of overflowing their input box. Full precision is kept for the underlying calculations
+- Investments: portfolio imports (both broker CSVs and PortfolioAnalyst reports) no longer store every foreign-currency position as Canadian dollars. A one-time notice flags holdings imported before this release so you can re-check their currency
+
 ## [0.7.2-beta] - 2026-07-19
 
 ### Added
