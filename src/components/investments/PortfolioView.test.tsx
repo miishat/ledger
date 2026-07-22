@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import { PortfolioView } from './PortfolioView'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -122,5 +122,42 @@ describe('FX provenance footer', () => {
     })
     render(<PortfolioView />)
     expect(await screen.findByText(/USD 1\.3712 \(live\)/)).toBeInTheDocument()
+  })
+})
+
+describe('holdings table polish', () => {
+  beforeEach(() => {
+    usePortfolioStore.setState({
+      holdings: [
+        { id: '1', ticker: 'ENB', quantity: 10, avgCost: 10, currency: 'CAD', account: 'RRSP' },
+        { id: '2', ticker: 'BCE', quantity: 10, avgCost: 30, currency: 'CAD', account: 'RRSP' },
+      ],
+      importedAt: '2026-07-21T00:00:00.000Z',
+      currencyReviewPending: false,
+    })
+  })
+
+  it('shows a subtotal in the account header', async () => {
+    render(<PortfolioView />)
+    expect(await screen.findByText(/RRSP/)).toBeInTheDocument()
+    expect(screen.getByTestId('account-subtotal-RRSP')).toHaveTextContent('$400')
+  })
+
+  it('sorts by value descending by default', async () => {
+    render(<PortfolioView />)
+    const tickers = (await screen.findAllByTestId('holding-ticker')).map((n) => n.textContent)
+    expect(tickers).toEqual(['BCE', 'ENB'])
+  })
+
+  it('reverses the order when the value header is clicked', async () => {
+    render(<PortfolioView />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Sort by Value' }))
+    const tickers = screen.getAllByTestId('holding-ticker').map((n) => n.textContent)
+    expect(tickers).toEqual(['ENB', 'BCE'])
+  })
+
+  it('renders an allocation bar per row', async () => {
+    render(<PortfolioView />)
+    expect(await screen.findAllByTestId('allocation-bar')).toHaveLength(2)
   })
 })

@@ -45,7 +45,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
   return (
     <tr className="border-b border-border last:border-b-0">
       <td className="py-2 pr-3">
-        <span className="text-text-primary font-medium">{holding.ticker}</span>
+        <span data-testid="holding-ticker" className="text-text-primary font-medium">{holding.ticker}</span>
         <span className="block text-[11px] text-text-secondary">
           <span className="inline-block align-middle">
             <ThemedSelect
@@ -83,7 +83,19 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
         {priceUnconvertible ? '-' : `${formatMoney(holdingPlDollars(holding, price))} (${pct(holdingPlPct(holding, price))})`}
       </td>
       <td data-testid="allocation-cell" className="py-2 text-right text-text-secondary">
-        {valueCad === null ? '-' : pct(allocationPct(valueCad, totalValueCad))}
+        {valueCad === null ? (
+          '-'
+        ) : (
+          <>
+            <span className="tabular-nums">{pct(allocationPct(valueCad, totalValueCad))}</span>
+            <span data-testid="allocation-bar" className="block h-1 mt-1 rounded bg-bg-primary/50 overflow-hidden">
+              <span
+                className="block h-full bg-accent"
+                style={{ width: `${Math.min(100, Math.max(0, allocationPct(valueCad, totalValueCad) ?? 0))}%` }}
+              />
+            </span>
+          </>
+        )}
       </td>
     </tr>
   )

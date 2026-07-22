@@ -87,9 +87,21 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         </span>
         <span className="text-text-secondary">Alloc</span>
         <span data-testid="allocation-cell" className="text-right tabular-nums">
-          {isLoadingPrice
-            ? <Skeleton className="h-4 w-12 inline-block" />
-            : valueCad === null ? '-' : pct(allocationPct(valueCad, totalValueCad))}
+          {isLoadingPrice ? (
+            <Skeleton className="h-4 w-12 inline-block" />
+          ) : valueCad === null ? (
+            '-'
+          ) : (
+            <>
+              <span className="tabular-nums">{pct(allocationPct(valueCad, totalValueCad))}</span>
+              <span className="block h-1 mt-1 rounded bg-bg-primary/50 overflow-hidden">
+                <span
+                  className="block h-full bg-accent"
+                  style={{ width: `${Math.min(100, Math.max(0, allocationPct(valueCad, totalValueCad) ?? 0))}%` }}
+                />
+              </span>
+            </>
+          )}
         </span>
         <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
         <span className="text-text-secondary">Value</span>
