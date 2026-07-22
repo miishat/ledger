@@ -6,6 +6,14 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.4-beta] - 2026-07-22
+
+### Added
+- Budgeting: the Overview tab has a new Savings Rate widget showing what share of your income you kept over the trailing six months, with paired income and expense bars per month
+
+### Changed
+- Tooling: eslint now ignores the .claude tooling directory, so lint reports only real application issues
+
 ## [0.7.3-beta] - 2026-07-21
 
 ### Added
