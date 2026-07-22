@@ -20,6 +20,7 @@ import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget'
 import { ParadigmBanner } from '../components/budget/ParadigmBanner';
 import { ReallocationHistory } from '../components/budget/ReallocationHistory';
 import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
+import { SavingsRateWidget } from '../components/budget/SavingsRateWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -143,6 +144,8 @@ export const Budgeting: React.FC = () => {
             <BudgetProgressWidget range={range} />
             <SankeyWidget range={range} />
           </div>
+
+          <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
         </>
