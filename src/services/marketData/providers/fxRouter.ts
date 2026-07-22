@@ -2,9 +2,10 @@ import type { Currency, FxRate } from '../types'
 import { fetchFxRate } from './frankfurter'
 import { fetchErApiFxRate } from './erApi'
 
-/** Currencies served by Frankfurter (ECB reference rates). BDT is not one. */
+/** Currencies served by Frankfurter (ECB reference rates). BDT and HKD are not. */
 export const FRANKFURTER_CURRENCIES: ReadonlySet<string> = new Set([
   'USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY', 'KRW', 'INR',
+  'CHF', 'SGD', 'NZD', 'SEK', 'NOK', 'DKK', 'MXN', 'BRL', 'CNY', 'PLN', 'ZAR',
 ])
 
 /** Frankfurter for pairs it supports (incl. historical dates); er-api

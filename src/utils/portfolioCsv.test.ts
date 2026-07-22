@@ -1,4 +1,5 @@
 import { mapPortfolioRows, parsePortfolioText } from './portfolioCsv'
+import type { Holding } from '../store/usePortfolioStore'
 
 const ibkrCsv = `Symbol,Description,Quantity,Cost Basis,Currency
 AAPL,APPLE INC,10,1800,USD
@@ -38,7 +39,7 @@ describe('mapPortfolioRows', () => {
     if (!('unrecognized' in r)) throw new Error('expected unrecognized')
     const mapped = mapPortfolioRows(r.rows, { ticker: 'Ticker', quantity: 'Units', totalCost: 'Total Paid' })
     expect(mapped).toHaveLength(1)
-    expect(mapped[0]).toMatchObject({ ticker: 'SHOP', quantity: 5, avgCost: 120, currency: 'CAD' })
+    expect(mapped[0]).toMatchObject({ ticker: 'SHOP', quantity: 5, avgCost: 120, currency: null })
   })
 
   it('skips unparseable rows', () => {
@@ -73,5 +74,34 @@ describe('header normalization', () => {
     const csv = 'Ticker,Shares,Total\nAAPL,10,1500\n'
     const result = parsePortfolioText(csv)
     expect('unrecognized' in (result as object)).toBe(true)
+  })
+})
+
+describe('currency parsing', () => {
+  it('keeps the real currency code from an IBKR row', () => {
+    const csv = [
+      'Symbol,Description,Quantity,Cost Basis,Currency',
+      'ASML,ASML Holding,10,6000,EUR',
+      'SHEL,Shell plc,20,5000,GBP',
+      'AAPL,Apple,5,1000,USD',
+      'ENB,Enbridge,50,2500,CAD',
+    ].join('\n')
+    const result = parsePortfolioText(csv)
+    expect(Array.isArray(result)).toBe(true)
+    const holdings = result as Omit<Holding, 'id' | 'account'>[]
+    expect(holdings.map((h) => h.currency)).toEqual(['EUR', 'GBP', 'USD', 'CAD'])
+  })
+
+  it('is case insensitive and tolerates whitespace', () => {
+    const csv = 'Symbol,Quantity,Cost Basis,Currency\nASML,10,6000, eur '
+    const holdings = parsePortfolioText(csv) as Omit<Holding, 'id' | 'account'>[]
+    expect(holdings[0].currency).toBe('EUR')
+  })
+
+  it('returns null for an unsupported or blank code rather than guessing CAD', () => {
+    const csv = 'Symbol,Quantity,Cost Basis,Currency\nXXX,10,6000,ZWL\nYYY,10,6000,'
+    const holdings = parsePortfolioText(csv) as Omit<Holding, 'id' | 'account'>[]
+    expect(holdings[0].currency).toBeNull()
+    expect(holdings[1].currency).toBeNull()
   })
 })

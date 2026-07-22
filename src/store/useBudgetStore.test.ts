@@ -47,7 +47,7 @@ describe('budget store migration v2 -> v3', () => {
   })
 })
 
-import { getMonthlyBudgetStats } from './useBudgetStore'
+import { getMonthlyBudgetStats, useBudgetStore } from './useBudgetStore'
 import type { BudgetingParadigm } from '../types/budget'
 
 function makeState(paradigm: BudgetingParadigm) {
@@ -130,5 +130,37 @@ describe('getMonthlyBudgetStats paradigm blocks', () => {
     expect(stats.spent).toBe(1900)
     expect(stats.unallocated).toBe(2200) // brief said 2100; corrected to match income(4000) - totalTarget(1800), consistent with zeroBased.unassigned and targetBased.buffer tests above
     expect(stats.remaining).toBe(1800 - 1900)
+  })
+})
+
+describe('getMonthlyBudgetStats with annual categories', () => {
+  it('uses the monthly equivalent as the effective target', () => {
+    useBudgetStore.setState({
+      transactions: {},
+      categoryGroups: { g1: { id: 'g1', name: 'Travel', kind: 'expense' } },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' },
+      },
+      reallocations: {},
+    })
+    const stats = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 6)
+    expect(stats.perCategory.c1.effectiveTarget).toBe(200)
+  })
+
+  it('applies reallocations on top of the monthly equivalent', () => {
+    useBudgetStore.setState({
+      transactions: {},
+      categoryGroups: { g1: { id: 'g1', name: 'Travel', kind: 'expense' } },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' },
+        c2: { id: 'c2', groupId: 'g1', name: 'Rent', targetAmount: 1000 },
+      },
+      reallocations: {
+        r1: { id: 'r1', fromCategoryId: 'c2', toCategoryId: 'c1', amount: 50, date: '2026-07-05' },
+      },
+    })
+    const stats = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 6)
+    expect(stats.perCategory.c1.effectiveTarget).toBe(250)
+    expect(stats.perCategory.c2.effectiveTarget).toBe(950)
   })
 })

@@ -7,6 +7,7 @@ import { ReallocationModal } from './ReallocationModal';
 import { totalMonthlyBudget } from '../../store/budgetSelectors';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
+import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
@@ -141,7 +142,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         {groups.map(group => {
           const isIncomeGroup = group.kind === 'income';
           const groupCats = catList.filter(c => c.groupId === group.id);
-          const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
+          const groupTotal = groupCats.reduce((sum, cat) => sum + monthlyEquivalent(cat), 0);
           const groupEarned = groupCats.reduce((sum, cat) => {
             return sum + thisMonthIncome.filter(t => t.categoryId === cat.id).reduce((s, t) => s + t.amount, 0);
           }, 0);
@@ -230,7 +231,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           const monthReallocs = Object.values(reallocations).filter(r => r.date.startsWith(selectedMonth));
                           const reallocsIn = monthReallocs.filter(r => r.toCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
                           const reallocsOut = monthReallocs.filter(r => r.fromCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
-                          const effectiveTarget = cat.targetAmount + reallocsIn - reallocsOut;
+                          const effectiveTarget = monthlyEquivalent(cat) + reallocsIn - reallocsOut;
 
                           const isOverBudget = !isIncomeGroup && actualAmount > effectiveTarget && effectiveTarget > 0;
                           const progressPercentage = effectiveTarget > 0 ? Math.min((actualAmount / effectiveTarget) * 100, 100) : 0;
@@ -273,6 +274,26 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 onCommit={(n) => updateCategory(cat.id, { targetAmount: n })}
                                 className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
                               />
+                              {!isIncomeGroup && (
+                                <div className="flex rounded border border-border overflow-hidden ml-1">
+                                  {(['monthly', 'annual'] as const).map((c) => (
+                                    <button
+                                      key={c}
+                                      type="button"
+                                      aria-label={`Budget ${cat.name} ${c === 'monthly' ? 'monthly' : 'annually'}`}
+                                      aria-pressed={cadenceOf(cat) === c}
+                                      onClick={() => updateCategory(cat.id, { cadence: c })}
+                                      className={`px-1.5 py-0.5 text-[11px] transition-colors ${
+                                        cadenceOf(cat) === c
+                                          ? 'bg-accent/15 text-accent'
+                                          : 'text-text-secondary hover:text-text-primary'
+                                      }`}
+                                    >
+                                      {c === 'monthly' ? '/mo' : '/yr'}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                               <button 
                                 onClick={() => deleteCategory(cat.id)}
                                 className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"

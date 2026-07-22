@@ -1,30 +1,46 @@
 import React, { useEffect } from 'react'
 import { useCurrentPrice } from '../../services/marketData'
-import type { Holding } from '../../store/usePortfolioStore'
+import { CURRENCIES, type Currency } from '../../services/marketData/types'
+import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, holdingPlDollars, holdingPlPct, marketValue, toCad,
+  bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 import { pct } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
+import { ThemedSelect } from '../ui/ThemedSelect'
 
 interface HoldingCardProps {
   holding: Holding
-  fxUsdCad: number
+  rates: FxRates
   totalValueCad: number
-  onPrice: (id: string, price: number) => void
+  onPrice: (id: string, price: number, currency: Currency | null, unconvertible: boolean) => void
 }
 
-export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, fxUsdCad, totalValueCad, onPrice }) => {
+export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
+  const setHoldingCurrency = usePortfolioStore((s) => s.setHoldingCurrency)
   const live = useCurrentPrice(holding.ticker, holding.exchange)
-  const price = live.data?.value.price ?? holding.avgCost
+  const quoteCurrency = live.data?.value.currency ?? holding.currency
+  const nativePrice = live.data?.value.price ?? holding.avgCost
+
+  // The quote's currency is authoritative for the price; convert it into the
+  // holding's currency so value and P/L compare against the cost basis.
+  const converted =
+    quoteCurrency === holding.currency
+      ? nativePrice
+      : convertAmount(nativePrice, quoteCurrency, holding.currency, rates)
+  const priceUnconvertible = converted === null
+  const price = converted ?? nativePrice
 
   useEffect(() => {
-    onPrice(holding.id, price) // parent keeps last-reported price; guarded upstream
-  }, [holding.id, price, onPrice])
+    onPrice(holding.id, price, quoteCurrency, priceUnconvertible) // parent keeps last-reported price; guarded upstream
+  }, [holding.id, price, quoteCurrency, priceUnconvertible, onPrice])
 
-  const valueCad = toCad(marketValue(holding, price), holding.currency, fxUsdCad)
+  // price is only meaningful in the holding's own currency once the cross
+  // rate resolves; when it does not, value, P/L and allocation are unknown,
+  // not wrong-but-confident numbers computed from a mismatched price.
+  const valueCad = priceUnconvertible ? null : toCad(marketValue(holding, price), holding.currency, rates)
   const plDollars = holdingPlDollars(holding, price)
   const isLoadingPrice = live.status === 'loading' && !live.data
 
@@ -34,13 +50,30 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, fxUsdCad, tot
         <div>
           <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
           <span className="block text-[11px] text-text-secondary">
-            {holding.currency}{live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
+            <span className="inline-block align-middle">
+              <ThemedSelect
+                value={holding.currency ?? ''}
+                onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}
+                ariaLabel={`Currency for ${holding.ticker}`}
+                className="!w-auto !px-1.5 !py-0 !text-[11px] !rounded"
+                options={[
+                  { value: '', label: 'Set currency' },
+                  ...CURRENCIES.map((c) => ({ value: c, label: c })),
+                ]}
+              />
+            </span>
+            {priceUnconvertible && quoteCurrency ? (
+              <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency ?? 'unset currency'}`}> · unconverted</span>
+            ) : null}
+            {live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
           </span>
         </div>
         {isLoadingPrice ? (
           <Skeleton className="h-4 w-20 inline-block" />
+        ) : priceUnconvertible ? (
+          <span data-testid="pl-cell" className="text-[14px] font-semibold tabular-nums text-text-secondary">-</span>
         ) : (
-          <span className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
+          <span data-testid="pl-cell" className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
             {formatMoney(plDollars)} ({pct(holdingPlPct(holding, price))})
           </span>
         )}
@@ -53,13 +86,29 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, fxUsdCad, tot
           {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
         </span>
         <span className="text-text-secondary">Alloc</span>
-        <span className="text-right tabular-nums">
-          {isLoadingPrice ? <Skeleton className="h-4 w-12 inline-block" /> : pct(allocationPct(valueCad, totalValueCad))}
+        <span data-testid="allocation-cell" className="text-right tabular-nums">
+          {isLoadingPrice ? (
+            <Skeleton className="h-4 w-12 inline-block" />
+          ) : valueCad === null ? (
+            '-'
+          ) : (
+            <>
+              <span className="tabular-nums">{pct(allocationPct(valueCad, totalValueCad))}</span>
+              <span className="block h-1 mt-1 rounded bg-bg-primary/50 overflow-hidden">
+                <span
+                  className="block h-full bg-accent"
+                  style={{ width: `${Math.min(100, Math.max(0, allocationPct(valueCad, totalValueCad) ?? 0))}%` }}
+                />
+              </span>
+            </>
+          )}
         </span>
         <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
         <span className="text-text-secondary">Value</span>
-        <span className="text-right tabular-nums">
-          {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : formatMoney(marketValue(holding, price))}
+        <span data-testid="value-cell" className="text-right tabular-nums">
+          {isLoadingPrice
+            ? <Skeleton className="h-4 w-16 inline-block" />
+            : priceUnconvertible ? '-' : formatMoney(marketValue(holding, price))}
         </span>
       </div>
     </div>

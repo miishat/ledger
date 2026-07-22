@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { accountNames, usePortfolioStore } from '../../../store/usePortfolioStore'
 import { useMarketDataStore } from '../../../store/useMarketDataStore'
-import { quoteKey, useFxRate } from '../../../services/marketData'
+import { quoteKey } from '../../../services/marketData'
+import { useFxRates } from '../../../hooks/useFxRates'
 import { portfolioTotals } from '../../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../../planner/format'
 
@@ -11,7 +12,8 @@ export const PortfolioRollupWidget: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
-  const fx = useFxRate('USD', 'CAD')
+  const currencies = useMemo(() => holdings.map((h) => h.currency), [holdings])
+  const fx = useFxRates(currencies)
 
   if (holdings.length === 0) {
     return (
@@ -28,7 +30,7 @@ export const PortfolioRollupWidget: React.FC = () => {
     holding: h,
     price: overrides[quoteKey(h.ticker, h.exchange)] ?? quotes[quoteKey(h.ticker, h.exchange)]?.value.price ?? h.avgCost,
   }))
-  const t = portfolioTotals(rows, fx.data?.value.rate ?? 1)
+  const t = portfolioTotals(rows, fx.rates)
 
   return (
     <WidgetWrapper title="Portfolio">
@@ -38,6 +40,11 @@ export const PortfolioRollupWidget: React.FC = () => {
           {t.plCad >= 0 ? '+' : ''}{formatMoney(t.plCad)}{t.plPct !== null ? ` (${t.plPct.toFixed(1)}%)` : ''} all-time
         </span>
         <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
+        {t.excludedCount > 0 && (
+          <span className="text-[11px] text-error">
+            {t.excludedCount} excluded, no FX rate
+          </span>
+        )}
       </div>
     </WidgetWrapper>
   )

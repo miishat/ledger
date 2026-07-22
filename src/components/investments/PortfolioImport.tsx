@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import {
-  mapPortfolioRows, parsePortfolioText, type ColumnMapping, type UnrecognizedPortfolioCSV,
+  mapPortfolioRows, parsePortfolioText, toCurrency, type ColumnMapping, type UnrecognizedPortfolioCSV,
 } from '../../utils/portfolioCsv'
 import {
   DEFAULT_ACCOUNT, usePortfolioStore, type Holding, type ImportMode,
@@ -20,8 +20,10 @@ const MODE_LABELS: Record<ImportMode, string> = {
   add: 'Add as new rows',
 }
 
-/** Stock/ETF long positions from the report, as importable holdings. */
-function holdingsFromReport(report: PAReport): Omit<Holding, 'id' | 'account'>[] {
+/** Stock/ETF long positions from the report, as importable holdings.
+ *  Exported for testing: covers the same guess-CAD bug fixed in portfolioCsv.ts,
+ *  so it must be exercised directly. */
+export function holdingsFromReport(report: PAReport): Omit<Holding, 'id' | 'account'>[] {
   return report.openPositions
     .filter((p) => (p.instrument === 'Stocks' || p.instrument === 'ETFs') && p.quantity > 0 && p.costBasis > 0)
     .map((p) => ({
@@ -29,7 +31,7 @@ function holdingsFromReport(report: PAReport): Omit<Holding, 'id' | 'account'>[]
       name: p.description || undefined,
       quantity: p.quantity,
       avgCost: p.costBasis / p.quantity,
-      currency: p.currency === 'USD' ? ('USD' as const) : ('CAD' as const),
+      currency: toCurrency(p.currency),
     }))
 }
 

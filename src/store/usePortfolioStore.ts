@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Currency } from '../services/marketData/types'
 
 export interface Holding {
   id: string
@@ -9,7 +10,9 @@ export interface Holding {
   quantity: number
   /** Per-share cost basis in the holding's own currency. */
   avgCost: number
-  currency: 'USD' | 'CAD'
+  /** null when the import gave a code we cannot map. Such holdings show
+   *  native numbers and are excluded from CAD totals. */
+  currency: Currency | null
   /** Broker account this row belongs to (user-supplied at import). */
   account: string
 }
@@ -30,8 +33,31 @@ export function accountNames(holdings: Holding[]): string[] {
 interface PortfolioState {
   holdings: Holding[]
   importedAt: string | null
+  /** Set by the v1 -> v2 migration: pre-0.7.3 imports may have wrong currencies. */
+  currencyReviewPending: boolean
   importHoldings: (account: string, mode: ImportMode, rows: Omit<Holding, 'id' | 'account'>[]) => void
+  setHoldingCurrency: (id: string, currency: Currency | null) => void
+  dismissCurrencyReview: () => void
   clearHoldings: () => void
+}
+
+/** v0 -> v1: holdings predate accounts, so adopt them into Default.
+ *  v1 -> v2: imports before v0.7.3 stored every foreign currency as CAD. The
+ *  original code is unrecoverable, so flag a review rather than guess. */
+export function migratePortfolioState(persisted: unknown, version: number): unknown {
+  const state = persisted as {
+    holdings?: Array<Record<string, unknown>>
+    importedAt?: string | null
+  }
+  let next: Record<string, unknown> = { ...state }
+  if (version < 1 && Array.isArray(state.holdings)) {
+    next = { ...next, holdings: state.holdings.map((h) => ({ account: DEFAULT_ACCOUNT, ...h })) }
+  }
+  if (version < 2) {
+    const holdings = next.holdings as unknown[] | undefined
+    next = { ...next, currencyReviewPending: Array.isArray(holdings) && holdings.length > 0 }
+  }
+  return next
 }
 
 let importSeq = 0
@@ -45,6 +71,7 @@ export const usePortfolioStore = create<PortfolioState>()(
     (set) => ({
       holdings: [],
       importedAt: null,
+      currencyReviewPending: false,
       importHoldings: (account, mode, rows) =>
         set((state) => {
           const incoming = stamp(account, rows)
@@ -64,22 +91,17 @@ export const usePortfolioStore = create<PortfolioState>()(
           }
           return { holdings, importedAt: new Date().toISOString() }
         }),
-      clearHoldings: () => set({ holdings: [], importedAt: null }),
+      setHoldingCurrency: (id, currency) =>
+        set((state) => ({
+          holdings: state.holdings.map((h) => (h.id === id ? { ...h, currency } : h)),
+        })),
+      dismissCurrencyReview: () => set({ currencyReviewPending: false }),
+      clearHoldings: () => set({ holdings: [], importedAt: null, currencyReviewPending: false }),
     }),
     {
       name: 'ledger-portfolio',
-      version: 1,
-      // v0 holdings predate accounts - adopt them into the Default account.
-      migrate: (persisted, version) => {
-        const state = persisted as { holdings?: Array<Record<string, unknown>>; importedAt?: string | null }
-        if (version < 1 && Array.isArray(state.holdings)) {
-          return {
-            ...state,
-            holdings: state.holdings.map((h) => ({ account: DEFAULT_ACCOUNT, ...h })),
-          } as unknown
-        }
-        return persisted
-      },
+      version: 2,
+      migrate: migratePortfolioState,
     },
   ),
 )

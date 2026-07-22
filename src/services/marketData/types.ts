@@ -1,4 +1,7 @@
-export const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY', 'KRW', 'INR', 'BDT'] as const
+export const CURRENCIES = [
+  'USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY', 'KRW', 'INR', 'BDT',
+  'CHF', 'HKD', 'SGD', 'NZD', 'SEK', 'NOK', 'DKK', 'MXN', 'BRL', 'CNY', 'PLN', 'ZAR',
+] as const
 export type Currency = (typeof CURRENCIES)[number]
 
 export interface Quote {

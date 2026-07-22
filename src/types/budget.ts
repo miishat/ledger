@@ -2,6 +2,8 @@ export type BudgetingParadigm = 'Ledger Custom' | 'Zero-Based' | 'Target-Based' 
 
 export type BudgetClass = 'need' | 'want' | 'savings';
 
+export type BudgetCadence = 'monthly' | 'annual';
+
 export interface CategoryGroup {
   id: string;
   name: string;
@@ -15,6 +17,9 @@ export interface Category {
   groupId: string;
   name: string;
   targetAmount: number;
+  /** Period targetAmount covers. Absent means 'monthly', so no migration is
+   *  needed for categories saved before cadence existed. */
+  cadence?: BudgetCadence;
 }
 
 export interface Transaction {
