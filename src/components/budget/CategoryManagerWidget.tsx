@@ -7,7 +7,7 @@ import { ReallocationModal } from './ReallocationModal';
 import { totalMonthlyBudget } from '../../store/budgetSelectors';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
-import { cadenceOf } from '../../utils/budget/cadence';
+import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 
 export const PARADIGM_DESCRIPTIONS: Record<BudgetingParadigm, string> = {
@@ -142,7 +142,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         {groups.map(group => {
           const isIncomeGroup = group.kind === 'income';
           const groupCats = catList.filter(c => c.groupId === group.id);
-          const groupTotal = groupCats.reduce((sum, cat) => sum + cat.targetAmount, 0);
+          const groupTotal = groupCats.reduce((sum, cat) => sum + monthlyEquivalent(cat), 0);
           const groupEarned = groupCats.reduce((sum, cat) => {
             return sum + thisMonthIncome.filter(t => t.categoryId === cat.id).reduce((s, t) => s + t.amount, 0);
           }, 0);
@@ -231,7 +231,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           const monthReallocs = Object.values(reallocations).filter(r => r.date.startsWith(selectedMonth));
                           const reallocsIn = monthReallocs.filter(r => r.toCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
                           const reallocsOut = monthReallocs.filter(r => r.fromCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
-                          const effectiveTarget = cat.targetAmount + reallocsIn - reallocsOut;
+                          const effectiveTarget = monthlyEquivalent(cat) + reallocsIn - reallocsOut;
 
                           const isOverBudget = !isIncomeGroup && actualAmount > effectiveTarget && effectiveTarget > 0;
                           const progressPercentage = effectiveTarget > 0 ? Math.min((actualAmount / effectiveTarget) * 100, 100) : 0;
