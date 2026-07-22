@@ -51,11 +51,7 @@ function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
     <g>
       <title>{name}</title>
       <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--border-color)" />
-      {kind === 'pool' ? (
-        <text x={x + width / 2} y={y - 8} textAnchor="middle" fill="var(--text-primary)" fontSize={12}>
-          {label}
-        </text>
-      ) : kind === 'income' ? (
+      {kind === 'pool' ? null : kind === 'income' ? (
         <text x={x - 6} y={y + height / 2} textAnchor="end" dominantBaseline="middle" fill="var(--text-primary)" fontSize={12}>
           {label}
         </text>
