@@ -20,9 +20,11 @@ export const PortfolioView: React.FC = () => {
 
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
-  const onPrice = useCallback((id: string, price: number, currency: Currency | null) => {
+  const [unconvertibleIds, setUnconvertibleIds] = useState<Record<string, boolean>>({})
+  const onPrice = useCallback((id: string, price: number, currency: Currency | null, unconvertible: boolean) => {
     setPrices((prev) => (prev[id] === price ? prev : { ...prev, [id]: price }))
     setQuoteCurrencies((prev) => (prev[id] === currency ? prev : { ...prev, [id]: currency }))
+    setUnconvertibleIds((prev) => (prev[id] === unconvertible ? prev : { ...prev, [id]: unconvertible }))
   }, [])
 
   const currencies = useMemo(
@@ -32,8 +34,16 @@ export const PortfolioView: React.FC = () => {
   const fx = useFxRates(currencies)
   const rates = fx.rates
 
-  const rows = holdings.map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
-  const totals = portfolioTotals(rows, rates)
+  // A holding whose live quote could not be converted into its own currency
+  // has no usable price in that currency, so it is left out of portfolioTotals
+  // entirely rather than feeding it a wrong-currency price. It is folded into
+  // the same excluded count as a holding that lacks an FX rate outright.
+  const rows = holdings
+    .filter((h) => !unconvertibleIds[h.id])
+    .map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
+  const rawTotals = portfolioTotals(rows, rates)
+  const unconvertibleCount = holdings.filter((h) => unconvertibleIds[h.id]).length
+  const totals = { ...rawTotals, excludedCount: rawTotals.excludedCount + unconvertibleCount }
 
   return (
     <div className="flex flex-col gap-6">

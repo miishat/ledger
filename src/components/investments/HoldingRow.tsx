@@ -15,7 +15,7 @@ interface HoldingRowProps {
   holding: Holding
   rates: FxRates
   totalValueCad: number
-  onPrice: (id: string, price: number, currency: Currency | null) => void
+  onPrice: (id: string, price: number, currency: Currency | null, unconvertible: boolean) => void
 }
 
 export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalValueCad, onPrice }) => {
@@ -34,10 +34,13 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
   const price = converted ?? nativePrice
 
   useEffect(() => {
-    onPrice(holding.id, price, quoteCurrency) // parent keeps last-reported price; guarded upstream
-  }, [holding.id, price, quoteCurrency, onPrice])
+    onPrice(holding.id, price, quoteCurrency, priceUnconvertible) // parent keeps last-reported price; guarded upstream
+  }, [holding.id, price, quoteCurrency, priceUnconvertible, onPrice])
 
-  const valueCad = toCad(marketValue(holding, price), holding.currency, rates)
+  // price is only meaningful in the holding's own currency once the cross
+  // rate resolves; when it does not, value, P/L and allocation are unknown,
+  // not wrong-but-confident numbers computed from a mismatched price.
+  const valueCad = priceUnconvertible ? null : toCad(marketValue(holding, price), holding.currency, rates)
 
   return (
     <tr className="border-b border-border last:border-b-0">
@@ -57,7 +60,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
             />
           </span>
           {priceUnconvertible && quoteCurrency ? (
-            <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency}`}> · unconverted</span>
+            <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency ?? 'unset currency'}`}> · unconverted</span>
           ) : null}
           {live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
         </span>
@@ -68,9 +71,16 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
         {live.status === 'loading' && !live.data ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
       </td>
       <td className="py-2 pr-3 text-right text-text-primary">{formatMoney(bookValue(holding))}</td>
-      <td className="py-2 pr-3 text-right text-text-primary">{formatMoney(marketValue(holding, price))}</td>
-      <td className={`py-2 pr-3 text-right ${holdingPlDollars(holding, price) >= 0 ? 'text-accent' : 'text-error'}`}>
-        {formatMoney(holdingPlDollars(holding, price))} ({pct(holdingPlPct(holding, price))})
+      <td data-testid="value-cell" className="py-2 pr-3 text-right text-text-primary">
+        {priceUnconvertible ? '-' : formatMoney(marketValue(holding, price))}
+      </td>
+      <td
+        data-testid="pl-cell"
+        className={`py-2 pr-3 text-right ${
+          priceUnconvertible ? 'text-text-secondary' : holdingPlDollars(holding, price) >= 0 ? 'text-accent' : 'text-error'
+        }`}
+      >
+        {priceUnconvertible ? '-' : `${formatMoney(holdingPlDollars(holding, price))} (${pct(holdingPlPct(holding, price))})`}
       </td>
       <td data-testid="allocation-cell" className="py-2 text-right text-text-secondary">
         {valueCad === null ? '-' : pct(allocationPct(valueCad, totalValueCad))}

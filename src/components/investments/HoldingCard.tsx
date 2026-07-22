@@ -15,7 +15,7 @@ interface HoldingCardProps {
   holding: Holding
   rates: FxRates
   totalValueCad: number
-  onPrice: (id: string, price: number, currency: Currency | null) => void
+  onPrice: (id: string, price: number, currency: Currency | null, unconvertible: boolean) => void
 }
 
 export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
@@ -34,10 +34,13 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
   const price = converted ?? nativePrice
 
   useEffect(() => {
-    onPrice(holding.id, price, quoteCurrency) // parent keeps last-reported price; guarded upstream
-  }, [holding.id, price, quoteCurrency, onPrice])
+    onPrice(holding.id, price, quoteCurrency, priceUnconvertible) // parent keeps last-reported price; guarded upstream
+  }, [holding.id, price, quoteCurrency, priceUnconvertible, onPrice])
 
-  const valueCad = toCad(marketValue(holding, price), holding.currency, rates)
+  // price is only meaningful in the holding's own currency once the cross
+  // rate resolves; when it does not, value, P/L and allocation are unknown,
+  // not wrong-but-confident numbers computed from a mismatched price.
+  const valueCad = priceUnconvertible ? null : toCad(marketValue(holding, price), holding.currency, rates)
   const plDollars = holdingPlDollars(holding, price)
   const isLoadingPrice = live.status === 'loading' && !live.data
 
@@ -60,15 +63,17 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
               />
             </span>
             {priceUnconvertible && quoteCurrency ? (
-              <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency}`}> · unconverted</span>
+              <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency ?? 'unset currency'}`}> · unconverted</span>
             ) : null}
             {live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
           </span>
         </div>
         {isLoadingPrice ? (
           <Skeleton className="h-4 w-20 inline-block" />
+        ) : priceUnconvertible ? (
+          <span data-testid="pl-cell" className="text-[14px] font-semibold tabular-nums text-text-secondary">-</span>
         ) : (
-          <span className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
+          <span data-testid="pl-cell" className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
             {formatMoney(plDollars)} ({pct(holdingPlPct(holding, price))})
           </span>
         )}
@@ -88,8 +93,10 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         </span>
         <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
         <span className="text-text-secondary">Value</span>
-        <span className="text-right tabular-nums">
-          {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : formatMoney(marketValue(holding, price))}
+        <span data-testid="value-cell" className="text-right tabular-nums">
+          {isLoadingPrice
+            ? <Skeleton className="h-4 w-16 inline-block" />
+            : priceUnconvertible ? '-' : formatMoney(marketValue(holding, price))}
         </span>
       </div>
     </div>

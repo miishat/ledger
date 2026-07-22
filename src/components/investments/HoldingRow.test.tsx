@@ -78,4 +78,29 @@ describe('quote currency', () => {
     expect(screen.getByTestId('allocation-cell')).toHaveTextContent('-')
     expect(screen.getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
   })
+
+  it('shows no value, P/L, or allocation when the holding currency has a rate but the quote currency does not', async () => {
+    __setProviders({
+      fetchQuote: async () => ({
+        ticker: 'ASML', price: 100, currency: 'USD', asOf: '2026-07-21T00:00:00.000Z',
+      }) as never,
+    })
+    const holding = {
+      id: '1', ticker: 'ASML', quantity: 1, avgCost: 50,
+      currency: 'EUR' as const, account: 'A',
+    }
+    render(
+      <table><tbody>
+        {/* EUR has a rate; USD (the quote's currency) does not, so the
+            cross rate is unavailable even though the holding's own
+            currency converts fine. */}
+        <HoldingRow holding={holding} rates={{ EUR: 1.47 }} totalValueCad={1000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+    await screen.findByTitle(/quoted in USD/)
+    expect(screen.getByTestId('value-cell')).toHaveTextContent('-')
+    expect(screen.getByTestId('pl-cell')).toHaveTextContent('-')
+    expect(screen.getByTestId('allocation-cell')).toHaveTextContent('-')
+    expect(screen.getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
+  })
 })

@@ -81,4 +81,30 @@ describe('HoldingCard', () => {
     expect(getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
     expect(getByText('Set currency')).toBeInTheDocument()
   })
+
+  it('shows no value, P/L, or allocation when the holding currency has a rate but the quote currency does not', () => {
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 100, currency: 'USD' }, source: 'live', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+
+    // EUR has a rate; USD (the quote's currency) does not, so the cross
+    // rate is unavailable even though the holding's own currency converts fine.
+    const { getByTestId } = render(
+      <HoldingCard
+        holding={buildHolding({ currency: 'EUR' })}
+        rates={{ EUR: 1.47 }}
+        totalValueCad={1000}
+        onPrice={() => {}}
+      />,
+    )
+
+    expect(getByTestId('value-cell')).toHaveTextContent('-')
+    expect(getByTestId('pl-cell')).toHaveTextContent('-')
+    expect(getByTestId('allocation-cell')).toHaveTextContent('-')
+    expect(getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
+  })
 })
