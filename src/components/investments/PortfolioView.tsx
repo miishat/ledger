@@ -8,7 +8,7 @@ import { formatMoney } from '../planner/format'
 import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
 import { PortfolioImport } from './PortfolioImport'
-import { PortfolioReport } from './PortfolioReport'
+import { PortfolioReport } from './report/PortfolioReport'
 import { EmptyState } from '../ui/EmptyState'
 
 export const PortfolioView: React.FC = () => {
