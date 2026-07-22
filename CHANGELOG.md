@@ -9,9 +9,11 @@ pre-1.0 beta.
 ## [0.7.4-beta] - 2026-07-22
 
 ### Added
-- Budgeting: the Overview tab has a new Savings Rate widget showing what share of your income you kept over the trailing six months, with paired income and expense bars per month
+- Budgeting: a new Savings Rate widget on the Overview tab, with a rate gauge and toggles for a net-savings trend and a saved-versus-spent split. It follows the timeframe you pick above and shows amounts on hover
 
 ### Changed
+- Budgeting: the Income Flow chart is now Cash Flow, a colored diagram that traces each income source into your spending groups and, when you spend less than you earn, into a Savings outlet so the money you kept is visible
+- Budgeting: annual budget rows no longer show the "set aside by now" line; they show what you have spent and what is left for the year
 - Tooling: eslint now ignores the .claude tooling directory, so lint reports only real application issues
 
 ## [0.7.3-beta] - 2026-07-21
