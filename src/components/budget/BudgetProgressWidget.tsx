@@ -126,7 +126,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
           {annualRows.length > 0 && (
             <div className="flex flex-col gap-3 pt-3 border-t border-border">
               <p className="text-[12px] uppercase tracking-wide text-text-secondary">Annual budgets</p>
-              {annualRows.map(({ c, spent, annual, expected, pace }) => (
+              {annualRows.map(({ c, spent, annual, pace }) => (
                 <div key={c.id} className="flex flex-col gap-1 text-[13px]">
                   <div className="flex justify-between">
                     <span className="text-text-primary">{c.name}</span>
@@ -141,7 +141,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
                     />
                   </div>
                   <p className="text-[11px] text-text-secondary">
-                    Set aside {formatMoney(expected)} by now · {formatMoney(spent)} spent · {formatMoney(Math.max(0, annual - spent))} left this year
+                    {formatMoney(spent)} spent · {formatMoney(Math.max(0, annual - spent))} left this year
                   </p>
                 </div>
               ))}

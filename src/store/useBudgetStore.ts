@@ -197,6 +197,8 @@ export const useBudgetStore = create<BudgetState>()(
             
             '4e3699b4-5077-4617-81af-c5bbc228878f': { id: '4e3699b4-5077-4617-81af-c5bbc228878f', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Night Out', targetAmount: 0 },
             '51d01f29-9a0e-4032-89f1-63c6e33c8752': { id: '51d01f29-9a0e-4032-89f1-63c6e33c8752', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Dining', targetAmount: 0 },
+            '468cbbb7-7571-4185-8d71-9dce157fe754': { id: '468cbbb7-7571-4185-8d71-9dce157fe754', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Events', targetAmount: 0 },
+            'bdca2db9-3734-4e9c-8e19-c965b4a336e6': { id: 'bdca2db9-3734-4e9c-8e19-c965b4a336e6', groupId: '02d13ccd-9d3a-4585-ada4-5c3b9041b539', name: 'Vacation', targetAmount: 0 },
             
             '7a9e68b5-da77-4754-9f28-3a37c65c01db': { id: '7a9e68b5-da77-4754-9f28-3a37c65c01db', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Phone Bill', targetAmount: 0 },
             'ad76c6c1-7747-4083-b070-6f1d284ae644': { id: 'ad76c6c1-7747-4083-b070-6f1d284ae644', groupId: '6252c9d2-7035-4a58-baf2-ef4d78de6a43', name: 'Subscriptions', targetAmount: 0 },

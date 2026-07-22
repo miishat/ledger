@@ -5,6 +5,7 @@
 import type { Category, CategoryGroup, Transaction } from '../types/budget'
 import { countsAsIncome } from '../utils/budget/sharedExpenses'
 import { monthlyEquivalent } from '../utils/budget/cadence'
+import { monthKeyOf } from '../utils/budget/period'
 
 export function monthlyExpenseTotal(
   transactions: Record<string, Transaction>,
@@ -68,4 +69,41 @@ export function totalMonthlyBudget(
   return Object.values(categories)
     .filter((c) => categoryGroups[c.groupId]?.kind === 'expense')
     .reduce((sum, c) => sum + monthlyEquivalent(c), 0)
+}
+
+export interface MonthlyFlow {
+  month: string
+  income: number
+  expense: number
+}
+
+/** Income and expense totals for the N months ending at refDate (oldest
+ *  first). Empty months are zero. Reimbursements are excluded from income
+ *  because monthlyIncomeTotal filters them out via countsAsIncome. */
+export function incomeExpenseSeries(
+  transactions: Record<string, Transaction>,
+  monthsBack: number,
+  refDate: Date = new Date(),
+): MonthlyFlow[] {
+  const series: MonthlyFlow[] = []
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1)
+    const month = monthKeyOf(d)
+    series.push({
+      month,
+      income: monthlyIncomeTotal(transactions, month),
+      expense: monthlyExpenseTotal(transactions, month),
+    })
+  }
+  return series
+}
+
+/** Savings rate over a set of monthly flows: (income - expense) / income.
+ *  Returns null when total income is zero, so callers can render a neutral
+ *  placeholder rather than dividing by zero. */
+export function savingsRate(series: MonthlyFlow[]): number | null {
+  const income = series.reduce((sum, m) => sum + m.income, 0)
+  const expense = series.reduce((sum, m) => sum + m.expense, 0)
+  if (income <= 0) return null
+  return (income - expense) / income
 }

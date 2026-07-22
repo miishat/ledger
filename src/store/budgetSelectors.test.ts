@@ -7,6 +7,7 @@ import {
 } from './budgetSelectors'
 import { totalMonthlyBudget } from './budgetSelectors'
 import type { Category, CategoryGroup } from '../types/budget'
+import { incomeExpenseSeries, savingsRate, type MonthlyFlow } from './budgetSelectors'
 
 function tx(date: string, amount: number, type: 'expense' | 'income'): Transaction {
   return { id: `${date}-${amount}-${type}`, date, amount, description: 't', type }
@@ -81,5 +82,52 @@ describe('totalMonthlyBudget with mixed cadence', () => {
       c2: { id: 'c2', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' as const },
     }
     expect(totalMonthlyBudget(categories, categoryGroups)).toBe(1200)
+  })
+})
+
+describe('incomeExpenseSeries', () => {
+  const txns: Record<string, Transaction> = Object.fromEntries(
+    [
+      tx('2026-05-15', 4000, 'income'),
+      tx('2026-05-03', 1500, 'expense'),
+      tx('2026-06-20', 4000, 'income'),
+      tx('2026-06-01', 3000, 'expense'),
+    ].map((t) => [t.id, t]),
+  )
+  const ref = new Date('2026-06-15T12:00:00')
+
+  it('returns one entry per month, oldest first, with empty months as zero', () => {
+    expect(incomeExpenseSeries(txns, 3, ref)).toEqual<MonthlyFlow[]>([
+      { month: '2026-04', income: 0, expense: 0 },
+      { month: '2026-05', income: 4000, expense: 1500 },
+      { month: '2026-06', income: 4000, expense: 3000 },
+    ])
+  })
+
+  it('excludes reimbursement income (mirrors monthlyIncomeTotal)', () => {
+    const withReimb: Record<string, Transaction> = {
+      ...txns,
+      r: {
+        id: 'r', date: '2026-06-05', amount: 50, description: 'payback',
+        type: 'income', reimbursement: { from: 'Alex' },
+      },
+    }
+    const june = incomeExpenseSeries(withReimb, 1, ref)[0]
+    expect(june).toEqual({ month: '2026-06', income: 4000, expense: 3000 })
+  })
+})
+
+describe('savingsRate', () => {
+  it('computes (income - expense) / income over the whole series', () => {
+    const series: MonthlyFlow[] = [
+      { month: '2026-05', income: 4000, expense: 1500 },
+      { month: '2026-06', income: 4000, expense: 3000 },
+    ]
+    // income 8000, expense 4500 -> 3500 / 8000
+    expect(savingsRate(series)).toBeCloseTo(0.4375, 4)
+  })
+
+  it('returns null when there is no income', () => {
+    expect(savingsRate([{ month: '2026-01', income: 0, expense: 100 }])).toBeNull()
   })
 })

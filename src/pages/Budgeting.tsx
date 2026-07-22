@@ -13,13 +13,14 @@ import { TransactionListWidget } from '../components/budget/TransactionListWidge
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
 import { SubscriptionsWidget } from '../components/budget/SubscriptionsWidget';
 import { AnomalyAlertsWidget } from '../components/budget/AnomalyAlertsWidget';
-import { SankeyWidget } from '../components/budget/SankeyWidget';
+import { CashFlowWidget } from '../components/budget/CashFlowWidget';
 import { SpendingHeatmapWidget } from '../components/budget/SpendingHeatmapWidget';
 import { CategoryTrendsWidget } from '../components/budget/CategoryTrendsWidget';
 import { BudgetProgressWidget } from '../components/budget/BudgetProgressWidget';
 import { ParadigmBanner } from '../components/budget/ParadigmBanner';
 import { ReallocationHistory } from '../components/budget/ReallocationHistory';
 import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
+import { SavingsRateWidget } from '../components/budget/SavingsRateWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
 export const Budgeting: React.FC = () => {
@@ -141,8 +142,10 @@ export const Budgeting: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BudgetProgressWidget range={range} />
-            <SankeyWidget range={range} />
+            <CashFlowWidget range={range} />
           </div>
+
+          <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
         </>
