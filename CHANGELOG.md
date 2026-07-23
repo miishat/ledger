@@ -6,6 +6,21 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.7.5-beta] - 2026-07-23
+
+### Fixed
+- Mobile: content at the bottom of long pages is no longer hidden behind the bottom navigation bar. Scrolling to the end now clears the nav, so buttons and captions at the foot of a page are reachable
+- Mobile: pop-ups and sheets (Settings, Add Account, Add Transaction, the CSV importer, and the rest) now fill the screen width instead of appearing as a narrow panel pinned to one side, their sections are spaced correctly, and each shows a single close button instead of two
+- Mobile: the Salary and Tax bracket bars show every bracket's full dollar range and rate instead of clipping the label
+
+### Changed
+- Mobile: pages now use the full screen width. Doubled-up page margins were removed, so content is roughly 40px wider on a phone and text wraps less
+- Mobile: the bottom navigation tabs are evenly spaced and their labels stay on one line instead of crowding on narrow phones
+- Mobile: controls for editing accounts, stepping through months, and similar actions now have finger-friendly tap targets
+- Mobile: the Budgeting header is simpler on phones, with a single month control and a compact toolbar, so it takes up less of the screen
+- Mobile: the Net-Worth Forecaster's Monte Carlo cards stack in one clean column on phones instead of sitting unevenly
+- Dashboard: rearranging widgets by dragging is now a desktop-only feature, since it never worked by touch
+
 ## [0.7.4-beta] - 2026-07-22
 
 ### Added
