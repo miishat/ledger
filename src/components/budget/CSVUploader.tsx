@@ -122,10 +122,11 @@ export const CSVUploader: React.FC = () => {
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isParsing}
+        aria-label="Import CSV"
         className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[14px] font-medium hover:border-[var(--color-accent)] transition-colors disabled:opacity-50"
       >
         <Upload size={16} />
-        {isParsing ? 'Parsing...' : 'Import CSV'}
+        <span className="hidden sm:inline">{isParsing ? 'Parsing...' : 'Import CSV'}</span>
       </button>
       {error && <span className="text-[12px] text-error text-center">{error}</span>}
 

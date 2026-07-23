@@ -59,31 +59,34 @@ export const Budgeting: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-4 items-center">
-          <ThemedSelect
-            value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
-            onChange={(v) => {
-              if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
-              else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
-              else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
-            }}
-            className="text-[13px]"
-            options={[
-              ...(period.kind === 'month' && period.month !== currentMonth
-                ? [{ value: 'pickedMonth', label: formattedMonth }]
-                : []),
-              { value: 'thisMonth', label: 'This month' },
-              { value: 'lastMonth', label: 'Last month' },
-              { value: 'last3', label: 'Last 3 months' },
-              { value: 'last6', label: 'Last 6 months' },
-              { value: 'last12', label: 'Last 12 months' },
-              { value: 'ytd', label: 'Year to date' },
-            ]}
-          />
+          <div data-period-dropdown className="hidden md:block">
+            <ThemedSelect
+              ariaLabel="Time period"
+              value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
+              onChange={(v) => {
+                if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
+                else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
+                else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
+              }}
+              className="text-[13px]"
+              options={[
+                ...(period.kind === 'month' && period.month !== currentMonth
+                  ? [{ value: 'pickedMonth', label: formattedMonth }]
+                  : []),
+                { value: 'thisMonth', label: 'This month' },
+                { value: 'lastMonth', label: 'Last month' },
+                { value: 'last3', label: 'Last 3 months' },
+                { value: 'last6', label: 'Last 6 months' },
+                { value: 'last12', label: 'Last 12 months' },
+                { value: 'ytd', label: 'Year to date' },
+              ]}
+            />
+          </div>
           {period.kind === 'month' && (
             <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
               <button
                 onClick={() => shiftMonth(-1)}
-                className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
                 aria-label="Previous Month"
               >
                 <ChevronLeft size={16} />
@@ -91,7 +94,7 @@ export const Budgeting: React.FC = () => {
               <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
               <button
                 onClick={() => shiftMonth(1)}
-                className="p-1.5 rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
                 aria-label="Next Month"
               >
                 <ChevronRight size={16} />

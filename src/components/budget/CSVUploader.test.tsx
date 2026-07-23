@@ -27,3 +27,17 @@ describe('CSVUploader mapping sheet', () => {
     await waitFor(() => expect(screen.queryByTestId('sheet-panel')).not.toBeInTheDocument())
   })
 })
+
+describe('CSVUploader import button (mobile de-duplication)', () => {
+  it('is accessible via aria-label and collapses its text label below sm', () => {
+    render(<CSVUploader />)
+
+    const button = screen.getByRole('button', { name: 'Import CSV' })
+    expect(button).toBeInTheDocument()
+
+    const label = button.querySelector('span')
+    expect(label).toBeTruthy()
+    expect(label!.className.split(/\s+/)).toContain('hidden')
+    expect(label!.className.split(/\s+/)).toContain('sm:inline')
+  })
+})
