@@ -55,3 +55,15 @@ describe('Layout mobile bottom nav sizing', () => {
     expect(labels.length).toBe(6)
   })
 })
+
+describe('Layout nav clearance guard', () => {
+  it('keeps nav clearance from being overridden by sm padding', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const main = container.querySelector('main')!
+    const classes = main.className.split(/\s+/)
+    expect(main.className).toMatch(/pb-\[calc\(/)      // nav-clearance retained
+    expect(classes).not.toContain('sm:p-8')            // all-sides sm padding would clobber pb
+    expect(classes).not.toContain('p-4')               // all-sides base padding would clobber pb too
+    expect(classes).toContain('sm:px-8')               // horizontal sm padding split out
+  })
+})

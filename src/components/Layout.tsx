@@ -131,7 +131,7 @@ export const Layout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-auto overflow-x-hidden p-4 sm:p-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8">
+      <main className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8">
         <ErrorBoundary key={location.pathname}>
           <PageTransition>
             <Outlet />
