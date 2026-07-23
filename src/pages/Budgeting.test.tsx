@@ -15,7 +15,7 @@ describe('Budgeting header (mobile de-duplication)', () => {
   })
 
   it('hides the range dropdown below md so only one month control shows on mobile', () => {
-    const { container } = renderBudget()
+    renderBudget()
     const trigger = screen.getByRole('button', { name: 'Time period' })
     // the dropdown wrapper is hidden on mobile, shown from md up
     const wrapper = trigger.closest('[data-period-dropdown]') as HTMLElement
