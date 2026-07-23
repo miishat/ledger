@@ -67,11 +67,12 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClos
       onClose={onClose}
       desktop="modal"
       ariaLabel={editingAccount ? 'Edit Account' : 'Add Account'}
-      panelClassName="bg-bg-primary border border-border rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+      title={editingAccount ? 'Edit Account' : 'Add Account'}
+      panelClassName="bg-bg-primary border border-border md:rounded-xl shadow-xl w-full max-w-md md:overflow-hidden flex flex-col"
     >
-        <div className="flex justify-between items-center p-4 border-b border-border">
+        <div className="hidden md:flex justify-between items-center p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">{editingAccount ? 'Edit Account' : 'Add Account'}</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
+          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
             <X size={20} />
           </button>
         </div>
