@@ -38,3 +38,20 @@ describe('Layout desktop sidebar', () => {
     expect(active.className).toMatch(/border-l-2/)
   })
 })
+
+describe('Layout mobile bottom nav sizing', () => {
+  it('gives every tab an equal, shrinkable, truncation-safe cell', () => {
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+    const bar = screen.getByRole('navigation', { name: 'Primary' })
+    const cells = Array.from(bar.children) as HTMLElement[]
+    expect(cells.length).toBe(6) // 5 links + Settings button
+    for (const cell of cells) {
+      const classes = cell.className.split(/\s+/)
+      expect(classes).toContain('flex-1')
+      expect(classes).toContain('min-w-0') // lets the cell shrink below its label's min-content width
+    }
+    // each label is truncation-safe
+    const labels = bar.querySelectorAll('.truncate')
+    expect(labels.length).toBe(6)
+  })
+})

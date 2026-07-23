@@ -153,12 +153,12 @@ export const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
                 isActive ? 'text-accent' : 'text-text-secondary'
               }`}
             >
               <Icon className="w-5 h-5" />
-              {item.name}
+              <span className="max-w-full truncate px-0.5">{item.name}</span>
             </Link>
           )
         })}
@@ -166,10 +166,10 @@ export const Layout: React.FC = () => {
           type="button"
           onClick={() => setSettingsOpen(true)}
           aria-label="Settings"
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
+          className="flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
         >
           <Settings className="w-5 h-5" />
-          Settings
+          <span className="max-w-full truncate px-0.5">Settings</span>
         </button>
       </nav>
 
