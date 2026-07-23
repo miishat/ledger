@@ -20,6 +20,8 @@ describe('AccountCategoryWidget mobile tap targets', () => {
       const classes = btn.className.split(/\s+/)
       expect(classes).toContain('min-h-[44px]')
       expect(classes).toContain('min-w-[44px]')
+      expect(classes).toContain('sm:min-h-0')
+      expect(classes).toContain('sm:min-w-0')
       expect(classes).not.toContain('opacity-0') // bare opacity-0 would hide it on touch
       expect(classes).toContain('sm:opacity-0')
       expect(classes).toContain('sm:group-hover:opacity-100')
