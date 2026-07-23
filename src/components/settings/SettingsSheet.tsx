@@ -38,9 +38,10 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
     onClose={onClose}
     desktop="modal"
     ariaLabel="Settings"
-    panelClassName="themed-menu rounded-lg w-full max-w-md p-5 flex flex-col gap-3 max-h-[85dvh] overflow-y-auto"
+    title={<><Settings className="w-5 h-5 text-accent" aria-hidden="true" /> Settings</>}
+    panelClassName="themed-menu md:rounded-lg w-full max-w-md md:p-5 flex flex-col gap-3 md:max-h-[85dvh] md:overflow-y-auto"
   >
-    <div className="flex items-center justify-between">
+    <div className="hidden md:flex items-center justify-between">
       <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
         <Settings className="w-5 h-5 text-accent" /> Settings
       </h2>

@@ -11,6 +11,7 @@ import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealth
 import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
 import { UpcomingVestsWidget } from '../components/dashboard/widgets/UpcomingVestsWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
+import { useIsDesktop } from '../hooks/useMediaQuery';
 
 // Canonical default widget order/ids, hoisted to module scope so it is a stable
 // reference across renders (ids are what get persisted/reordered, not the elements).
@@ -48,6 +49,7 @@ export const Dashboard: React.FC = () => {
   const moveWidget = useDashboardLayoutStore((s) => s.moveWidget);
   const storedOrder = useDashboardLayoutStore((s) => s.order);
   const setOrder = useDashboardLayoutStore((s) => s.setOrder);
+  const isDesktop = useIsDesktop();
 
   // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
   // (recomputed each render), so the elements themselves cannot be hoisted alongside the ids.
@@ -85,7 +87,7 @@ export const Dashboard: React.FC = () => {
     .filter((w): w is { id: string; element: React.ReactNode } => w !== null);
 
   return (
-    <div className="p-6 min-h-full w-full">
+    <div className="min-h-full w-full">
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>
@@ -98,18 +100,18 @@ export const Dashboard: React.FC = () => {
           return (
             <div
               key={id}
-              draggable
-              onDragStart={() => setDragId(id)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => {
+              draggable={isDesktop}
+              onDragStart={isDesktop ? () => setDragId(id) : undefined}
+              onDragOver={isDesktop ? (e) => e.preventDefault() : undefined}
+              onDrop={isDesktop ? () => {
                 if (dragId && dragId !== id) {
                   if (storedOrder.length === 0) setOrder(orderedIds); // materialize default before first move
                   moveWidget(dragId, id);
                 }
                 setDragId(null);
-              }}
-              onDragEnd={() => setDragId(null)}
-              className={`h-full cursor-grab active:cursor-grabbing ${WIDGET_SPAN[id] ?? ''} ${dragId === id ? 'opacity-50' : ''}`}
+              } : undefined}
+              onDragEnd={isDesktop ? () => setDragId(null) : undefined}
+              className={`h-full ${WIDGET_SPAN[id] ?? ''} ${isDesktop ? 'cursor-grab active:cursor-grabbing' : ''} ${dragId === id ? 'opacity-50' : ''}`}
             >
               {element}
             </div>

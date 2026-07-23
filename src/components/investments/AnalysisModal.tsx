@@ -58,8 +58,8 @@ const AddPositionModal: React.FC<{ analysisId: string; onClose: () => void }> = 
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="themed-card md:rounded-lg md:p-6 flex flex-col gap-4">
+      <div className="hidden md:flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">Add Position: {existing?.name ?? ''}</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
           <X className="w-5 h-5" />
@@ -160,8 +160,8 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   return (
-    <div className="themed-card rounded-lg p-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="themed-card md:rounded-lg md:p-6 flex flex-col gap-4">
+      <div className="hidden md:flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">New Analysis</h2>
         <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">
           <X className="w-5 h-5" />
@@ -230,12 +230,15 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 }
 
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, analysisId }) => {
+  const existingName = useAnalysisStore((s) => (analysisId ? s.analyses.find((a) => a.id === analysisId)?.name : undefined))
+
   return (
     <Sheet
       open={isOpen}
       onClose={onClose}
       desktop="modal"
       ariaLabel={analysisId ? 'Add position' : 'New analysis'}
+      title={analysisId ? <>Add Position: {existingName ?? ''}</> : 'New Analysis'}
       panelClassName="w-full max-w-lg"
     >
       {analysisId ? (

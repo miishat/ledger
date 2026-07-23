@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { fireEvent, render } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { Sheet } from './Sheet.tsx'
 import { setMatchMedia, resetMatchMedia } from '../../test-utils/matchMedia'
 
@@ -147,5 +147,20 @@ describe('Sheet', () => {
 
     document.body.removeChild(anchor)
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth })
+  })
+})
+
+describe('Sheet mobile header ownership', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('renders exactly one close control and the title on mobile', () => {
+    setMatchMedia(false) // mobile => bottom sheet
+    render(
+      <Sheet open onClose={() => {}} title="Add account">
+        <div>body</div>
+      </Sheet>,
+    )
+    expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Add account' })).toBeInTheDocument()
   })
 })

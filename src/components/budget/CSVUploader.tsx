@@ -122,10 +122,11 @@ export const CSVUploader: React.FC = () => {
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isParsing}
+        aria-label="Import CSV"
         className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[14px] font-medium hover:border-[var(--color-accent)] transition-colors disabled:opacity-50"
       >
         <Upload size={16} />
-        {isParsing ? 'Parsing...' : 'Import CSV'}
+        <span className="hidden sm:inline">{isParsing ? 'Parsing...' : 'Import CSV'}</span>
       </button>
       {error && <span className="text-[12px] text-error text-center">{error}</span>}
 
@@ -134,13 +135,14 @@ export const CSVUploader: React.FC = () => {
         onClose={() => setMappingData(null)}
         desktop="modal"
         ariaLabel="Map CSV Columns"
-        panelClassName="bg-[var(--color-bg-primary)] p-6 rounded-lg w-[400px] border border-[var(--color-border)] shadow-xl flex flex-col gap-4"
+        title="Map CSV Columns"
+        panelClassName="bg-[var(--color-bg-primary)] md:p-6 md:rounded-lg w-full md:w-[400px] border border-[var(--color-border)] shadow-xl flex flex-col gap-4"
       >
         {mappingData && (
           <>
-            <div className="flex justify-between items-center">
+            <div className="hidden md:flex justify-between items-center">
               <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Map CSV Columns</h2>
-              <button onClick={() => setMappingData(null)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"><X size={20} /></button>
+              <button onClick={() => setMappingData(null)} aria-label="Close" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"><X size={20} /></button>
             </div>
             <p className="text-[14px] text-[var(--color-text-secondary)]">We couldn't recognize this CSV format. Please select the correct columns.</p>
             

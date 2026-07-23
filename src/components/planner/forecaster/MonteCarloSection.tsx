@@ -46,7 +46,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
         <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
         <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
         <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />

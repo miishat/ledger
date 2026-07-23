@@ -59,25 +59,25 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
               <p className="text-sm text-text-secondary italic">No accounts added yet.</p>
             ) : (
               accounts.map((acc) => (
-                <div key={acc.id} className="flex justify-between items-center group">
-                  <span className="text-sm text-text-secondary">{acc.name}</span>
-                  <div className="flex items-center gap-2">
+                <div key={acc.id} className="flex justify-between items-center gap-2 group">
+                  <span className="text-sm text-text-secondary truncate min-w-0">{acc.name}</span>
+                  <div className="flex items-center gap-1 shrink-0">
                     <span className="text-sm font-medium text-text-primary">
                       ${acc.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <button
                       onClick={() => handleEdit(acc)}
-                      className="p-2 -m-1 text-text-secondary/50 hover:text-accent sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
+                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary/50 hover:text-accent sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
                       aria-label="Edit account"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => removeAccount(acc.id)}
-                      className="p-2 -m-1 text-text-secondary/50 hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
+                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary/50 hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
                       aria-label="Remove account"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>

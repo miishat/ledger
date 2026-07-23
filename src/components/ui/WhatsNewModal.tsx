@@ -66,9 +66,10 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
       onClose={onClose}
       desktop="modal"
       ariaLabel="What's New"
-      panelClassName="themed-menu rounded-lg w-full max-w-2xl p-6 flex flex-col gap-1"
+      title={<><Sparkles className="w-5 h-5 text-accent" aria-hidden="true" /> What's New · v{__APP_VERSION__}</>}
+      panelClassName="themed-menu md:rounded-lg w-full max-w-2xl md:p-6 flex flex-col gap-1"
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="hidden md:flex items-center justify-between mb-2">
         <h2 className="flex items-center gap-2 text-[18px] font-semibold text-text-primary">
           <Sparkles className="w-5 h-5 text-accent" /> What's New · v{__APP_VERSION__}
         </h2>

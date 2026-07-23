@@ -54,3 +54,17 @@ describe('PlannerTool route', () => {
     expect(screen.getByRole('heading', { name: target.name })).toBeInTheDocument()
   })
 })
+
+describe('Planner page gutter (no double padding)', () => {
+  it('root does not add its own p-6 padding (main owns the gutter)', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/planner']}>
+        <Routes>
+          <Route path="/planner" element={<Planner />} />
+        </Routes>
+      </MemoryRouter>
+    )
+    const root = container.firstChild as HTMLElement
+    expect(root.className.split(/\s+/)).not.toContain('p-6')
+  })
+})

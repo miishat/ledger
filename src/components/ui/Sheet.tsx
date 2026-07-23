@@ -17,9 +17,10 @@ interface SheetProps {
   dismissible?: boolean
   ariaLabel?: string
   labelledBy?: string
+  /** Optional title shown in the mobile sheet header row (desktop ignores it; callers keep their own headers). */
+  title?: React.ReactNode
   /** Extra classes for the panel container (e.g. max-width on desktop modal). */
   panelClassName?: string
-  /** Optional title shown in the mobile sheet header row (desktop ignores it; callers keep their own headers). */
   children: React.ReactNode
 }
 
@@ -40,6 +41,7 @@ export const Sheet: React.FC<SheetProps> = ({
   dismissible = true,
   ariaLabel,
   labelledBy,
+  title,
   panelClassName = '',
   children,
 }) => {
@@ -236,14 +238,17 @@ export const Sheet: React.FC<SheetProps> = ({
             dragElastic={{ top: 0, bottom: 0.6 }}
             onDragEnd={onDragEnd}
           >
-            <div className="sticky top-0 flex items-center justify-between px-4 pt-3 pb-2 bg-[var(--dropdown-bg)]">
-              <span className="mx-auto h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+            <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
+              <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+              {title != null && (
+                <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
+              )}
               {dismissible && (
                 <button
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="absolute right-3 top-3 p-1 text-text-secondary hover:text-text-primary"
+                  className="ml-auto p-1 text-text-secondary hover:text-text-primary"
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -149,9 +149,10 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       onClose={onClose}
       desktop="modal"
       ariaLabel={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
-      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] rounded-xl shadow-lg border border-[var(--color-border)] overflow-hidden"
+      title={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
+      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)] md:overflow-hidden"
     >
-        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+        <div className="hidden md:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">
             {initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
           </h2>
