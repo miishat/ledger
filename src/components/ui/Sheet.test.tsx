@@ -164,3 +164,35 @@ describe('Sheet mobile header ownership', () => {
     expect(screen.getByRole('heading', { name: 'Add account' })).toBeInTheDocument()
   })
 })
+
+describe('Sheet mobile panel isolation', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('keeps desktop panelClassName (max-width) off the full-width mobile sheet and routes contentClassName to the content', () => {
+    setMatchMedia(false) // mobile bottom sheet
+    render(
+      <Sheet open onClose={() => {}} ariaLabel="x" panelClassName="max-w-md leak-marker" contentClassName="flex flex-col gap-3">
+        <div>body</div>
+      </Sheet>,
+    )
+    const panel = screen.getByTestId('sheet-panel')
+    // the desktop width cap must not leak onto the mobile sheet (it made popups narrow + left-aligned)
+    expect(panel.className).not.toContain('leak-marker')
+    expect(panel.className).not.toContain('max-w-md')
+    expect(panel.className).toContain('w-full')
+    // per-modal content spacing must reach the mobile content wrapper
+    expect(panel.querySelector('.flex.flex-col.gap-3')).toBeTruthy()
+  })
+
+  it('applies panelClassName on desktop and still wraps content with contentClassName', () => {
+    setMatchMedia(true) // desktop modal
+    render(
+      <Sheet open onClose={() => {}} ariaLabel="x" panelClassName="max-w-md keep-marker" contentClassName="flex flex-col gap-3">
+        <div>body</div>
+      </Sheet>,
+    )
+    const panel = screen.getByTestId('sheet-panel')
+    expect(panel.className).toContain('keep-marker')
+    expect(panel.querySelector('.flex.flex-col.gap-3')).toBeTruthy()
+  })
+})
