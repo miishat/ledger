@@ -35,27 +35,29 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[12px] uppercase tracking-wide text-text-secondary">{title}</span>
-      <div className="flex w-full gap-1">
-        {segments.map((s) => {
-          const width = ((s.end - s.start) / cap) * 100
-          const filledTo = Math.min(Math.max(income - s.start, 0), s.end - s.start)
-          const filledPct = (s.end - s.start > 0 ? filledTo / (s.end - s.start) : 0) * 100
-          const active = income > s.start
-          return (
-            <div key={s.start} className="flex flex-col gap-1" style={{ width: `${width}%` }}>
-              <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
-                   title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
-                <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
-                <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-[11px] font-medium text-text-primary">
-                  {(s.rate * 100).toFixed(1)}%
+      <div className="w-full overflow-x-auto">
+        <div className="flex w-full gap-1 min-w-full">
+          {segments.map((s) => {
+            const width = ((s.end - s.start) / cap) * 100
+            const filledTo = Math.min(Math.max(income - s.start, 0), s.end - s.start)
+            const filledPct = (s.end - s.start > 0 ? filledTo / (s.end - s.start) : 0) * 100
+            const active = income > s.start
+            return (
+              <div key={s.start} className="flex flex-col gap-1 shrink-0" style={{ width: `${width}%`, minWidth: '3.5rem' }}>
+                <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
+                     title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
+                  <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
+                  <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-[11px] font-medium text-text-primary">
+                    {(s.rate * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <span className="text-[10px] text-text-secondary text-center whitespace-nowrap">
+                  {formatMoney(s.start)}{s.end < cap ? ` to ${formatMoney(s.end)}` : '+'}
                 </span>
               </div>
-              <span className="text-[10px] text-text-secondary text-center truncate">
-                {formatMoney(s.start)}{s.end < cap ? ` to ${formatMoney(s.end)}` : '+'}
-              </span>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     </div>
   )
