@@ -19,8 +19,13 @@ interface SheetProps {
   labelledBy?: string
   /** Optional title shown in the mobile sheet header row (desktop ignores it; callers keep their own headers). */
   title?: React.ReactNode
-  /** Extra classes for the panel container (e.g. max-width on desktop modal). */
+  /** DESKTOP-only panel classes (max-width, rounding, padding). NOT applied to the mobile
+   *  bottom sheet, which is always full-width with its own chrome. Put content-layout classes
+   *  (flex/gap) in contentClassName so they apply in both modes. */
   panelClassName?: string
+  /** Classes for the content wrapper around children, applied in BOTH desktop and mobile
+   *  (e.g. "flex flex-col gap-3"). This is where per-modal content spacing belongs. */
+  contentClassName?: string
   children: React.ReactNode
 }
 
@@ -43,6 +48,7 @@ export const Sheet: React.FC<SheetProps> = ({
   labelledBy,
   title,
   panelClassName = '',
+  contentClassName = '',
   children,
 }) => {
   const isDesktop = useIsDesktop()
@@ -162,6 +168,10 @@ export const Sheet: React.FC<SheetProps> = ({
     onClick: (e: React.MouseEvent) => e.stopPropagation(),
   } as const
 
+  // Desktop content wrapper: only wrap when a contentClassName is given, so modals
+  // that don't need content-layout classes keep rendering children directly.
+  const desktopContent = contentClassName ? <div className={contentClassName}>{children}</div> : children
+
   // ---- Desktop: modal (centered) ----
   if (isDesktop && desktop === 'modal') {
     return createPortal(
@@ -177,7 +187,7 @@ export const Sheet: React.FC<SheetProps> = ({
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: reduced ? 0 : 0.15 }}
             >
-              {children}
+              {desktopContent}
             </motion.div>
           </div>
         )}
@@ -206,7 +216,7 @@ export const Sheet: React.FC<SheetProps> = ({
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: reduced ? 0 : 0.12 }}
             >
-              {children}
+              {desktopContent}
             </motion.div>
           </>
         )}
@@ -223,11 +233,11 @@ export const Sheet: React.FC<SheetProps> = ({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
           {scrim}
           <motion.div
             {...commonPanelProps}
-            className={`relative z-50 w-full max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl ${panelClassName}`}
+            className="relative z-50 w-full max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             initial={reduced ? { opacity: 0 } : { y: '100%' }}
             animate={reduced ? { opacity: 1 } : { y: 0 }}
@@ -254,7 +264,7 @@ export const Sheet: React.FC<SheetProps> = ({
                 </button>
               )}
             </div>
-            <div className="px-4 pb-4">{children}</div>
+            <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
           </motion.div>
         </div>
       )}
