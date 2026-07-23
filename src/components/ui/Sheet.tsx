@@ -238,7 +238,7 @@ export const Sheet: React.FC<SheetProps> = ({
             dragElastic={{ top: 0, bottom: 0.6 }}
             onDragEnd={onDragEnd}
           >
-            <div className="sticky top-0 z-10 relative flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
+            <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
               <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
               {title != null && (
                 <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
