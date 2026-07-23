@@ -10,7 +10,7 @@ export const PlannerTool: React.FC = () => {
   if (!tool) return <Navigate to="/planner" replace />
   const Component = tool.component
   return (
-    <div className="flex flex-col gap-6 w-full min-h-full p-6 animate-fade-in">
+    <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
       <header className="flex items-center gap-2">
         <Link
           to="/planner"

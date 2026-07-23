@@ -41,3 +41,11 @@ describe('Compensation page - live price + CAD toggle', () => {
     expect(screen.getByRole('button', { name: /refresh price/i })).toBeInTheDocument()
   })
 })
+
+describe('Compensation page gutter (no double padding)', () => {
+  it('page root does not add its own p-6 padding', () => {
+    const { container } = render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const root = container.firstChild as HTMLElement
+    expect(root.className.split(/\s+/)).not.toContain('p-6')
+  })
+})

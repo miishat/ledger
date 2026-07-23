@@ -85,7 +85,7 @@ export const Dashboard: React.FC = () => {
     .filter((w): w is { id: string; element: React.ReactNode } => w !== null);
 
   return (
-    <div className="p-6 min-h-full w-full">
+    <div className="min-h-full w-full">
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { PLANNER_GROUPS, PLANNER_TOOLS } from '../components/planner/toolRegistry'
 
 export const Planner: React.FC = () => (
-  <div className="flex flex-col gap-8 w-full min-h-full p-6 animate-fade-in">
+  <div className="flex flex-col gap-8 w-full min-h-full animate-fade-in">
     <header>
       <h1 className="text-[24px] font-semibold text-text-primary">Planner</h1>
       <p className="text-[14px] text-text-secondary mt-1">
