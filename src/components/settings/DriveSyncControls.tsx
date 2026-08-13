@@ -19,6 +19,14 @@ function whenText(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
+/** Compile-time exhaustiveness guard. If a decision handler reaches this with
+ *  a variant it did not narrow away, TypeScript rejects the call site because
+ *  `x` cannot be `never`, so a new decision variant is a build error instead
+ *  of a silent fall-through into the data-mutating call. */
+function assertNever(x: never): never {
+  throw new Error(`Unhandled decision variant: ${JSON.stringify(x)}`)
+}
+
 export const DriveSyncControls: React.FC = () => {
   const clientId = useSyncStore((s) => s.clientId)
   const setClientId = useSyncStore((s) => s.setClientId)
@@ -79,6 +87,9 @@ export const DriveSyncControls: React.FC = () => {
         })
         return
       }
+      if (decision.kind !== 'clean') {
+        return assertNever(decision)
+      }
       await performPush(await token(), useSyncStore.getState().folderId!, decision.nextRevision, decision.baseRevision)
       setStatus(`Pushed revision ${decision.nextRevision}.`)
     })
@@ -101,6 +112,9 @@ export const DriveSyncControls: React.FC = () => {
       if (decision.kind === 'collision') {
         setPending({ kind: 'collision', remote: decision.remote })
         return
+      }
+      if (decision.kind !== 'clean') {
+        return assertNever(decision)
       }
       await performPull(await token(), decision.remote)
       setStatus(`Pulled revision ${decision.remote.revision}. Reloading.`)
