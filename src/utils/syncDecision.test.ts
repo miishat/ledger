@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { decidePush, decidePull, latestSnapshot, type SnapshotMeta, type LocalSyncFacts } from './syncDecision'
+import { decidePush, decidePull, latestSnapshot, hasRevisionCollision, type SnapshotMeta, type LocalSyncFacts } from './syncDecision'
 
 function snap(revision: number, over: Partial<SnapshotMeta> = {}): SnapshotMeta {
   return {
@@ -64,6 +64,45 @@ describe('decidePush', () => {
   it('reports divergence even when local is unchanged but remote moved', () => {
     expect(decidePush(synced, [snap(5)]).kind).toBe('diverged')
   })
+
+  it('has nothing to push from a fresh device with no local data even though the hash differs', () => {
+    const fresh = { lastSyncedRevision: 0, lastSyncedHash: '', currentHash: 'hash-empty', hasLocalData: false }
+    expect(decidePush(fresh, []).kind).toBe('nothing-to-push')
+  })
+
+  it('has nothing to push from a device with no local data even when Drive has newer snapshots', () => {
+    const fresh = { lastSyncedRevision: 0, lastSyncedHash: '', currentHash: 'hash-empty', hasLocalData: false }
+    expect(decidePush(fresh, [snap(3), snap(5)]).kind).toBe('nothing-to-push')
+  })
+
+  it('reports divergence when two snapshots tie at the highest revision, even at our own last synced revision', () => {
+    const tieA = snap(3, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(3, { fileId: 'tie-b', deviceId: 'device-b' })
+    const d = decidePush(synced, [tieA, tieB])
+    expect(d.kind).toBe('diverged')
+  })
+})
+
+describe('hasRevisionCollision', () => {
+  it('is false for an empty list', () => {
+    expect(hasRevisionCollision([])).toBe(false)
+  })
+
+  it('is false for a single snapshot', () => {
+    expect(hasRevisionCollision([snap(3)])).toBe(false)
+  })
+
+  it('is false when all revisions are distinct', () => {
+    expect(hasRevisionCollision([snap(2), snap(3), snap(5)])).toBe(false)
+  })
+
+  it('is true when two snapshots tie at the highest revision', () => {
+    expect(hasRevisionCollision([snap(3), snap(5, { fileId: 'a' }), snap(5, { fileId: 'b' })])).toBe(true)
+  })
+
+  it('is false when a tie exists at a non-top revision', () => {
+    expect(hasRevisionCollision([snap(3, { fileId: 'a' }), snap(3, { fileId: 'b' }), snap(5)])).toBe(false)
+  })
 })
 
 describe('decidePull', () => {
@@ -93,5 +132,22 @@ describe('decidePull', () => {
   it('warns on a device that has data but has never synced', () => {
     const never = { lastSyncedRevision: 0, lastSyncedHash: '', currentHash: 'hash-x', hasLocalData: true }
     expect(decidePull(never, [snap(5)]).kind).toBe('would-lose-local')
+  })
+
+  it('reports a collision when two snapshots tie at the highest revision and local is clean', () => {
+    const tieA = snap(5, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(5, { fileId: 'tie-b', deviceId: 'device-b' })
+    expect(decidePull(synced, [tieA, tieB]).kind).toBe('collision')
+  })
+
+  it('still warns would-lose-local when there is a tie and local is dirty', () => {
+    const tieA = snap(5, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(5, { fileId: 'tie-b', deviceId: 'device-b' })
+    const dirty = { ...synced, currentHash: 'hash-9' }
+    expect(decidePull(dirty, [tieA, tieB]).kind).toBe('would-lose-local')
+  })
+
+  it('still reports up-to-date in the ordinary no-collision case', () => {
+    expect(decidePull(synced, [snap(3)]).kind).toBe('up-to-date')
   })
 })
