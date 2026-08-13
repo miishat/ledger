@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { DriveSyncControls } from './DriveSyncControls'
 import { useSyncStore } from '../../store/useSyncStore'
 
@@ -31,6 +31,11 @@ describe('DriveSyncControls', () => {
     vi.mocked(service.performPush).mockReset().mockResolvedValue(undefined as never)
     vi.mocked(service.performPull).mockReset().mockResolvedValue(undefined)
     useSyncStore.setState({ clientId: 'client-1', folderId: 'folder-1', lastSyncedRevision: 3, lastSyncedHash: 'h' })
+    vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('asks for a client id when none is configured', () => {
@@ -120,5 +125,57 @@ describe('DriveSyncControls', () => {
     render(<DriveSyncControls />)
     fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
     await waitFor(() => expect(screen.getByText(/access expired/i)).toBeInTheDocument())
+  })
+
+  it('discards local changes and pulls when the user confirms', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'would-lose-local', remote })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /discard local and pull/i }))
+    await waitFor(() => expect(service.performPull).toHaveBeenCalledWith('tok', remote))
+  })
+
+  it('pulls the chosen snapshot when the user confirms a collision', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'collision', remote })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /pull this one/i }))
+    await waitFor(() => expect(service.performPull).toHaveBeenCalledWith('tok', remote))
+  })
+
+  it('cancels the pull when the user backs out of a conflict dialog', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'would-lose-local', remote })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(service.performPull).not.toHaveBeenCalled()
+  })
+
+  it('tells the user to push from another device first when Drive has no snapshots', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'nothing-remote' })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByText(/push from one device first/i)).toBeInTheDocument())
+    expect(service.performPull).not.toHaveBeenCalled()
+  })
+
+  it('reports when this device is already up to date', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'up-to-date' })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByText(/already up to date/i)).toBeInTheDocument())
+    expect(service.performPull).not.toHaveBeenCalled()
+  })
+
+  it('pulls without a dialog when there is no conflict', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'clean', remote })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(service.performPull).toHaveBeenCalledWith('tok', remote))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

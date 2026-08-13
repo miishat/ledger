@@ -6,9 +6,14 @@ import { previewPush, previewPull, performPush, performPull } from '../../utils/
 import type { SnapshotMeta } from '../../utils/syncDecision'
 
 type Pending =
-  | { kind: 'overwrite'; remote: SnapshotMeta; nextRevision: number; baseRevision: number }
-  | { kind: 'discard-local'; remote: SnapshotMeta }
-  | { kind: 'collision'; remote: SnapshotMeta }
+  | {
+      kind: 'overwrite'
+      remote: SnapshotMeta
+      nextRevision: number
+      baseRevision: number
+    }
+  | { kind: 'discard-local', remote: SnapshotMeta }
+  | { kind: 'collision', remote: SnapshotMeta }
 
 function whenText(iso: string): string {
   return new Date(iso).toLocaleString()
