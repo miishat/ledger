@@ -2,7 +2,7 @@ import React from 'react'
 import { Line, LineChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { PAReport } from '../../../utils/investments/ibkrPortfolioAnalyst'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
-import { growthSeries } from './reportMetrics'
+import { formatReportMonth, growthSeries } from './reportMetrics'
 import { Section, pct } from './Section'
 
 const chartColors = ['var(--accent)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-5)']
@@ -15,9 +15,9 @@ export const ReportPerformance: React.FC<{ report: PAReport }> = ({ report }) =>
       <div className="h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={11} />
+            <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={11} tickFormatter={formatReportMonth} minTickGap={20} />
             <YAxis stroke="var(--text-secondary)" fontSize={11} domain={['auto', 'auto']} />
-            <Tooltip {...chartTooltipStyles} />
+            <Tooltip {...chartTooltipStyles} labelFormatter={(label) => formatReportMonth(String(label))} />
             <Legend />
             {names.map((n, i) => (
               <Line key={n} type="monotone" dataKey={n} stroke={chartColors[i % chartColors.length]} strokeWidth={n === 'Account' ? 2 : 1.5} dot={false} isAnimationActive={false} />

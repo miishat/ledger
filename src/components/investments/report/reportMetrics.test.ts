@@ -1,5 +1,6 @@
-import type { PABenchmarkPoint, PASymbolPerf } from '../../../utils/investments/ibkrPortfolioAnalyst'
-import { benchmarkDelta, contributors, feeTotal, growthSeries, incomeTotals } from './reportMetrics'
+import type { PABenchmarkPoint, PAReport, PASymbolPerf } from '../../../utils/investments/ibkrPortfolioAnalyst'
+import { accountValue, benchmarkDelta, contributors, feeTotal, formatReportMonth, growthSeries, incomeTotals } from './reportMetrics'
+import { sampleReport } from './testFixtures'
 
 const sym = (symbol: string, contribution: number): PASymbolPerf => ({
   symbol, description: '', instrument: '', sector: '',
@@ -77,5 +78,53 @@ describe('benchmarkDelta', () => {
 
   it('is null without a benchmark to compare against', () => {
     expect(benchmarkDelta([])).toBeNull()
+  })
+})
+
+describe('formatReportMonth', () => {
+  it('renders IBKR YYYYMM months as a short month and year', () => {
+    expect(formatReportMonth('202601')).toBe('Jan 2026')
+    expect(formatReportMonth('202612')).toBe('Dec 2026')
+  })
+
+  it('passes through anything that is not a valid YYYYMM', () => {
+    expect(formatReportMonth('2026-01')).toBe('2026-01')
+    expect(formatReportMonth('202613')).toBe('202613')
+    expect(formatReportMonth('')).toBe('')
+  })
+})
+
+describe('accountValue', () => {
+  const withAssetClass = (rows: PAReport['assetClassAllocation']): PAReport =>
+    ({ ...sampleReport, assetClassAllocation: rows })
+
+  it('returns null when there is no report', () => {
+    expect(accountValue(null)).toBeNull()
+  })
+
+  it('returns null when the report carried no key statistics', () => {
+    expect(accountValue({ ...sampleReport, keyStats: undefined })).toBeNull()
+  })
+
+  it('reads ending NAV and the cash sleeve', () => {
+    const v = accountValue(withAssetClass([
+      { name: 'Stocks', endingNav: 100000, endingPct: 84.7 },
+      { name: 'Cash', endingNav: 18000, endingPct: 15.3 },
+    ]))
+    expect(v).toEqual({ nav: 118000, cash: 18000, baseCurrency: 'CAD' })
+  })
+
+  it('keeps a negative cash balance for a margin account', () => {
+    const v = accountValue(withAssetClass([{ name: 'Cash', endingNav: -25000, endingPct: -21.2 }]))
+    expect(v?.cash).toBe(-25000)
+    expect(v?.nav).toBe(118000)
+  })
+
+  it('reports null cash when the report has no cash row', () => {
+    expect(accountValue(withAssetClass([{ name: 'Stocks', endingNav: 118000, endingPct: 100 }]))?.cash).toBeNull()
+  })
+
+  it('preserves a non-CAD base currency rather than converting', () => {
+    expect(accountValue({ ...sampleReport, baseCurrency: 'USD' })?.baseCurrency).toBe('USD')
   })
 })

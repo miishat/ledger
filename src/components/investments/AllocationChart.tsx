@@ -48,17 +48,17 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <div className="h-[200px]">
+        <div className="h-[260px] md:h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} isAnimationActive={false}>
+              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false}>
                 {slices.map((s, i) => <Cell key={s.name} fill={SLICE_COLORS[i % SLICE_COLORS.length]} />)}
               </Pie>
               <Tooltip {...chartTooltipStyles} formatter={(value) => formatMoney(Number(value))} />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex flex-col gap-1 text-[13px] max-h-[200px] overflow-y-auto">
+        <div className="flex flex-col gap-1 text-[13px] max-h-[260px] md:max-h-[320px] overflow-y-auto">
           {slices.map((s, i) => (
             <div key={s.name} className="flex justify-between items-center gap-2">
               <span className="flex items-center gap-2 text-text-primary truncate">

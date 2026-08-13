@@ -10,6 +10,8 @@ import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
 import { PortfolioImport } from './PortfolioImport'
 import { PortfolioReport } from './report/PortfolioReport'
+import { accountValue } from './report/reportMetrics'
+import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { EmptyState } from '../ui/EmptyState'
 
 export const PortfolioView: React.FC = () => {
@@ -18,6 +20,12 @@ export const PortfolioView: React.FC = () => {
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
   const currencyReviewPending = usePortfolioStore((s) => s.currencyReviewPending)
   const dismissCurrencyReview = usePortfolioStore((s) => s.dismissCurrencyReview)
+  const report = usePortfolioReportStore((s) => s.report)
+
+  // The imported holdings carry no cash and no margin loan, so their sum is
+  // only ever the holdings value. A PortfolioAnalyst report, when one has been
+  // uploaded, reports the broker's own ending NAV, which does include both.
+  const nav = accountValue(report)
 
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
@@ -99,9 +107,9 @@ export const PortfolioView: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${nav ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
             <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total Invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Value Now (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
+            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Holdings Value (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
             <div className="themed-card rounded-lg p-4">
               <p className="text-[12px] uppercase text-text-secondary">Total P/L</p>
               <p className={`text-[22px] font-semibold ${totals.plCad >= 0 ? 'text-accent' : 'text-error'}`}>
@@ -113,6 +121,15 @@ export const PortfolioView: React.FC = () => {
                 </p>
               )}
             </div>
+            {nav && (
+              <div className="themed-card rounded-lg p-4">
+                <p className="text-[12px] uppercase text-text-secondary">Account Value ({nav.baseCurrency})</p>
+                <p className="text-[22px] font-semibold text-text-primary">{formatMoney(nav.nav)}</p>
+                <p className="text-[11px] text-text-secondary mt-1">
+                  {nav.cash !== null ? `Cash ${formatMoney(nav.cash)} · ` : ''}per report{report?.period ? `, ${report.period}` : ''}
+                </p>
+              </div>
+            )}
           </div>
 
           <AllocationChart rows={rows} rates={rates} />
