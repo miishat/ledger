@@ -202,7 +202,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Company Current Stock Price ($)</label>
+            <label className={labelClass}>Company Current Stock Price (USD)</label>
             <NumberInput
               value={companyCurrentPrice}
               onCommit={setCompanyCurrentPrice}
@@ -337,7 +337,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Grant Price ($)</label>
+                  <label className={labelClass}>Grant Price (USD)</label>
                   <NumberInput
                     value={rsuGrantPrice}
                     onCommit={setRsuGrantPrice}
@@ -492,7 +492,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>ESPP Lock-In Price ($)</label>
+                  <label className={labelClass}>ESPP Lock-In Price (USD)</label>
                   <NumberInput
                     value={esppLockedInPrice}
                     onCommit={setEsppLockedInPrice}

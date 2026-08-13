@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import { PortfolioView } from './PortfolioView'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
+import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
+import { sampleReport } from './report/testFixtures'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __resetMinInterval } from '../../services/marketData/throttle'
@@ -112,6 +114,54 @@ describe('multi-currency totals', () => {
     render(<PortfolioView />)
     expect(await screen.findByText('Total Invested (CAD)')).toBeInTheDocument()
     expect(screen.queryByText(/excluded, no FX rate/)).not.toBeInTheDocument()
+  })
+})
+
+describe('account value from the PortfolioAnalyst report', () => {
+  const initialReportState = usePortfolioReportStore.getState()
+
+  beforeEach(() => {
+    usePortfolioStore.setState({
+      holdings: [{ id: '1', ticker: 'ENB', quantity: 10, avgCost: 50, currency: 'CAD', account: 'A' }],
+      importedAt: '2026-07-21T00:00:00.000Z',
+    })
+  })
+
+  afterEach(() => {
+    usePortfolioReportStore.setState(initialReportState, true)
+  })
+
+  it('shows only the holdings value when no report has been uploaded', async () => {
+    usePortfolioReportStore.setState({ report: null, uploadedAt: null })
+    render(<PortfolioView />)
+    expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
+    expect(screen.queryByText(/^Account Value/)).not.toBeInTheDocument()
+  })
+
+  it('adds an account value card with the cash sleeve once a report exists', async () => {
+    usePortfolioReportStore.setState({
+      report: {
+        ...sampleReport,
+        assetClassAllocation: [
+          { name: 'Stocks', endingNav: 143000, endingPct: 121.2 },
+          { name: 'Cash', endingNav: -25000, endingPct: -21.2 },
+        ],
+      },
+      uploadedAt: '2026-07-21T00:00:00.000Z',
+    })
+    render(<PortfolioView />)
+    expect(await screen.findByText('Account Value (CAD)')).toBeInTheDocument()
+    expect(screen.getByText('$118,000')).toBeInTheDocument()
+    expect(screen.getByText(/Cash -\$25,000/)).toBeInTheDocument()
+  })
+
+  it('labels the card with the report base currency instead of converting', async () => {
+    usePortfolioReportStore.setState({
+      report: { ...sampleReport, baseCurrency: 'USD' },
+      uploadedAt: '2026-07-21T00:00:00.000Z',
+    })
+    render(<PortfolioView />)
+    expect(await screen.findByText('Account Value (USD)')).toBeInTheDocument()
   })
 })
 

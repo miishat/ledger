@@ -3,8 +3,46 @@
 
 import type {
   PABenchmarkPoint, PABenchmarkSummaryRow, PADividend, PAFeeRow,
-  PAProjectedIncomeRow, PASymbolPerf,
+  PAProjectedIncomeRow, PAReport, PASymbolPerf,
 } from '../../../utils/investments/ibkrPortfolioAnalyst'
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
+
+/** IBKR reports the benchmark month as a bare YYYYMM string ("202601"), which
+ *  is unreadable as an axis tick. Anything that is not a valid YYYYMM is passed
+ *  through untouched rather than guessed at. */
+export function formatReportMonth(month: string): string {
+  const m = /^(\d{4})(\d{2})$/.exec(month)
+  if (!m) return month
+  const index = Number(m[2]) - 1
+  if (index < 0 || index > 11) return month
+  return `${MONTH_NAMES[index]} ${m[1]}`
+}
+
+export interface AccountValue {
+  /** Ending NAV: holdings plus cash, net of any margin loan. */
+  nav: number
+  /** Cash sleeve, negative when the account is drawn on margin. */
+  cash: number | null
+  /** Currency the report is denominated in. Never converted here. */
+  baseCurrency: string
+}
+
+/** Account value as the broker reports it, which unlike the sum of imported
+ *  holdings includes cash and nets out a margin loan. Null when no report has
+ *  been uploaded or it carried no key statistics. */
+export function accountValue(report: PAReport | null): AccountValue | null {
+  if (!report?.keyStats) return null
+  const cashRow = report.assetClassAllocation.find((r) => r.name.toLowerCase() === 'cash')
+  return {
+    nav: report.keyStats.endingNav,
+    cash: cashRow ? cashRow.endingNav : null,
+    baseCurrency: report.baseCurrency || 'CAD',
+  }
+}
 
 export interface GrowthPoint {
   month: string

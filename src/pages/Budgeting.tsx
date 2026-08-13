@@ -68,7 +68,7 @@ export const Budgeting: React.FC = () => {
                 else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
                 else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
               }}
-              className="text-[13px]"
+              className="h-10 text-[13px]"
               options={[
                 ...(period.kind === 'month' && period.month !== currentMonth
                   ? [{ value: 'pickedMonth', label: formattedMonth }]
@@ -83,10 +83,10 @@ export const Budgeting: React.FC = () => {
             />
           </div>
           {period.kind === 'month' && (
-            <div className="flex items-center gap-1 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
+            <div className="flex items-center gap-1 md:h-10 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
               <button
                 onClick={() => shiftMonth(-1)}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
                 aria-label="Previous Month"
               >
                 <ChevronLeft size={16} />
@@ -94,7 +94,7 @@ export const Budgeting: React.FC = () => {
               <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
               <button
                 onClick={() => shiftMonth(1)}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
                 aria-label="Next Month"
               >
                 <ChevronRight size={16} />
@@ -112,7 +112,7 @@ export const Budgeting: React.FC = () => {
           <CSVUploader />
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+            className="h-10 px-4 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
           >
             Add Transaction
           </button>
