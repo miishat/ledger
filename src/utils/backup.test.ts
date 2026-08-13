@@ -112,4 +112,44 @@ describe('backup v2 envelope', () => {
       .toThrow('Invalid Ledger backup file')
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
   })
+
+  it('rejects a string data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: 'not an object' as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('rejects an array data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: [1, 2, 3] as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('rejects a null data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: null as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('writes only registered keys, leaving unregistered ones untouched', () => {
+    // Snapshot files sit in a hand-editable Drive folder and the same code
+    // path backs manual Import. A crafted data blob naming ledger-sync
+    // must not be able to overwrite this device's sync bookmark.
+    localStorage.setItem('ledger-sync', JSON.stringify({ deviceId: 'this-device', lastSyncedRevision: 3 }))
+    localStorage.setItem('some-random-key', JSON.stringify({ mine: true }))
+    restoreBackup({
+      app: 'ledger', version: BACKUP_VERSION, exportedAt: '',
+      data: {
+        'ledger-budget': { x: 1 },
+        'ledger-sync': { deviceId: 'attacker', lastSyncedRevision: 999 },
+        'some-random-key': { evil: true },
+      },
+    })
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 1 })
+    expect(JSON.parse(localStorage.getItem('ledger-sync')!)).toEqual({ deviceId: 'this-device', lastSyncedRevision: 3 })
+    expect(JSON.parse(localStorage.getItem('some-random-key')!)).toEqual({ mine: true })
+  })
 })

@@ -35,8 +35,15 @@ export interface BackupEnvelope {
   baseRevision?: number
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function assertValidEnvelope(env: BackupEnvelope | null | undefined): asserts env is BackupEnvelope {
   if (!env || env.app !== 'ledger' || typeof env.version !== 'number' || env.version > BACKUP_VERSION) {
+    throw new Error('Invalid Ledger backup file')
+  }
+  if (env.data !== undefined && !isPlainObject(env.data)) {
     throw new Error('Invalid Ledger backup file')
   }
 }
@@ -67,6 +74,7 @@ export function restoreBackup(envelope: BackupEnvelope): void {
   // Serialise every value before touching localStorage so a bad value cannot
   // leave storage half-written.
   const writes: Array<[string, string]> = Object.entries(envelope.data ?? {})
+    .filter(([key]) => BACKUP_KEYS.includes(key))
     .map(([key, value]) => [key, JSON.stringify(value)] as [string, string])
   for (const [key, serialised] of writes) {
     localStorage.setItem(key, serialised)
