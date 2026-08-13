@@ -1,5 +1,5 @@
 import { buildBackup, parseBackupText, restoreBackup } from './backup'
-import { currentBackupHash, hasLocalData } from './syncHash'
+import { currentBackupHash, hasLocalData, hashBackupData } from './syncHash'
 import { useSyncStore } from '../store/useSyncStore'
 import { decidePull, decidePush, type LocalSyncFacts, type PullDecision, type PushDecision, type SnapshotMeta } from './syncDecision'
 import { downloadSnapshot, findOrCreateFolder, listSnapshots, pruneSnapshots, uploadSnapshot } from './driveSync'
@@ -40,10 +40,14 @@ export async function performPush(
 ): Promise<SnapshotMeta> {
   const { deviceId, deviceName } = useSyncStore.getState()
   const envelope = buildBackup({ deviceId, deviceName, revision: nextRevision, baseRevision })
+  const uploadedHash = hashBackupData(envelope.data)
   const uploaded = await uploadSnapshot(token, folderId, envelope)
 
-  // Bookmark only after Drive confirms the write.
-  useSyncStore.getState().recordSync(nextRevision, currentBackupHash())
+  // Bookmark the payload Drive actually holds, not whatever localStorage says
+  // now. Local data can change during the upload round trip, and hashing it
+  // afterwards would mark those edits as already synced and hide them from
+  // every future push.
+  useSyncStore.getState().recordSync(nextRevision, uploadedHash)
 
   // Pruning is best-effort housekeeping and must never fail the push.
   try {

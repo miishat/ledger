@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { collectFacts, performPush, performPull } from './syncService'
 import { useSyncStore } from '../store/useSyncStore'
 import { BACKUP_VERSION, type BackupEnvelope } from './backup'
+import { hashBackupData } from './syncHash'
 import type { SnapshotMeta } from './syncDecision'
 
 vi.mock('./driveSync', async (importOriginal) => {
@@ -70,6 +71,25 @@ describe('syncService', () => {
     await performPush('tok', 'folder-1', 4, 3)
     expect(useSyncStore.getState().lastSyncedRevision).toBe(4)
     expect(useSyncStore.getState().lastSyncedHash).not.toBe('')
+  })
+
+  it('bookmarks the uploaded payload\'s hash, not localStorage after the upload', async () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ x: 1 }))
+    const originalHash = hashBackupData({ 'ledger-budget': { x: 1 } })
+
+    vi.mocked(drive.uploadSnapshot).mockImplementation(async () => {
+      // Simulate a local edit landing during the network round trip.
+      localStorage.setItem('ledger-budget', JSON.stringify({ x: 2 }))
+      return remoteMeta(4)
+    })
+
+    await performPush('tok', 'folder-1', 4, 3)
+
+    expect(useSyncStore.getState().lastSyncedHash).toBe(originalHash)
+    expect(useSyncStore.getState().lastSyncedHash).not.toBe(hashBackupData({ 'ledger-budget': { x: 2 } }))
+
+    const facts = collectFacts()
+    expect(facts.currentHash).not.toBe(facts.lastSyncedHash)
   })
 
   it('performPull restores the downloaded snapshot', async () => {
