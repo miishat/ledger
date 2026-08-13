@@ -128,3 +128,36 @@ describe('accountValue', () => {
     expect(accountValue({ ...sampleReport, baseCurrency: 'USD' })?.baseCurrency).toBe('USD')
   })
 })
+
+describe('growthSeries ordering', () => {
+  it('compounds oldest-first even when the report rows arrive newest-first', () => {
+    const descending: PABenchmarkPoint[] = [
+      { month: '202603', account: 10, benchmarks: { SPX: 0 } },
+      { month: '202602', account: -10, benchmarks: { SPX: 0 } },
+      { month: '202601', account: 10, benchmarks: { SPX: 0 } },
+    ]
+    const { data } = growthSeries(descending)
+    expect(data.map((d) => d.month)).toEqual(['202601', '202602', '202603'])
+    // 100 -> 110 -> 99 -> 108.9, i.e. the same result as the ascending input.
+    expect(data.map((d) => d.Account)).toEqual([110, 99, 108.9])
+  })
+
+  it('gives an out-of-order input the same result as a sorted one', () => {
+    const points: PABenchmarkPoint[] = [
+      { month: '202601', account: 5, benchmarks: { SPX: 1 } },
+      { month: '202602', account: 3, benchmarks: { SPX: 2 } },
+      { month: '202603', account: -4, benchmarks: { SPX: 1 } },
+    ]
+    const shuffled = [points[2], points[0], points[1]]
+    expect(growthSeries(shuffled)).toEqual(growthSeries(points))
+  })
+
+  it('does not mutate the caller array', () => {
+    const points: PABenchmarkPoint[] = [
+      { month: '202603', account: 1, benchmarks: {} },
+      { month: '202601', account: 2, benchmarks: {} },
+    ]
+    growthSeries(points)
+    expect(points.map((p) => p.month)).toEqual(['202603', '202601'])
+  })
+})

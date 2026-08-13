@@ -49,12 +49,19 @@ export interface GrowthPoint {
   [series: string]: string | number
 }
 
-/** Cumulative growth of 100 from monthly percentage returns. */
+/** Cumulative growth of 100 from monthly percentage returns.
+ *
+ *  Points are sorted oldest-first before compounding. The report does not
+ *  guarantee chronological rows, and order is not merely cosmetic here: each
+ *  month multiplies into a running total, so an out-of-order input both draws
+ *  the axis backwards and compounds the returns in the wrong sequence. Month
+ *  keys are fixed-width ("202601"), so a lexicographic sort is chronological. */
 export function growthSeries(points: PABenchmarkPoint[]): { names: string[]; data: GrowthPoint[] } {
   if (points.length === 0) return { names: [], data: [] }
-  const names = ['Account', ...Object.keys(points[0].benchmarks)]
+  const ordered = [...points].sort((a, b) => (a.month < b.month ? -1 : a.month > b.month ? 1 : 0))
+  const names = ['Account', ...Object.keys(ordered[0].benchmarks)]
   const running: Record<string, number> = Object.fromEntries(names.map((n) => [n, 100]))
-  const data = points.map((p) => {
+  const data = ordered.map((p) => {
     running.Account *= 1 + p.account / 100
     for (const [bm, r] of Object.entries(p.benchmarks)) {
       if (running[bm] !== undefined) running[bm] *= 1 + r / 100

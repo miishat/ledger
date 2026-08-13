@@ -3,12 +3,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { Holding } from '../../store/usePortfolioStore'
 import { allocationBreakdown, type AllocationBy, type FxRates } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
-import { chartTooltipStyles } from '../../utils/chartTheme'
-
-const SLICE_COLORS = [
-  'var(--accent)', 'var(--chart-2)', 'var(--chart-3)',
-  'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)',
-]
+import { chartTooltipStyles, sliceColor } from '../../utils/chartTheme'
 
 const MODES: { by: AllocationBy; label: string }[] = [
   { by: 'holding', label: 'By holding' },
@@ -52,7 +47,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false}>
-                {slices.map((s, i) => <Cell key={s.name} fill={SLICE_COLORS[i % SLICE_COLORS.length]} />)}
+                {slices.map((s, i) => <Cell key={s.name} fill={sliceColor(i)} />)}
               </Pie>
               <Tooltip {...chartTooltipStyles} formatter={(value) => formatMoney(Number(value))} />
             </PieChart>
@@ -62,7 +57,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
           {slices.map((s, i) => (
             <div key={s.name} className="flex justify-between items-center gap-2">
               <span className="flex items-center gap-2 text-text-primary truncate">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: SLICE_COLORS[i % SLICE_COLORS.length] }} />
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sliceColor(i) }} />
                 {s.name}
               </span>
               <span className="text-text-secondary shrink-0 tabular-nums">{s.pct.toFixed(1)}% · {formatMoney(s.valueCad)}</span>
