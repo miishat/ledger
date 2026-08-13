@@ -18,6 +18,7 @@ vi.mock('../../utils/syncService', () => ({
 }))
 
 const service = await import('../../utils/syncService')
+const auth = await import('../../utils/driveAuth')
 
 const remote = {
   fileId: 'f5', name: 'r5.json', createdTime: '2026-08-12T10:00:00.000Z',
@@ -30,6 +31,7 @@ describe('DriveSyncControls', () => {
     vi.mocked(service.previewPull).mockReset()
     vi.mocked(service.performPush).mockReset().mockResolvedValue(undefined as never)
     vi.mocked(service.performPull).mockReset().mockResolvedValue(undefined)
+    vi.mocked(auth.clearCachedToken).mockReset()
     useSyncStore.setState({ clientId: 'client-1', folderId: 'folder-1', lastSyncedRevision: 3, lastSyncedHash: 'h' })
     vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
   })
@@ -125,6 +127,26 @@ describe('DriveSyncControls', () => {
     render(<DriveSyncControls />)
     fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
     await waitFor(() => expect(screen.getByText(/access expired/i)).toBeInTheDocument())
+  })
+
+  it('reconnects and retries once when the token has expired, and succeeds', async () => {
+    vi.mocked(service.previewPull)
+      .mockRejectedValueOnce(new Error('Google Drive access expired. Connect again and retry.'))
+      .mockResolvedValueOnce({ kind: 'up-to-date' })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByText(/already up to date/i)).toBeInTheDocument())
+    expect(auth.clearCachedToken).toHaveBeenCalled()
+    expect(service.previewPull).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry a non-expiry error', async () => {
+    vi.mocked(service.previewPull).mockRejectedValue(new Error('Network unreachable.'))
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByText(/network unreachable/i)).toBeInTheDocument())
+    expect(auth.clearCachedToken).not.toHaveBeenCalled()
+    expect(service.previewPull).toHaveBeenCalledTimes(1)
   })
 
   it('discards local changes and pulls when the user confirms', async () => {

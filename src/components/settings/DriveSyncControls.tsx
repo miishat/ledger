@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CloudUpload, CloudDownload, AlertTriangle } from 'lucide-react'
 import { useSyncStore } from '../../store/useSyncStore'
-import { requestAccessToken, getCachedToken } from '../../utils/driveAuth'
+import { requestAccessToken, getCachedToken, clearCachedToken } from '../../utils/driveAuth'
 import { previewPush, previewPull, performPush, performPull } from '../../utils/syncService'
 import type { SnapshotMeta } from '../../utils/syncDecision'
 
@@ -37,6 +37,19 @@ export const DriveSyncControls: React.FC = () => {
 
   const token = async (): Promise<string> => getCachedToken() ?? (await requestAccessToken(clientId!))
 
+  const isExpiry = (err: unknown) => err instanceof Error && /access expired/i.test(err.message)
+
+  /** Runs work with a token, and on an expiry failure reconnects once and retries. */
+  const withToken = async <T,>(work: (accessToken: string) => Promise<T>): Promise<T> => {
+    try {
+      return await work(await token())
+    } catch (err) {
+      if (!isExpiry(err)) throw err
+      clearCachedToken()
+      return work(await token())
+    }
+  }
+
   const run = async (work: () => Promise<void>) => {
     setBusy(true)
     setError(null)
@@ -52,8 +65,7 @@ export const DriveSyncControls: React.FC = () => {
 
   const handlePush = () =>
     run(async () => {
-      const accessToken = await token()
-      const decision = await previewPush(accessToken)
+      const decision = await withToken((accessToken) => previewPush(accessToken))
       if (decision.kind === 'nothing-to-push') {
         setStatus('Drive is already up to date.')
         return
@@ -67,14 +79,13 @@ export const DriveSyncControls: React.FC = () => {
         })
         return
       }
-      await performPush(accessToken, useSyncStore.getState().folderId!, decision.nextRevision, decision.baseRevision)
+      await performPush(await token(), useSyncStore.getState().folderId!, decision.nextRevision, decision.baseRevision)
       setStatus(`Pushed revision ${decision.nextRevision}.`)
     })
 
   const handlePull = () =>
     run(async () => {
-      const accessToken = await token()
-      const decision = await previewPull(accessToken)
+      const decision = await withToken((accessToken) => previewPull(accessToken))
       if (decision.kind === 'nothing-remote') {
         setStatus('No snapshots in Drive yet. Push from one device first.')
         return
@@ -91,22 +102,21 @@ export const DriveSyncControls: React.FC = () => {
         setPending({ kind: 'collision', remote: decision.remote })
         return
       }
-      await performPull(accessToken, decision.remote)
+      await performPull(await token(), decision.remote)
       setStatus(`Pulled revision ${decision.remote.revision}. Reloading.`)
       window.location.reload()
     })
 
   const confirmPending = () =>
     run(async () => {
-      const accessToken = await token()
       const current = pending!
       setPending(null)
       if (current.kind === 'overwrite') {
-        await performPush(accessToken, folderId!, current.nextRevision, current.baseRevision)
+        await withToken((accessToken) => performPush(accessToken, folderId!, current.nextRevision, current.baseRevision))
         setStatus(`Pushed revision ${current.nextRevision}, overwriting the newer snapshot.`)
         return
       }
-      await performPull(accessToken, current.remote)
+      await withToken((accessToken) => performPull(accessToken, current.remote))
       window.location.reload()
     })
 
