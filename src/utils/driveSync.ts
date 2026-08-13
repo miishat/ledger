@@ -1,4 +1,5 @@
 import type { SnapshotMeta } from './syncDecision'
+import type { BackupEnvelope } from './backup'
 
 export const SYNC_FOLDER_NAME = 'Ledger'
 export const SNAPSHOT_CAP = 100
@@ -75,4 +76,74 @@ export async function listSnapshots(token: string, folderId: string): Promise<Sn
       deviceName: file.appProperties!.deviceName ?? 'another device',
     }))
     .filter((snapshot) => Number.isFinite(snapshot.revision))
+}
+
+const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files'
+const UPLOAD_BOUNDARY = 'ledger-sync-boundary'
+
+/** e.g. ledger-2026-08-12T14-30-05Z-r14.json */
+export function snapshotFilename(date: Date, revision: number): string {
+  const stamp = date.toISOString().slice(0, 19).replace(/:/g, '-')
+  return `ledger-${stamp}Z-r${revision}.json`
+}
+
+export async function uploadSnapshot(
+  token: string,
+  folderId: string,
+  envelope: BackupEnvelope
+): Promise<SnapshotMeta> {
+  const revision = envelope.revision ?? 1
+  const metadata = {
+    name: snapshotFilename(new Date(), revision),
+    parents: [folderId],
+    mimeType: 'application/json',
+    appProperties: {
+      revision: String(revision),
+      deviceId: envelope.deviceId ?? '',
+      deviceName: envelope.deviceName ?? 'another device',
+    },
+  }
+  const content = JSON.stringify(envelope, null, 2)
+  const body =
+    `--${UPLOAD_BOUNDARY}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${UPLOAD_BOUNDARY}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n` +
+    `--${UPLOAD_BOUNDARY}--`
+
+  const url = `${DRIVE_UPLOAD}?uploadType=multipart&fields=${encodeURIComponent('id,name,createdTime')}`
+  const created = (await (
+    await driveFetch(url, token, {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/related; boundary=${UPLOAD_BOUNDARY}` },
+      body,
+    })
+  ).json()) as { id: string; name: string; createdTime: string }
+
+  return {
+    fileId: created.id,
+    name: created.name,
+    createdTime: created.createdTime,
+    revision,
+    deviceId: envelope.deviceId ?? '',
+    deviceName: envelope.deviceName ?? 'another device',
+  }
+}
+
+export async function downloadSnapshot(token: string, fileId: string): Promise<string> {
+  const response = await driveFetch(`${DRIVE_FILES}/${fileId}?alt=media`, token)
+  return response.text()
+}
+
+/** Trashes the oldest snapshots beyond SNAPSHOT_CAP. Returns how many were trashed. */
+export async function pruneSnapshots(token: string, snapshots: SnapshotMeta[]): Promise<number> {
+  if (snapshots.length <= SNAPSHOT_CAP) return 0
+  const oldestFirst = [...snapshots].sort((a, b) => a.createdTime.localeCompare(b.createdTime))
+  const doomed = oldestFirst.slice(0, snapshots.length - SNAPSHOT_CAP)
+  for (const snapshot of doomed) {
+    await driveFetch(`${DRIVE_FILES}/${snapshot.fileId}`, token, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trashed: true }),
+    })
+  }
+  return doomed.length
 }

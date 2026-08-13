@@ -1,5 +1,15 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { findOrCreateFolder, listSnapshots, SYNC_FOLDER_NAME, SNAPSHOT_CAP } from './driveSync'
+import {
+  findOrCreateFolder,
+  listSnapshots,
+  SYNC_FOLDER_NAME,
+  SNAPSHOT_CAP,
+  snapshotFilename,
+  uploadSnapshot,
+  downloadSnapshot,
+  pruneSnapshots,
+} from './driveSync'
+import { BACKUP_VERSION, type BackupEnvelope } from './backup'
 
 function jsonResponse(body: unknown, status = 200) {
   return Promise.resolve({
@@ -111,5 +121,78 @@ describe('driveSync listSnapshots', () => {
 
   it('caps retention at 100 snapshots', () => {
     expect(SNAPSHOT_CAP).toBe(100)
+  })
+})
+
+function envelope(revision: number): BackupEnvelope {
+  return {
+    version: BACKUP_VERSION,
+    exportedAt: '2026-08-12T10:00:00.000Z',
+    app: 'ledger',
+    data: { 'ledger-budget': { x: 1 } },
+    deviceId: 'dev-a',
+    deviceName: 'Desktop',
+    revision,
+    baseRevision: revision - 1,
+  }
+}
+
+describe('driveSync upload and download', () => {
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    fetchMock.mockReset()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  it('names snapshots by timestamp and revision', () => {
+    expect(snapshotFilename(new Date('2026-08-12T14:30:05.123Z'), 14))
+      .toBe('ledger-2026-08-12T14-30-05Z-r14.json')
+  })
+
+  it('uploads with revision metadata in appProperties', async () => {
+    fetchMock.mockReturnValueOnce(
+      jsonResponse({ id: 'new-file', name: 'x.json', createdTime: '2026-08-12T10:00:00.000Z' })
+    )
+    const meta = await uploadSnapshot('tok', 'folder-1', envelope(4))
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toContain('uploadType=multipart')
+    expect(init.headers['Content-Type']).toContain('multipart/related; boundary=')
+    expect(init.body).toContain('"revision":"4"')
+    expect(init.body).toContain('"deviceName":"Desktop"')
+    expect(init.body).toContain('"folder-1"')
+    expect(meta.revision).toBe(4)
+    expect(meta.fileId).toBe('new-file')
+  })
+
+  it('downloads raw file text', async () => {
+    fetchMock.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('{"app":"ledger"}') } as Response)
+    )
+    await expect(downloadSnapshot('tok', 'f1')).resolves.toBe('{"app":"ledger"}')
+    expect(fetchMock.mock.calls[0][0]).toBe('https://www.googleapis.com/drive/v3/files/f1?alt=media')
+  })
+
+  it('prunes nothing when under the cap', async () => {
+    const few = Array.from({ length: 3 }, (_, i) => ({
+      fileId: `f${i}`, name: '', createdTime: `2026-08-0${i + 1}T00:00:00.000Z`,
+      revision: i + 1, deviceId: 'd', deviceName: 'Desktop',
+    }))
+    await expect(pruneSnapshots('tok', few)).resolves.toBe(0)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('trashes the oldest snapshots beyond the cap', async () => {
+    const many = Array.from({ length: SNAPSHOT_CAP + 2 }, (_, i) => ({
+      fileId: `f${i}`, name: '', createdTime: new Date(Date.UTC(2026, 0, i + 1)).toISOString(),
+      revision: i + 1, deviceId: 'd', deviceName: 'Desktop',
+    }))
+    fetchMock.mockReturnValue(jsonResponse({ id: 'x' }))
+    await expect(pruneSnapshots('tok', many)).resolves.toBe(2)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://www.googleapis.com/drive/v3/files/f0')
+    expect(init.method).toBe('PATCH')
+    expect(JSON.parse(init.body)).toEqual({ trashed: true })
   })
 })
