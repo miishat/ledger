@@ -76,3 +76,40 @@ describe('backup file io', () => {
     expect(() => parseBackupText(JSON.stringify({ app: 'nope' }))).toThrow('Invalid Ledger backup file')
   })
 })
+
+describe('backup v2 envelope', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('is version 2', () => {
+    expect(BACKUP_VERSION).toBe(2)
+  })
+
+  it('omits sync metadata when no meta is supplied', () => {
+    const env = buildBackup()
+    expect(env.deviceId).toBeUndefined()
+    expect(env.revision).toBeUndefined()
+  })
+
+  it('carries sync metadata when meta is supplied', () => {
+    const env = buildBackup({ deviceId: 'dev-1', deviceName: 'Desktop', revision: 7, baseRevision: 6 })
+    expect(env.deviceId).toBe('dev-1')
+    expect(env.deviceName).toBe('Desktop')
+    expect(env.revision).toBe(7)
+    expect(env.baseRevision).toBe(6)
+  })
+
+  it('still accepts a version 1 envelope', () => {
+    const v1 = JSON.stringify({ app: 'ledger', version: 1, exportedAt: '', data: { 'ledger-budget': { x: 1 } } })
+    const env = parseBackupText(v1)
+    expect(env.version).toBe(1)
+    restoreBackup(env)
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 1 })
+  })
+
+  it('writes nothing when the envelope is invalid', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: 99, exportedAt: '', data: { 'ledger-budget': { x: 9 } } }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+})
