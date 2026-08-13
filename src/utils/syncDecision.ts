@@ -66,8 +66,8 @@ export function decidePush(facts: LocalSyncFacts, snapshots: SnapshotMeta[]): Pu
 export function decidePull(facts: LocalSyncFacts, snapshots: SnapshotMeta[]): PullDecision {
   const remote = latestSnapshot(snapshots)
   if (!remote) return { kind: 'nothing-remote' }
-  if (facts.hasLocalData && isDirty(facts)) return { kind: 'would-lose-local', remote }
-  if (hasRevisionCollision(snapshots)) return { kind: 'collision', remote }
   if (remote.revision <= facts.lastSyncedRevision) return { kind: 'up-to-date' }
+  if (hasRevisionCollision(snapshots)) return { kind: 'collision', remote }
+  if (facts.hasLocalData && isDirty(facts)) return { kind: 'would-lose-local', remote }
   return { kind: 'clean', remote }
 }

@@ -140,14 +140,37 @@ describe('decidePull', () => {
     expect(decidePull(synced, [tieA, tieB]).kind).toBe('collision')
   })
 
-  it('still warns would-lose-local when there is a tie and local is dirty', () => {
+  it('reports a collision, not would-lose-local, when there is a tie and local is also dirty', () => {
+    // Collision now takes precedence: the destructive would-lose-local dialog
+    // would name only one of the two tied snapshots as "the" remote, which is
+    // misleading when the real problem is that Drive itself is ambiguous.
     const tieA = snap(5, { fileId: 'tie-a', deviceId: 'device-a' })
     const tieB = snap(5, { fileId: 'tie-b', deviceId: 'device-b' })
     const dirty = { ...synced, currentHash: 'hash-9' }
-    expect(decidePull(dirty, [tieA, tieB]).kind).toBe('would-lose-local')
+    expect(decidePull(dirty, [tieA, tieB]).kind).toBe('collision')
   })
 
-  it('still reports up-to-date in the ordinary no-collision case', () => {
-    expect(decidePull(synced, [snap(3)]).kind).toBe('up-to-date')
+  it('reports a collision even with no local data, since Drive itself is ambiguous', () => {
+    const tieA = snap(5, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(5, { fileId: 'tie-b', deviceId: 'device-b' })
+    const fresh = { lastSyncedRevision: 0, lastSyncedHash: '', currentHash: 'hash-empty', hasLocalData: false }
+    expect(decidePull(fresh, [tieA, tieB]).kind).toBe('collision')
+  })
+
+  it('is up to date when dirty locally but Drive has nothing newer', () => {
+    const dirty = { ...synced, currentHash: 'hash-9' }
+    expect(decidePull(dirty, [snap(3)]).kind).toBe('up-to-date')
+  })
+
+  it('is up to date once a collision has already been resolved by a previous pull', () => {
+    const tieA = snap(3, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(3, { fileId: 'tie-b', deviceId: 'device-b' })
+    expect(decidePull(synced, [tieA, tieB]).kind).toBe('up-to-date')
+  })
+
+  it('still reports a collision at a revision higher than the last resolved one', () => {
+    const tieA = snap(5, { fileId: 'tie-a', deviceId: 'device-a' })
+    const tieB = snap(5, { fileId: 'tie-b', deviceId: 'device-b' })
+    expect(decidePull(synced, [tieA, tieB]).kind).toBe('collision')
   })
 })
