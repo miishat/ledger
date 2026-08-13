@@ -8,12 +8,20 @@ pre-1.0 beta.
 
 ## [0.7.5-beta] - 2026-07-23
 
+### Added
+- Investments: the Portfolio tab now shows an Account Value card with the true account value from an uploaded PortfolioAnalyst report, including the cash balance and net of any margin loan. It lists the cash sleeve (negative when you are drawn on margin) and the report period, so a margin account no longer looks like it holds only the sum of its positions. A report in a currency other than Canadian dollars is labelled with that currency rather than converted
+
 ### Fixed
+- Budgeting: the period picker, month selector, Import CSV and Add Transaction controls in the page header were three different heights; they now line up on a single row. On phones the month arrows keep their full-size tap targets
+- Investments: the Benchmark Comparison chart labelled its horizontal axis with raw values like "202601". It now reads "Jan 2026", on both the axis and the hover tooltip
+- Compensation: the ESPP lock-in price, company stock price, and grant price are labelled USD, so it is clear which currency they are entered in
 - Mobile: content at the bottom of long pages is no longer hidden behind the bottom navigation bar. Scrolling to the end now clears the nav, so buttons and captions at the foot of a page are reachable
 - Mobile: pop-ups and sheets (Settings, Add Account, Add Transaction, the CSV importer, and the rest) now fill the screen width instead of appearing as a narrow panel pinned to one side, their sections are spaced correctly, and each shows a single close button instead of two
 - Mobile: the Salary and Tax bracket bars show every bracket's full dollar range and rate instead of clipping the label
 
 ### Changed
+- Investments: the Portfolio tab's "Value Now" total is now "Holdings Value", since it counts only your positions and never included cash or a margin loan
+- Investments: the allocation donut on the Portfolio tab is noticeably larger
 - Mobile: pages now use the full screen width. Doubled-up page margins were removed, so content is roughly 40px wider on a phone and text wraps less
 - Mobile: the bottom navigation tabs are evenly spaced and their labels stay on one line instead of crowding on narrow phones
 - Mobile: controls for editing accounts, stepping through months, and similar actions now have finger-friendly tap targets
