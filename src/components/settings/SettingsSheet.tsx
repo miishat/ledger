@@ -1,9 +1,10 @@
 import React from 'react'
-import { Database, LineChart, Palette, Settings, X } from 'lucide-react'
+import { Database, LineChart, Palette, RefreshCw, Settings, X } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
 import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
 import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
+import { DriveSyncControls } from './DriveSyncControls'
 
 interface SettingsSheetProps {
   open: boolean
@@ -65,6 +66,10 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
 
     <SectionCard icon={<Database className="w-4 h-4" />} title="Backup">
       <BackupControls />
+    </SectionCard>
+
+    <SectionCard icon={<RefreshCw className="w-4 h-4" />} title="Sync">
+      <DriveSyncControls />
     </SectionCard>
 
     <div className="flex items-center justify-between pt-2 border-t border-border">

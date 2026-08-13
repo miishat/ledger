@@ -6,6 +6,13 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Added
+- Google Drive sync. Push and pull your whole dataset as timestamped JSON snapshots in a `Ledger` folder in your own Drive, using an OAuth client ID you supply in Settings. Snapshots carry a revision number, and the app warns before a push overwrites a newer snapshot from another device or a pull discards unpushed local edits. Retention keeps the most recent 100 snapshots and moves older ones to the Drive bin.
+
+### Changed
+- Backup envelope is now version 2, carrying device and revision metadata. Version 1 backup files still import.
+- Restoring a backup now validates the whole file before writing anything, so a corrupt file cannot leave data half-restored.
+
 ## [0.7.6-beta] - 2026-08-12
 
 ### Added

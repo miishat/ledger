@@ -5,11 +5,12 @@ import { SettingsSheet } from './SettingsSheet'
 const noop = () => {}
 
 describe('SettingsSheet', () => {
-  it('renders the three section cards and the about footer', () => {
+  it('renders the section cards and the about footer', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     expect(screen.getByText('Appearance')).toBeInTheDocument()
     expect(screen.getByText('Market data')).toBeInTheDocument()
     expect(screen.getByText('Backup')).toBeInTheDocument()
+    expect(screen.getByText('Sync')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /What's New/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Not financial advice/ })).toBeInTheDocument()
   })

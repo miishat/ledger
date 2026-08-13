@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import changelog from '../../../CHANGELOG.md?raw'
 import type { SWUpdate } from '../../hooks/useSWUpdate'
-import { groupSections, type VersionSection } from '../../utils/whatsNew'
+import { groupSections, versionSeries, type VersionSection } from '../../utils/whatsNew'
 import { Sheet } from './Sheet'
 
 interface WhatsNewModalProps {
@@ -44,10 +44,14 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
     [],
   )
   // Keyed by heading rather than index, since the two groups are rendered
-  // from separate lists and would otherwise collide on position.
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    () => new Set(current.length > 0 ? [current[0].heading] : []),
-  )
+  // from separate lists and would otherwise collide on position. The default
+  // open entry is the newest *versioned* section, so an "[Unreleased]" entry
+  // with real content (previewing an in-progress feature) is shown without
+  // hijacking the auto-expand slot from the latest shipped release.
+  const [openSections, setOpenSections] = useState<Set<string>>(() => {
+    const defaultSection = current.find((s) => versionSeries(s.heading) !== null) ?? current[0]
+    return new Set(defaultSection ? [defaultSection.heading] : [])
+  })
   const [showOlder, setShowOlder] = useState(false)
 
   const toggle = (heading: string) =>
