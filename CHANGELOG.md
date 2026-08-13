@@ -17,11 +17,13 @@ pre-1.0 beta.
 - Compensation: the ESPP lock-in price, company stock price, and grant price are labelled USD, so it is clear which currency they are entered in
 - Dashboard: the Net Worth widget's month-over-month percentage printed its full unrounded value (for example -0.15652843963654473%). It now shows two decimals
 - Desktop: the divider between the sidebar and the page used to begin abruptly at the top edge with nothing meeting it, while its lower end was anchored by the settings bar. It now fades in, so it no longer looks unfinished
+- Pop-ups taller than the window were cut off at the top with no way to scroll back up to them. They now scroll to reveal their full height, headers included. This affected What's New most, but applied to every desktop pop-up
 - Mobile: content at the bottom of long pages is no longer hidden behind the bottom navigation bar. Scrolling to the end now clears the nav, so buttons and captions at the foot of a page are reachable
 - Mobile: pop-ups and sheets (Settings, Add Account, Add Transaction, the CSV importer, and the rest) now fill the screen width instead of appearing as a narrow panel pinned to one side, their sections are spaced correctly, and each shows a single close button instead of two
 - Mobile: the Salary and Tax bracket bars show every bracket's full dollar range and rate instead of clipping the label
 
 ### Changed
+- What's New now lists only the releases in the current version series; earlier ones are tucked behind an "Older versions" section, so the window opens short instead of listing every release back to 0.1.0
 - Investments: the Portfolio tab's "Value Now" total is now "Holdings Value", since it counts only your positions and never included cash or a margin loan
 - Investments: the allocation donut on the Portfolio tab is noticeably larger
 - Mobile: pages now use the full screen width. Doubled-up page margins were removed, so content is roughly 40px wider on a phone and text wraps less

@@ -195,4 +195,24 @@ describe('Sheet mobile panel isolation', () => {
     expect(panel.className).toContain('keep-marker')
     expect(panel.querySelector('.flex.flex-col.gap-3')).toBeTruthy()
   })
+
+  // A panel taller than the viewport used to be centred by the scroll
+  // container itself, which overflows it equally top and bottom and leaves the
+  // top unreachable. Centring must sit on an inner min-h-full wrapper instead.
+  it('keeps a too-tall desktop panel scrollable to its top edge', () => {
+    setMatchMedia(true)
+    render(
+      <Sheet open onClose={() => {}} ariaLabel="x" panelClassName="max-w-md">
+        <div>body</div>
+      </Sheet>,
+    )
+    const panel = screen.getByTestId('sheet-panel')
+    const centering = panel.parentElement!
+    const scroller = centering.parentElement!
+
+    expect(centering.className).toContain('min-h-full')
+    expect(centering.className).toContain('items-center')
+    expect(scroller.className).toMatch(/overflow-y-auto/)
+    expect(scroller.className).not.toMatch(/items-center/)
+  })
 })

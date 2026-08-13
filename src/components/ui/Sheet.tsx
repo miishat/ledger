@@ -177,18 +177,26 @@ export const Sheet: React.FC<SheetProps> = ({
     return createPortal(
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-50 overflow-y-auto">
             {scrim}
-            <motion.div
-              {...commonPanelProps}
-              className={`relative z-50 my-8 ${panelClassName}`}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: reduced ? 0 : 0.15 }}
-            >
-              {desktopContent}
-            </motion.div>
+            {/* Centering lives on an inner min-h-full wrapper, NOT on the
+                scroll container. `items-center` on a scroll container overflows
+                a too-tall panel equally in both directions, and the part above
+                the top edge cannot be scrolled back to, so the panel's header
+                is permanently cut off. Growing this wrapper past the viewport
+                instead keeps the whole panel reachable. */}
+            <div className="flex min-h-full items-center justify-center p-4">
+              <motion.div
+                {...commonPanelProps}
+                className={`relative z-50 my-8 ${panelClassName}`}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: reduced ? 0 : 0.15 }}
+              >
+                {desktopContent}
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>,

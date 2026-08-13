@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import changelog from '../../../CHANGELOG.md?raw'
 import type { SWUpdate } from '../../hooks/useSWUpdate'
+import { groupSections, type VersionSection } from '../../utils/whatsNew'
 import { Sheet } from './Sheet'
 
 interface WhatsNewModalProps {
@@ -9,11 +10,6 @@ interface WhatsNewModalProps {
   onClose: () => void
   onOpenDisclaimer: () => void
   swUpdate?: SWUpdate
-}
-
-interface VersionSection {
-  heading: string
-  body: string[]
 }
 
 /** CHANGELOG.md split into per-version sections, empty ones dropped. */
@@ -39,19 +35,43 @@ const SectionBody: React.FC<{ body: string[] }> = ({ body }) => (
   </>
 )
 
-/** Renders CHANGELOG.md (bundled at build time): newest version expanded,
- *  older versions collapsed. */
+/** Renders CHANGELOG.md (bundled at build time): the running version's release
+ *  series is listed with its newest entry expanded; earlier series are tucked
+ *  behind an "Older versions" disclosure. */
 export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, onOpenDisclaimer, swUpdate }) => {
-  const sections = useMemo(() => parseSections(), [])
-  const [openSections, setOpenSections] = useState<Set<number>>(() => new Set([0]))
+  const { current, older } = useMemo(
+    () => groupSections(parseSections(), __APP_VERSION__),
+    [],
+  )
+  // Keyed by heading rather than index, since the two groups are rendered
+  // from separate lists and would otherwise collide on position.
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(current.length > 0 ? [current[0].heading] : []),
+  )
+  const [showOlder, setShowOlder] = useState(false)
 
-  const toggle = (i: number) =>
+  const toggle = (heading: string) =>
     setOpenSections((prev) => {
       const next = new Set(prev)
-      if (next.has(i)) next.delete(i)
-      else next.add(i)
+      if (next.has(heading)) next.delete(heading)
+      else next.add(heading)
       return next
     })
+
+  const renderSection = (s: VersionSection) => (
+    <div key={s.heading} className="flex flex-col">
+      <button
+        type="button"
+        onClick={() => toggle(s.heading)}
+        aria-expanded={openSections.has(s.heading)}
+        className="flex items-center justify-between gap-2 mt-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+      >
+        <span className="text-[15px] font-semibold text-accent">{s.heading}</span>
+        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${openSections.has(s.heading) ? 'rotate-180' : ''}`} />
+      </button>
+      {openSections.has(s.heading) && <SectionBody body={s.body} />}
+    </div>
+  )
 
   const checkLabel =
     swUpdate?.checkStatus === 'checking' ? 'Checking…'
@@ -79,20 +99,24 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
         </button>
       </div>
 
-      {sections.map((s, i) => (
-        <div key={s.heading} className="flex flex-col">
+      {current.map(renderSection)}
+
+      {older.length > 0 && (
+        <div className="flex flex-col mt-3 pt-3 border-t border-border">
           <button
             type="button"
-            onClick={() => toggle(i)}
-            aria-expanded={openSections.has(i)}
-            className="flex items-center justify-between gap-2 mt-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+            onClick={() => setShowOlder((v) => !v)}
+            aria-expanded={showOlder}
+            className="flex items-center justify-between gap-2 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
           >
-            <span className="text-[15px] font-semibold text-accent">{s.heading}</span>
-            <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${openSections.has(i) ? 'rotate-180' : ''}`} />
+            <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
+              Older versions ({older.length})
+            </span>
+            <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${showOlder ? 'rotate-180' : ''}`} />
           </button>
-          {openSections.has(i) && <SectionBody body={s.body} />}
+          {showOlder && older.map(renderSection)}
         </div>
-      ))}
+      )}
 
       {swUpdate && (
         <div className="flex items-center justify-between gap-3 mt-5 pt-3 border-t border-border">
