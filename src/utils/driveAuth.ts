@@ -1,5 +1,7 @@
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
+export const TOKEN_TIMEOUT_MS = 120000
+
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
 
 interface TokenResponse {
@@ -62,10 +64,15 @@ export async function requestAccessToken(clientId: string): Promise<string> {
   if (!google) throw new Error('Could not reach Google. Check your connection and try again.')
 
   return new Promise<string>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Google did not respond. The sign-in window may have been blocked. Try again.'))
+    }, TOKEN_TIMEOUT_MS)
+
     const client = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: DRIVE_SCOPE,
       callback: (response) => {
+        clearTimeout(timer)
         if (response.access_token) {
           cachedToken = response.access_token
           resolve(response.access_token)
@@ -73,7 +80,10 @@ export async function requestAccessToken(clientId: string): Promise<string> {
         }
         reject(new Error(response.error ?? 'Google did not return an access token.'))
       },
-      error_callback: () => reject(new Error('Google sign-in was cancelled.')),
+      error_callback: () => {
+        clearTimeout(timer)
+        reject(new Error('Google sign-in was cancelled.'))
+      },
     })
     client.requestAccessToken()
   })
