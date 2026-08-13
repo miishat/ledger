@@ -1648,6 +1648,15 @@ describe('DriveSyncControls', () => {
     expect(service.performPull).not.toHaveBeenCalled()
   })
 
+  it('warns when two devices pushed the same revision', async () => {
+    vi.mocked(service.previewPull).mockResolvedValue({ kind: 'collision', remote })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+    expect(screen.getByText(/at the same time/i)).toBeInTheDocument()
+    expect(service.performPull).not.toHaveBeenCalled()
+  })
+
   it('surfaces Drive errors', async () => {
     vi.mocked(service.previewPull).mockRejectedValue(new Error('Google Drive access expired. Connect again and retry.'))
     render(<DriveSyncControls />)
@@ -1680,6 +1689,7 @@ import type { SnapshotMeta } from '../../utils/syncDecision'
 type Pending =
   | { kind: 'overwrite'; remote: SnapshotMeta; nextRevision: number; baseRevision: number }
   | { kind: 'discard-local'; remote: SnapshotMeta }
+  | { kind: 'collision'; remote: SnapshotMeta }
 
 function whenText(iso: string): string {
   return new Date(iso).toLocaleString()
@@ -1751,6 +1761,10 @@ export const DriveSyncControls: React.FC = () => {
       }
       if (decision.kind === 'would-lose-local') {
         setPending({ kind: 'discard-local', remote: decision.remote })
+        return
+      }
+      if (decision.kind === 'collision') {
+        setPending({ kind: 'collision', remote: decision.remote })
         return
       }
       await performPull(accessToken, decision.remote)
@@ -1842,17 +1856,26 @@ export const DriveSyncControls: React.FC = () => {
           <p className="flex items-center gap-1.5 text-[13px] font-medium text-text-primary">
             <AlertTriangle className="w-4 h-4 text-error" aria-hidden="true" /> This will discard data
           </p>
-          {pending.kind === 'overwrite' ? (
+          {pending.kind === 'overwrite' && (
             <p className="text-[12px] text-text-secondary">
               {pending.remote.deviceName} pushed revision {pending.remote.revision} on{' '}
               {whenText(pending.remote.createdTime)}, after this device last synced. Pushing now makes your
               copy the newest one. Nothing is deleted from Drive, but the other device's changes will not be
               in your data.
             </p>
-          ) : (
+          )}
+          {pending.kind === 'discard-local' && (
             <p className="text-[12px] text-text-secondary">
               You have unpushed changes on this device. Pulling revision {pending.remote.revision} from{' '}
               {pending.remote.deviceName} replaces everything here, and those local changes are gone.
+            </p>
+          )}
+          {pending.kind === 'collision' && (
+            <p className="text-[12px] text-text-secondary">
+              Two devices pushed revision {pending.remote.revision} at the same time, so Drive holds two
+              different snapshots with that number. Pulling takes the one from {pending.remote.deviceName},
+              saved {whenText(pending.remote.createdTime)}. The other snapshot stays in your Drive folder,
+              but this app will not offer it again, so recover it by hand if you need it.
             </p>
           )}
           <div className="flex gap-2">
@@ -1861,7 +1884,9 @@ export const DriveSyncControls: React.FC = () => {
               disabled={busy}
               className="flex-1 px-3 py-2 rounded-md border border-error text-[13px] text-error hover:bg-error/10 transition-colors disabled:opacity-50"
             >
-              {pending.kind === 'overwrite' ? 'Overwrite anyway' : 'Discard local and pull'}
+              {pending.kind === 'overwrite' && 'Overwrite anyway'}
+              {pending.kind === 'discard-local' && 'Discard local and pull'}
+              {pending.kind === 'collision' && 'Pull this one'}
             </button>
             <button
               onClick={() => setPending(null)}
@@ -1883,7 +1908,7 @@ export const DriveSyncControls: React.FC = () => {
 npx vitest run src/components/settings/DriveSyncControls.test.tsx
 ```
 
-Expected: PASS, 10 tests. If `window.location.reload` throws under jsdom, add `vi.stubGlobal('location', { ...window.location, reload: vi.fn() })` in `beforeEach` rather than changing the component.
+Expected: PASS, 11 tests. If `window.location.reload` throws under jsdom, add `vi.stubGlobal('location', { ...window.location, reload: vi.fn() })` in `beforeEach` rather than changing the component.
 
 - [ ] **Step 5: Commit**
 
@@ -1996,4 +2021,5 @@ Automated tests never touch Google, so one manual pass is required before this i
 - **Testing-mode consent expires every 7 days.** Avoiding this requires submitting the app for Google verification, which is disproportionate for a personal tool.
 - **Token is memory-only**, so Connect is needed roughly once per app session. This is deliberate.
 - **Hash-based dirty detection can report a false positive** if Zustand serialises the same state with different key order. The cost is one extra confirmation prompt and never data loss.
-- **Simultaneous pushes from two devices** can produce two snapshots with the same revision. `latestSnapshot` breaks the tie by `createdTime`, so the app stays consistent, but one device's push will be silently superseded on the next pull.
+- **Simultaneous pushes from two devices** can produce two snapshots with the same revision. This is now detected rather than silently resolved: `hasRevisionCollision` reports the tie, `decidePush` returns `diverged`, and `decidePull` returns a `collision` decision that warns the user. The losing snapshot is not deleted, but the app will not offer it again, so recovering it means fetching the file from the Drive folder by hand. Amendment approved by the project owner after the Task 4 review; the original plan accepted the silent tie-break.
+- **`decidePush` refuses to push from a device with no local data**, returning `nothing-to-push` even when the hash looks dirty. This stops a freshly installed device uploading an empty snapshot as revision 1. Also a Task 4 review amendment.
