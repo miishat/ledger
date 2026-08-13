@@ -31,6 +31,21 @@ describe('Layout desktop sidebar', () => {
     expect(screen.getByPlaceholderText('Jump to a page or tool…')).toBeInTheDocument()
   })
 
+  // The sidebar's vertical rule used to run to the top edge with nothing
+  // meeting it, while its lower end was anchored by the settings dock border.
+  // It is now a gradient that fades in from the top.
+  it('draws the divider as a gradient that fades in from the top', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const sidebar = container.querySelector('nav.md\\:flex')!
+    expect(sidebar.className).not.toMatch(/border-r border-border/)
+
+    const divider = screen.getByTestId('sidebar-divider')
+    expect(divider.getAttribute('style')).toMatch(/linear-gradient/)
+    expect(divider.getAttribute('style')).toMatch(/transparent/)
+    expect(divider.className).toMatch(/absolute/)
+    expect(divider).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('marks the active nav item with an accent bar', () => {
     render(<MemoryRouter><Layout /></MemoryRouter>)
     const active = screen.getAllByRole('link', { name: /dashboard/i })

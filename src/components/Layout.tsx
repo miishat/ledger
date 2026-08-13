@@ -70,7 +70,18 @@ export const Layout: React.FC = () => {
       <ThemeBackground theme={theme} />
 
       {/* Sidebar Navigation */}
-      <nav className="hidden md:flex w-64 border-r border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
+      <nav className="hidden md:flex w-64 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
+        {/* The divider fades in from the top rather than starting at a hard
+            edge with nothing meeting it. Its lower end is already anchored by
+            the settings dock's border-t. Absolutely positioned, so it stays
+            out of the flex flow; the transparent border-r above preserves the
+            1px the solid border used to occupy. */}
+        <div
+          aria-hidden="true"
+          data-testid="sidebar-divider"
+          className="pointer-events-none absolute inset-y-0 -right-px w-px"
+          style={{ background: 'linear-gradient(to bottom, transparent 0px, var(--border-color) 150px)' }}
+        />
         <div>
           <div className="p-6 pb-3 flex items-center gap-2.5">
             <LedgerMark size={26} className="text-accent shrink-0" />

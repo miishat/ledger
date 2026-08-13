@@ -23,7 +23,7 @@ export const NetWorthWidget: React.FC = () => {
         <div className="flex items-center text-accent font-medium">
           {isPositive ? <TrendingUp size={16} className="mr-1" /> : <TrendingDown size={16} className="mr-1 text-error" />}
           <span className={isPositive ? '' : 'text-error'}>
-            {isPositive ? '+' : ''}{netWorthTrend}%
+            {isPositive ? '+' : ''}{netWorthTrend.toFixed(2)}%
           </span>
           <span className="text-text-secondary ml-2 font-normal text-sm">vs Last Month</span>
         </div>

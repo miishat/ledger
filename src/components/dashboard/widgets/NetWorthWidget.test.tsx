@@ -27,3 +27,29 @@ describe('NetWorthWidget currency formatting', () => {
     expect(screen.getByText('$15,000.00')).toBeInTheDocument()
   })
 })
+
+describe('NetWorthWidget trend formatting', () => {
+  // A month-over-month ratio is an arbitrary float, so it has to be rounded
+  // before display or it renders its full binary expansion.
+  const seedTrend = (past: number, currentValue: number) => {
+    const now = new Date()
+    const endOfLastMonth = new Date(new Date(now.getFullYear(), now.getMonth(), 1).getTime() - 1)
+    useAccountsStore.setState({
+      accounts: [{ id: 'b1', name: 'Chequing', value: currentValue, type: 'bank' }],
+      history: [{ date: endOfLastMonth.toISOString().split('T')[0], value: past }],
+    })
+  }
+
+  it('rounds a repeating trend to two decimals instead of printing the raw float', () => {
+    seedTrend(319430.77, 318930.77)
+    render(<NetWorthWidget />)
+    expect(screen.getByText('-0.16%')).toBeInTheDocument()
+    expect(screen.queryByText(/\d\.\d{4,}%/)).not.toBeInTheDocument()
+  })
+
+  it('keeps two decimals and a plus sign on a positive trend', () => {
+    seedTrend(100000, 110000)
+    render(<NetWorthWidget />)
+    expect(screen.getByText('+10.00%')).toBeInTheDocument()
+  })
+})

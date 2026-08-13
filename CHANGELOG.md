@@ -15,6 +15,8 @@ pre-1.0 beta.
 - Budgeting: the period picker, month selector, Import CSV and Add Transaction controls in the page header were three different heights; they now line up on a single row. On phones the month arrows keep their full-size tap targets
 - Investments: the Benchmark Comparison chart labelled its horizontal axis with raw values like "202601". It now reads "Jan 2026", on both the axis and the hover tooltip
 - Compensation: the ESPP lock-in price, company stock price, and grant price are labelled USD, so it is clear which currency they are entered in
+- Dashboard: the Net Worth widget's month-over-month percentage printed its full unrounded value (for example -0.15652843963654473%). It now shows two decimals
+- Desktop: the divider between the sidebar and the page used to begin abruptly at the top edge with nothing meeting it, while its lower end was anchored by the settings bar. It now fades in, so it no longer looks unfinished
 - Mobile: content at the bottom of long pages is no longer hidden behind the bottom navigation bar. Scrolling to the end now clears the nav, so buttons and captions at the foot of a page are reachable
 - Mobile: pop-ups and sheets (Settings, Add Account, Add Transaction, the CSV importer, and the rest) now fill the screen width instead of appearing as a narrow panel pinned to one side, their sections are spaced correctly, and each shows a single close button instead of two
 - Mobile: the Salary and Tax bracket bars show every bracket's full dollar range and rate instead of clipping the label
