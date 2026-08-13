@@ -113,4 +113,34 @@ describe('syncService', () => {
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
     expect(useSyncStore.getState().lastSyncedRevision).toBe(0)
   })
+
+  it('performPull removes a registered key the snapshot does not carry, and reports clean afterwards', async () => {
+    // Device has portfolio data the remote snapshot never had (it was pushed
+    // from a device that never used Investments).
+    localStorage.setItem('ledger-portfolio', JSON.stringify({ holdings: [1, 2, 3] }))
+    const envelope: BackupEnvelope = {
+      version: BACKUP_VERSION, exportedAt: '', app: 'ledger',
+      data: { 'ledger-budget': { pulled: true } }, revision: 5,
+    }
+    vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
+
+    await performPull('tok', remoteMeta(5))
+
+    expect(localStorage.getItem('ledger-portfolio')).toBeNull()
+    const facts = collectFacts()
+    expect(facts.currentHash).toBe(facts.lastSyncedHash)
+  })
+
+  it('performPull overwrites a key present in both local storage and the snapshot', async () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ old: true }))
+    const envelope: BackupEnvelope = {
+      version: BACKUP_VERSION, exportedAt: '', app: 'ledger',
+      data: { 'ledger-budget': { fresh: true } }, revision: 5,
+    }
+    vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
+
+    await performPull('tok', remoteMeta(5))
+
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ fresh: true })
+  })
 })

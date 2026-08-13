@@ -1,4 +1,4 @@
-import { buildBackup, parseBackupText, restoreBackup } from './backup'
+import { BACKUP_KEYS, buildBackup, parseBackupText, restoreBackup } from './backup'
 import { currentBackupHash, hasLocalData, hashBackupData } from './syncHash'
 import { useSyncStore } from '../store/useSyncStore'
 import { decidePull, decidePush, type LocalSyncFacts, type PullDecision, type PushDecision, type SnapshotMeta } from './syncDecision'
@@ -64,5 +64,11 @@ export async function performPull(token: string, remote: SnapshotMeta): Promise<
   // Parse and validate before any write, so a corrupt file cannot damage local data.
   const envelope = parseBackupText(text)
   restoreBackup(envelope)
+  // A pull is a whole-state replacement. Any registered key the snapshot does
+  // not carry must go, otherwise it survives, gets folded into the bookmark
+  // hash, and silently rides along into the next push.
+  for (const key of BACKUP_KEYS) {
+    if (!(key in (envelope.data ?? {}))) localStorage.removeItem(key)
+  }
   useSyncStore.getState().recordSync(remote.revision, currentBackupHash())
 }
