@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { ThemedSelect, menuPlacement } from './ThemedSelect'
+import { ThemedSelect } from './ThemedSelect'
+import { menuPlacement } from './menuPlacement'
 import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const options = [

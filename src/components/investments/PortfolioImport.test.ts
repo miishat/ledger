@@ -1,4 +1,4 @@
-import { holdingsFromReport } from './PortfolioImport'
+import { holdingsFromReport } from './holdingsFromReport'
 import type { PAReport, PAOpenPosition } from '../../utils/investments/ibkrPortfolioAnalyst'
 
 function position(over: Partial<PAOpenPosition>): PAOpenPosition {

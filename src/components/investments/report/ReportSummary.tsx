@@ -3,7 +3,7 @@ import type { PAReport } from '../../../utils/investments/ibkrPortfolioAnalyst'
 import { formatMoney } from '../../planner/format'
 import { Stat } from '../../ui/Stat'
 import { benchmarkDelta, feeTotal, incomeTotals } from './reportMetrics'
-import { pct } from './Section'
+import { pct } from './format'
 
 /** Summary-first hero: the six figures that answer "how did I do" before any
  *  table is opened. */

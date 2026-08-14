@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { Sheet } from './Sheet'
+import { menuPlacement } from './menuPlacement'
 
 export interface ThemedSelectOption {
   value: string
@@ -16,23 +17,6 @@ interface ThemedSelectProps {
   className?: string
   /** Accessible name for the trigger, for selects with no visible label. */
   ariaLabel?: string
-}
-
-const MENU_MAX = 256 // px, matches previous max-h-64
-const MENU_MARGIN = 16
-const MIN_BELOW = 160
-
-/** Decide dropdown direction and scroll height from the trigger's rect. */
-export function menuPlacement(
-  rect: { top: number; bottom: number },
-  viewportHeight: number,
-): { openUp: boolean; maxHeight: number } {
-  const below = viewportHeight - rect.bottom - MENU_MARGIN
-  const above = rect.top - MENU_MARGIN
-  if (below < MIN_BELOW && above > below) {
-    return { openUp: true, maxHeight: Math.min(MENU_MAX, above) }
-  }
-  return { openUp: false, maxHeight: Math.min(MENU_MAX, Math.max(below, MIN_BELOW)) }
 }
 
 /** Theme-aware replacement for native <select>. Styled like the planner

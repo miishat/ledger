@@ -1,15 +1,16 @@
 import React, { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import {
-  mapPortfolioRows, parsePortfolioText, toCurrency, type ColumnMapping, type UnrecognizedPortfolioCSV,
+  mapPortfolioRows, parsePortfolioText, type ColumnMapping, type UnrecognizedPortfolioCSV,
 } from '../../utils/portfolioCsv'
 import {
   DEFAULT_ACCOUNT, usePortfolioStore, type Holding, type ImportMode,
 } from '../../store/usePortfolioStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
-import { isPortfolioAnalystCsv, parsePortfolioAnalyst, type PAReport } from '../../utils/investments/ibkrPortfolioAnalyst'
+import { isPortfolioAnalystCsv, parsePortfolioAnalyst } from '../../utils/investments/ibkrPortfolioAnalyst'
 import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { holdingsFromReport } from './holdingsFromReport'
 
 const selectCls =
   'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
@@ -18,21 +19,6 @@ const MODE_LABELS: Record<ImportMode, string> = {
   replace: 'Replace this account',
   update: 'Update (merge by ticker)',
   add: 'Add as new rows',
-}
-
-/** Stock/ETF long positions from the report, as importable holdings.
- *  Exported for testing: covers the same guess-CAD bug fixed in portfolioCsv.ts,
- *  so it must be exercised directly. */
-export function holdingsFromReport(report: PAReport): Omit<Holding, 'id' | 'account'>[] {
-  return report.openPositions
-    .filter((p) => (p.instrument === 'Stocks' || p.instrument === 'ETFs') && p.quantity > 0 && p.costBasis > 0)
-    .map((p) => ({
-      ticker: p.symbol.toUpperCase(),
-      name: p.description || undefined,
-      quantity: p.quantity,
-      avgCost: p.costBasis / p.quantity,
-      currency: toCurrency(p.currency),
-    }))
 }
 
 export const PortfolioImport: React.FC = () => {

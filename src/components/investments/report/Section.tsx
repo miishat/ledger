@@ -17,5 +17,3 @@ export const Section: React.FC<{ title: string; defaultOpen?: boolean; children:
     </div>
   )
 }
-
-export const pct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`

@@ -3,7 +3,8 @@ import { Line, LineChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } f
 import type { PAReport } from '../../../utils/investments/ibkrPortfolioAnalyst'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { formatReportMonth, growthSeries } from './reportMetrics'
-import { Section, pct } from './Section'
+import { Section } from './Section'
+import { pct } from './format'
 
 const chartColors = ['var(--accent)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-5)']
 
