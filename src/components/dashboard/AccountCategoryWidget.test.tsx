@@ -37,3 +37,13 @@ describe('AccountCategoryWidget mobile tap targets', () => {
     expect(name.className.split(/\s+/)).toContain('truncate')
   })
 })
+
+describe('AccountCategoryWidget empty state', () => {
+  it('invites the user to add their first account instead of showing a bare sentence', () => {
+    useAccountsStore.setState({ accounts: [] })
+    render(<AccountCategoryWidget title="Bank Accounts" type="bank" />)
+    expect(screen.getByText('No accounts yet')).toBeInTheDocument()
+    const cta = screen.getByRole('button', { name: 'Add account' })
+    expect(cta).toBeInTheDocument()
+  })
+})

@@ -4,6 +4,7 @@ import { WidgetWrapper } from './WidgetWrapper';
 import { useAccountsStore } from '../../store/useAccountsStore';
 import type { AccountType } from '../../store/useAccountsStore';
 import { AddAccountModal } from './AddAccountModal';
+import { EmptyState } from '../ui/EmptyState';
 
 interface AccountCategoryWidgetProps {
   title: string;
@@ -56,7 +57,11 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
           
           <div className="flex-1 overflow-y-auto max-h-[150px] pr-2 flex flex-col gap-2">
             {accounts.length === 0 ? (
-              <p className="text-sm text-text-secondary italic">No accounts added yet.</p>
+              <EmptyState
+                message="No accounts yet"
+                hint={`Add your first ${title.toLowerCase().replace(/s$/, '')} to start tracking.`}
+                action={{ label: 'Add account', onClick: handleAdd }}
+              />
             ) : (
               accounts.map((acc) => (
                 <div key={acc.id} className="flex justify-between items-center gap-2 group">

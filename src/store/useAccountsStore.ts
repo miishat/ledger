@@ -30,15 +30,36 @@ interface AccountsState {
   getNetWorthTrend: () => number;
 }
 
+/** The demo accounts every install used to boot with, before 0.8.1-beta. Kept
+ *  so the migration can recognise and remove them. */
+export const DEMO_ACCOUNTS: Account[] = [
+  { id: '1', name: 'Main Checking', value: 15000, type: 'bank' },
+  { id: '2', name: 'Vanguard 401k', value: 120000, type: 'investment' },
+  { id: '3', name: 'Mortgage', value: 350000, type: 'debt' },
+  { id: '4', name: 'Personal Loan to Bob', value: 5000, type: 'receivable' },
+]
+
+/** v0 -> v1: a fresh install no longer ships demo accounts. Existing installs
+ *  drop the four seeded rows only if they are still present untouched. A row
+ *  the user renamed, revalued, or retyped is theirs now and is kept, as is
+ *  anything they added. */
+export function migrateAccountsState(persisted: unknown, version: number): unknown {
+  if (version >= 1) return persisted
+  const state = persisted as { accounts?: Account[] } | null
+  if (!state?.accounts) return persisted
+  const accounts = state.accounts.filter(
+    (a) =>
+      !DEMO_ACCOUNTS.some(
+        (d) => d.id === a.id && d.name === a.name && d.value === a.value && d.type === a.type,
+      ),
+  )
+  return { ...state, accounts }
+}
+
 export const useAccountsStore = create<AccountsState>()(
   persist(
     (set, get) => ({
-      accounts: [
-        { id: '1', name: 'Main Checking', value: 15000, type: 'bank' },
-        { id: '2', name: 'Vanguard 401k', value: 120000, type: 'investment' },
-        { id: '3', name: 'Mortgage', value: 350000, type: 'debt' },
-        { id: '4', name: 'Personal Loan to Bob', value: 5000, type: 'receivable' },
-      ],
+      accounts: [],
       history: [],
 
       addAccount: (accountData) => {
@@ -123,6 +144,8 @@ export const useAccountsStore = create<AccountsState>()(
     }),
     {
       name: STORAGE_KEYS.accounts,
+      version: 1,
+      migrate: migrateAccountsState,
     }
   )
 );
