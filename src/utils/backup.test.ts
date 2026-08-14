@@ -76,3 +76,80 @@ describe('backup file io', () => {
     expect(() => parseBackupText(JSON.stringify({ app: 'nope' }))).toThrow('Invalid Ledger backup file')
   })
 })
+
+describe('backup v2 envelope', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('is version 2', () => {
+    expect(BACKUP_VERSION).toBe(2)
+  })
+
+  it('omits sync metadata when no meta is supplied', () => {
+    const env = buildBackup()
+    expect(env.deviceId).toBeUndefined()
+    expect(env.revision).toBeUndefined()
+  })
+
+  it('carries sync metadata when meta is supplied', () => {
+    const env = buildBackup({ deviceId: 'dev-1', deviceName: 'Desktop', revision: 7, baseRevision: 6 })
+    expect(env.deviceId).toBe('dev-1')
+    expect(env.deviceName).toBe('Desktop')
+    expect(env.revision).toBe(7)
+    expect(env.baseRevision).toBe(6)
+  })
+
+  it('still accepts a version 1 envelope', () => {
+    const v1 = JSON.stringify({ app: 'ledger', version: 1, exportedAt: '', data: { 'ledger-budget': { x: 1 } } })
+    const env = parseBackupText(v1)
+    expect(env.version).toBe(1)
+    restoreBackup(env)
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 1 })
+  })
+
+  it('writes nothing when the envelope is invalid', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: 99, exportedAt: '', data: { 'ledger-budget': { x: 9 } } }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('rejects a string data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: 'not an object' as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('rejects an array data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: [1, 2, 3] as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('rejects a null data field and writes nothing', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ keep: true }))
+    expect(() => restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: null as unknown as Record<string, unknown> }))
+      .toThrow('Invalid Ledger backup file')
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ keep: true })
+  })
+
+  it('writes only registered keys, leaving unregistered ones untouched', () => {
+    // Snapshot files sit in a hand-editable Drive folder and the same code
+    // path backs manual Import. A crafted data blob naming ledger-sync
+    // must not be able to overwrite this device's sync bookmark.
+    localStorage.setItem('ledger-sync', JSON.stringify({ deviceId: 'this-device', lastSyncedRevision: 3 }))
+    localStorage.setItem('some-random-key', JSON.stringify({ mine: true }))
+    restoreBackup({
+      app: 'ledger', version: BACKUP_VERSION, exportedAt: '',
+      data: {
+        'ledger-budget': { x: 1 },
+        'ledger-sync': { deviceId: 'attacker', lastSyncedRevision: 999 },
+        'some-random-key': { evil: true },
+      },
+    })
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 1 })
+    expect(JSON.parse(localStorage.getItem('ledger-sync')!)).toEqual({ deviceId: 'this-device', lastSyncedRevision: 3 })
+    expect(JSON.parse(localStorage.getItem('some-random-key')!)).toEqual({ mine: true })
+  })
+})
