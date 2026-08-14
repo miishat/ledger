@@ -42,18 +42,24 @@ export const DEMO_ACCOUNTS: Account[] = [
 /** v0 -> v1: a fresh install no longer ships demo accounts. Existing installs
  *  drop the four seeded rows only if they are still present untouched. A row
  *  the user renamed, revalued, or retyped is theirs now and is kept, as is
- *  anything they added. */
+ *  anything they added. If, and only if, at least one demo row was actually
+ *  removed, the net worth history is cleared too: those snapshots were
+ *  computed while the fake demo money was included in the total, so they no
+ *  longer describe the user's real net worth and cannot be salvaged. A user
+ *  whose accounts never matched a demo row (they had already deleted them,
+ *  or never had them) keeps their history untouched, since it is genuine. */
 export function migrateAccountsState(persisted: unknown, version: number): unknown {
   if (version >= 1) return persisted
-  const state = persisted as { accounts?: Account[] } | null
-  if (!state?.accounts) return persisted
+  const state = persisted as { accounts?: Account[]; history?: NetWorthSnapshot[] } | null
+  if (!state?.accounts || !Array.isArray(state.accounts)) return persisted
   const accounts = state.accounts.filter(
     (a) =>
       !DEMO_ACCOUNTS.some(
         (d) => d.id === a.id && d.name === a.name && d.value === a.value && d.type === a.type,
       ),
   )
-  return { ...state, accounts }
+  const removedAny = accounts.length !== state.accounts.length
+  return { ...state, accounts, ...(removedAny ? { history: [] } : {}) }
 }
 
 export const useAccountsStore = create<AccountsState>()(

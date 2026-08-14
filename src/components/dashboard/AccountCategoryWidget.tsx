@@ -19,6 +19,14 @@ interface Account {
   type: AccountType;
 }
 
+const SINGULAR_NOUN: Record<AccountType, string> = {
+  bank: 'bank account',
+  investment: 'investment account',
+  debt: 'debt',
+  receivable: 'receivable',
+  other: 'other asset',
+};
+
 export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ title, type, className }) => {
   const { getAccountsByType, getTotalByType, removeAccount } = useAccountsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +67,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
             {accounts.length === 0 ? (
               <EmptyState
                 message="No accounts yet"
-                hint={`Add your first ${title.toLowerCase().replace(/s$/, '')} to start tracking.`}
+                hint={`Add your first ${SINGULAR_NOUN[type]} to start tracking.`}
                 action={{ label: 'Add account', onClick: handleAdd }}
               />
             ) : (

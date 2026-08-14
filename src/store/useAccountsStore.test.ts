@@ -75,4 +75,29 @@ describe('migrateAccountsState v0 to v1', () => {
   it('survives state with no accounts array', () => {
     expect(migrateAccountsState({ history: [] }, 0)).toEqual({ history: [] })
   })
+
+  it('survives state where accounts is not an array', () => {
+    const state = { accounts: 'not an array', history: [{ date: '2026-01-01', value: 5 }] }
+    expect(migrateAccountsState(state, 0)).toEqual(state)
+  })
+
+  it('clears history when demo rows are actually removed', () => {
+    const migrated = migrateAccountsState(
+      { accounts: [...DEMO_ACCOUNTS], history: [{ date: '2026-01-01', value: -220000 }] },
+      0,
+    ) as { history: unknown[] }
+    expect(migrated.history).toEqual([])
+  })
+
+  it('keeps history untouched when no accounts match a demo row', () => {
+    const mine = { id: 'mine', name: 'Tangerine', value: 42, type: 'bank' as const }
+    const history = [{ date: '2026-01-01', value: 42 }]
+    const migrated = migrateAccountsState({ accounts: [mine], history }, 0) as { history: unknown[] }
+    expect(migrated.history).toEqual(history)
+  })
+
+  it('leaves an already-migrated state, history included, completely untouched', () => {
+    const state = { accounts: [...DEMO_ACCOUNTS], history: [{ date: '2026-01-01', value: -220000 }] }
+    expect(migrateAccountsState(state, 1)).toBe(state)
+  })
 })
