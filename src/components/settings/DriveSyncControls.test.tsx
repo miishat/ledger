@@ -276,4 +276,9 @@ describe('DriveSyncControls', () => {
       expect(useSyncStore.getState().lastSyncedHash).toBe('')
     })
   })
+
+  it('shows a short disconnect explainer instead of a long paragraph', () => {
+    render(<DriveSyncControls />)
+    expect(screen.getByText('Forgets the Drive link only. Nothing is deleted.')).toBeInTheDocument()
+  })
 })

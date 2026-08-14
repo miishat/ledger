@@ -16,7 +16,12 @@ type Pending =
   | { kind: 'collision', remote: SnapshotMeta }
 
 function whenText(iso: string): string {
-  return new Date(iso).toLocaleString()
+  return new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 /** Compile-time exhaustiveness guard. If a decision handler reaches this with
@@ -196,22 +201,22 @@ export const DriveSyncControls: React.FC = () => {
         />
       </label>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
         <p className="text-[11px] text-text-secondary/80">
           {lastSyncedAt
-            ? `Last synced ${whenText(lastSyncedAt)} at revision ${lastSyncedRevision}.`
+            ? `Last synced ${whenText(lastSyncedAt)} · revision ${lastSyncedRevision}`
             : 'Never synced on this device.'}
         </p>
         <button
           onClick={handleDisconnect}
           disabled={busy}
-          className="text-[11px] text-text-secondary hover:text-accent transition-colors disabled:opacity-50"
+          className="text-[11px] text-text-secondary hover:text-accent underline underline-offset-2 decoration-text-secondary/40 hover:decoration-accent transition-colors disabled:opacity-50"
         >
           Disconnect
         </button>
       </div>
-      <p className="text-[11px] text-text-secondary/80">
-        Disconnecting forgets your Drive link and sync history. Your data on this device and in Drive is untouched.
+      <p className="text-[11px] text-text-secondary/70">
+        Forgets the Drive link only. Nothing is deleted.
       </p>
 
       {status && <p className="text-[12px] text-text-secondary">{status}</p>}
