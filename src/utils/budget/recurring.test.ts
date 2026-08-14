@@ -31,6 +31,24 @@ describe('detectRecurring', () => {
     expect(items[0].monthlyEstimate).toBeCloseTo(items[0].avgAmount * (30 / items[0].intervalDays), 6)
   })
 
+  it('computes nextExpected as the correct local calendar date for a simple monthly series', () => {
+    // Note: this test passes both before and after the local-date-parts fix
+    // on a machine running at a negative UTC offset, where the old
+    // toISOString-based read happened to agree with the local calendar date.
+    // It is here to lock in the expected calendar date going forward, not to
+    // demonstrate a red-to-green fix.
+    const txs = asRecord([
+      tx('2026-01-01', 10, 'MONTHLY THING'),
+      tx('2026-02-01', 10, 'MONTHLY THING'),
+      tx('2026-03-01', 10, 'MONTHLY THING'),
+    ])
+    const items = detectRecurring(txs)
+    expect(items).toHaveLength(1)
+    expect(items[0].lastDate).toBe('2026-03-01')
+    expect(items[0].intervalDays).toBe(30)
+    expect(items[0].nextExpected).toBe('2026-03-31')
+  })
+
   it('detects biweekly income (paycheque)', () => {
     const txs = asRecord([
       tx('2026-05-01', 2500, 'ACME PAYROLL', 'income'),
