@@ -1,5 +1,5 @@
 import type { Transaction } from '../../types/budget'
-import { detectRecurring, normalizeDescription } from './recurring'
+import { detectRecurring, normalizeDescription, upcomingWithin, type RecurringItem } from './recurring'
 
 let id = 0
 const tx = (date: string, amount: number, description: string, type: 'expense' | 'income' = 'expense'): Transaction =>
@@ -58,5 +58,38 @@ describe('detectRecurring', () => {
       tx('2026-05-01', 80, 'GROCERY MART'),
     ])
     expect(detectRecurring(txs)).toHaveLength(0)
+  })
+})
+
+const item = (key: string, nextExpected: string): RecurringItem => ({
+  key,
+  description: key,
+  type: 'expense',
+  avgAmount: 10,
+  intervalDays: 30,
+  occurrences: 3,
+  lastDate: '2026-07-15',
+  nextExpected,
+  monthlyEstimate: 10,
+})
+
+describe('upcomingWithin', () => {
+  it('keeps only charges due inside the window', () => {
+    const items = [item('a', '2026-08-20'), item('b', '2026-09-30')]
+    expect(upcomingWithin(items, '2026-08-14', 30).map((i) => i.key)).toEqual(['a'])
+  })
+
+  it('includes a charge due today and one due on the last day of the window', () => {
+    const items = [item('today', '2026-08-14'), item('edge', '2026-09-13')]
+    expect(upcomingWithin(items, '2026-08-14', 30).map((i) => i.key)).toEqual(['today', 'edge'])
+  })
+
+  it('drops a charge whose expected date has already passed', () => {
+    expect(upcomingWithin([item('stale', '2026-08-01')], '2026-08-14', 30)).toEqual([])
+  })
+
+  it('orders soonest first', () => {
+    const items = [item('later', '2026-09-01'), item('sooner', '2026-08-16')]
+    expect(upcomingWithin(items, '2026-08-14', 30).map((i) => i.key)).toEqual(['sooner', 'later'])
   })
 })

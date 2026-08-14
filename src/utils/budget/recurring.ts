@@ -83,3 +83,19 @@ export function detectRecurring(transactions: Record<string, Transaction>): Recu
   }
   return items.sort((a, b) => b.monthlyEstimate - a.monthlyEstimate)
 }
+
+/** Charges expected between today and `days` from today, inclusive at both
+ *  ends, soonest first. Dates are compared as YYYY-MM-DD strings, which sort
+ *  lexicographically, so no timezone can shift a boundary. */
+export function upcomingWithin(
+  items: RecurringItem[],
+  todayISO: string,
+  days: number,
+): RecurringItem[] {
+  const end = new Date(`${todayISO}T00:00:00`)
+  end.setDate(end.getDate() + days)
+  const endISO = end.toISOString().slice(0, 10)
+  return items
+    .filter((i) => i.nextExpected >= todayISO && i.nextExpected <= endISO)
+    .sort((a, b) => a.nextExpected.localeCompare(b.nextExpected))
+}

@@ -26,6 +26,7 @@ describe('storage key registry', () => {
       portfolioReport: 'ledger-portfolio-report',
       dashboardLayout: 'ledger-dashboard-layout',
       wheel: 'ledger-wheel',
+      recurring: 'ledger-recurring',
       sync: 'ledger-sync',
     })
   })

@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   portfolioReport: 'ledger-portfolio-report',
   dashboardLayout: 'ledger-dashboard-layout',
   wheel: 'ledger-wheel',
+  recurring: 'ledger-recurring',
   sync: 'ledger-sync',
 } as const
 
