@@ -6,6 +6,22 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.8.1-beta] - 2026-08-14
+
+### Added
+- Budgeting: a search box on the transaction list, matching on description or category name
+- Budgeting: tick boxes on the transaction list to select many transactions at once, then set a category on all of them or delete them together
+- Budgeting: deleting a transaction now offers an Undo, for single rows and for a bulk delete
+- Budgeting: the Subscriptions widget lists what is due in the next 30 days with a running total, and a charge that is not really a subscription can be ignored and restored later
+
+### Fixed
+- Backups and Drive sync were silently leaving out your uploaded PortfolioAnalyst report, so the Account Value card, benchmark comparison and contributors were lost on a restore or on a second device. The report is now included, and the app derives its backup list from a single registry of stores so a future store cannot go missing the same way
+- A brand new install started with four made-up accounts (a chequing account, a retirement account, a mortgage and a personal loan), so the dashboard, net worth and forecaster all showed money that was not yours. A new install now starts empty and invites you to add your first account. If those four accounts are still sitting untouched in an existing install they are removed on upgrade, and your stored net worth history is cleared along with them, since every past snapshot was computed with that fake money included and would otherwise show a large phantom swing on the trend chart. Anything you renamed, revalued or added is kept; if you had been tracking real balances alongside the demo accounts, your net worth trend will start over after the upgrade
+- Editing an account or a transaction reset its form through an extra render pass, which could briefly show stale values. The forms are now built fresh each time the pop-up opens
+
+### Changed
+- The app is split into one bundle per page instead of a single bundle: the largest chunk that loads up front dropped from 1,229 kB (350 kB gzipped) to 463 kB (143 kB gzipped), so opening it downloads noticeably less before the dashboard appears. The other pages load when you first visit them
+
 ## [0.8.0-beta] - 2026-08-13
 
 ### Added
