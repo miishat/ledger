@@ -1,4 +1,4 @@
-import { useAccountsStore, migrateAccountsState, DEMO_ACCOUNTS } from './useAccountsStore'
+import { useAccountsStore, stripDemoAccounts, DEMO_ACCOUNTS } from './useAccountsStore'
 
 const initialState = useAccountsStore.getState()
 
@@ -43,61 +43,74 @@ describe('useAccountsStore net worth', () => {
   })
 })
 
-describe('migrateAccountsState v0 to v1', () => {
+describe('stripDemoAccounts', () => {
   it('drops the four untouched demo accounts', () => {
-    const migrated = migrateAccountsState({ accounts: [...DEMO_ACCOUNTS], history: [] }, 0) as {
+    const stripped = stripDemoAccounts({ accounts: [...DEMO_ACCOUNTS], history: [] }) as {
       accounts: unknown[]
     }
-    expect(migrated.accounts).toEqual([])
+    expect(stripped.accounts).toEqual([])
   })
 
   it('keeps a demo row the user edited', () => {
     const edited = { ...DEMO_ACCOUNTS[0], value: 22000 }
-    const migrated = migrateAccountsState({ accounts: [edited], history: [] }, 0) as {
+    const stripped = stripDemoAccounts({ accounts: [edited], history: [] }) as {
       accounts: { value: number }[]
     }
-    expect(migrated.accounts).toEqual([edited])
+    expect(stripped.accounts).toEqual([edited])
   })
 
   it("keeps the user's own accounts alongside removing the demo rows", () => {
     const mine = { id: 'mine', name: 'Tangerine', value: 42, type: 'bank' as const }
-    const migrated = migrateAccountsState({ accounts: [...DEMO_ACCOUNTS, mine], history: [] }, 0) as {
+    const stripped = stripDemoAccounts({ accounts: [...DEMO_ACCOUNTS, mine], history: [] }) as {
       accounts: unknown[]
     }
-    expect(migrated.accounts).toEqual([mine])
-  })
-
-  it('leaves already-migrated state alone', () => {
-    const state = { accounts: [...DEMO_ACCOUNTS], history: [] }
-    expect(migrateAccountsState(state, 1)).toBe(state)
+    expect(stripped.accounts).toEqual([mine])
   })
 
   it('survives state with no accounts array', () => {
-    expect(migrateAccountsState({ history: [] }, 0)).toEqual({ history: [] })
+    expect(stripDemoAccounts({ history: [] })).toEqual({ history: [] })
   })
 
   it('survives state where accounts is not an array', () => {
     const state = { accounts: 'not an array', history: [{ date: '2026-01-01', value: 5 }] }
-    expect(migrateAccountsState(state, 0)).toEqual(state)
+    expect(stripDemoAccounts(state)).toEqual(state)
   })
 
   it('clears history when demo rows are actually removed', () => {
-    const migrated = migrateAccountsState(
-      { accounts: [...DEMO_ACCOUNTS], history: [{ date: '2026-01-01', value: -220000 }] },
-      0,
-    ) as { history: unknown[] }
-    expect(migrated.history).toEqual([])
+    const stripped = stripDemoAccounts({
+      accounts: [...DEMO_ACCOUNTS],
+      history: [{ date: '2026-01-01', value: -220000 }],
+    }) as { history: unknown[] }
+    expect(stripped.history).toEqual([])
   })
 
   it('keeps history untouched when no accounts match a demo row', () => {
     const mine = { id: 'mine', name: 'Tangerine', value: 42, type: 'bank' as const }
     const history = [{ date: '2026-01-01', value: 42 }]
-    const migrated = migrateAccountsState({ accounts: [mine], history }, 0) as { history: unknown[] }
-    expect(migrated.history).toEqual(history)
+    const stripped = stripDemoAccounts({ accounts: [mine], history }) as { history: unknown[] }
+    expect(stripped.history).toEqual(history)
   })
 
-  it('leaves an already-migrated state, history included, completely untouched', () => {
-    const state = { accounts: [...DEMO_ACCOUNTS], history: [{ date: '2026-01-01', value: -220000 }] }
-    expect(migrateAccountsState(state, 1)).toBe(state)
+  it('is idempotent: a second call on already-stripped state removes nothing more and does not clear history again', () => {
+    const mine = { id: 'mine', name: 'Tangerine', value: 42, type: 'bank' as const }
+    const history = [{ date: '2026-01-01', value: 42 }]
+    const once = stripDemoAccounts({ accounts: [...DEMO_ACCOUNTS, mine], history }) as {
+      accounts: unknown[]
+      history: unknown[]
+    }
+    // First call removes the demos and clears history, since demos were present.
+    expect(once.accounts).toEqual([mine])
+    expect(once.history).toEqual([])
+
+    // A second call on the already-stripped result should be a no-op: nothing
+    // left matches a demo row, and history (now empty, but genuinely so) is
+    // not cleared again just because it ran a second time.
+    const startingHistory = [{ date: '2026-02-01', value: 42 }]
+    const twice = stripDemoAccounts({ accounts: once.accounts, history: startingHistory }) as {
+      accounts: unknown[]
+      history: unknown[]
+    }
+    expect(twice.accounts).toEqual([mine])
+    expect(twice.history).toEqual(startingHistory)
   })
 })

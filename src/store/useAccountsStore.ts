@@ -39,17 +39,22 @@ export const DEMO_ACCOUNTS: Account[] = [
   { id: '4', name: 'Personal Loan to Bob', value: 5000, type: 'receivable' },
 ]
 
-/** v0 -> v1: a fresh install no longer ships demo accounts. Existing installs
- *  drop the four seeded rows only if they are still present untouched. A row
- *  the user renamed, revalued, or retyped is theirs now and is kept, as is
- *  anything they added. If, and only if, at least one demo row was actually
- *  removed, the net worth history is cleared too: those snapshots were
- *  computed while the fake demo money was included in the total, so they no
- *  longer describe the user's real net worth and cannot be salvaged. A user
- *  whose accounts never matched a demo row (they had already deleted them,
- *  or never had them) keeps their history untouched, since it is genuine. */
-export function migrateAccountsState(persisted: unknown, version: number): unknown {
-  if (version >= 1) return persisted
+/** A fresh install no longer ships demo accounts. Existing installs drop the
+ *  four seeded rows only if they are still present untouched. A row the user
+ *  renamed, revalued, or retyped is theirs now and is kept, as is anything
+ *  they added. If, and only if, at least one demo row was actually removed,
+ *  the net worth history is cleared too: those snapshots were computed while
+ *  the fake demo money was included in the total, so they no longer describe
+ *  the user's real net worth and cannot be salvaged. A user whose accounts
+ *  never matched a demo row (they had already deleted them, or never had
+ *  them) keeps their history untouched, since it is genuine.
+ *
+ *  This runs on every rehydration (via `merge`), not gated by a stored
+ *  version number, so that older builds without this logic can still read a
+ *  snapshot written by this build (see the persist options below for why the
+ *  `version` field itself is intentionally omitted). Once the demos are gone
+ *  it is a no-op: nothing matches, nothing is removed, history is untouched. */
+export function stripDemoAccounts(persisted: unknown): unknown {
   const state = persisted as { accounts?: Account[]; history?: NetWorthSnapshot[] } | null
   if (!state?.accounts || !Array.isArray(state.accounts)) return persisted
   const accounts = state.accounts.filter(
@@ -150,8 +155,22 @@ export const useAccountsStore = create<AccountsState>()(
     }),
     {
       name: STORAGE_KEYS.accounts,
-      version: 1,
-      migrate: migrateAccountsState,
+      // Intentionally no `version` here. zustand writes `{ state, version:
+      // options.version }`, and with `options.version` undefined,
+      // JSON.stringify drops the key entirely, so a snapshot written by this
+      // build stays version-less and a build on the previous release can
+      // still read it on its normal (non-migrate) path instead of falling
+      // back to its initial state. The demo-account cleanup lives in
+      // `merge`, which zustand calls on every rehydration regardless of
+      // version. `migrate` is kept only as a self-heal path for a machine
+      // that already has `"version": 1` written to localStorage from an
+      // earlier build of this same branch: with `options.version` undefined
+      // and a stored version of 1, zustand still detects a mismatch and
+      // calls `migrate` rather than discarding the state. After that one
+      // load the entry is rewritten without a version field and the machine
+      // is healed.
+      migrate: (persisted) => stripDemoAccounts(persisted),
+      merge: (persisted, current) => ({ ...current, ...(stripDemoAccounts(persisted) as object) }),
     }
   )
 );
