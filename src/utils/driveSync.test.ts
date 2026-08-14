@@ -63,6 +63,53 @@ describe('driveSync folder', () => {
     fetchMock.mockReturnValueOnce(jsonResponse({ error: { message: 'Rate Limit Exceeded' } }, 429))
     await expect(findOrCreateFolder('tok')).rejects.toThrow(/Rate Limit Exceeded/)
   })
+
+  it('treats a 403 rate limit reason as a rate-limit error, not an expiry', async () => {
+    fetchMock.mockReturnValueOnce(
+      jsonResponse(
+        { error: { message: 'User Rate Limit Exceeded', errors: [{ reason: 'userRateLimitExceeded' }] } },
+        403
+      )
+    )
+    await expect(findOrCreateFolder('tok')).rejects.toThrow(/rate limiting this app/i)
+    await expect(findOrCreateFolder('tok')).rejects.not.toThrow(/access expired/i)
+  })
+
+  it('treats a 403 daily limit reason as a rate-limit error', async () => {
+    fetchMock.mockReturnValueOnce(
+      jsonResponse({ error: { message: 'Daily Limit Exceeded', errors: [{ reason: 'dailyLimitExceeded' }] } }, 403)
+    )
+    await expect(findOrCreateFolder('tok')).rejects.toThrow(/rate limiting this app/i)
+  })
+
+  it('treats a 403 storage quota reason as a full-Drive error', async () => {
+    fetchMock.mockReturnValueOnce(
+      jsonResponse(
+        { error: { message: 'Storage Quota Exceeded', errors: [{ reason: 'storageQuotaExceeded' }] } },
+        403
+      )
+    )
+    await expect(findOrCreateFolder('tok')).rejects.toThrow(/Drive is full/i)
+  })
+
+  it('surfaces the Drive message for an unrecognised 403 reason', async () => {
+    fetchMock.mockReturnValueOnce(
+      jsonResponse({ error: { message: 'Some Other Reason', errors: [{ reason: 'somethingElse' }] } }, 403)
+    )
+    await expect(findOrCreateFolder('tok')).rejects.toThrow(/Some Other Reason/)
+  })
+
+  it('falls back to the status message for a 403 with a non-JSON body', async () => {
+    fetchMock.mockReturnValueOnce(
+      Promise.resolve({
+        ok: false,
+        status: 403,
+        json: () => Promise.reject(new Error('not json')),
+        text: () => Promise.reject(new Error('not json')),
+      } as unknown as Response)
+    )
+    await expect(findOrCreateFolder('tok')).rejects.toThrow(/Drive request failed \(403\)/)
+  })
 })
 
 describe('driveSync listSnapshots', () => {

@@ -10,18 +10,33 @@ function authHeaders(token: string): Record<string, string> {
   return { Authorization: `Bearer ${token}` }
 }
 
+const RATE_LIMIT_REASONS = new Set(['rateLimitExceeded', 'userRateLimitExceeded', 'dailyLimitExceeded'])
+
 /** Turns a Drive error response into a message worth showing a human. */
 async function driveError(response: Response): Promise<Error> {
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     return new Error('Google Drive access expired. Connect again and retry.')
   }
+
   let detail = `Drive request failed (${response.status})`
+  let body: { error?: { message?: string, errors?: Array<{ reason?: string }> } } | undefined
   try {
-    const body = (await response.json()) as { error?: { message?: string } }
+    body = (await response.json()) as typeof body
     if (body?.error?.message) detail = body.error.message
   } catch {
     // Keep the status-based message.
   }
+
+  if (response.status === 403) {
+    const reason = body?.error?.errors?.[0]?.reason
+    if (reason && RATE_LIMIT_REASONS.has(reason)) {
+      return new Error('Google Drive is rate limiting this app. Wait a moment and try again.')
+    }
+    if (reason === 'storageQuotaExceeded') {
+      return new Error('Your Google Drive is full. Free up space and try again.')
+    }
+  }
+
   return new Error(detail)
 }
 
