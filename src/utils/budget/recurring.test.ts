@@ -92,4 +92,14 @@ describe('upcomingWithin', () => {
     const items = [item('later', '2026-09-01'), item('sooner', '2026-08-16')]
     expect(upcomingWithin(items, '2026-08-14', 30).map((i) => i.key)).toEqual(['sooner', 'later'])
   })
+
+  it('includes a charge due on the final day of a window that crosses a month boundary', () => {
+    const items = [item('edge', '2026-09-13')]
+    expect(upcomingWithin(items, '2026-08-14', 30).map((i) => i.key)).toEqual(['edge'])
+  })
+
+  it('normalises a window end across a year boundary', () => {
+    const items = [item('ny', '2027-01-19')]
+    expect(upcomingWithin(items, '2026-12-20', 30).map((i) => i.key)).toEqual(['ny'])
+  })
 })
