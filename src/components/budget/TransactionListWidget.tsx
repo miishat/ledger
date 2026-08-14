@@ -18,12 +18,17 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const categories = useBudgetStore((state) => state.categories);
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
   const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
+  const setTransactionsCategory = useBudgetStore((state) => state.setTransactionsCategory);
+  const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkCategoryId, setBulkCategoryId] = useState('');
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   const needle = query.trim().toLowerCase();
   const txList = Object.values(transactions)
@@ -42,6 +47,19 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       );
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Selection is scoped to what is currently visible: narrowing the search must
+  // not leave invisible rows armed for deletion.
+  const visibleIds = txList.map((tx) => tx.id);
+  const selected = selectedIds.filter((id) => visibleIds.includes(id));
+  const allVisibleSelected = visibleIds.length > 0 && selected.length === visibleIds.length;
+
+  const toggleRow = (id: string) =>
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+    );
+
+  const toggleAll = () => setSelectedIds(allVisibleSelected ? [] : visibleIds);
 
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
@@ -64,7 +82,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex flex-wrap items-center gap-3 min-w-0">
           <div className="relative">
-            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+            <Search size={14} aria-hidden="true" className="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
             <input
               type="search"
               value={query}
@@ -102,6 +120,45 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           </button>
         </div>
       </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border border-accent/40 bg-accent/10">
+          <span className="text-[13px] font-medium text-text-primary">{selected.length} selected</span>
+          <ThemedSelect
+            ariaLabel="Category for selected"
+            value={bulkCategoryId}
+            onChange={setBulkCategoryId}
+            className="text-[13px]"
+            options={[
+              { value: '', label: 'Choose a category' },
+              ...Object.values(categories).map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
+          <button
+            onClick={() => {
+              if (!bulkCategoryId) return;
+              setTransactionsCategory(selected, bulkCategoryId);
+              setSelectedIds([]);
+              setBulkCategoryId('');
+            }}
+            disabled={!bulkCategoryId}
+            className="text-[13px] px-3 py-1.5 rounded-md bg-accent text-[var(--color-bg-primary)] font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Apply
+          </button>
+          <button
+            onClick={() => setConfirmBulkDeleteOpen(true)}
+            className="text-[13px] px-3 py-1.5 rounded-md border border-error/40 text-error hover:bg-error/10"
+          >
+            Delete selected
+          </button>
+          <button
+            onClick={() => setSelectedIds([])}
+            className="text-[13px] px-2 py-1.5 rounded-md text-text-secondary hover:text-text-primary ml-auto"
+          >
+            Clear
+          </button>
+        </div>
+      )}
       {txList.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
           {needle || selectedCategoryId ? (
@@ -120,6 +177,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border text-[12px] text-text-secondary">
+                  <th className="pb-2 font-medium w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all transactions"
+                      checked={allVisibleSelected}
+                      onChange={toggleAll}
+                      className="accent-[var(--color-accent)]"
+                    />
+                  </th>
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Description</th>
                   <th className="pb-2 font-medium">Category</th>
@@ -136,6 +202,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
                     onClick={() => setEditingTransaction(tx)}
                   >
+                    <td className="py-3 w-8" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select transaction"
+                        checked={selected.includes(tx.id)}
+                        onChange={() => toggleRow(tx.id)}
+                        className="accent-[var(--color-accent)]"
+                      />
+                    </td>
                     <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
                     <td className="py-3 text-[14px]">{tx.description}</td>
                     <td className="py-3 text-[14px]">
@@ -178,6 +253,14 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                 className="themed-card rounded-lg p-3 flex flex-col gap-2 cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2">
+                  <input
+                    type="checkbox"
+                    aria-label="Select transaction"
+                    checked={selected.includes(tx.id)}
+                    onChange={() => toggleRow(tx.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 shrink-0 accent-[var(--color-accent)]"
+                  />
                   <div className="flex items-center justify-between flex-1 min-w-0">
                     <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
                     <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
@@ -230,6 +313,20 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           setConfirmClearOpen(false);
         }}
         onCancel={() => setConfirmClearOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDeleteOpen}
+        title={`Delete ${selected.length} transaction${selected.length === 1 ? '' : 's'}?`}
+        message="The selected transactions will be removed. You can undo this straight afterwards."
+        confirmLabel="Delete"
+        tone="danger"
+        onConfirm={() => {
+          deleteTransactions(selected);
+          setSelectedIds([]);
+          setConfirmBulkDeleteOpen(false);
+        }}
+        onCancel={() => setConfirmBulkDeleteOpen(false)}
       />
     </div>
   );
