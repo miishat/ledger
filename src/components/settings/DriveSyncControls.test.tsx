@@ -82,6 +82,7 @@ describe('DriveSyncControls', () => {
     fireEvent.click(screen.getByRole('button', { name: /push to drive/i }))
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     expect(screen.getByText(/Phone/)).toBeInTheDocument()
+    expect(screen.getByText('Another device has newer data')).toBeInTheDocument()
     expect(service.performPush).not.toHaveBeenCalled()
   })
 
@@ -110,6 +111,7 @@ describe('DriveSyncControls', () => {
     fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     expect(screen.getByText(/unpushed changes/i)).toBeInTheDocument()
+    expect(screen.getByText('This will discard your local changes')).toBeInTheDocument()
     expect(service.performPull).not.toHaveBeenCalled()
   })
 
@@ -119,6 +121,7 @@ describe('DriveSyncControls', () => {
     fireEvent.click(screen.getByRole('button', { name: /pull from drive/i }))
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     expect(screen.getByText(/at the same time/i)).toBeInTheDocument()
+    expect(screen.getByText('Two devices pushed the same revision')).toBeInTheDocument()
     expect(service.performPull).not.toHaveBeenCalled()
   })
 

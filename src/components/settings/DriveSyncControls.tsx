@@ -32,6 +32,12 @@ function assertNever(x: never): never {
   throw new Error(`Unhandled decision variant: ${JSON.stringify(x)}`)
 }
 
+function pendingHeading(kind: Pending['kind']): string {
+  if (kind === 'overwrite') return 'Another device has newer data'
+  if (kind === 'discard-local') return 'This will discard your local changes'
+  return 'Two devices pushed the same revision'
+}
+
 export const DriveSyncControls: React.FC = () => {
   const clientId = useSyncStore((s) => s.clientId)
   const setClientId = useSyncStore((s) => s.setClientId)
@@ -225,7 +231,7 @@ export const DriveSyncControls: React.FC = () => {
       {pending && (
         <div role="dialog" aria-label="Sync conflict" className="border border-error/60 rounded-md p-3 flex flex-col gap-2">
           <p className="flex items-center gap-1.5 text-[13px] font-medium text-text-primary">
-            <AlertTriangle className="w-4 h-4 text-error" aria-hidden="true" /> This will discard data
+            <AlertTriangle className="w-4 h-4 text-error" aria-hidden="true" /> {pendingHeading(pending.kind)}
           </p>
           {pending.kind === 'overwrite' && (
             <p className="text-[12px] text-text-secondary">
