@@ -30,6 +30,7 @@ function assertNever(x: never): never {
 export const DriveSyncControls: React.FC = () => {
   const clientId = useSyncStore((s) => s.clientId)
   const setClientId = useSyncStore((s) => s.setClientId)
+  const disconnect = useSyncStore((s) => s.disconnect)
   const folderId = useSyncStore((s) => s.folderId)
   const lastSyncedAt = useSyncStore((s) => s.lastSyncedAt)
   const lastSyncedRevision = useSyncStore((s) => s.lastSyncedRevision)
@@ -121,6 +122,11 @@ export const DriveSyncControls: React.FC = () => {
       window.location.reload()
     })
 
+  const handleDisconnect = () => {
+    disconnect()
+    clearCachedToken()
+  }
+
   const confirmPending = () =>
     run(async () => {
       const current = pending!
@@ -190,10 +196,22 @@ export const DriveSyncControls: React.FC = () => {
         />
       </label>
 
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] text-text-secondary/80">
+          {lastSyncedAt
+            ? `Last synced ${whenText(lastSyncedAt)} at revision ${lastSyncedRevision}.`
+            : 'Never synced on this device.'}
+        </p>
+        <button
+          onClick={handleDisconnect}
+          disabled={busy}
+          className="text-[11px] text-text-secondary hover:text-accent transition-colors disabled:opacity-50"
+        >
+          Disconnect
+        </button>
+      </div>
       <p className="text-[11px] text-text-secondary/80">
-        {lastSyncedAt
-          ? `Last synced ${whenText(lastSyncedAt)} at revision ${lastSyncedRevision}.`
-          : 'Never synced on this device.'}
+        Disconnecting forgets your Drive link and sync history. Your data on this device and in Drive is untouched.
       </p>
 
       {status && <p className="text-[12px] text-text-secondary">{status}</p>}

@@ -253,4 +253,27 @@ describe('DriveSyncControls', () => {
     await waitFor(() => expect(service.performPull).toHaveBeenCalledWith('tok', remote))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
+
+  it('shows a Disconnect control once a client id is configured', () => {
+    render(<DriveSyncControls />)
+    expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument()
+  })
+
+  it('disconnecting clears the cached token and returns to the client id form', async () => {
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /disconnect/i }))
+    expect(auth.clearCachedToken).toHaveBeenCalled()
+    await waitFor(() => expect(screen.getByLabelText(/google client id/i)).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /push to drive/i })).not.toBeInTheDocument()
+  })
+
+  it('disconnecting resets the sync bookmark so a fresh Drive is not mistaken for an up-to-date one', async () => {
+    useSyncStore.setState({ lastSyncedRevision: 4, lastSyncedHash: 'abc12345' })
+    render(<DriveSyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: /disconnect/i }))
+    await waitFor(() => {
+      expect(useSyncStore.getState().lastSyncedRevision).toBe(0)
+      expect(useSyncStore.getState().lastSyncedHash).toBe('')
+    })
+  })
 })

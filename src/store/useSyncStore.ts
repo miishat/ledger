@@ -27,6 +27,7 @@ interface SyncState {
   clearClientId: () => void;
   setFolderId: (id: string) => void;
   recordSync: (revision: number, hash: string) => void;
+  disconnect: () => void;
 }
 
 export const useSyncStore = create<SyncState>()(
@@ -46,6 +47,20 @@ export const useSyncStore = create<SyncState>()(
       setFolderId: (id) => set({ folderId: id }),
       recordSync: (revision, hash) =>
         set({ lastSyncedRevision: revision, lastSyncedHash: hash, lastSyncedAt: new Date().toISOString() }),
+      // Forgets the whole Drive relationship, not just the client id. A reconnect
+      // may point at a different Drive account or project, and a stale
+      // lastSyncedRevision/lastSyncedHash would make decidePush believe an empty
+      // remote is already up to date, silently hiding local data from a fresh Drive.
+      // Device identity is independent of which Drive is connected, so deviceId and
+      // deviceName survive.
+      disconnect: () =>
+        set({
+          clientId: undefined,
+          folderId: undefined,
+          lastSyncedAt: undefined,
+          lastSyncedRevision: 0,
+          lastSyncedHash: '',
+        }),
     }),
     {
       // Intentionally absent from BACKUP_KEYS: this metadata is per-device and

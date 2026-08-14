@@ -34,4 +34,31 @@ describe('useSyncStore', () => {
   it('is excluded from backups so a pull cannot overwrite device identity', () => {
     expect(BACKUP_KEYS).not.toContain('ledger-sync')
   })
+
+  it('disconnect clears the whole Drive relationship', () => {
+    useSyncStore.setState({
+      clientId: 'abc.apps.googleusercontent.com',
+      folderId: 'folder-1',
+      lastSyncedRevision: 4,
+      lastSyncedAt: '2026-08-01T00:00:00.000Z',
+      lastSyncedHash: 'abc12345',
+    })
+    useSyncStore.getState().disconnect()
+    const state = useSyncStore.getState()
+    expect(state.clientId).toBeUndefined()
+    expect(state.folderId).toBeUndefined()
+    expect(state.lastSyncedAt).toBeUndefined()
+    expect(state.lastSyncedRevision).toBe(0)
+    expect(state.lastSyncedHash).toBe('')
+  })
+
+  it('disconnect preserves device identity', () => {
+    const before = useSyncStore.getState()
+    const deviceId = before.deviceId
+    const deviceName = before.deviceName
+    useSyncStore.getState().disconnect()
+    const after = useSyncStore.getState()
+    expect(after.deviceId).toBe(deviceId)
+    expect(after.deviceName).toBe(deviceName)
+  })
 })
