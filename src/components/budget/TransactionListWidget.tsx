@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2, Maximize2, Minimize2, Receipt, Search } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2, Receipt, Search, X } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
@@ -20,6 +20,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
   const setTransactionsCategory = useBudgetStore((state) => state.setTransactionsCategory);
   const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
+  const addTransaction = useBudgetStore((state) => state.addTransaction);
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -29,6 +30,10 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkCategoryId, setBulkCategoryId] = useState('');
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+  // Holds the rows from the most recent delete so it can be reversed. Replaced
+  // by the next delete and cleared on dismiss; there is no timer, so the offer
+  // does not vanish while the user is deciding.
+  const [undoable, setUndoable] = useState<Transaction[] | null>(null);
 
   const needle = query.trim().toLowerCase();
   const txList = Object.values(transactions)
@@ -60,6 +65,18 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     );
 
   const toggleAll = () => setSelectedIds(allVisibleSelected ? [] : visibleIds);
+
+  const undoLabel = !undoable
+    ? ''
+    : undoable.length === 1
+      ? `Deleted "${undoable[0].description}"`
+      : `Deleted ${undoable.length} transactions`;
+
+  const restoreDeleted = () => {
+    if (!undoable) return;
+    for (const tx of undoable) addTransaction(tx);
+    setUndoable(null);
+  };
 
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
@@ -159,6 +176,24 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           </button>
         </div>
       )}
+      {undoable && (
+        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border border-border bg-bg-primary">
+          <span className="text-[13px] text-text-primary">{undoLabel}</span>
+          <button
+            onClick={restoreDeleted}
+            className="text-[13px] font-medium text-accent hover:underline"
+          >
+            Undo
+          </button>
+          <button
+            onClick={() => setUndoable(null)}
+            aria-label="Dismiss undo"
+            className="ml-auto p-1 text-text-secondary hover:text-text-primary rounded-md"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
       {txList.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
           {needle || selectedCategoryId ? (
@@ -228,6 +263,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          setUndoable([tx]);
                           deleteTransaction(tx.id);
                         }}
                         aria-label="Delete transaction"
@@ -270,6 +306,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      setUndoable([tx]);
                       deleteTransaction(tx.id);
                     }}
                     aria-label="Delete transaction"
@@ -322,6 +359,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         confirmLabel="Delete"
         tone="danger"
         onConfirm={() => {
+          setUndoable(txList.filter((tx) => selected.includes(tx.id)));
           deleteTransactions(selected);
           setSelectedIds([]);
           setConfirmBulkDeleteOpen(false);

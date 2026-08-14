@@ -175,3 +175,85 @@ describe('TransactionListWidget bulk actions', () => {
     expect(screen.queryByDisplayValue('Netflix')).not.toBeInTheDocument()
   })
 })
+
+describe('TransactionListWidget undo', () => {
+  const seedOne = () => {
+    useBudgetStore.setState({
+      transactions: {
+        t1: { id: 't1', date: '2026-07-03', amount: 42, description: 'Coffee Bar', type: 'expense' },
+      },
+    })
+  }
+
+  it('restores a single deleted transaction, with its fields intact', () => {
+    seedOne()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    const table = screen.getByRole('table')
+    fireEvent.click(within(table).getByLabelText('Delete transaction'))
+    expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(useBudgetStore.getState().transactions.t1).toEqual({
+      id: 't1',
+      date: '2026-07-03',
+      amount: 42,
+      description: 'Coffee Bar',
+      type: 'expense',
+    })
+  })
+
+  it('names what was deleted', () => {
+    seedOne()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    const table = screen.getByRole('table')
+    fireEvent.click(within(table).getByLabelText('Delete transaction'))
+    expect(screen.getByText('Deleted "Coffee Bar"')).toBeInTheDocument()
+  })
+
+  it('drops the offer once dismissed', () => {
+    seedOne()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    const table = screen.getByRole('table')
+    fireEvent.click(within(table).getByLabelText('Delete transaction'))
+    fireEvent.click(screen.getByLabelText('Dismiss undo'))
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
+  })
+
+  it('restores every row from a bulk delete', () => {
+    useBudgetStore.setState({
+      transactions: {
+        t1: { id: 't1', date: '2026-07-03', amount: 42, description: 'Coffee Bar', type: 'expense' },
+        t2: { id: 't2', date: '2026-07-04', amount: 9, description: 'Netflix', type: 'expense' },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.click(screen.getByLabelText('Select all transactions'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(Object.keys(useBudgetStore.getState().transactions)).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(Object.keys(useBudgetStore.getState().transactions).sort()).toEqual(['t1', 't2'])
+  })
+
+  it('does not delete selected rows that the search has filtered out', () => {
+    useBudgetStore.setState({
+      transactions: {
+        t1: { id: 't1', date: '2026-07-03', amount: 42, description: 'Coffee Bar', type: 'expense' },
+        t2: { id: 't2', date: '2026-07-04', amount: 9, description: 'Netflix', type: 'expense' },
+        t3: { id: 't3', date: '2026-07-05', amount: 15, description: 'Groceries', type: 'expense' },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.click(screen.getByLabelText('Select all transactions'))
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'Groceries' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    const remaining = useBudgetStore.getState().transactions
+    expect(remaining.t3).toBeUndefined()
+    expect(remaining.t1).toBeDefined()
+    expect(remaining.t2).toBeDefined()
+  })
+})
