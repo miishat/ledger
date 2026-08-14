@@ -108,6 +108,26 @@ describe('TransactionListWidget search', () => {
     fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'zzzz' } })
     expect(screen.getByText('No matching transactions')).toBeInTheDocument()
   })
+
+  it('states the full transaction count in the Clear All confirmation, not the filtered count', () => {
+    seedThree()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'netfl' } })
+    fireEvent.click(screen.getByTitle('Clear All Transactions'))
+    expect(screen.getByText(/Every transaction \(3\) will be deleted/)).toBeInTheDocument()
+    expect(screen.getByText(/hidden by the current search or filter/)).toBeInTheDocument()
+  })
+
+  it('leaves no Undo button after confirming Clear All', () => {
+    seedThree()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.click(screen.getAllByLabelText('Delete transaction')[0])
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+    fireEvent.click(screen.getByTitle('Clear All Transactions'))
+    const confirmButtons = screen.getAllByRole('button', { name: 'Clear All' })
+    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
 })
 
 describe('TransactionListWidget bulk actions', () => {

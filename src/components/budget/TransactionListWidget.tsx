@@ -342,11 +342,12 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       <ConfirmDialog
         open={confirmClearOpen}
         title="Clear all transactions?"
-        message="Every transaction will be deleted. This cannot be undone."
+        message={`Every transaction (${Object.keys(transactions).length}) will be deleted, including any hidden by the current search or filter. This cannot be undone.`}
         confirmLabel="Clear All"
         tone="danger"
         onConfirm={() => {
           clearAllTransactions();
+          setUndoable(null);
           setConfirmClearOpen(false);
         }}
         onCancel={() => setConfirmClearOpen(false)}
