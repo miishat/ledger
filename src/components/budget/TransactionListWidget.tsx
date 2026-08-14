@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2, Maximize2, Minimize2, Receipt } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2, Receipt, Search } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
@@ -23,13 +23,23 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [query, setQuery] = useState('');
 
+  const needle = query.trim().toLowerCase();
   const txList = Object.values(transactions)
     .filter(tx => inRange(tx.date, range))
     .filter(tx => {
       if (selectedCategoryId === '') return true;
       if (selectedCategoryId === 'uncategorized') return !tx.categoryId;
       return tx.categoryId === selectedCategoryId;
+    })
+    .filter(tx => {
+      if (!needle) return true;
+      const categoryName = tx.categoryId ? categories[tx.categoryId]?.name ?? '' : '';
+      return (
+        tx.description.toLowerCase().includes(needle) ||
+        categoryName.toLowerCase().includes(needle)
+      );
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -53,6 +63,17 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       <div className="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b border-border pb-4">
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex flex-wrap items-center gap-3 min-w-0">
+          <div className="relative">
+            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search transactions"
+              placeholder="Search"
+              className="h-[34px] w-40 sm:w-48 pl-7 pr-2 text-[13px] bg-bg-primary border border-border rounded-md text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent shadow-sm"
+            />
+          </div>
           <ThemedSelect
             value={selectedCategoryId}
             onChange={setSelectedCategoryId}
@@ -83,7 +104,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       </div>
       {txList.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
-          <EmptyState icon={Receipt} message="No transactions yet" hint="Import a CSV or add one manually to see it here." />
+          {needle || selectedCategoryId ? (
+            <EmptyState
+              icon={Search}
+              message="No matching transactions"
+              hint="Try a different search or clear the category filter."
+            />
+          ) : (
+            <EmptyState icon={Receipt} message="No transactions yet" hint="Import a CSV or add one manually to see it here." />
+          )}
         </div>
       ) : (
         <div className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : ''}`}>

@@ -69,3 +69,43 @@ describe('TransactionListWidget mobile layout', () => {
     expect(screen.getByDisplayValue('Coffee')).toBeInTheDocument()
   })
 })
+
+describe('TransactionListWidget search', () => {
+  const seedThree = () => {
+    useBudgetStore.setState({
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+      },
+      transactions: {
+        t1: { id: 't1', date: '2026-07-03', amount: 42, description: 'Coffee Bar', type: 'expense' },
+        t2: { id: 't2', date: '2026-07-04', amount: 9, description: 'Netflix', type: 'expense' },
+        t3: { id: 't3', date: '2026-07-05', amount: 80, description: 'Loblaws', type: 'expense', categoryId: 'c1' },
+      },
+    })
+  }
+
+  it('filters by description, case insensitively', () => {
+    seedThree()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'netfl' } })
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Netflix')).toBeInTheDocument()
+    expect(within(table).queryByText('Coffee Bar')).not.toBeInTheDocument()
+  })
+
+  it('matches on the category name too', () => {
+    seedThree()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'grocer' } })
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Loblaws')).toBeInTheDocument()
+    expect(within(table).queryByText('Netflix')).not.toBeInTheDocument()
+  })
+
+  it('says so when nothing matches instead of showing an empty table', () => {
+    seedThree()
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'zzzz' } })
+    expect(screen.getByText('No matching transactions')).toBeInTheDocument()
+  })
+})
