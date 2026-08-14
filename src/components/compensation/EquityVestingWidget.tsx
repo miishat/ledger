@@ -2,6 +2,7 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useCompensationStore, generateVestEvents } from '../../store/useCompensationStore'
 import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
+import type { ChartTooltipProps, ChartTooltipPayloadItem } from '../../utils/chartTheme'
 import {
   ComposedChart,
   Line,
@@ -13,52 +14,59 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
+const cad = (v: number) =>
+  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
+
+// Module scope, not inside the component: a component created during render is
+// a new type on every render, so React remounts the tooltip each time.
+const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProps) => {
+  if (active && payload && payload.length) {
+    const barPayloads = payload.filter(
+      (p: ChartTooltipPayloadItem) => p.dataKey !== 'cumulativeVested' && p.dataKey !== 'vestValue',
+    );
+
+    if (barPayloads.length === 0) return null;
+
+    const totalVest = barPayloads.reduce((sum, p) => sum + (p.value ?? 0), 0);
+
+    return (
+      <div className="themed-card rounded-lg p-3 min-w-[200px]" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+        <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
+
+        <div className="flex flex-col gap-1 mb-2">
+          {barPayloads.map((p, i) => {
+            if ((p.value ?? 0) === 0) return null;
+            return (
+              <div key={i} className="flex justify-between items-center gap-4 text-[13px]">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
+                  <span className="text-[var(--color-text-secondary)]">{p.name}</span>
+                </div>
+                <span className="text-[var(--color-text-primary)] font-medium">
+                  {cad(p.value ?? 0)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-between items-center gap-4 text-[13px] pt-2 border-t border-[var(--color-border)]">
+          <span className="text-[var(--color-text-primary)] font-semibold">Total Vesting</span>
+          <span className="text-[var(--color-text-primary)] font-bold">
+            {cad(totalVest)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function EquityVestingWidget() {
   const { timeMode } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
 
   const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)']
-
-  const CustomEquityTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const barPayloads = payload.filter((p: any) => p.dataKey !== 'cumulativeVested' && p.dataKey !== 'vestValue');
-      
-      if (barPayloads.length === 0) return null;
-      
-      const totalVest = barPayloads.reduce((sum: number, p: any) => sum + p.value, 0);
-
-      return (
-        <div className="themed-card rounded-lg p-3 min-w-[200px]" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
-          <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
-          
-          <div className="flex flex-col gap-1 mb-2">
-            {barPayloads.map((p: any, i: number) => {
-              if (p.value === 0) return null;
-              return (
-                <div key={i} className="flex justify-between items-center gap-4 text-[13px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
-                    <span className="text-[var(--color-text-secondary)]">{p.name}</span>
-                  </div>
-                  <span className="text-[var(--color-text-primary)] font-medium">
-                    {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(p.value)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-between items-center gap-4 text-[13px] pt-2 border-t border-[var(--color-border)]">
-            <span className="text-[var(--color-text-primary)] font-semibold">Total Vesting</span>
-            <span className="text-[var(--color-text-primary)] font-bold">
-              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalVest)}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (primaryPackage.rsuGrants.length === 0) {
     return (
@@ -106,7 +114,7 @@ export function EquityVestingWidget() {
   let cumulativeVested = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
 
   const chartData = displayMonths.map(dm => {
-    const dataRow: any = { monthLabel: dm.label, vestValue: 0 }
+    const dataRow: Record<string, string | number> = { monthLabel: dm.label, vestValue: 0 }
     let totalVestThisMonth = 0
 
     primaryPackage.rsuGrants.forEach((grant) => {

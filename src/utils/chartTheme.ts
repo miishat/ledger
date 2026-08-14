@@ -36,3 +36,18 @@ export function sliceColor(i: number): string {
   const mix = SLICE_MIXES[Math.floor(i / BASE_SLICE_COLORS.length) % SLICE_MIXES.length]
   return mix ? `color-mix(in srgb, ${base} ${mix.keep}%, ${mix.toward})` : base
 }
+
+/** The shape Recharts hands a custom Tooltip `content` component. Recharts types
+ *  this loosely, so this is the narrow subset our tooltips actually read. */
+export interface ChartTooltipPayloadItem {
+  dataKey?: string | number
+  name?: string
+  value?: number
+  color?: string
+}
+
+export interface ChartTooltipProps {
+  active?: boolean
+  payload?: ChartTooltipPayloadItem[]
+  label?: string | number
+}

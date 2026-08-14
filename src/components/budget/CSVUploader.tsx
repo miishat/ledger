@@ -51,8 +51,8 @@ export const CSVUploader: React.FC = () => {
       } else {
         handleTransactions(result as TriageTransaction[]);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to parse CSV');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to parse CSV');
     } finally {
       setIsParsing(false);
       if (fileInputRef.current) {
@@ -99,7 +99,7 @@ export const CSVUploader: React.FC = () => {
         amount,
         description: String(descRaw || '').trim(),
         type,
-        originalRowData: row
+        originalRowData: Array.isArray(row) ? Object.fromEntries(row.map((val, i) => [String(i), val])) : row
       });
     });
 
