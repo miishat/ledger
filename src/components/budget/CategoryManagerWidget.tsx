@@ -8,6 +8,7 @@ import { totalMonthlyBudget } from '../../store/budgetSelectors';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
+import { amountForCategory } from '../../utils/budget/splits';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions';
 
@@ -138,7 +139,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           const groupCats = catList.filter(c => c.groupId === group.id);
           const groupTotal = groupCats.reduce((sum, cat) => sum + monthlyEquivalent(cat), 0);
           const groupEarned = groupCats.reduce((sum, cat) => {
-            return sum + thisMonthIncome.filter(t => t.categoryId === cat.id).reduce((s, t) => s + t.amount, 0);
+            return sum + thisMonthIncome.reduce((s, t) => s + amountForCategory(t, cat.id), 0);
           }, 0);
           
           return (
@@ -203,8 +204,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                       <div className="flex items-center gap-2 flex-1 flex-wrap justify-end">
                         {(() => {
                           const actualAmount = (isIncomeGroup ? thisMonthIncome : thisMonthExpenses)
-                            .filter(t => t.categoryId === cat.id)
-                            .reduce((sum, t) => sum + t.amount, 0);
+                            .reduce((sum, t) => sum + amountForCategory(t, cat.id), 0);
 
                           if (isIncomeGroup) {
                             return (
