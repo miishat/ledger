@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from './storageKeys'
 import type { TriageTransaction } from '../types/triage';
 import { useBudgetStore } from './useBudgetStore';
 
@@ -113,7 +114,7 @@ export const useTriageStore = create<TriageState>()(
       clearAll: () => set({ pendingTransactions: {} }),
     }),
     {
-      name: 'ledger-triage',
+      name: STORAGE_KEYS.triage,
     }
   )
 );

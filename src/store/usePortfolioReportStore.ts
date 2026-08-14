@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 import type { PAReport } from '../utils/investments/ibkrPortfolioAnalyst'
 
 interface PortfolioReportState {
@@ -18,6 +19,6 @@ export const usePortfolioReportStore = create<PortfolioReportState>()(
       setReport: (report) => set({ report, uploadedAt: new Date().toISOString() }),
       clearReport: () => set({ report: null, uploadedAt: null }),
     }),
-    { name: 'ledger-portfolio-report' },
+    { name: STORAGE_KEYS.portfolioReport },
   ),
 )

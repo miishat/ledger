@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 import { mergeActivityRows, type RawRow } from '../utils/investments/wheel/ibkrActivityParser'
 
 interface WheelState {
@@ -23,6 +24,6 @@ export const useWheelStore = create<WheelState>()(
         })),
       clearAll: () => set({ rawRows: [], fileCount: 0 }),
     }),
-    { name: 'ledger-wheel' },
+    { name: STORAGE_KEYS.wheel },
   ),
 )

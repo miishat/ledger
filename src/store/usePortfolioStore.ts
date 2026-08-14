@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 import type { Currency } from '../services/marketData/types'
 
 export interface Holding {
@@ -99,7 +100,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       clearHoldings: () => set({ holdings: [], importedAt: null, currencyReviewPending: false }),
     }),
     {
-      name: 'ledger-portfolio',
+      name: STORAGE_KEYS.portfolio,
       version: 2,
       migrate: migratePortfolioState,
     },

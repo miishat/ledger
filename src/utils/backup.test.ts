@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText, BACKUP_KEYS } from './backup'
+import { STORAGE_KEYS } from '../store/storageKeys'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -151,5 +152,30 @@ describe('backup v2 envelope', () => {
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 1 })
     expect(JSON.parse(localStorage.getItem('ledger-sync')!)).toEqual({ deviceId: 'this-device', lastSyncedRevision: 3 })
     expect(JSON.parse(localStorage.getItem('some-random-key')!)).toEqual({ mine: true })
+  })
+})
+
+describe('backup key coverage', () => {
+  it('backs up the PortfolioAnalyst report store', () => {
+    expect(BACKUP_KEYS).toContain('ledger-portfolio-report')
+  })
+
+  it('leaves per-device sync bookkeeping out of the backup', () => {
+    expect(BACKUP_KEYS).not.toContain('ledger-sync')
+  })
+
+  it('covers every registered store except the declared exclusions', () => {
+    const expected = Object.values(STORAGE_KEYS).filter((k) => k !== STORAGE_KEYS.sync)
+    expect([...BACKUP_KEYS].sort()).toEqual([...expected].sort())
+  })
+
+  it('round-trips the PortfolioAnalyst report through a backup', () => {
+    localStorage.setItem('ledger-portfolio-report', JSON.stringify({ state: { report: { id: 'r1' } } }))
+    const env = buildBackup()
+    localStorage.clear()
+    restoreBackup(env)
+    expect(JSON.parse(localStorage.getItem('ledger-portfolio-report') as string)).toEqual({
+      state: { report: { id: 'r1' } },
+    })
   })
 })

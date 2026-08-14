@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from './storageKeys'
 import type {
   BudgetingParadigm,
   BudgetClass,
@@ -215,7 +216,7 @@ export const useBudgetStore = create<BudgetState>()(
       }),
     }),
     {
-      name: 'ledger-budget',
+      name: STORAGE_KEYS.budget,
       version: 3,
       migrate: (persistedState, version) => {
         const persisted = persistedState as Partial<BudgetState>;

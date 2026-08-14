@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from './storageKeys'
 import { v4 as uuidv4 } from 'uuid';
 
 export type AccountType = 'bank' | 'investment' | 'debt' | 'receivable' | 'other';
@@ -121,7 +122,7 @@ export const useAccountsStore = create<AccountsState>()(
       },
     }),
     {
-      name: 'accounts-storage',
+      name: STORAGE_KEYS.accounts,
     }
   )
 );
