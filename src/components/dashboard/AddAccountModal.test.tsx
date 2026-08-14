@@ -36,3 +36,24 @@ describe('AddAccountModal mobile header (no double close)', () => {
     expect(closeButtons).toHaveLength(1)
   })
 })
+
+describe('AddAccountModal form state', () => {
+  it('starts blank when opened to add, after having been opened to edit', () => {
+    const editing = { id: 'a1', name: 'Chequing', value: 1200, type: 'bank' as const }
+    const { rerender } = render(
+      <AddAccountModal isOpen onClose={() => {}} editingAccount={editing} />,
+    )
+    expect(screen.getByDisplayValue('Chequing')).toBeInTheDocument()
+
+    rerender(<AddAccountModal isOpen={false} onClose={() => {}} editingAccount={editing} />)
+    rerender(<AddAccountModal isOpen onClose={() => {}} editingAccount={null} />)
+
+    expect(screen.queryByDisplayValue('Chequing')).not.toBeInTheDocument()
+  })
+
+  it('loads the edited account into the form', () => {
+    const editing = { id: 'a1', name: 'Chequing', value: 1200, type: 'bank' as const }
+    render(<AddAccountModal isOpen onClose={() => {}} editingAccount={editing} />)
+    expect(screen.getByDisplayValue('Chequing')).toBeInTheDocument()
+  })
+})
