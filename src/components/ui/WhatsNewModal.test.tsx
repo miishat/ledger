@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { WhatsNewModal } from './WhatsNewModal'
 import { setMatchMedia } from '../../test-utils/matchMedia'
+import { versionSeries } from '../../utils/whatsNew'
 
 describe('WhatsNewModal disclaimer link', () => {
   it('renders the disclaimer button under Made by Mishat and fires the callback', () => {
@@ -24,21 +25,40 @@ describe('WhatsNewModal scrim dismissal', () => {
 
 
 describe('WhatsNewModal older versions disclosure', () => {
+  // Derived from the running version rather than hardcoded, so cutting a new
+  // minor release does not break these tests. An "[Unreleased]" heading has no
+  // parseable version and is excluded by isVersionHeading.
+  const currentSeries = versionSeries(__APP_VERSION__)
+  const isVersionHeading = (b: HTMLElement) => /^\[\d+\.\d+\./.test(b.textContent || '')
+  const inCurrentSeries = (b: HTMLElement) => versionSeries(b.textContent || '') === currentSeries
+  const versionHeadings = () => screen.getAllByRole('button').filter(isVersionHeading)
+
   it('hides earlier series behind a collapsed disclosure', () => {
     render(<WhatsNewModal isOpen onClose={() => {}} onOpenDisclaimer={() => {}} />)
     const toggle = screen.getByRole('button', { name: /older versions/i })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText(/^\[0\.6\./)).not.toBeInTheDocument()
+
+    const before = versionHeadings()
+    expect(before.length).toBeGreaterThan(0)
+    expect(before.every(inCurrentSeries)).toBe(true)
 
     fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByText(/^\[0\.6\./).length).toBeGreaterThan(0)
+
+    const after = versionHeadings()
+    expect(after.length).toBeGreaterThan(before.length)
+    expect(after.some((b) => !inCurrentSeries(b))).toBe(true)
   })
 
-  it('expands the newest entry of the current series by default', () => {
+  it('expands only the newest entry of the current series by default', () => {
     render(<WhatsNewModal isOpen onClose={() => {}} onOpenDisclaimer={() => {}} />)
-    const headings = screen.getAllByRole('button').filter((b) => /^\[0\.7\./.test(b.textContent || ''))
-    expect(headings[0]).toHaveAttribute('aria-expanded', 'true')
-    expect(headings[1]).toHaveAttribute('aria-expanded', 'false')
+    const current = versionHeadings().filter(inCurrentSeries)
+    expect(current.length).toBeGreaterThan(0)
+    expect(current[0]).toHaveAttribute('aria-expanded', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: /older versions/i }))
+    const older = versionHeadings().filter((b) => !inCurrentSeries(b))
+    expect(older.length).toBeGreaterThan(0)
+    expect(older.every((b) => b.getAttribute('aria-expanded') === 'false')).toBe(true)
   })
 })
