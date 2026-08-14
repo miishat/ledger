@@ -20,7 +20,10 @@ export const SubscriptionsWidget: React.FC = () => {
   const ignored = detected.filter((i) => ignoredKeys.includes(i.key))
   const monthlyTotal = items.reduce((s, i) => s + i.monthlyEstimate, 0)
 
-  const today = new Date().toISOString().slice(0, 10)
+  // Use local calendar date, not UTC. toISOString reports UTC date, which rolls over to
+  // tomorrow late in the day for users west of UTC, causing today's charges to disappear.
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const upcoming = upcomingWithin(items, today, UPCOMING_DAYS)
   const upcomingTotal = upcoming.reduce((s, i) => s + i.avgAmount, 0)
 

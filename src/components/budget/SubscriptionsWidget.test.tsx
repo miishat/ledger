@@ -50,6 +50,22 @@ describe('SubscriptionsWidget', () => {
     expect(screen.getByTestId('upcoming-list').textContent).toContain('NETFLIX')
   })
 
+  it('includes a charge due today (local calendar date) in the upcoming list', () => {
+    // Three charges on the 15th, each 30 days apart. At frozen time 2026-08-14T12:00:00Z
+    // (which is 2026-08-14 08:00 in Toronto UTC-4), the last charge on 2026-07-15 means
+    // next expected = 2026-08-14. This test guards against the bug where toISOString
+    // reports tomorrow for users west of UTC late in the day.
+    useBudgetStore.setState({
+      transactions: {
+        charge1: { id: 'charge1', date: '2026-05-15', amount: 12.50, description: 'LOCAL_DAY_TEST', type: 'expense' },
+        charge2: { id: 'charge2', date: '2026-06-15', amount: 12.50, description: 'LOCAL_DAY_TEST', type: 'expense' },
+        charge3: { id: 'charge3', date: '2026-07-15', amount: 12.50, description: 'LOCAL_DAY_TEST', type: 'expense' },
+      },
+    })
+    render(<SubscriptionsWidget />)
+    expect(within(screen.getByTestId('upcoming-list')).getByText('LOCAL_DAY_TEST')).toBeInTheDocument()
+  })
+
   it('drops an ignored charge out of the list and the total', () => {
     seedNetflix()
     render(<SubscriptionsWidget />)
