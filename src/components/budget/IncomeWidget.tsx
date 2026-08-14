@@ -4,6 +4,7 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { inRange, isSingleMonth, type MonthRange } from '../../utils/budget/period';
+import { splitParts } from '../../utils/budget/splits';
 
 interface IncomeWidgetProps {
   range: MonthRange;
@@ -19,8 +20,10 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ range }) => {
 
   // Break down by income category (Salary, RSU, ...) so you can see the source.
   const incomeBySource = incomeThisMonth.reduce((acc, t) => {
-    const name = (t.categoryId && categories[t.categoryId]?.name) || 'Other income';
-    acc[name] = (acc[name] || 0) + t.amount;
+    for (const part of splitParts(t)) {
+      const name = (part.categoryId && categories[part.categoryId]?.name) || 'Other income';
+      acc[name] = (acc[name] || 0) + part.amount;
+    }
     return acc;
   }, {} as Record<string, number>);
 

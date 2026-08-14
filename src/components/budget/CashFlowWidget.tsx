@@ -7,6 +7,7 @@ import { formatMoney } from '../planner/format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 import { inRange, type MonthRange } from '../../utils/budget/period'
+import { splitParts } from '../../utils/budget/splits'
 
 type NodeKind = 'income' | 'pool' | 'expense' | 'savings'
 
@@ -82,12 +83,16 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
     if (!inRange(t.date, range)) continue
     if (t.type === 'income') {
       if (!countsAsIncome(t)) continue
-      const name = (t.categoryId && categories[t.categoryId]?.name) || 'Other income'
-      incomeByCat.set(name, (incomeByCat.get(name) ?? 0) + t.amount)
+      for (const part of splitParts(t)) {
+        const name = (part.categoryId && categories[part.categoryId]?.name) || 'Other income'
+        incomeByCat.set(name, (incomeByCat.get(name) ?? 0) + part.amount)
+      }
     } else {
-      const groupId = t.categoryId ? categories[t.categoryId]?.groupId : undefined
-      const name = (groupId && categoryGroups[groupId]?.name) || 'Uncategorized'
-      expenseByGroup.set(name, (expenseByGroup.get(name) ?? 0) + t.amount)
+      for (const part of splitParts(t)) {
+        const groupId = part.categoryId ? categories[part.categoryId]?.groupId : undefined
+        const name = (groupId && categoryGroups[groupId]?.name) || 'Uncategorized'
+        expenseByGroup.set(name, (expenseByGroup.get(name) ?? 0) + part.amount)
+      }
     }
   }
 
