@@ -14,8 +14,10 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
+import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import type { ChartTooltipProps } from '../../utils/chartTheme'
 import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
 import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
 import { usePlannerStore } from '../../store/usePlannerStore'
@@ -33,36 +35,41 @@ const COMP_COLORS = {
   rsu: 'var(--chart-5)',
 }
 
-export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
-      return (
-        <div className="themed-card rounded-lg p-3" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
-          <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={`item-${index}`} className="flex justify-between items-center gap-4 text-[13px] mb-1">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
-                <span className="text-[var(--color-text-secondary)]">{entry.name}</span>
-              </div>
-              <span className="text-[var(--color-text-primary)] font-medium">
-                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(entry.value)}
-              </span>
+const cad = (v: number) =>
+  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
+
+// Module scope, not inside the component: a component created during render is
+// a new type on every render, so React remounts the tooltip each time.
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
+  if (active && payload && payload.length) {
+    const total = payload.reduce((sum, entry) => sum + (entry.value ?? 0), 0);
+    return (
+      <div className="themed-card rounded-lg p-3" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+        <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
+        {payload.map((entry, index) => (
+          <div key={`item-${index}`} className="flex justify-between items-center gap-4 text-[13px] mb-1">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+              <span className="text-[var(--color-text-secondary)]">{entry.name}</span>
             </div>
-          ))}
-          <div className="flex justify-between items-center gap-4 text-[13px] mt-2 pt-2 border-t border-[var(--color-border)]">
-            <span className="text-[var(--color-text-primary)] font-semibold">Total</span>
-            <span className="text-[var(--color-text-primary)] font-bold">
-              {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(total)}
+            <span className="text-[var(--color-text-primary)] font-medium">
+              {cad(entry.value ?? 0)}
             </span>
           </div>
+        ))}
+        <div className="flex justify-between items-center gap-4 text-[13px] mt-2 pt-2 border-t border-[var(--color-border)]">
+          <span className="text-[var(--color-text-primary)] font-semibold">Total</span>
+          <span className="text-[var(--color-text-primary)] font-bold">
+            {cad(total)}
+          </span>
         </div>
-      );
-    }
-    return null;
-  };
+      </div>
+    );
+  }
+  return null;
+};
 
+export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   const navigate = useNavigate()
   const { timeMode, setTimeMode, showAfterTax, toggleAfterTax, useCadConversion } = useCompensationStore()
   const { pkg: primaryPackage } = useCompensationDisplay()
@@ -145,7 +152,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     let rsuThisMonth = 0
     primaryPackage.rsuGrants.forEach(grant => {
       const events = generateVestEvents(grant, primaryPackage.companyCurrentPrice || 0)
-      const eventsThisMonth = events.filter((e: any) => {
+      const eventsThisMonth = events.filter((e: VestEvent) => {
         if (!e.date) return false;
         const eventDate = new Date(e.date);
         return eventDate.getMonth() === dm.monthIndex && eventDate.getFullYear() === dm.year;
@@ -239,10 +246,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any, name: any) => [
-                    new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value),
-                    name
-                  ]}
+                  formatter={(value, name) => [cad(Number(value) || 0), String(name)]}
                   {...chartTooltipStyles}
                 />
               </PieChart>

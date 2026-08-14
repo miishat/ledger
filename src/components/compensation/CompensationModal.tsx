@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
-import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule } from '../../store/useCompensationStore'
+import type { VestingPreset, VestingFrequency, PastSalary, VestingSchedule, RSUGrant } from '../../store/useCompensationStore'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
@@ -110,7 +110,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
     setRsuGrantShares(0)
   }
 
-  const handleEditRSU = (grant: any) => {
+  const handleEditRSU = (grant: RSUGrant) => {
     setEditRsuGrantId(grant.id)
     setRsuGrantName(grant.grantName)
     setRsuGrantShares(grant.grantShares)

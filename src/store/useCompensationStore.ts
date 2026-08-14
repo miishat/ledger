@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 
 export type VestingPreset = '4yr-1yr-cliff' | '3yr-no-cliff' | 'custom'
 export type VestingFrequency = 'monthly' | 'quarterly'
@@ -289,7 +290,7 @@ export const useCompensationStore = create<CompensationState>()(
         })),
     }),
     {
-      name: 'ledger-compensation',
+      name: STORAGE_KEYS.compensation,
     }
   )
 )

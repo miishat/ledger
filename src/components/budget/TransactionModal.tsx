@@ -18,7 +18,14 @@ interface TransactionModalProps {
   initialTransaction?: Transaction | null;
 }
 
-export function TransactionModal({ isOpen, onClose, initialTransaction }: TransactionModalProps) {
+interface TransactionFormProps {
+  onClose: () => void;
+  initialTransaction?: Transaction | null;
+}
+
+/** Mounted only while the sheet is open, so useState initialisers are the form
+ *  reset. Do not reintroduce an effect that sets state here. */
+function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) {
   const addTransaction = useBudgetStore((state) => state.addTransaction);
   const updateTransaction = useBudgetStore((state) => state.updateTransaction);
   const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
@@ -26,51 +33,27 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   const categoryGroups = useBudgetStore((state) => state.categoryGroups);
   const transactions = useBudgetStore((state) => state.transactions);
 
-  const [type, setType] = useState<TransactionType>('expense');
+  const [type, setType] = useState<TransactionType>(initialTransaction?.type ?? 'expense');
 
   const categoryList = Object.values(categories).filter((cat) => {
     const group = categoryGroups[cat.groupId];
     return (group?.kind ?? 'expense') === type;
   });
 
-  const [amount, setAmount] = useState<number>(0);
-  const [category, setCategory] = useState<string>('');
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [description, setDescription] = useState<string>('');
+  const [amount, setAmount] = useState<number>(initialTransaction?.amount ?? 0);
+  const [category, setCategory] = useState<string>(
+    initialTransaction?.categoryId ?? categoryList[0]?.id ?? '',
+  );
+  const [date, setDate] = useState<string>(initialTransaction?.date ?? new Date().toISOString().split('T')[0]);
+  const [description, setDescription] = useState<string>(initialTransaction?.description ?? '');
 
-  const [isShared, setIsShared] = useState(false);
-  const [totalPaid, setTotalPaid] = useState<number>(0);
-  const [sharedWith, setSharedWith] = useState<string>('');
-  const [isReimbursement, setIsReimbursement] = useState(false);
-  const [reimbursementFrom, setReimbursementFrom] = useState<string>('');
+  const [isShared, setIsShared] = useState(!!initialTransaction?.shared);
+  const [totalPaid, setTotalPaid] = useState<number>(initialTransaction?.shared?.totalAmount ?? 0);
+  const [sharedWith, setSharedWith] = useState<string>(initialTransaction?.shared?.sharedWith ?? '');
+  const [isReimbursement, setIsReimbursement] = useState(!!initialTransaction?.reimbursement);
+  const [reimbursementFrom, setReimbursementFrom] = useState<string>(initialTransaction?.reimbursement?.from ?? '');
 
   const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
-
-  React.useEffect(() => {
-    if (initialTransaction) {
-      setType(initialTransaction.type);
-      setAmount(initialTransaction.amount);
-      setCategory(initialTransaction.categoryId || '');
-      setDate(initialTransaction.date);
-      setDescription(initialTransaction.description || '');
-      setIsShared(!!initialTransaction.shared);
-      setTotalPaid(initialTransaction.shared?.totalAmount ?? 0);
-      setSharedWith(initialTransaction.shared?.sharedWith ?? '');
-      setIsReimbursement(!!initialTransaction.reimbursement);
-      setReimbursementFrom(initialTransaction.reimbursement?.from ?? '');
-    } else {
-      setType('expense');
-      setAmount(0);
-      setCategory(categoryList.length > 0 ? categoryList[0].id : '');
-      setDate(new Date().toISOString().split('T')[0]);
-      setDescription('');
-      setIsShared(false);
-      setTotalPaid(0);
-      setSharedWith('');
-      setIsReimbursement(false);
-      setReimbursementFrom('');
-    }
-  }, [initialTransaction, isOpen, categories]);
 
   const handleTypeChange = (nextType: TransactionType) => {
     setType(nextType);
@@ -122,17 +105,6 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       });
     }
 
-    // Reset form
-    setType('expense');
-    setAmount(0);
-    setCategory(categoryList.length > 0 ? categoryList[0].id : '');
-    setDate(new Date().toISOString().split('T')[0]);
-    setDescription('');
-    setIsShared(false);
-    setTotalPaid(0);
-    setSharedWith('');
-    setIsReimbursement(false);
-    setReimbursementFrom('');
     onClose();
   };
 
@@ -144,14 +116,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
   };
 
   return (
-    <Sheet
-      open={isOpen}
-      onClose={onClose}
-      desktop="modal"
-      ariaLabel={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
-      title={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
-      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)] md:overflow-hidden"
-    >
+    <>
         <div className="hidden md:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">
             {initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
@@ -335,6 +300,21 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
             </button>
           </div>
         </form>
+    </>
+  );
+}
+
+export function TransactionModal({ isOpen, onClose, initialTransaction }: TransactionModalProps) {
+  return (
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      desktop="modal"
+      ariaLabel={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
+      title={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
+      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)] md:overflow-hidden"
+    >
+      <TransactionForm key={initialTransaction?.id ?? 'new'} onClose={onClose} initialTransaction={initialTransaction} />
     </Sheet>
   );
 }

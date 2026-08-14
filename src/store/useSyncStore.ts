@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from './storageKeys'
 import { v4 as uuidv4 } from 'uuid';
 
 /** A readable default label so the conflict dialog can name the other device. */
@@ -65,7 +66,7 @@ export const useSyncStore = create<SyncState>()(
     {
       // Intentionally absent from BACKUP_KEYS: this metadata is per-device and
       // must not travel inside a snapshot.
-      name: 'ledger-sync',
+      name: STORAGE_KEYS.sync,
     }
   )
 );

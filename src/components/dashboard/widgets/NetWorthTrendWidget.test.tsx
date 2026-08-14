@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { trendDomain } from './NetWorthTrendWidget'
+import { trendDomain } from './trendDomain'
 
 describe('trendDomain', () => {
   it('pads min and max by 8% of the range and never forces zero', () => {

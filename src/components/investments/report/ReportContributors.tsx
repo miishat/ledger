@@ -4,7 +4,8 @@ import type { PAReport } from '../../../utils/investments/ibkrPortfolioAnalyst'
 import { formatMoney } from '../../planner/format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { contributors } from './reportMetrics'
-import { Section, pct } from './Section'
+import { Section } from './Section'
+import { pct } from './format'
 
 export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) => {
   const [showAll, setShowAll] = useState(false)

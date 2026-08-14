@@ -2,16 +2,21 @@ import Papa from 'papaparse';
 import { v4 as uuidv4 } from 'uuid';
 import type { TriageTransaction } from '../types/triage';
 
+/** One parsed CSV record. PapaParse gives an object keyed by header when the
+ *  file has headers, and a positional string array when it does not. */
+export type CsvRow = Record<string, string>
+export type CsvHeaderlessRow = string[]
+
 export interface UnrecognizedCSVResult {
   unrecognized: true;
   headers: string[];
-  rows: any[];
+  rows: (CsvRow | CsvHeaderlessRow)[];
 }
 
 export interface BankParserConfig {
   name: string;
-  detect: (headers: string[], firstRow: any) => boolean;
-  parse: (row: any) => Omit<TriageTransaction, 'id' | 'categoryId'> | null;
+  detect: (headers: string[], firstRow: CsvRow | CsvHeaderlessRow | undefined) => boolean;
+  parse: (row: CsvRow | CsvHeaderlessRow) => Omit<TriageTransaction, 'id' | 'categoryId'> | null;
 }
 
 export const PARSERS: BankParserConfig[] = [
@@ -20,9 +25,10 @@ export const PARSERS: BankParserConfig[] = [
     // Headers: Filter,Date,Description,Sub-description,Type of Transaction,Amount,Balance
     detect: (headers) => headers.includes('Sub-description') && headers.includes('Type of Transaction'),
     parse: (row) => {
+      if (Array.isArray(row)) return null;
       const amountRaw = parseFloat(row['Amount']);
       if (isNaN(amountRaw)) return null;
-      
+
       const type = row['Type of Transaction'] === 'Credit' ? 'income' : 'expense';
       const amount = Math.abs(amountRaw);
       
@@ -46,7 +52,7 @@ export const PARSERS: BankParserConfig[] = [
       // Check if first element is a date like MM/DD/YYYY
       return /^\d{2}\/\d{2}\/\d{4}$/.test(firstRow[0]);
     },
-    parse: (row: string[]) => {
+    parse: (row) => {
       if (!Array.isArray(row) || row.length < 5) return null;
       
       // row[0]: Date, row[1]: Description, row[2]: Expense, row[3]: Income
@@ -83,6 +89,7 @@ export const PARSERS: BankParserConfig[] = [
     // Headers: Account Type,Account Number,Transaction Date,Cheque Number,Description 1,Description 2,CAD$,USD$
     detect: (headers) => headers.includes('Transaction Date') && headers.includes('CAD$'),
     parse: (row) => {
+      if (Array.isArray(row)) return null;
       const amountRaw = parseFloat(row['CAD$']);
       if (isNaN(amountRaw)) return null;
       
@@ -103,9 +110,10 @@ export const PARSERS: BankParserConfig[] = [
     name: 'Standard Ledger CSV',
     detect: (headers) => headers.includes('Date') && headers.includes('Amount') && headers.includes('Description'),
     parse: (row) => {
+      if (Array.isArray(row)) return null;
       const amountRaw = parseFloat(row['Amount']);
       if (isNaN(amountRaw)) return null;
-      
+
       const type = amountRaw >= 0 ? 'income' : 'expense';
       const amount = Math.abs(amountRaw);
       
@@ -128,7 +136,7 @@ export async function parseCSV(file: File): Promise<TriageTransaction[] | Unreco
   const isHeaderless = /^\d{2}\/\d{2}\/\d{4},/.test(firstLine);
 
   return new Promise((resolve, reject) => {
-    Papa.parse<any>(file, {
+    Papa.parse<CsvRow | CsvHeaderlessRow>(file, {
       header: !isHeaderless,
       skipEmptyLines: true,
       complete: (results) => {
@@ -140,7 +148,7 @@ export async function parseCSV(file: File): Promise<TriageTransaction[] | Unreco
         if (!parser) {
           resolve({
             unrecognized: true,
-            headers: isHeaderless ? firstRow.map((_: any, i: number) => `Column ${i + 1}`) : headers,
+            headers: isHeaderless ? (firstRow as CsvHeaderlessRow).map((_, i) => `Column ${i + 1}`) : headers,
             rows: results.data
           });
           return;

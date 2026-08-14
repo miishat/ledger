@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
@@ -144,9 +144,21 @@ export const Layout: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8">
         <ErrorBoundary key={location.pathname}>
-          <PageTransition>
-            <Outlet />
-          </PageTransition>
+          <Suspense
+            fallback={
+              <div
+                role="status"
+                aria-label="Loading page"
+                className="flex items-center justify-center py-24 text-[13px] text-text-secondary"
+              >
+                Loading...
+              </div>
+            }
+          >
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
+          </Suspense>
         </ErrorBoundary>
       </main>
 

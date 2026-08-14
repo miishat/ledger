@@ -1,14 +1,18 @@
-import { useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useThemeStore } from './store/useThemeStore'
 import { Layout } from './components/Layout'
 
+// Dashboard is the index route, so it stays in the entry chunk: lazy-loading it
+// would only add a round trip before first paint. Every other page is a
+// separate chunk, fetched when the user first navigates to it.
 import { Dashboard } from './pages/Dashboard'
-import { Budgeting } from './pages/Budgeting'
-import { Investments } from './pages/Investments'
-import { Planner } from './pages/Planner'
-import { PlannerTool } from './pages/PlannerTool'
-import { Compensation } from './pages/Compensation'
+
+const Budgeting = lazy(() => import('./pages/Budgeting').then((m) => ({ default: m.Budgeting })))
+const Investments = lazy(() => import('./pages/Investments').then((m) => ({ default: m.Investments })))
+const Planner = lazy(() => import('./pages/Planner').then((m) => ({ default: m.Planner })))
+const PlannerTool = lazy(() => import('./pages/PlannerTool').then((m) => ({ default: m.PlannerTool })))
+const Compensation = lazy(() => import('./pages/Compensation').then((m) => ({ default: m.Compensation })))
 
 function App() {
   const { theme } = useThemeStore()

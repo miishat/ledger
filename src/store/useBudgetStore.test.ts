@@ -133,6 +133,46 @@ describe('getMonthlyBudgetStats paradigm blocks', () => {
   })
 })
 
+describe('bulk transaction actions', () => {
+  const seed = () => {
+    useBudgetStore.setState({
+      transactions: {
+        t1: { id: 't1', date: '2026-08-01', amount: 10, description: 'A', type: 'expense' },
+        t2: { id: 't2', date: '2026-08-02', amount: 20, description: 'B', type: 'expense' },
+        t3: { id: 't3', date: '2026-08-03', amount: 30, description: 'C', type: 'expense', categoryId: 'keep' },
+      },
+    })
+  }
+
+  it('sets the category on every named transaction and leaves the rest alone', () => {
+    seed()
+    useBudgetStore.getState().setTransactionsCategory(['t1', 't2'], 'cat-1')
+    const txs = useBudgetStore.getState().transactions
+    expect(txs.t1.categoryId).toBe('cat-1')
+    expect(txs.t2.categoryId).toBe('cat-1')
+    expect(txs.t3.categoryId).toBe('keep')
+  })
+
+  it('ignores ids that do not exist rather than creating empty transactions', () => {
+    seed()
+    useBudgetStore.getState().setTransactionsCategory(['nope'], 'cat-1')
+    expect(useBudgetStore.getState().transactions.nope).toBeUndefined()
+    expect(Object.keys(useBudgetStore.getState().transactions)).toHaveLength(3)
+  })
+
+  it('deletes every named transaction in one update', () => {
+    seed()
+    useBudgetStore.getState().deleteTransactions(['t1', 't3'])
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['t2'])
+  })
+
+  it('treats an empty id list as a no-op', () => {
+    seed()
+    useBudgetStore.getState().deleteTransactions([])
+    expect(Object.keys(useBudgetStore.getState().transactions)).toHaveLength(3)
+  })
+})
+
 describe('getMonthlyBudgetStats with annual categories', () => {
   it('uses the monthly equivalent as the effective target', () => {
     useBudgetStore.setState({

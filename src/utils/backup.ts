@@ -1,20 +1,13 @@
+import { STORAGE_KEYS, NON_BACKUP_KEY_NAMES, type StorageKeyName } from '../store/storageKeys'
+
 export const BACKUP_VERSION = 2
 
-// Registry of every persisted LocalStorage key. Append new keys here when
-// later phases add persisted stores (Investments, Projections/Planner, etc.).
-export const BACKUP_KEYS: string[] = [
-  'accounts-storage',
-  'ledger-budget',
-  'ledger-compensation',
-  'financial-dashboard-theme',
-  'ledger-triage',
-  'ledger-market-data',
-  'ledger-planner',
-  'ledger-analyses',
-  'ledger-portfolio',
-  'ledger-dashboard-layout',
-  'ledger-wheel',
-]
+/** Every persisted key that travels in a backup or a Drive snapshot. Derived
+ *  from the store registry, so adding a store to STORAGE_KEYS is all it takes
+ *  to have it backed up. */
+export const BACKUP_KEYS: string[] = (Object.keys(STORAGE_KEYS) as StorageKeyName[])
+  .filter((name) => !NON_BACKUP_KEY_NAMES.includes(name))
+  .map((name) => STORAGE_KEYS[name])
 
 export interface BackupMeta {
   deviceId: string

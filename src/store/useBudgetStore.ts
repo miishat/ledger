@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from './storageKeys'
 import type {
   BudgetingParadigm,
   BudgetClass,
@@ -80,6 +81,8 @@ interface BudgetState {
   addTransaction: (transaction: Transaction) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
+  setTransactionsCategory: (ids: string[], categoryId: string) => void;
+  deleteTransactions: (ids: string[]) => void;
   clearAllTransactions: () => void;
 
   addCategory: (category: Category) => void;
@@ -125,6 +128,21 @@ export const useBudgetStore = create<BudgetState>()(
           const newTransactions = { ...state.transactions };
           delete newTransactions[id];
           return { transactions: newTransactions };
+        }),
+      setTransactionsCategory: (ids, categoryId) =>
+        set((state) => {
+          const next = { ...state.transactions };
+          for (const id of ids) {
+            if (!next[id]) continue;
+            next[id] = { ...next[id], categoryId };
+          }
+          return { transactions: next };
+        }),
+      deleteTransactions: (ids) =>
+        set((state) => {
+          const next = { ...state.transactions };
+          for (const id of ids) delete next[id];
+          return { transactions: next };
         }),
       clearAllTransactions: () => set({ transactions: {} }),
 
@@ -215,7 +233,7 @@ export const useBudgetStore = create<BudgetState>()(
       }),
     }),
     {
-      name: 'ledger-budget',
+      name: STORAGE_KEYS.budget,
       version: 3,
       migrate: (persistedState, version) => {
         const persisted = persistedState as Partial<BudgetState>;

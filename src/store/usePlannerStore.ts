@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 
 export type PlannerInputValue = number | string | boolean
 export type ToolInputs = Record<string, PlannerInputValue>
@@ -28,7 +29,7 @@ export const usePlannerStore = create<PlannerState>()(
           return { inputs: next }
         }),
     }),
-    { name: 'ledger-planner' }
+    { name: STORAGE_KEYS.planner }
   )
 )
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { CategoryManagerWidget, PARADIGM_DESCRIPTIONS } from './CategoryManagerWidget'
+import { CategoryManagerWidget } from './CategoryManagerWidget'
+import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions'
 import { useBudgetStore } from '../../store/useBudgetStore'
 
 beforeEach(() => {

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 
 export interface BuyLot {
   id: string
@@ -216,7 +217,7 @@ export const useAnalysisStore = create<AnalysisState>()(
         })),
     }),
     {
-      name: 'ledger-analyses',
+      name: STORAGE_KEYS.analyses,
       version: 4,
       // v0: one flat ticker per analysis → wrap it as the single position.
       // v1: analyses gain a `swaps` scenario list.

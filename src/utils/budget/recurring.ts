@@ -69,6 +69,12 @@ export function detectRecurring(transactions: Record<string, Transaction>): Recu
     const last = sorted[sorted.length - 1]
     const next = new Date(`${last.date}T00:00:00`)
     next.setDate(next.getDate() + Math.round(gapMed))
+    // Built from local date parts deliberately, not next.toISOString(). The
+    // date was parsed at local midnight above, and toISOString reads back in
+    // UTC: for users ahead of UTC that reports the previous day, which makes
+    // upcomingWithin's `nextExpected >= todayISO` check false on the charge's
+    // actual due date and drops it from the upcoming window.
+    const nextExpected = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`
     items.push({
       key,
       description: last.description,
@@ -77,9 +83,26 @@ export function detectRecurring(transactions: Record<string, Transaction>): Recu
       intervalDays: Math.round(gapMed),
       occurrences: sorted.length,
       lastDate: last.date,
-      nextExpected: next.toISOString().slice(0, 10),
+      nextExpected,
       monthlyEstimate: amtMed * (30 / Math.round(gapMed)),
     })
   }
   return items.sort((a, b) => b.monthlyEstimate - a.monthlyEstimate)
+}
+
+/** Charges expected between today and `days` from today, inclusive at both
+ *  ends, soonest first. Dates are compared as YYYY-MM-DD strings, which sort
+ *  lexicographically. The window end is computed in UTC so the host timezone
+ *  cannot shift the final boundary day. */
+export function upcomingWithin(
+  items: RecurringItem[],
+  todayISO: string,
+  days: number,
+): RecurringItem[] {
+  const [y, m, d] = todayISO.split('-').map(Number)
+  const end = new Date(Date.UTC(y, m - 1, d + days))
+  const endISO = end.toISOString().slice(0, 10)
+  return items
+    .filter((i) => i.nextExpected >= todayISO && i.nextExpected <= endISO)
+    .sort((a, b) => a.nextExpected.localeCompare(b.nextExpected))
 }

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 
 interface DashboardLayoutState {
   /** Widget ids in display order; empty = default order. */
@@ -22,6 +23,6 @@ export const useDashboardLayoutStore = create<DashboardLayoutState>()(
           return { order: [...rest.slice(0, idx), id, ...rest.slice(idx)] }
         }),
     }),
-    { name: 'ledger-dashboard-layout' },
+    { name: STORAGE_KEYS.dashboardLayout },
   ),
 )

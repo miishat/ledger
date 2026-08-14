@@ -37,3 +37,19 @@ describe('AccountCategoryWidget mobile tap targets', () => {
     expect(name.className.split(/\s+/)).toContain('truncate')
   })
 })
+
+describe('AccountCategoryWidget empty state', () => {
+  it('invites the user to add their first account instead of showing a bare sentence', () => {
+    useAccountsStore.setState({ accounts: [] })
+    render(<AccountCategoryWidget title="Bank Accounts" type="bank" />)
+    expect(screen.getByText('No accounts yet')).toBeInTheDocument()
+    const cta = screen.getByRole('button', { name: 'Add account' })
+    expect(cta).toBeInTheDocument()
+  })
+
+  it('uses an explicit singular noun for the debt widget instead of a mangled title', () => {
+    useAccountsStore.setState({ accounts: [] })
+    render(<AccountCategoryWidget title="Debts & Liabilities" type="debt" />)
+    expect(screen.getByText('Add your first debt to start tracking.')).toBeInTheDocument()
+  })
+})

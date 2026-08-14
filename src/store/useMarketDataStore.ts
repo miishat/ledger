@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 import type { Cached, FxRate, HistoricalPrice, Quote } from '../services/marketData/types'
 import { fxKey, historicalKey, quoteKey } from '../services/marketData/cacheKey'
 
@@ -65,6 +66,6 @@ export const useMarketDataStore = create<MarketDataState>()(
       setApiKey: (key) => set({ apiKey: key.trim() || undefined }),
       clearApiKey: () => set({ apiKey: undefined }),
     }),
-    { name: 'ledger-market-data' },
+    { name: STORAGE_KEYS.marketData },
   ),
 )

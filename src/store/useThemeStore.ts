@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEYS } from './storageKeys'
 
 export type AppTheme = 'geometric' | 'tactical' | 'luxury' | 'aurora' | 'glass'
 
@@ -22,7 +23,7 @@ export const useThemeStore = create<ThemeState>()(
       }),
     }),
     {
-      name: 'financial-dashboard-theme',
+      name: STORAGE_KEYS.theme,
     }
   )
 )
