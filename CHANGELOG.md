@@ -16,6 +16,7 @@ pre-1.0 beta.
 - Dashboard: a Customize panel to switch widgets off and set their order, with up and down buttons so reordering works on a phone
 - Net worth: an Edit history window on the trend chart to add, correct or delete dated figures, so you can backfill months from before you installed the app. A point is also recorded each day you open it, so the trend is sampled by time rather than by how often you happen to edit an account
 - Investments: a Trades tab. Record your buys and sells to see realized gains for the year, your adjusted cost base per holding, and a warning when the trades you entered disagree with an imported holding
+- If you use Drive sync, update Ledger on every device before recording trades. A device still on an older version does not know about the Trades tab, and a sync from it will remove your trade log from the other devices
 - Investments: prices and exchange rates now say how old they are and offer a refresh where the figure is shown, instead of only saying "cache" or "stale"
 
 ### Fixed
