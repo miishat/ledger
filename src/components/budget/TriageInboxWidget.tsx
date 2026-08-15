@@ -3,6 +3,7 @@ import { Check, Trash2, X } from 'lucide-react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { useUndoStore } from '../../store/useUndoStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { formatMoney } from '../planner/format';
@@ -12,9 +13,12 @@ export const TriageInboxWidget: React.FC = () => {
   const updatePending = useTriageStore((state) => state.updatePending);
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
   const approveAll = useTriageStore((state) => state.approveAll);
+  const addPending = useTriageStore((state) => state.addPending);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
   const rejectDuplicates = useTriageStore((state) => state.rejectDuplicates);
   const clearAll = useTriageStore((state) => state.clearAll);
+  const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
+  const offerUndo = useUndoStore((state) => state.offerUndo);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const categories = useBudgetStore((state) => state.categories);
@@ -26,6 +30,15 @@ export const TriageInboxWidget: React.FC = () => {
 
   const duplicates = txList.filter((tx) => tx.duplicate);
   const acceptableCount = txList.length - duplicates.length;
+
+  const handleAcceptAll = () => {
+    const rows = txList.filter((tx) => !tx.duplicate);
+    const ids = approveAll();
+    offerUndo(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`, () => {
+      deleteTransactions(ids);
+      addPending(rows);
+    });
+  };
 
   return (
     <WidgetWrapper title={`Triage Inbox (${txList.length})`}>
@@ -45,7 +58,7 @@ export const TriageInboxWidget: React.FC = () => {
           </button>
         )}
         <button
-          onClick={approveAll}
+          onClick={handleAcceptAll}
           className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
         >
           <Check size={14} /> Accept All ({acceptableCount})
@@ -103,11 +116,15 @@ export const TriageInboxWidget: React.FC = () => {
       <ConfirmDialog
         open={confirmClearOpen}
         title="Clear triage inbox?"
-        message={`Discard ${txList.length} pending transaction${txList.length === 1 ? '' : 's'}? Nothing will be added to your budget. This cannot be undone.`}
+        message={`Discard ${txList.length} pending transaction${txList.length === 1 ? '' : 's'}? Nothing will be added to your budget. You can undo this straight afterwards.`}
         confirmLabel="Clear All"
         tone="danger"
         onConfirm={() => {
+          const cleared = txList;
           clearAll();
+          offerUndo(`Cleared ${cleared.length} pending transaction${cleared.length === 1 ? '' : 's'}`, () =>
+            addPending(cleared),
+          );
           setConfirmClearOpen(false);
         }}
         onCancel={() => setConfirmClearOpen(false)}

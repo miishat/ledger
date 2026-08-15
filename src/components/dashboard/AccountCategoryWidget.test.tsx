@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { AccountCategoryWidget } from './AccountCategoryWidget'
 import { useAccountsStore } from '../../store/useAccountsStore'
+import { useUndoStore } from '../../store/useUndoStore'
 
 const initialState = useAccountsStore.getState()
 
@@ -15,7 +16,7 @@ describe('AccountCategoryWidget mobile tap targets', () => {
     })
     render(<AccountCategoryWidget title="Bank" type="bank" />)
     const edit = screen.getByLabelText('Edit account')
-    const remove = screen.getByLabelText('Remove account')
+    const remove = screen.getByLabelText('Delete Chequing')
     for (const btn of [edit, remove]) {
       const classes = btn.className.split(/\s+/)
       expect(classes).toContain('min-h-[44px]')
@@ -51,5 +52,26 @@ describe('AccountCategoryWidget empty state', () => {
     useAccountsStore.setState({ accounts: [] })
     render(<AccountCategoryWidget title="Debts & Liabilities" type="debt" />)
     expect(screen.getByText('Add your first debt to start tracking.')).toBeInTheDocument()
+  })
+})
+
+describe('AccountCategoryWidget account delete undo', () => {
+  it('offers an undo that restores a deleted account with its value', () => {
+    useUndoStore.setState({ pending: null })
+    useAccountsStore.setState({
+      accounts: [{ id: 'a1', name: 'Chequing', value: 2500, type: 'bank' }],
+      history: [],
+    })
+    render(<AccountCategoryWidget title="Bank Accounts" type="bank" />)
+    fireEvent.click(screen.getByLabelText('Delete Chequing'))
+
+    expect(useAccountsStore.getState().accounts).toEqual([])
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted account "Chequing"')
+
+    useUndoStore.getState().runUndo()
+    const restored = useAccountsStore.getState().accounts
+    expect(restored).toHaveLength(1)
+    expect(restored[0].name).toBe('Chequing')
+    expect(restored[0].value).toBe(2500)
   })
 })
