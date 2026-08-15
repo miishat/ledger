@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { TriageInboxWidget } from './TriageInboxWidget'
 import { useTriageStore } from '../../store/useTriageStore'
 import { useBudgetStore } from '../../store/useBudgetStore'
@@ -32,5 +32,19 @@ describe('TriageInboxWidget', () => {
     ])
     render(<TriageInboxWidget />)
     expect(screen.getByText('NETFLIX')).toBeInTheDocument()
+  })
+
+  it('marks duplicate rows and offers to reject them all', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-04', amount: 10, description: 'Clean', type: 'expense' },
+        b: { id: 'b', date: '2026-08-04', amount: 20, description: 'Dupe', type: 'expense', duplicate: 'exact' },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.getByText('already imported')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Accept All (1)' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 duplicate' }))
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
   })
 })

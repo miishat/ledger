@@ -13,6 +13,7 @@ export const TriageInboxWidget: React.FC = () => {
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
   const approveAll = useTriageStore((state) => state.approveAll);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
+  const rejectDuplicates = useTriageStore((state) => state.rejectDuplicates);
   const clearAll = useTriageStore((state) => state.clearAll);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
@@ -23,6 +24,9 @@ export const TriageInboxWidget: React.FC = () => {
 
   if (txList.length === 0) return null;
 
+  const duplicates = txList.filter((tx) => tx.duplicate);
+  const acceptableCount = txList.length - duplicates.length;
+
   return (
     <WidgetWrapper title={`Triage Inbox (${txList.length})`}>
       <div className="flex justify-end gap-2 mt-2">
@@ -32,11 +36,19 @@ export const TriageInboxWidget: React.FC = () => {
         >
           <Trash2 size={14} /> Clear All
         </button>
+        {duplicates.length > 0 && (
+          <button
+            onClick={rejectDuplicates}
+            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
+          >
+            Reject {duplicates.length} duplicate{duplicates.length === 1 ? '' : 's'}
+          </button>
+        )}
         <button
           onClick={approveAll}
           className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
         >
-          <Check size={14} /> Accept All
+          <Check size={14} /> Accept All ({acceptableCount})
         </button>
       </div>
       <div className="flex flex-col gap-3 mt-3 max-h-[400px] overflow-y-auto pr-2">
@@ -45,7 +57,14 @@ export const TriageInboxWidget: React.FC = () => {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{tx.description}</p>
-                <p className="text-[12px] text-[var(--color-text-secondary)]">{tx.date}</p>
+                <p className="text-[12px] text-[var(--color-text-secondary)]">
+                  {tx.date}
+                  {tx.duplicate && (
+                    <span className="ml-2 px-2 py-0.5 rounded-md text-[11px] bg-error/10 text-error">
+                      {tx.duplicate === 'exact' ? 'already imported' : 'possible duplicate'}
+                    </span>
+                  )}
+                </p>
               </div>
               <span className={`text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
                 {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
