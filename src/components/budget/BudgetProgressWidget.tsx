@@ -83,8 +83,9 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
   const budgeted = totalMonthlyBudget(categories, categoryGroups) * months
   const totalSpent = txInRange.reduce((s, t) => s + t.amount, 0)
   const unbudgeted = txInRange
-    .filter((t) => !t.categoryId || (categories[t.categoryId]?.targetAmount ?? 0) === 0)
-    .reduce((s, t) => s + t.amount, 0)
+    .flatMap((t) => splitParts(t))
+    .filter((p) => !p.categoryId || (categories[p.categoryId]?.targetAmount ?? 0) === 0)
+    .reduce((s, p) => s + p.amount, 0)
 
   const hasAnything = rows.length > 0 || annualRows.length > 0
 
