@@ -6,6 +6,18 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.1-beta] - 2026-08-15
+
+### Added
+- Salary & Tax: an RRSP Efficiency block next to your deductions. It shows how much of your income sits in each marginal band, what sheltering each band would save, and the contribution that clears your top band
+- Salary & Tax: an optional RRSP Room field. Leave it empty and the tool estimates your room at 18% of income up to the annual maximum, and says that it is an estimate
+
+### Changed
+- Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
+
+### Fixed
+- Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income
+
 ## [0.9.0-beta] - 2026-08-15
 
 ### Added
