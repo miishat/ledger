@@ -12,7 +12,11 @@ interface DashboardLayoutState {
   toggleHidden: (id: string) => void
   /** Move one place earlier (-1) or later (+1). Takes the currently displayed
    *  order so the first move materialises the default instead of starting from
-   *  an empty stored order. This is the touch path: dragging is desktop only. */
+   *  an empty stored order. This is the touch path: dragging is desktop only.
+   *  Callers must always pass the complete currently-displayed order, never a
+   *  filtered subset: it is written straight into the persisted order, including
+   *  on the no-op branch, so a filtered list would silently drop every other
+   *  widget from the user's saved layout. */
   moveBy: (id: string, delta: number, currentOrder: string[]) => void
 }
 
