@@ -3,6 +3,7 @@ import { useCompensationStore, generateVestEvents } from '../../store/useCompens
 import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import type { ChartTooltipProps, ChartTooltipPayloadItem } from '../../utils/chartTheme'
+import { LEADING_LABEL, TRAILING_LABEL, isPaddingLabel } from './vestingPadding'
 import {
   ComposedChart,
   Area,
@@ -17,15 +18,11 @@ import {
 const cad = (v: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
 
-/** Label of the padding row that lets the final vest's drop level off like the
- *  others. Not a real month, so nothing should report on it. */
-export const TRAILING_LABEL = '';
-
 // Module scope, not inside the component: a component created during render is
 // a new type on every render, so React remounts the tooltip each time.
 export const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload || payload.length === 0) return null;
-  if (label === TRAILING_LABEL) return null;
+  if (isPaddingLabel(label)) return null;
 
   const barPayloads = payload.filter(
     (p: ChartTooltipPayloadItem) => p.dataKey !== 'unvestedRemaining' && p.dataKey !== 'vestValue',
@@ -130,7 +127,8 @@ export function EquityVestingWidget() {
 
   // Calculate cumulative vested before the window starts
   const windowStartDate = timeMode === 'current-year' ? new Date(targetYear, 0, 1) : new Date(targetYear, currentMonth, 1);
-  let cumulativeVested = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
+  const vestedBeforeWindow = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
+  let cumulativeVested = vestedBeforeWindow;
 
   const chartData = displayMonths.map(dm => {
     const dataRow: Record<string, string | number> = { monthLabel: dm.label, vestValue: 0 }
@@ -158,16 +156,19 @@ export function EquityVestingWidget() {
     return dataRow;
   })
 
-  // A flat run after a vest only exists because the months following it carry
-  // the same value, so the final month has nothing to hold against and the area
-  // stops dead on its slope. This trailing row repeats the last value with no
-  // vests of its own, giving the last drop the same flat continuation every
-  // earlier drop gets. Its blank label keeps it off the axis, and the tooltip
-  // skips it so it is never hoverable as a real month.
+  // Padding rows that bracket the window. See vestingPadding.ts for why both
+  // are needed and what each one carries.
+  const emptyGrantValues = Object.fromEntries(primaryPackage.rsuGrants.map((g) => [g.id, 0]))
   const lastRow = chartData[chartData.length - 1]
+  chartData.unshift({
+    ...emptyGrantValues,
+    monthLabel: LEADING_LABEL,
+    vestValue: 0,
+    unvestedRemaining: Math.max(0, totalScheduleValue - vestedBeforeWindow),
+  })
   if (lastRow) {
     chartData.push({
-      ...Object.fromEntries(primaryPackage.rsuGrants.map((g) => [g.id, 0])),
+      ...emptyGrantValues,
       monthLabel: TRAILING_LABEL,
       vestValue: 0,
       unvestedRemaining: lastRow.unvestedRemaining,
@@ -186,9 +187,10 @@ export function EquityVestingWidget() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
+                tickFormatter={(label: string) => (isPaddingLabel(label) ? '' : label)}
               />
-              <YAxis 
-                yAxisId="left" 
+              <YAxis
+                yAxisId="left"
                 axisLine={false} 
                 tickLine={false} 
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 

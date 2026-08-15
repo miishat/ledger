@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { useAccountsStore } from '../../../store/useAccountsStore'
-import { formatMoney } from '../../planner/format'
+import { formatMoney, formatMoneyCompact } from '../../planner/format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { trendDomain } from './trendDomain'
 import { NetWorthHistorySheet } from './NetWorthHistorySheet'
@@ -37,8 +37,12 @@ export const NetWorthTrendWidget: React.FC = () => {
       <div className="h-[220px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={history}>
-            <XAxis dataKey="date" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} minTickGap={40} />
-            <YAxis width={70} domain={domain} allowDataOverflow={false} tickFormatter={(v: number) => formatMoney(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+            {/* The axes meet at the corner, so a full-precision y label like
+                $316,621 sits directly against the first date and the two read as
+                one string. Compact labels keep the corner legible, and match the
+                axis formatting every other chart in the app uses. */}
+            <XAxis dataKey="date" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} minTickGap={40} tickMargin={14} />
+            <YAxis width={48} domain={domain} allowDataOverflow={false} tickFormatter={(v: number) => formatMoneyCompact(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickMargin={6} />
             <Tooltip
               formatter={(value) => [formatMoney(Number(value)), 'Net worth']}
               {...chartTooltipStyles}

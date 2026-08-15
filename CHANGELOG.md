@@ -25,6 +25,7 @@ pre-1.0 beta.
 ### Fixed
 - A widget that hit unexpected data used to blank the whole page. Now it fails inside its own card with a Try again button and the rest of the page keeps working
 - Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
+- Dashboard: the Net Worth Over Time chart wrote its side labels out in full, so a figure like $316,621 ran into the first date underneath it and the bottom corner read as one run-on line. The side labels are now shortened to $316k, matching every other chart
 
 ## [0.8.1-beta] - 2026-08-14
 

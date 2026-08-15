@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { CustomEquityTooltip, EquityVestingWidget, TRAILING_LABEL } from './EquityVestingWidget'
+import { CustomEquityTooltip, EquityVestingWidget } from './EquityVestingWidget'
+import { LEADING_LABEL, TRAILING_LABEL } from './vestingPadding'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
@@ -101,9 +102,12 @@ describe('EquityVestingWidget tooltip', () => {
     expect(screen.getByText('$170,880')).toBeInTheDocument()
   })
 
-  it('renders nothing for the trailing padding row, which is not a real month', () => {
+  it.each([
+    ['leading', LEADING_LABEL],
+    ['trailing', TRAILING_LABEL],
+  ])('renders nothing for the %s padding row, which is not a real month', (_name, label) => {
     const { container } = render(
-      <CustomEquityTooltip active payload={grantPayload(0)} label={TRAILING_LABEL} />,
+      <CustomEquityTooltip active payload={grantPayload(0)} label={label} />,
     )
     expect(container).toBeEmptyDOMElement()
   })
