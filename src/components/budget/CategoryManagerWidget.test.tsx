@@ -228,4 +228,24 @@ describe('category delete undo', () => {
     useUndoStore.getState().runUndo()
     expect(useBudgetStore.getState().categories.c1.name).toBe('Groceries')
   })
+
+  it('offers an undo that restores a deleted empty group', () => {
+    useUndoStore.setState({ pending: null })
+    useBudgetStore.setState({
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Subscriptions', kind: 'expense' },
+        g2: { id: 'g2', name: 'Housing', kind: 'expense' },
+      },
+      categories: { c1: { id: 'c1', groupId: 'g2', name: 'Rent', targetAmount: 400 } },
+      transactions: {},
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-08" />)
+    fireEvent.click(screen.getByLabelText('Delete group Subscriptions'))
+
+    expect(useBudgetStore.getState().categoryGroups.g1).toBeUndefined()
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted group "Subscriptions"')
+
+    useUndoStore.getState().runUndo()
+    expect(useBudgetStore.getState().categoryGroups.g1.name).toBe('Subscriptions')
+  })
 })

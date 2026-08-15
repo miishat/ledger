@@ -86,6 +86,8 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
 
   const handleDeleteGroup = (id: string) => {
     const removedGroup = categoryGroups[id];
+    // The delete control only renders for an empty group today, so this capture is insurance
+    // for the case where that UI gate is relaxed rather than a path exercised today.
     const removedCategories = Object.values(categories).filter((c) => c.groupId === id);
     deleteCategoryGroup(id);
     offerUndo(`Deleted group "${removedGroup.name}"`, () => {
