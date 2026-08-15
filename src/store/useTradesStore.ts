@@ -21,7 +21,17 @@ export const useTradesStore = create<TradesState>()(
       trades: [],
       addTrade: (trade) =>
         set((state) => ({
-          trades: [...state.trades, { ...trade, ticker: trade.ticker.trim().toUpperCase(), id: uuidv4() }],
+          trades: [
+            ...state.trades,
+            {
+              ...trade,
+              ticker: trade.ticker.trim().toUpperCase(),
+              quantity: Math.abs(trade.quantity),
+              price: Math.abs(trade.price),
+              fees: Math.abs(trade.fees),
+              id: uuidv4(),
+            },
+          ],
         })),
       removeTrade: (id) => set((state) => ({ trades: state.trades.filter((t) => t.id !== id) })),
       clearTrades: () => set({ trades: [] }),
