@@ -19,8 +19,12 @@ pre-1.0 beta.
 - If you use Drive sync, update Ledger on every device before recording trades. A device still on an older version does not know about the Trades tab, and a sync from it will remove your trade log from the other devices
 - Investments: prices and exchange rates now say how old they are and offer a refresh where the figure is shown, instead of only saying "cache" or "stale"
 
+### Changed
+- Compensation: the line on the Equity Vesting Schedule now tracks the equity you have not vested yet, falling as each grant vests, instead of the total vested so far. Hovering any month gives you the figure, including months where nothing vests, and the chart now names each grant and states the share price the value depends on
+
 ### Fixed
 - A widget that hit unexpected data used to blank the whole page. Now it fails inside its own card with a Try again button and the rest of the page keeps working
+- Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
 
 ## [0.8.1-beta] - 2026-08-14
 

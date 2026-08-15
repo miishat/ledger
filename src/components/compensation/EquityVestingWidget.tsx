@@ -5,7 +5,7 @@ import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import type { ChartTooltipProps, ChartTooltipPayloadItem } from '../../utils/chartTheme'
 import {
   ComposedChart,
-  Line,
+  Area,
   Bar,
   XAxis,
   YAxis,
@@ -17,10 +17,15 @@ import {
 const cad = (v: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
 
+/** Label of the padding row that lets the final vest's drop level off like the
+ *  others. Not a real month, so nothing should report on it. */
+export const TRAILING_LABEL = '';
+
 // Module scope, not inside the component: a component created during render is
 // a new type on every render, so React remounts the tooltip each time.
 export const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload || payload.length === 0) return null;
+  if (label === TRAILING_LABEL) return null;
 
   const barPayloads = payload.filter(
     (p: ChartTooltipPayloadItem) => p.dataKey !== 'unvestedRemaining' && p.dataKey !== 'vestValue',
@@ -153,6 +158,21 @@ export function EquityVestingWidget() {
     return dataRow;
   })
 
+  // A flat run after a vest only exists because the months following it carry
+  // the same value, so the final month has nothing to hold against and the area
+  // stops dead on its slope. This trailing row repeats the last value with no
+  // vests of its own, giving the last drop the same flat continuation every
+  // earlier drop gets. Its blank label keeps it off the axis, and the tooltip
+  // skips it so it is never hoverable as a real month.
+  const lastRow = chartData[chartData.length - 1]
+  if (lastRow) {
+    chartData.push({
+      ...Object.fromEntries(primaryPackage.rsuGrants.map((g) => [g.id, 0])),
+      monthLabel: TRAILING_LABEL,
+      vestValue: 0,
+      unvestedRemaining: lastRow.unvestedRemaining,
+    })
+  }
 
   return (
     <WidgetWrapper title="Equity Vesting Schedule">
@@ -162,10 +182,10 @@ export function EquityVestingWidget() {
             <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
               <XAxis 
-                dataKey="monthLabel" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 
+                dataKey="monthLabel"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
               />
               <YAxis 
                 yAxisId="left" 
@@ -181,35 +201,41 @@ export function EquityVestingWidget() {
                 tickLine={false}
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
                 tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`}
-                domain={[0, totalScheduleValue]}
               />
               <Tooltip 
                 content={<CustomEquityTooltip />} 
                 cursor={{ fill: 'var(--color-border)' }} 
               />
-              {primaryPackage.rsuGrants.map((grant, index) => (
-                <Bar 
-                  key={grant.id}
-                  yAxisId="left" 
-                  dataKey={grant.id} 
-                  name={grant.grantName} 
-                  stackId="a"
-                  fill={COLORS[index % COLORS.length]} 
-                  opacity={0.8} 
-                />
-              ))}
-              {/* stepAfter, not monotone: equity vests in discrete cliffs, so the
-                  amount still locked up holds flat between vest dates and drops
-                  on one. A smoothed curve would imply it accrues continuously. */}
-              <Line
+              {/* Recharts paints an Area in a lower z-layer than a Bar regardless
+                  of declaration order, so the bars sit over this fill rather than
+                  under it. `linear`, not `monotone`: the data points are monthly
+                  and the value genuinely holds flat between vests, so the only
+                  interpolation is the single month leading into each vest. A
+                  monotone curve would instead bend through every flat month and
+                  imply equity accrues continuously, which cliff vesting does not. */}
+              <Area
                 yAxisId="right"
-                type="stepAfter"
+                type="linear"
                 dataKey="unvestedRemaining"
                 name="Unvested remaining"
-                stroke="var(--color-text-secondary)"
+                stroke="var(--unvested)"
                 strokeWidth={2}
+                fill="var(--unvested)"
+                fillOpacity={0.09}
                 dot={false}
+                activeDot={false}
               />
+              {primaryPackage.rsuGrants.map((grant, index) => (
+                <Bar
+                  key={grant.id}
+                  yAxisId="left"
+                  dataKey={grant.id}
+                  name={grant.grantName}
+                  stackId="a"
+                  fill={COLORS[index % COLORS.length]}
+                  opacity={0.8}
+                />
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -228,7 +254,7 @@ export function EquityVestingWidget() {
           <span className="inline-flex items-center gap-1.5">
             <span
               className="w-3.5 h-0.5"
-              style={{ backgroundColor: 'var(--color-text-secondary)' }}
+              style={{ backgroundColor: 'var(--unvested)' }}
               aria-hidden="true"
             />
             Unvested remaining

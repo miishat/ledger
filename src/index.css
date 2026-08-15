@@ -7,6 +7,11 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-accent: var(--accent);
+  /* Unvested equity: the running theme's accent, muted toward the secondary
+     text tone so it reads as the theme's colour without being mistaken for
+     the pure accent that chart-1 already gives the first RSU grant. Defined
+     once: var(--accent) resolves against whichever [data-theme] is active. */
+  --unvested: color-mix(in srgb, var(--accent) 62%, var(--text-secondary));
   --color-border: var(--border-color);
   --color-error: var(--error);
 

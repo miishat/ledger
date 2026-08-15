@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { CustomEquityTooltip, EquityVestingWidget } from './EquityVestingWidget'
+import { CustomEquityTooltip, EquityVestingWidget, TRAILING_LABEL } from './EquityVestingWidget'
 import { useCompensationStore } from '../../store/useCompensationStore'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
@@ -99,6 +99,13 @@ describe('EquityVestingWidget tooltip', () => {
     // With a single grant the row and the month total are the same figure.
     expect(screen.getAllByText('$13,120')).toHaveLength(2)
     expect(screen.getByText('$170,880')).toBeInTheDocument()
+  })
+
+  it('renders nothing for the trailing padding row, which is not a real month', () => {
+    const { container } = render(
+      <CustomEquityTooltip active payload={grantPayload(0)} label={TRAILING_LABEL} />,
+    )
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('renders nothing when inactive', () => {
