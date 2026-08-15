@@ -37,8 +37,30 @@ describe('BracketBar', () => {
     const caption = screen.getByText('$114,750+')
     const classes = caption.className.split(/\s+/)
     expect(classes).not.toContain('truncate') // truncation would drop the trailing "+"
-    // every segment carries a minimum width so labels fit and the 44px rate-label query resolves
-    const segment = caption.parentElement as HTMLElement
-    expect(segment.style.minWidth).not.toBe('')
+  })
+
+  it('lays segments out so the row can never overflow into a scrollbar', () => {
+    const { container } = render(
+      <BracketBar
+        title="Ontario"
+        income={193000}
+        brackets={[
+          { upTo: 53891, rate: 0.0505 },
+          { upTo: 107785, rate: 0.0915 },
+          { upTo: 150000, rate: 0.1116 },
+          { upTo: 220000, rate: 0.1216 },
+          { upTo: Infinity, rate: 0.1316 },
+        ]}
+      />,
+    )
+    // nothing in the subtree may scroll horizontally
+    expect(container.querySelectorAll('.overflow-x-auto')).toHaveLength(0)
+    const segment = screen.getByText('$0 to $53,891').parentElement as HTMLElement
+    // proportional but shrinkable: gaps come out of the segments, not the row
+    expect(segment.style.flex).not.toBe('')
+    expect(segment.style.flex).toContain('1 0')
+    expect(segment.style.minWidth).toBe('')
+    expect(segment.className).toContain('min-w-0')
+    expect(segment.className).not.toContain('shrink-0')
   })
 })
