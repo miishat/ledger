@@ -28,6 +28,26 @@ export const TradesView: React.FC = () => {
   const results = resultsByTicker(trades)
   const thisYear = new Date().getFullYear()
 
+  /** A holding with no trades at all is the most severe reconciliation gap:
+   *  the user forgot to enter any trade for it, so the trade-derived list
+   *  above stays silent. Add a zero row for every such ticker so the
+   *  "holding says N" badge can still fire. */
+  const tradeTickers = new Set(results.map((r) => r.ticker.toUpperCase()))
+  const untradedHoldingTickers = Array.from(
+    new Set(
+      holdings
+        .map((h) => h.ticker.toUpperCase())
+        .filter((t) => !tradeTickers.has(t))
+    )
+  )
+  const positions =
+    trades.length === 0
+      ? results
+      : [
+          ...results,
+          ...untradedHoldingTickers.map((ticker) => ({ ticker, quantity: 0, avgCost: 0, realized: 0 })),
+        ]
+
   const submit = () => {
     if (!ticker.trim() || quantity <= 0 || price <= 0) return
     addTrade({ date, ticker, account, side, quantity, price, fees, currency: 'CAD', exchange: undefined })
@@ -118,7 +138,7 @@ export const TradesView: React.FC = () => {
           <div className="themed-card rounded-lg p-4">
             <h2 className="text-[16px] font-semibold text-text-primary mb-3">Positions from your trades</h2>
             <div className="flex flex-col gap-2">
-              {results.map((r) => {
+              {positions.map((r) => {
                 const imported = holdingQuantity(r.ticker)
                 const mismatch = imported > 0 && Math.abs(imported - r.quantity) > 0.001
                 return (

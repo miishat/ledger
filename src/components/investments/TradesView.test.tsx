@@ -60,4 +60,21 @@ describe('TradesView', () => {
     const row = screen.getByTestId('position-VFV')
     expect(within(row).getByText(/holding says 12/i)).toBeInTheDocument()
   })
+
+  it('shows a holding that has no trades recorded at all', () => {
+    useTradesStore.setState({
+      trades: [
+        { id: '1', date: '2026-01-05', ticker: 'VFV', account: 'RRSP', side: 'buy', quantity: 10, price: 100, fees: 0, currency: 'CAD' },
+      ],
+    })
+    usePortfolioStore.setState({
+      holdings: [
+        { id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'RRSP' },
+        { id: 'h2', ticker: 'XEQT', quantity: 25, avgCost: 30, currency: 'CAD', account: 'TFSA' },
+      ],
+    })
+    render(<TradesView />)
+    const row = screen.getByTestId('position-XEQT')
+    expect(within(row).getByText(/holding says 25/i)).toBeInTheDocument()
+  })
 })
