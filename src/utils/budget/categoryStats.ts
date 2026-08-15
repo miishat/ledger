@@ -2,6 +2,7 @@
 // average of completed months). Thresholds exported for UI copy.
 
 import type { Category, Transaction } from '../../types/budget'
+import { amountForCategory } from './splits'
 
 export const ANOMALY_RATIO = 1.5
 export const ANOMALY_MIN_DELTA = 50
@@ -12,8 +13,8 @@ export function categoryMonthlyTotal(
   month: string,
 ): number {
   return Object.values(transactions)
-    .filter((t) => t.type === 'expense' && t.categoryId === categoryId && t.date.startsWith(month))
-    .reduce((s, t) => s + t.amount, 0)
+    .filter((t) => t.type === 'expense' && t.date.startsWith(month))
+    .reduce((s, t) => s + amountForCategory(t, categoryId), 0)
 }
 
 function monthKey(d: Date): string {

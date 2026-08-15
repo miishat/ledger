@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { parseCSV, type UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
+import { classifyDuplicates } from '../../utils/budget/importDedupe';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,7 +34,16 @@ export const CSVUploader: React.FC = () => {
         categoryId
       };
     });
-    addPending(categorized);
+    // Compare against what is already in the budget AND what is already waiting
+    // in triage, so importing the same file twice flags the second copy.
+    const existing = [
+      ...Object.values(useBudgetStore.getState().transactions),
+      ...Object.values(useTriageStore.getState().pendingTransactions).map((p) => ({
+        id: p.id, date: p.date, amount: p.amount, description: p.description, type: p.type,
+      })),
+    ];
+    const verdicts = classifyDuplicates(categorized, existing);
+    addPending(categorized.map((tx) => (verdicts[tx.id] ? { ...tx, duplicate: verdicts[tx.id] } : tx)));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {

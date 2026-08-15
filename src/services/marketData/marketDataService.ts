@@ -35,7 +35,7 @@ export function __resetProviders(): void { providers = { ...defaultProviders } }
 
 const flight = new SingleFlight()
 
-function isStale(fetchedAt: string): boolean {
+export function isStale(fetchedAt: string): boolean {
   return Date.now() - new Date(fetchedAt).getTime() > STALE_AFTER_MS
 }
 

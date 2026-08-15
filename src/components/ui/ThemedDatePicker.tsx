@@ -5,6 +5,7 @@ import { Sheet } from './Sheet'
 
 interface ThemedDatePickerProps {
   id?: string
+  ariaLabel?: string
   value: string // YYYY-MM-DD ('' allowed)
   onChange: (value: string) => void
   className?: string
@@ -16,7 +17,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Theme-aware replacement for <input type="date">: themed month-grid
  *  calendar popover. */
-export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, onChange, className = '' }) => {
+export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, ariaLabel, value, onChange, className = '' }) => {
   const isDesktop = useIsDesktop()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -89,6 +90,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, value, o
     <div ref={rootRef} className="relative">
       <button
         id={id}
+        aria-label={ariaLabel}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}

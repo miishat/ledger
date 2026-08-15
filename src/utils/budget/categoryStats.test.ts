@@ -47,3 +47,24 @@ describe('detectAnomalies', () => {
     expect(detectAnomalies(small, categories, '2026-07', new Date('2026-07-15T12:00:00'))).toHaveLength(0)
   })
 })
+
+describe('categoryMonthlyTotal with splits', () => {
+  it('counts only the slice belonging to the category', () => {
+    const transactions = {
+      t1: {
+        id: 't1',
+        date: '2026-08-04',
+        amount: 180,
+        description: 'Costco',
+        type: 'expense' as const,
+        categoryId: 'groceries',
+        splits: [
+          { categoryId: 'groceries', amount: 120 },
+          { categoryId: 'household', amount: 60 },
+        ],
+      },
+    }
+    expect(categoryMonthlyTotal(transactions, 'groceries', '2026-08')).toBe(120)
+    expect(categoryMonthlyTotal(transactions, 'household', '2026-08')).toBe(60)
+  })
+})

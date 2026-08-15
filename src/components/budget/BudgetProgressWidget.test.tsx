@@ -103,3 +103,42 @@ describe('BudgetProgressWidget annual section', () => {
     expect(screen.queryByText(/under pace/)).not.toBeInTheDocument()
   })
 })
+
+describe('BudgetProgressWidget unbudgeted spending', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 3, 15)) // 15 April 2026
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('attributes unbudgeted spending by split slice, not by the whole transaction', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Home', kind: 'expense' } },
+      categories: {
+        // Parent category has no target: naive whole-amount attribution
+        // would call the whole $180 unbudgeted.
+        misc: { id: 'misc', groupId: 'g1', name: 'Misc', targetAmount: 0 },
+        // Both slices land on targeted categories, so nothing here is
+        // genuinely unbudgeted.
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 400 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 200 },
+      },
+      transactions: {
+        t1: {
+          id: 't1', date: '2026-04-10', amount: 180,
+          categoryId: 'misc', description: 'Split purchase', type: 'expense',
+          splits: [
+            { categoryId: 'groceries', amount: 120 },
+            { categoryId: 'household', amount: 60 },
+          ],
+        },
+      },
+      reallocations: {},
+    })
+    render(<BudgetProgressWidget range={{ from: '2026-04', to: '2026-04' }} />)
+    expect(screen.queryByText('Unbudgeted spending')).not.toBeInTheDocument()
+  })
+})

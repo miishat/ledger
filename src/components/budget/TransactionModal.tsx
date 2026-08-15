@@ -7,8 +7,9 @@ import { NumberInput } from '../ui/NumberInput';
 import { Sheet } from '../ui/Sheet';
 import { formatMoney } from '../planner/format';
 import { sharedPeople } from '../../utils/budget/sharedExpenses';
+import { splitRemainder, round2 } from '../../utils/budget/splits';
 
-import type { Transaction } from '../../types/budget';
+import type { Transaction, TransactionSplit } from '../../types/budget';
 
 export type TransactionType = 'expense' | 'income';
 
@@ -53,6 +54,15 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   const [isReimbursement, setIsReimbursement] = useState(!!initialTransaction?.reimbursement);
   const [reimbursementFrom, setReimbursementFrom] = useState<string>(initialTransaction?.reimbursement?.from ?? '');
 
+  const [isSplit, setIsSplit] = useState(!!initialTransaction?.splits?.length);
+  const [splits, setSplits] = useState<TransactionSplit[]>(
+    initialTransaction?.splits ?? [{ categoryId: category, amount: 0 }],
+  );
+  const [tagsText, setTagsText] = useState<string>((initialTransaction?.tags ?? []).join(', '));
+  const [note, setNote] = useState<string>(initialTransaction?.note ?? '');
+
+  const remaining = splitRemainder(amount, isSplit ? splits : []);
+
   const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
 
   const handleTypeChange = (nextType: TransactionType) => {
@@ -82,6 +92,24 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
         ? { from: reimbursementFrom.trim() }
         : undefined;
 
+    const cleanedSplits = isSplit
+      ? splits
+          .filter((s) => s.amount > 0)
+          .map((s) => ({ categoryId: s.categoryId || undefined, amount: round2(s.amount) }))
+      : [];
+    const splitsField = cleanedSplits.length > 0 ? cleanedSplits : undefined;
+
+    const tags = Array.from(
+      new Set(
+        tagsText
+          .split(',')
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+    const tagsField = tags.length > 0 ? tags : undefined;
+    const noteField = note.trim() ? note.trim() : undefined;
+
     if (initialTransaction) {
       updateTransaction(initialTransaction.id, {
         type,
@@ -90,7 +118,10 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
         date,
         description,
         shared: sharedField,
-        reimbursement: reimbursementField
+        reimbursement: reimbursementField,
+        splits: splitsField,
+        tags: tagsField,
+        note: noteField
       });
     } else {
       addTransaction({
@@ -101,7 +132,10 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
         date,
         description,
         shared: sharedField,
-        reimbursement: reimbursementField
+        reimbursement: reimbursementField,
+        splits: splitsField,
+        tags: tagsField,
+        note: noteField
       });
     }
 
@@ -255,6 +289,98 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                 { value: '', label: 'Uncategorized' },
                 ...categoryList.map((cat) => ({ value: cat.id, label: cat.name })),
               ]}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
+              <input
+                type="checkbox"
+                aria-label="Split across categories"
+                checked={isSplit}
+                onChange={(e) => setIsSplit(e.target.checked)}
+                className="accent-[var(--color-accent)]"
+              />
+              Split across categories
+            </label>
+            {isSplit && (
+              <div className="flex flex-col gap-2 pl-1 border-l-2 border-[var(--color-border)] ml-1">
+                {splits.map((slice, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <ThemedSelect
+                      ariaLabel="Slice category"
+                      value={slice.categoryId ?? ''}
+                      onChange={(v) =>
+                        setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, categoryId: v } : s)))
+                      }
+                      className="flex-1 text-[12px]"
+                      options={[
+                        { value: '', label: 'Uncategorized' },
+                        ...categoryList.map((cat) => ({ value: cat.id, label: cat.name })),
+                      ]}
+                    />
+                    <NumberInput
+                      value={slice.amount}
+                      onCommit={(v) =>
+                        setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, amount: v } : s)))
+                      }
+                      ariaLabel="Slice amount"
+                      className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
+                      placeholder="0.00"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Remove slice"
+                      onClick={() => setSplits((cur) => cur.filter((_, j) => j !== i))}
+                      className="p-2 text-[var(--color-text-secondary)] hover:text-error rounded-md"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setSplits((cur) => [...cur, { categoryId: '', amount: 0 }])}
+                  className="self-start px-2 py-1 rounded-md text-[12px] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] transition-colors"
+                >
+                  Add a slice
+                </button>
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
+                  {remaining > 0
+                    ? `${formatMoney(remaining)} left to allocate, which stays on the category above.`
+                    : remaining < 0
+                      ? `Slices exceed the amount by ${formatMoney(Math.abs(remaining))}.`
+                      : 'Fully allocated.'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="tx-tags" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+              Tags
+            </label>
+            <input
+              id="tx-tags"
+              type="text"
+              value={tagsText}
+              onChange={(e) => setTagsText(e.target.value)}
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              placeholder="Comma separated, e.g. trip, reimbursable"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="tx-note" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+              Note
+            </label>
+            <textarea
+              id="tx-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              placeholder="Anything you want to remember about this one"
             />
           </div>
 

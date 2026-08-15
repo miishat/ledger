@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
-import { Trash2, Maximize2, Minimize2, Receipt, Search, X } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2, Receipt, Search } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { inRange, type MonthRange } from '../../utils/budget/period';
+import { useUndoStore } from '../../store/useUndoStore';
 
 interface TransactionListWidgetProps {
   range: MonthRange;
@@ -16,11 +17,11 @@ interface TransactionListWidgetProps {
 export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
-  const deleteTransaction = useBudgetStore((state) => state.deleteTransaction);
   const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
   const setTransactionsCategory = useBudgetStore((state) => state.setTransactionsCategory);
   const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
   const addTransaction = useBudgetStore((state) => state.addTransaction);
+  const offerUndo = useUndoStore((s) => s.offerUndo);
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -30,10 +31,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkCategoryId, setBulkCategoryId] = useState('');
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
-  // Holds the rows from the most recent delete so it can be reversed. Replaced
-  // by the next delete and cleared on dismiss; there is no timer, so the offer
-  // does not vanish while the user is deciding.
-  const [undoable, setUndoable] = useState<Transaction[] | null>(null);
+
+  const deleteWithUndo = (rows: Transaction[]) => {
+    const label =
+      rows.length === 1 ? `Deleted "${rows[0].description}"` : `Deleted ${rows.length} transactions`;
+    deleteTransactions(rows.map((r) => r.id));
+    offerUndo(label, () => {
+      for (const tx of rows) addTransaction(tx);
+    });
+  };
 
   const needle = query.trim().toLowerCase();
   const txList = Object.values(transactions)
@@ -46,10 +52,19 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     .filter(tx => {
       if (!needle) return true;
       const categoryName = tx.categoryId ? categories[tx.categoryId]?.name ?? '' : '';
-      return (
-        tx.description.toLowerCase().includes(needle) ||
-        categoryName.toLowerCase().includes(needle)
-      );
+      const sliceNames = (tx.splits ?? [])
+        .map((s) => (s.categoryId ? categories[s.categoryId]?.name ?? '' : ''))
+        .join(' ');
+      const haystack = [
+        tx.description,
+        categoryName,
+        sliceNames,
+        (tx.tags ?? []).join(' '),
+        tx.note ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -66,27 +81,19 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
 
   const toggleAll = () => setSelectedIds(allVisibleSelected ? [] : visibleIds);
 
-  const undoLabel = !undoable
-    ? ''
-    : undoable.length === 1
-      ? `Deleted "${undoable[0].description}"`
-      : `Deleted ${undoable.length} transactions`;
-
-  const restoreDeleted = () => {
-    if (!undoable) return;
-    for (const tx of undoable) addTransaction(tx);
-    setUndoable(null);
-  };
-
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
     amountPrefix: tx.type === 'income' ? '+' : '-',
-    categoryLabel: tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+    categoryLabel: tx.splits?.length
+      ? `Split · ${tx.splits.length}`
+      : tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
     badge: tx.shared
       ? `shared · ${tx.shared.sharedWith}`
       : tx.reimbursement
         ? `reimb · ${tx.reimbursement.from}`
         : null,
+    tags: tx.tags ?? [],
+    hasNote: !!tx.note,
   });
 
   const wrapperClass = isExpanded
@@ -176,24 +183,6 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           </button>
         </div>
       )}
-      {undoable && (
-        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border border-border bg-bg-primary">
-          <span className="text-[13px] text-text-primary">{undoLabel}</span>
-          <button
-            onClick={restoreDeleted}
-            className="text-[13px] font-medium text-accent hover:underline"
-          >
-            Undo
-          </button>
-          <button
-            onClick={() => setUndoable(null)}
-            aria-label="Dismiss undo"
-            className="ml-auto p-1 text-text-secondary hover:text-text-primary rounded-md"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
       {txList.length === 0 ? (
         <div className="flex-grow flex items-center justify-center">
           {needle || selectedCategoryId ? (
@@ -230,7 +219,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               </thead>
               <tbody>
                 {txList.map(tx => {
-                  const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
+                  const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
                   return (
                   <tr
                     key={tx.id}
@@ -255,6 +244,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       {badge && (
                         <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
                       )}
+                      {tags.map((tag) => (
+                        <span key={tag} className="ml-1 px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px] text-text-secondary">
+                          #{tag}
+                        </span>
+                      ))}
+                      {hasNote && (
+                        <span className="ml-1 text-[12px] text-text-secondary" title="Has a note" aria-label="Has a note">
+                          ✎
+                        </span>
+                      )}
                     </td>
                     <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
                       {amountPrefix}{formatMoney(tx.amount)}
@@ -263,8 +262,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setUndoable([tx]);
-                          deleteTransaction(tx.id);
+                          deleteWithUndo([tx]);
                         }}
                         aria-label="Delete transaction"
                         className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
@@ -280,7 +278,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           </div>
           <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
             {txList.map(tx => {
-              const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
+              const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
               return (
               <div
                 key={tx.id}
@@ -306,8 +304,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setUndoable([tx]);
-                      deleteTransaction(tx.id);
+                      deleteWithUndo([tx]);
                     }}
                     aria-label="Delete transaction"
                     className="p-3 -m-1 text-text-secondary hover:text-error transition-colors rounded-md hover:bg-bg-primary shrink-0"
@@ -323,6 +320,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     </span>
                     {badge && (
                       <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
+                    )}
+                    {tags.map((tag) => (
+                      <span key={tag} className="ml-1 px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px] text-text-secondary">
+                        #{tag}
+                      </span>
+                    ))}
+                    {hasNote && (
+                      <span className="ml-1 text-[12px] text-text-secondary" title="Has a note" aria-label="Has a note">
+                        ✎
+                      </span>
                     )}
                   </span>
                 </div>
@@ -342,12 +349,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       <ConfirmDialog
         open={confirmClearOpen}
         title="Clear all transactions?"
-        message={`Every transaction (${Object.keys(transactions).length}) will be deleted, including any hidden by the current search or filter. This cannot be undone.`}
+        message={`Every transaction (${Object.keys(transactions).length}) will be deleted, including any hidden by the current search or filter. You can undo this straight afterwards.`}
         confirmLabel="Clear All"
         tone="danger"
         onConfirm={() => {
+          const all = Object.values(transactions);
           clearAllTransactions();
-          setUndoable(null);
+          offerUndo(`Cleared ${all.length} transaction${all.length === 1 ? '' : 's'}`, () => {
+            for (const tx of all) addTransaction(tx);
+          });
           setConfirmClearOpen(false);
         }}
         onCancel={() => setConfirmClearOpen(false)}
@@ -360,8 +370,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         confirmLabel="Delete"
         tone="danger"
         onConfirm={() => {
-          setUndoable(txList.filter((tx) => selected.includes(tx.id)));
-          deleteTransactions(selected);
+          deleteWithUndo(txList.filter((tx) => selected.includes(tx.id)));
           setSelectedIds([]);
           setConfirmBulkDeleteOpen(false);
         }}

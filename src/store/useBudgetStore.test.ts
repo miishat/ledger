@@ -204,3 +204,68 @@ describe('getMonthlyBudgetStats with annual categories', () => {
     expect(stats.perCategory.c2.effectiveTarget).toBe(950)
   })
 })
+
+describe('getMonthlyBudgetStats with split transactions', () => {
+  it('attributes each slice to its own category and leaves the total spend unchanged', () => {
+    useBudgetStore.setState({
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Food', kind: 'expense', budgetClass: 'need' },
+        g2: { id: 'g2', name: 'Shopping', kind: 'expense', budgetClass: 'want' },
+      },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 400 },
+        household: { id: 'household', groupId: 'g2', name: 'Household', targetAmount: 100 },
+      },
+      transactions: {
+        t1: {
+          id: 't1',
+          date: '2026-08-04',
+          amount: 180,
+          description: 'Costco',
+          type: 'expense',
+          categoryId: 'groceries',
+          splits: [
+            { categoryId: 'groceries', amount: 120 },
+            { categoryId: 'household', amount: 60 },
+          ],
+        },
+      },
+      reallocations: {},
+    })
+    const stats = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 7)
+    expect(stats.spent).toBe(180)
+    expect(stats.perCategory.groceries.spent).toBe(120)
+    expect(stats.perCategory.household.spent).toBe(60)
+  })
+
+  it('splits the 50/30/20 buckets by slice, not by the parent category', () => {
+    useBudgetStore.setState({
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Food', kind: 'expense', budgetClass: 'need' },
+        g2: { id: 'g2', name: 'Shopping', kind: 'expense', budgetClass: 'want' },
+      },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g2', name: 'Household', targetAmount: 0 },
+      },
+      transactions: {
+        t1: {
+          id: 't1',
+          date: '2026-08-04',
+          amount: 180,
+          description: 'Costco',
+          type: 'expense',
+          categoryId: 'groceries',
+          splits: [
+            { categoryId: 'groceries', amount: 120 },
+            { categoryId: 'household', amount: 60 },
+          ],
+        },
+      },
+      reallocations: {},
+    })
+    const stats = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 7)
+    expect(stats.fiftyThirtyTwenty.needsSpent).toBe(120)
+    expect(stats.fiftyThirtyTwenty.wantsSpent).toBe(60)
+  })
+})

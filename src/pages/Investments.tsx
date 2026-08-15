@@ -3,6 +3,7 @@ import { Plus, NotebookText } from 'lucide-react'
 import { AnalysisCard } from '../components/investments/AnalysisCard'
 import { AnalysisModal } from '../components/investments/AnalysisModal'
 import { PortfolioView } from '../components/investments/PortfolioView'
+import { TradesView } from '../components/investments/TradesView'
 import { WheelView } from '../components/investments/wheel/WheelView'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
@@ -12,12 +13,20 @@ import { formatMoney } from '../components/planner/format'
 import { Stat } from '../components/ui/Stat'
 import { EmptyState } from '../components/ui/EmptyState'
 
+const TAB_LABELS: Record<string, string> = { journal: 'Plan vs Actual', portfolio: 'Portfolio', trades: 'Trades', wheel: 'Options' }
+const TAB_BLURBS: Record<string, string> = {
+  journal: 'Your decision journal: what you analyzed, what you actually did, and how both performed.',
+  portfolio: 'Your portfolio with live prices and allocations.',
+  trades: 'Every buy and sell you have recorded, with realized gains and your adjusted cost base.',
+  wheel: 'Wheel strategy: options premium, cost basis, and true breakeven per ticker.',
+}
+
 export const Investments: React.FC = () => {
   const analyses = useAnalysisStore((s) => s.analyses)
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [tab, setTab] = useState<'journal' | 'portfolio' | 'wheel'>('journal')
+  const [tab, setTab] = useState<'journal' | 'portfolio' | 'trades' | 'wheel'>('journal')
 
   // Header totals use override > cached > start price (cards fetch live).
   const priceFor = (ticker: string, exchange: string | undefined, fallback: number) =>
@@ -36,13 +45,7 @@ export const Investments: React.FC = () => {
       <header className="flex justify-between items-center flex-wrap gap-3">
         <div>
           <h1 className="text-[24px] font-semibold text-text-primary">Investments</h1>
-          <p className="text-[14px] text-text-secondary mt-1">
-            {tab === 'journal'
-              ? 'Your decision journal: what you analyzed, what you actually did, and how both performed.'
-              : tab === 'portfolio'
-                ? 'Your portfolio with live prices and allocations.'
-                : 'Wheel strategy: options premium, cost basis, and true breakeven per ticker.'}
-          </p>
+          <p className="text-[14px] text-text-secondary mt-1">{TAB_BLURBS[tab]}</p>
         </div>
         {tab === 'journal' && (
           <button
@@ -55,7 +58,7 @@ export const Investments: React.FC = () => {
       </header>
 
       <div className="flex gap-2">
-        {(['journal', 'portfolio', 'wheel'] as const).map((t) => (
+        {(['journal', 'portfolio', 'trades', 'wheel'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -63,7 +66,7 @@ export const Investments: React.FC = () => {
               tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
             }`}
           >
-            {t === 'journal' ? 'Plan vs Actual' : t === 'portfolio' ? 'Portfolio' : 'Options'}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -103,6 +106,8 @@ export const Investments: React.FC = () => {
         </>
       ) : tab === 'portfolio' ? (
         <PortfolioView />
+      ) : tab === 'trades' ? (
+        <TradesView />
       ) : (
         <WheelView />
       )}

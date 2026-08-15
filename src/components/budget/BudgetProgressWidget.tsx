@@ -5,6 +5,7 @@ import { formatMoney } from '../planner/format'
 import { totalMonthlyBudget } from '../../store/budgetSelectors'
 import { inRange, isSingleMonth, monthKeyOf, monthsInRange, type MonthRange } from '../../utils/budget/period'
 import { annualTarget, elapsedMonthsInYear, isAnnual, setAsideExpected } from '../../utils/budget/cadence'
+import { splitParts } from '../../utils/budget/splits'
 
 type Pace = 'over' | 'under' | 'on'
 
@@ -37,8 +38,10 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
   )
   const spentByCategory = new Map<string, number>()
   for (const t of txInRange) {
-    const key = t.categoryId ?? ''
-    spentByCategory.set(key, (spentByCategory.get(key) ?? 0) + t.amount)
+    for (const part of splitParts(t)) {
+      const key = part.categoryId ?? ''
+      spentByCategory.set(key, (spentByCategory.get(key) ?? 0) + part.amount)
+    }
   }
 
   const withTarget = Object.values(categories).filter((c) => c.targetAmount > 0)
@@ -62,8 +65,10 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
   const yearSpentByCategory = new Map<string, number>()
   for (const t of Object.values(transactions)) {
     if (t.type === 'expense' && inRange(t.date, yearRange)) {
-      const key = t.categoryId ?? ''
-      yearSpentByCategory.set(key, (yearSpentByCategory.get(key) ?? 0) + t.amount)
+      for (const part of splitParts(t)) {
+        const key = part.categoryId ?? ''
+        yearSpentByCategory.set(key, (yearSpentByCategory.get(key) ?? 0) + part.amount)
+      }
     }
   }
   const annualRows = withTarget
@@ -78,8 +83,9 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
   const budgeted = totalMonthlyBudget(categories, categoryGroups) * months
   const totalSpent = txInRange.reduce((s, t) => s + t.amount, 0)
   const unbudgeted = txInRange
-    .filter((t) => !t.categoryId || (categories[t.categoryId]?.targetAmount ?? 0) === 0)
-    .reduce((s, t) => s + t.amount, 0)
+    .flatMap((t) => splitParts(t))
+    .filter((p) => !p.categoryId || (categories[p.categoryId]?.targetAmount ?? 0) === 0)
+    .reduce((s, p) => s + p.amount, 0)
 
   const hasAnything = rows.length > 0 || annualRows.length > 0
 

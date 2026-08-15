@@ -28,6 +28,9 @@ interface AccountsState {
   getNetWorth: () => number;
   recordSnapshot: () => void;
   getNetWorthTrend: () => number;
+  setSnapshot: (date: string, value: number) => void;
+  removeSnapshot: (date: string) => void;
+  ensureDailySnapshot: () => void;
 }
 
 /** The demo accounts every install used to boot with, before 0.8.1-beta. Kept
@@ -120,21 +123,45 @@ export const useAccountsStore = create<AccountsState>()(
         const state = get();
         const currentNetWorth = state.getNetWorth();
         const today = new Date().toISOString().split('T')[0];
-        
+
         set((state) => {
           const existingIndex = state.history.findIndex(h => h.date === today);
           const newHistory = [...state.history];
-          
+
           if (existingIndex >= 0) {
             newHistory[existingIndex] = { date: today, value: currentNetWorth };
           } else {
             newHistory.push({ date: today, value: currentNetWorth });
           }
-          
+
           newHistory.sort((a, b) => a.date.localeCompare(b.date));
-          
+
           return { history: newHistory };
         });
+      },
+
+      setSnapshot: (date, value) =>
+        set((state) => {
+          const history = state.history.filter((h) => h.date !== date);
+          history.push({ date, value });
+          history.sort((a, b) => a.date.localeCompare(b.date));
+          return { history };
+        }),
+
+      removeSnapshot: (date) =>
+        set((state) => ({ history: state.history.filter((h) => h.date !== date) })),
+
+      /** Called once when the app opens. Without this the trend chart is sampled
+       *  by the user's editing habits rather than by time: a month of no account
+       *  edits leaves a month-wide gap. An existing entry for today is left
+       *  alone so a manual correction is never overwritten, and an install with
+       *  no accounts records nothing rather than a misleading zero. */
+      ensureDailySnapshot: () => {
+        const state = get();
+        if (state.accounts.length === 0) return;
+        const today = new Date().toISOString().split('T')[0];
+        if (state.history.some((h) => h.date === today)) return;
+        state.recordSnapshot();
       },
 
       getNetWorthTrend: () => {

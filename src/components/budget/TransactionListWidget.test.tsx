@@ -1,11 +1,13 @@
 import { render, screen, within, fireEvent } from '@testing-library/react'
 import { TransactionListWidget } from './TransactionListWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { useUndoStore } from '../../store/useUndoStore'
 
 const initialState = useBudgetStore.getState()
 
 beforeEach(() => {
   useBudgetStore.setState(initialState, true)
+  useUndoStore.setState({ pending: null })
 })
 
 describe('TransactionListWidget mobile layout', () => {
@@ -118,15 +120,15 @@ describe('TransactionListWidget search', () => {
     expect(screen.getByText(/hidden by the current search or filter/)).toBeInTheDocument()
   })
 
-  it('leaves no Undo button after confirming Clear All', () => {
+  it('replaces the row-delete undo offer with the Clear All undo offer', () => {
     seedThree()
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     fireEvent.click(screen.getAllByLabelText('Delete transaction')[0])
-    expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument()
+    expect(useUndoStore.getState().pending?.label).toMatch(/^Deleted "/)
     fireEvent.click(screen.getByTitle('Clear All Transactions'))
     const confirmButtons = screen.getAllByRole('button', { name: 'Clear All' })
     fireEvent.click(confirmButtons[confirmButtons.length - 1])
-    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    expect(useUndoStore.getState().pending?.label).toMatch(/^Cleared /)
   })
 })
 
@@ -212,7 +214,7 @@ describe('TransactionListWidget undo', () => {
     fireEvent.click(within(table).getByLabelText('Delete transaction'))
     expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    useUndoStore.getState().runUndo()
     expect(useBudgetStore.getState().transactions.t1).toEqual({
       id: 't1',
       date: '2026-07-03',
@@ -227,7 +229,7 @@ describe('TransactionListWidget undo', () => {
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     const table = screen.getByRole('table')
     fireEvent.click(within(table).getByLabelText('Delete transaction'))
-    expect(screen.getByText('Deleted "Coffee Bar"')).toBeInTheDocument()
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted "Coffee Bar"')
   })
 
   it('drops the offer once dismissed', () => {
@@ -235,8 +237,8 @@ describe('TransactionListWidget undo', () => {
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     const table = screen.getByRole('table')
     fireEvent.click(within(table).getByLabelText('Delete transaction'))
-    fireEvent.click(screen.getByLabelText('Dismiss undo'))
-    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+    useUndoStore.getState().dismissUndo()
+    expect(useUndoStore.getState().pending).toBeNull()
     expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
   })
 
@@ -253,7 +255,7 @@ describe('TransactionListWidget undo', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
     expect(Object.keys(useBudgetStore.getState().transactions)).toHaveLength(0)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    useUndoStore.getState().runUndo()
     expect(Object.keys(useBudgetStore.getState().transactions).sort()).toEqual(['t1', 't2'])
   })
 
@@ -275,5 +277,101 @@ describe('TransactionListWidget undo', () => {
     expect(remaining.t3).toBeUndefined()
     expect(remaining.t1).toBeDefined()
     expect(remaining.t2).toBeDefined()
+  })
+})
+
+describe('TransactionListWidget splits and tags', () => {
+  const split = {
+    id: 'tx1',
+    date: '2026-08-04',
+    amount: 180,
+    description: 'Costco',
+    type: 'expense' as const,
+    categoryId: 'groceries',
+    splits: [
+      { categoryId: 'groceries', amount: 120 },
+      { categoryId: 'household', amount: 60 },
+    ],
+    tags: ['trip'],
+    note: 'weekly shop',
+  }
+
+  it('labels a split row with the number of slices instead of one category', () => {
+    useBudgetStore.setState({
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: { tx1: split },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Split · 2')).toBeInTheDocument()
+  })
+
+  it('finds a transaction by tag', () => {
+    useBudgetStore.setState({
+      categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
+      transactions: {
+        tx1: split,
+        tx2: { id: 'tx2', date: '2026-08-05', amount: 9, description: 'Coffee', type: 'expense' as const },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'trip' } })
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Costco')).toBeInTheDocument()
+    expect(within(table).queryByText('Coffee')).toBeNull()
+  })
+
+  it('finds a transaction by note text', () => {
+    useBudgetStore.setState({
+      categories: {},
+      transactions: { tx1: split },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'weekly' } })
+    expect(within(screen.getByRole('table')).getByText('Costco')).toBeInTheDocument()
+  })
+})
+
+describe('undo via the global store', () => {
+  beforeEach(() => {
+    useUndoStore.setState({ pending: null })
+  })
+
+  it('offers an undo through the undo store when a row is deleted', () => {
+    useBudgetStore.setState({
+      categories: {},
+      transactions: { tx1: { id: 'tx1', date: '2026-08-03', amount: 42, description: 'Coffee', type: 'expense' } },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.click(within(screen.getByRole('table')).getByLabelText('Delete transaction'))
+
+    expect(useBudgetStore.getState().transactions).toEqual({})
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted "Coffee"')
+
+    useUndoStore.getState().runUndo()
+    expect(useBudgetStore.getState().transactions.tx1.description).toBe('Coffee')
+  })
+
+  it('offers an undo after Clear All that restores every transaction', () => {
+    useBudgetStore.setState({
+      categories: {},
+      transactions: {
+        tx1: { id: 'tx1', date: '2026-08-03', amount: 42, description: 'Coffee', type: 'expense' },
+        tx2: { id: 'tx2', date: '2026-08-04', amount: 10, description: 'Tea', type: 'expense' },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.click(screen.getByTitle('Clear All Transactions'))
+    const confirmButtons = screen.getAllByRole('button', { name: 'Clear All' })
+    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+
+    expect(useBudgetStore.getState().transactions).toEqual({})
+    expect(useUndoStore.getState().pending?.label).toBe('Cleared 2 transactions')
+
+    useUndoStore.getState().runUndo()
+    expect(Object.keys(useBudgetStore.getState().transactions).sort()).toEqual(['tx1', 'tx2'])
   })
 })

@@ -2,6 +2,12 @@ import React from 'react'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
+  /** 'page' fills the viewport with a recovery card (the app-level default).
+   *  'widget' degrades to a single card's worth of space so one broken widget
+   *  leaves the rest of the page usable. */
+  variant?: 'page' | 'widget'
+  /** Widget title, used in the console message so a report names the culprit. */
+  label?: string
 }
 
 interface ErrorBoundaryState {
@@ -24,7 +30,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: unknown, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    console.error(`ErrorBoundary caught an error${this.props.label ? ` in ${this.props.label}` : ''}:`, error, errorInfo)
   }
 
   handleTryAgain = () => {
@@ -36,6 +42,23 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   render() {
+    if (this.state.hasError && this.props.variant === 'widget') {
+      return (
+        <div className="flex flex-col items-start gap-2 py-4">
+          <p className="text-[13px] text-text-secondary">
+            This widget could not be displayed, most likely from unexpected data.
+          </p>
+          <button
+            type="button"
+            onClick={this.handleTryAgain}
+            className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-accent/10 text-accent hover:bg-accent/20 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          >
+            Try again
+          </button>
+        </div>
+      )
+    }
+
     if (this.state.hasError) {
       return (
         <div className="flex items-center justify-center min-h-[60vh] p-6">

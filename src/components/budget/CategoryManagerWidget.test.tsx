@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { CategoryManagerWidget } from './CategoryManagerWidget'
 import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { useUndoStore } from '../../store/useUndoStore'
 
 beforeEach(() => {
   useBudgetStore.setState({
@@ -148,6 +149,40 @@ describe('cadence-aware group total and per-category target', () => {
   });
 });
 
+describe('split transaction attribution', () => {
+  it('attributes only each category own slice, not the full transaction amount', () => {
+    useBudgetStore.setState({
+      paradigm: 'Ledger Custom',
+      budgetSetupCollapsed: false,
+      transactions: {
+        t1: {
+          id: 't1',
+          date: '2026-07-05',
+          amount: 100,
+          categoryId: 'c1',
+          description: 'Costco run',
+          type: 'expense',
+          splits: [{ categoryId: 'c2', amount: 40 }],
+        },
+      },
+      reallocations: {},
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Housing', kind: 'expense' },
+      },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        c2: { id: 'c2', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    // Groceries (c1) keeps the uncovered remainder ($60), Household (c2) gets its slice ($40).
+    // Neither should show the full $100.
+    expect(screen.getByText('$60 spent')).toBeInTheDocument()
+    expect(screen.getByText('$40 spent')).toBeInTheDocument()
+    expect(screen.queryByText('$100 spent')).toBeNull()
+  })
+})
+
 describe('cadence toggle', () => {
   it('switches an expense category to annual and persists it', () => {
     useBudgetStore.setState({
@@ -173,5 +208,44 @@ describe('cadence toggle', () => {
     render(<CategoryManagerWidget selectedMonth="2026-04" />)
     fireEvent.click(screen.getByRole('button', { name: 'Budget Vacation monthly' }))
     expect(useBudgetStore.getState().categories.c1.cadence).toBe('monthly')
+  })
+})
+
+describe('category delete undo', () => {
+  it('offers an undo that restores a deleted category', () => {
+    useUndoStore.setState({ pending: null })
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Groceries', targetAmount: 400 } },
+      transactions: {},
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-08" />)
+    fireEvent.click(screen.getByLabelText('Delete category Groceries'))
+
+    expect(useBudgetStore.getState().categories.c1).toBeUndefined()
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted category "Groceries"')
+
+    useUndoStore.getState().runUndo()
+    expect(useBudgetStore.getState().categories.c1.name).toBe('Groceries')
+  })
+
+  it('offers an undo that restores a deleted empty group', () => {
+    useUndoStore.setState({ pending: null })
+    useBudgetStore.setState({
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Subscriptions', kind: 'expense' },
+        g2: { id: 'g2', name: 'Housing', kind: 'expense' },
+      },
+      categories: { c1: { id: 'c1', groupId: 'g2', name: 'Rent', targetAmount: 400 } },
+      transactions: {},
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-08" />)
+    fireEvent.click(screen.getByLabelText('Delete group Subscriptions'))
+
+    expect(useBudgetStore.getState().categoryGroups.g1).toBeUndefined()
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted group "Subscriptions"')
+
+    useUndoStore.getState().runUndo()
+    expect(useBudgetStore.getState().categoryGroups.g1.name).toBe('Subscriptions')
   })
 })

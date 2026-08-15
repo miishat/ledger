@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from './storageKeys'
+import { BACKUP_KEYS } from '../utils/backup'
 
 // Raw source of every persisted store, so the test can prove each one reads its
 // key from the registry instead of inlining a string. Every store file is named
@@ -28,6 +29,7 @@ describe('storage key registry', () => {
       wheel: 'ledger-wheel',
       recurring: 'ledger-recurring',
       sync: 'ledger-sync',
+      trades: 'ledger-trades',
     })
   })
 
@@ -46,5 +48,9 @@ describe('storage key registry', () => {
       if (!src.includes('persist(')) continue
       expect(src, `${path} must use STORAGE_KEYS, not an inline key string`).toContain('STORAGE_KEYS.')
     }
+  })
+
+  it('backs up the trade log', () => {
+    expect(BACKUP_KEYS).toContain(STORAGE_KEYS.trades)
   })
 })

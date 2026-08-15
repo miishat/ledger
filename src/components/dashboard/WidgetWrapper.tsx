@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { ErrorBoundary } from '../ErrorBoundary';
 
 interface WidgetWrapperProps {
   title: string;
@@ -8,6 +8,10 @@ interface WidgetWrapperProps {
   action?: React.ReactNode;
 }
 
+/** Every widget on every page renders through this, so the boundary here is
+ *  what keeps one widget's bad data from blanking the whole route. The card
+ *  chrome (title and action) stays outside the boundary so a failed widget is
+ *  still identifiable. */
 export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ title, children, className = '', action }) => {
   return (
     <div className={`themed-card rounded-lg p-4 flex flex-col h-full min-w-0 ${className}`}>
@@ -16,7 +20,9 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ title, children, c
         {action && action}
       </div>
       <div className="flex-1">
-        {children}
+        <ErrorBoundary variant="widget" label={title}>
+          {children}
+        </ErrorBoundary>
       </div>
     </div>
   );

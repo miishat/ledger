@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   dashboardLayout: 'ledger-dashboard-layout',
   wheel: 'ledger-wheel',
   recurring: 'ledger-recurring',
+  trades: 'ledger-trades',
   sync: 'ledger-sync',
 } as const
 

@@ -3,6 +3,7 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../planner/format';
 import { inRange, isSingleMonth, type MonthRange } from '../../utils/budget/period';
+import { splitParts } from '../../utils/budget/splits';
 
 interface ExpenseWidgetProps {
   range: MonthRange;
@@ -21,9 +22,11 @@ export const ExpenseWidget: React.FC<ExpenseWidgetProps> = ({ range }) => {
 
   // Group by category group (Housing, Food, ...), not individual category.
   const expensesByGroup = expensesThisMonth.reduce((acc, t) => {
-    const groupId = t.categoryId ? categories[t.categoryId]?.groupId : undefined;
-    const groupName = (groupId && categoryGroups[groupId]?.name) || 'Uncategorized';
-    acc[groupName] = (acc[groupName] || 0) + t.amount;
+    for (const part of splitParts(t)) {
+      const groupId = part.categoryId ? categories[part.categoryId]?.groupId : undefined;
+      const groupName = (groupId && categoryGroups[groupId]?.name) || 'Uncategorized';
+      acc[groupName] = (acc[groupName] || 0) + part.amount;
+    }
     return acc;
   }, {} as Record<string, number>);
 

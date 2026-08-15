@@ -114,3 +114,55 @@ describe('stripDemoAccounts', () => {
     expect(twice.history).toEqual(startingHistory)
   })
 })
+
+describe('editable net worth history', () => {
+  it('adds a dated snapshot and keeps history sorted oldest first', () => {
+    useAccountsStore.setState({ accounts: [], history: [{ date: '2026-08-01', value: 100 }] })
+    useAccountsStore.getState().setSnapshot('2026-06-01', 50)
+    expect(useAccountsStore.getState().history).toEqual([
+      { date: '2026-06-01', value: 50 },
+      { date: '2026-08-01', value: 100 },
+    ])
+  })
+
+  it('overwrites the snapshot for a date rather than appending a second one', () => {
+    useAccountsStore.setState({ accounts: [], history: [{ date: '2026-08-01', value: 100 }] })
+    useAccountsStore.getState().setSnapshot('2026-08-01', 175)
+    expect(useAccountsStore.getState().history).toEqual([{ date: '2026-08-01', value: 175 }])
+  })
+
+  it('removes a snapshot by date', () => {
+    useAccountsStore.setState({
+      accounts: [],
+      history: [{ date: '2026-08-01', value: 100 }, { date: '2026-08-02', value: 110 }],
+    })
+    useAccountsStore.getState().removeSnapshot('2026-08-01')
+    expect(useAccountsStore.getState().history).toEqual([{ date: '2026-08-02', value: 110 }])
+  })
+
+  it('records today on ensureDailySnapshot when there is none yet', () => {
+    const today = new Date().toISOString().split('T')[0]
+    useAccountsStore.setState({
+      accounts: [{ id: 'a', name: 'Chequing', value: 900, type: 'bank' }],
+      history: [],
+    })
+    useAccountsStore.getState().ensureDailySnapshot()
+    expect(useAccountsStore.getState().history).toEqual([{ date: today, value: 900 }])
+  })
+
+  it('leaves an existing snapshot for today alone, so opening the app does not overwrite an edit', () => {
+    const today = new Date().toISOString().split('T')[0]
+    useAccountsStore.setState({
+      accounts: [{ id: 'a', name: 'Chequing', value: 900, type: 'bank' }],
+      history: [{ date: today, value: 12345 }],
+    })
+    useAccountsStore.getState().ensureDailySnapshot()
+    expect(useAccountsStore.getState().history).toEqual([{ date: today, value: 12345 }])
+  })
+
+  it('does nothing on ensureDailySnapshot when there are no accounts, so an empty install records no zero line', () => {
+    useAccountsStore.setState({ accounts: [], history: [] })
+    useAccountsStore.getState().ensureDailySnapshot()
+    expect(useAccountsStore.getState().history).toEqual([])
+  })
+})

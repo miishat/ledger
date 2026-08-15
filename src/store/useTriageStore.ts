@@ -11,7 +11,10 @@ interface TriageState {
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
   approveTransaction: (id: string) => void;
-  approveAll: () => void;
+  /** Approves every row that is not flagged as a duplicate. Returns the ids it
+   *  approved, so the caller can offer to undo the batch. */
+  approveAll: () => string[];
+  rejectDuplicates: () => void;
   rejectTransaction: (id: string) => void;
   clearAll: () => void;
   learnRule: (description: string, categoryId: string) => void;
@@ -84,8 +87,8 @@ export const useTriageStore = create<TriageState>()(
       approveAll: () => {
         const state = get();
         const budgetState = useBudgetStore.getState();
-        const txs = Object.values(state.pendingTransactions);
-        
+        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate);
+
         txs.forEach((tx) => {
           budgetState.addTransaction({
             id: tx.id,
@@ -95,14 +98,27 @@ export const useTriageStore = create<TriageState>()(
             description: tx.description,
             type: tx.type,
           });
-          
+
           if (tx.categoryId) {
             state.learnRule(tx.description, tx.categoryId);
           }
         });
-        
-        set({ pendingTransactions: {} });
+
+        const approvedIds = txs.map((tx) => tx.id);
+        set((current) => {
+          const newPending = { ...current.pendingTransactions };
+          for (const id of approvedIds) delete newPending[id];
+          return { pendingTransactions: newPending };
+        });
+        return approvedIds;
       },
+
+      rejectDuplicates: () =>
+        set((state) => ({
+          pendingTransactions: Object.fromEntries(
+            Object.entries(state.pendingTransactions).filter(([, tx]) => !tx.duplicate),
+          ),
+        })),
 
       rejectTransaction: (id) =>
         set((state) => {

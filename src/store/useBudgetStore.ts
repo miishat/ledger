@@ -10,6 +10,7 @@ import type {
   Transaction,
 } from '../types/budget';
 import { monthlyEquivalent } from '../utils/budget/cadence';
+import { splitParts } from '../utils/budget/splits';
 
 /** v1 -> v2: category groups gain a kind. Existing groups are classified by
  *  the old name heuristic once; from then on kind is explicit. */
@@ -286,8 +287,9 @@ export function getMonthlyBudgetStats(
     if (!tx.date.startsWith(monthStr)) return;
     if (tx.type === 'expense') {
       spent += tx.amount;
-      if (tx.categoryId) {
-        perCategorySpent[tx.categoryId] = (perCategorySpent[tx.categoryId] ?? 0) + tx.amount;
+      for (const part of splitParts(tx)) {
+        if (!part.categoryId) continue;
+        perCategorySpent[part.categoryId] = (perCategorySpent[part.categoryId] ?? 0) + part.amount;
       }
     } else if (tx.type === 'income') {
       if (!tx.reimbursement) totalIncome += tx.amount;
@@ -342,12 +344,14 @@ export function getMonthlyBudgetStats(
   let hasUnclassified = false;
   Object.values(state.transactions).forEach((tx) => {
     if (tx.type !== 'expense' || !tx.date.startsWith(monthStr)) return;
-    const cat = tx.categoryId ? state.categories[tx.categoryId] : undefined;
-    const group = cat ? state.categoryGroups[cat.groupId] : undefined;
-    const cls = group?.budgetClass;
-    if (cls === 'want') wantsSpent += tx.amount;
-    else if (cls === 'savings') savingsSpent += tx.amount;
-    else needsSpent += tx.amount;
+    for (const part of splitParts(tx)) {
+      const cat = part.categoryId ? state.categories[part.categoryId] : undefined;
+      const group = cat ? state.categoryGroups[cat.groupId] : undefined;
+      const cls = group?.budgetClass;
+      if (cls === 'want') wantsSpent += part.amount;
+      else if (cls === 'savings') savingsSpent += part.amount;
+      else needsSpent += part.amount;
+    }
   });
   Object.values(state.categoryGroups).forEach((g) => {
     if (g.kind === 'expense' && !g.budgetClass) hasUnclassified = true;

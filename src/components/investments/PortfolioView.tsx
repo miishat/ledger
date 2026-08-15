@@ -13,6 +13,7 @@ import { PortfolioReport } from './report/PortfolioReport'
 import { accountValue } from './report/reportMetrics'
 import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { EmptyState } from '../ui/EmptyState'
+import { DataFreshness } from '../ui/DataFreshness'
 
 export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
@@ -203,7 +204,12 @@ export const PortfolioView: React.FC = () => {
                   .map(([c, r]) => `${c} ${r.toFixed(4)}${fx.sources[c as Currency] ? ` (${fx.sources[c as Currency]})` : ''}`)
                   .join(', ')}`
                 : ''}
-              {fx.stale ? ' (stale)' : ''}
+              {Object.keys(rates).length > 0 && fx.asOf && (
+                <>
+                  {' '}
+                  <DataFreshness source={fx.source} asOf={fx.asOf} stale={fx.stale} onRefresh={fx.refresh} label="exchange rate" />
+                </>
+              )}
             </p>
             <button onClick={clearHoldings} className="flex items-center gap-1 text-[12px] text-text-secondary hover:text-error transition-colors">
               <Trash2 className="w-3.5 h-3.5" /> Clear portfolio

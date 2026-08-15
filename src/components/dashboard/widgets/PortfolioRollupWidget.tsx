@@ -7,9 +7,13 @@ import { quoteKey } from '../../../services/marketData'
 import { useFxRates } from '../../../hooks/useFxRates'
 import { portfolioTotals } from '../../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../../planner/format'
+import { DataFreshness } from '../../ui/DataFreshness'
+import { timeAgo } from '../../../utils/timeAgo'
+import { isStale } from '../../../services/marketData/marketDataService'
 
 export const PortfolioRollupWidget: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
+  const importedAt = usePortfolioStore((s) => s.importedAt)
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
   const currencies = useMemo(() => holdings.map((h) => h.currency), [holdings])
@@ -32,6 +36,16 @@ export const PortfolioRollupWidget: React.FC = () => {
   }))
   const t = portfolioTotals(rows, fx.rates)
 
+  // The rollup reads whatever quotes happen to be cached rather than calling
+  // useCurrentPrice per holding, so its freshness is the newest fetchedAt
+  // across just the quotes it actually used, not a per-holding live check.
+  const usedFetchedAts = holdings
+    .map((h) => quotes[quoteKey(h.ticker, h.exchange)]?.fetchedAt)
+    .filter((v): v is string => v !== undefined)
+  const newestFetchedAt = usedFetchedAts.length > 0
+    ? usedFetchedAts.reduce((a, b) => (a > b ? a : b))
+    : undefined
+
   return (
     <WidgetWrapper title="Portfolio">
       <div className="flex flex-col gap-1 mt-2">
@@ -45,6 +59,15 @@ export const PortfolioRollupWidget: React.FC = () => {
             {t.excludedCount} excluded, no FX rate
           </span>
         )}
+        {newestFetchedAt ? (
+          <DataFreshness
+            source="cache"
+            asOf={newestFetchedAt}
+            stale={isStale(newestFetchedAt)}
+          />
+        ) : importedAt ? (
+          <span className="text-[11px] text-text-secondary">Imported {timeAgo(importedAt)}</span>
+        ) : null}
       </div>
     </WidgetWrapper>
   )

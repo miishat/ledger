@@ -5,6 +5,7 @@ import { useAccountsStore } from '../../store/useAccountsStore';
 import type { AccountType } from '../../store/useAccountsStore';
 import { AddAccountModal } from './AddAccountModal';
 import { EmptyState } from '../ui/EmptyState';
+import { useUndoStore } from '../../store/useUndoStore';
 
 interface AccountCategoryWidgetProps {
   title: string;
@@ -28,7 +29,8 @@ const SINGULAR_NOUN: Record<AccountType, string> = {
 };
 
 export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ title, type, className }) => {
-  const { getAccountsByType, getTotalByType, removeAccount } = useAccountsStore();
+  const { getAccountsByType, getTotalByType, removeAccount, addAccount } = useAccountsStore();
+  const offerUndo = useUndoStore((s) => s.offerUndo);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
@@ -86,9 +88,17 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={() => removeAccount(acc.id)}
+                      onClick={() => {
+                        removeAccount(acc.id);
+                        // The restored account gets a fresh id, because addAccount mints
+                        // one; that is acceptable since nothing else references an
+                        // account id today.
+                        offerUndo(`Deleted account "${acc.name}"`, () =>
+                          addAccount({ name: acc.name, value: acc.value, type: acc.type }),
+                        );
+                      }}
                       className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary/50 hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
-                      aria-label="Remove account"
+                      aria-label={`Delete ${acc.name}`}
                     >
                       <Trash2 size={16} />
                     </button>

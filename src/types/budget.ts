@@ -22,6 +22,13 @@ export interface Category {
   cadence?: BudgetCadence;
 }
 
+/** One slice of a split transaction. Amounts are positive and expressed in the
+ *  same sign convention as the parent transaction. */
+export interface TransactionSplit {
+  categoryId?: string;
+  amount: number;
+}
+
 export interface Transaction {
   id: string;
   date: string;
@@ -34,6 +41,14 @@ export interface Transaction {
   shared?: { totalAmount: number; sharedWith: string };
   /** Income that pays back a shared bill; excluded from income totals. */
   reimbursement?: { from: string };
+  /** Category slices. When present the parent categoryId is only used for any
+   *  amount the splits do not cover. Absent means the whole amount belongs to
+   *  categoryId, which is how every transaction written before 0.9 behaves. */
+  splits?: TransactionSplit[];
+  /** Free-form labels, lower-cased and de-duplicated on save. */
+  tags?: string[];
+  /** Free text the user attached to this transaction. */
+  note?: string;
 }
 
 export interface Reallocation {

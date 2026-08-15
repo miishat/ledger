@@ -80,3 +80,31 @@ describe('useTriageStore rejection and rules', () => {
     expect(useTriageStore.getState().categoryRules).toEqual({ SPOTIFY: 'c-2' })
   })
 })
+
+describe('approveAll with duplicates', () => {
+  it('approves only the rows that are not flagged and returns their ids', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-04', amount: 10, description: 'Clean', type: 'expense' },
+        b: { id: 'b', date: '2026-08-04', amount: 20, description: 'Dupe', type: 'expense', duplicate: 'exact' },
+      },
+    })
+    const approved = useTriageStore.getState().approveAll()
+    expect(approved).toEqual(['a'])
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['a'])
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['b'])
+  })
+})
+
+describe('rejectDuplicates', () => {
+  it('discards every flagged row and leaves the rest pending', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-04', amount: 10, description: 'Clean', type: 'expense' },
+        b: { id: 'b', date: '2026-08-04', amount: 20, description: 'Dupe', type: 'expense', duplicate: 'possible' },
+      },
+    })
+    useTriageStore.getState().rejectDuplicates()
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
+  })
+})

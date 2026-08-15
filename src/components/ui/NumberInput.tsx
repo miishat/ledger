@@ -14,6 +14,7 @@ interface NumberInputProps {
   className?: string
   disabled?: boolean
   'aria-label'?: string
+  ariaLabel?: string
 }
 
 const NUMERIC = /^-?\d*\.?\d*$/
@@ -37,6 +38,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   step: _step,
   maxDecimals,
+  ariaLabel,
   ...rest
 }) => {
   // null = not editing; otherwise the raw text being typed.
@@ -49,6 +51,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     <input
       type="text"
       inputMode="decimal"
+      aria-label={ariaLabel}
       value={text ?? display(value, maxDecimals)}
       onFocus={() => setText(value === 0 ? '' : display(value, maxDecimals))}
       onChange={(e) => {

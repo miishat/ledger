@@ -49,4 +49,10 @@ describe('Investments page', () => {
     // Actually Invested, Current Value) should show it with no analyses.
     expect(screen.getAllByText('$0')).toHaveLength(3)
   })
+
+  it('opens the Trades tab', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: 'Trades' }))
+    expect(screen.getByText('Record a trade')).toBeInTheDocument()
+  })
 })
