@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { CategoryManagerWidget } from './CategoryManagerWidget'
 import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { useUndoStore } from '../../store/useUndoStore'
 
 beforeEach(() => {
   useBudgetStore.setState({
@@ -207,5 +208,24 @@ describe('cadence toggle', () => {
     render(<CategoryManagerWidget selectedMonth="2026-04" />)
     fireEvent.click(screen.getByRole('button', { name: 'Budget Vacation monthly' }))
     expect(useBudgetStore.getState().categories.c1.cadence).toBe('monthly')
+  })
+})
+
+describe('category delete undo', () => {
+  it('offers an undo that restores a deleted category', () => {
+    useUndoStore.setState({ pending: null })
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Groceries', targetAmount: 400 } },
+      transactions: {},
+    })
+    render(<CategoryManagerWidget selectedMonth="2026-08" />)
+    fireEvent.click(screen.getByLabelText('Delete category Groceries'))
+
+    expect(useBudgetStore.getState().categories.c1).toBeUndefined()
+    expect(useUndoStore.getState().pending?.label).toBe('Deleted category "Groceries"')
+
+    useUndoStore.getState().runUndo()
+    expect(useBudgetStore.getState().categories.c1.name).toBe('Groceries')
   })
 })

@@ -11,6 +11,7 @@ import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
 import { amountForCategory } from '../../utils/budget/splits';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions';
+import { useUndoStore } from '../../store/useUndoStore';
 
 const BUDGET_CLASSES: BudgetClass[] = ['need', 'want', 'savings'];
 
@@ -36,6 +37,8 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
     budgetSetupCollapsed,
     toggleBudgetSetup
   } = state;
+
+  const offerUndo = useUndoStore((s) => s.offerUndo);
 
   const [coverTarget, setCoverTarget] = useState<{ id: string; overage: number } | null>(null);
   const [newCatName, setNewCatName] = useState('');
@@ -73,6 +76,22 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
       kind: newGroupKind
     });
     setNewGroupName('');
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    const removed = categories[id];
+    deleteCategory(id);
+    offerUndo(`Deleted category "${removed.name}"`, () => addCategory(removed));
+  };
+
+  const handleDeleteGroup = (id: string) => {
+    const removedGroup = categoryGroups[id];
+    const removedCategories = Object.values(categories).filter((c) => c.groupId === id);
+    deleteCategoryGroup(id);
+    offerUndo(`Deleted group "${removedGroup.name}"`, () => {
+      addCategoryGroup(removedGroup);
+      for (const c of removedCategories) addCategory(c);
+    });
   };
 
   const thisMonthExpenses = Object.values(transactions).filter(
@@ -171,10 +190,11 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   )}
                 </div>
                 {groupCats.length === 0 && (
-                  <button 
-                    onClick={() => deleteCategoryGroup(group.id)}
+                  <button
+                    onClick={() => handleDeleteGroup(group.id)}
                     className="p-1 text-text-secondary hover:text-error transition-colors"
                     title="Delete Empty Group"
+                    aria-label={`Delete group ${group.name}`}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -212,8 +232,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 <span className="text-[13px] font-medium text-text-primary">
                                   ${actualAmount.toFixed(0)} earned
                                 </span>
-                                <button 
-                                  onClick={() => deleteCategory(cat.id)}
+                                <button
+                                  onClick={() => handleDeleteCategory(cat.id)}
+                                  aria-label={`Delete category ${cat.name}`}
                                   className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                   <Trash2 size={14} />
@@ -288,8 +309,9 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                   ))}
                                 </div>
                               )}
-                              <button 
-                                onClick={() => deleteCategory(cat.id)}
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                aria-label={`Delete category ${cat.name}`}
                                 className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 size={14} />
