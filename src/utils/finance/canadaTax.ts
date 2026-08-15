@@ -283,6 +283,78 @@ export function marginalRateBreakdown(income: number, province: Province): Margi
   return { federal: fed, provincialBase, surtax, total: fed + provincialBase + surtax }
 }
 
+/** Income where the province's pre-surtax tax first reaches `target`, found by
+ *  bisection. base is non-decreasing in income, so this is well defined. */
+function incomeAtProvincialBase(target: number, province: Province): number {
+  let lo = 0
+  let hi = 1_000_000
+  if (provincialTaxParts(hi, province).base < target) return Infinity
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (provincialTaxParts(mid, province).base < target) lo = mid
+    else hi = mid
+  }
+  return hi
+}
+
+export interface MarginalSlice {
+  from: number // lower bound of the slice
+  to: number // upper bound
+  amount: number // to - from
+  rate: number // percentage points of combined tax on every dollar in the slice
+  taxSaved: number // tax removed by deducting this whole slice
+}
+
+/** Splits income at every point where the combined marginal rate changes:
+ *  federal bracket edges, provincial bracket edges and the two Ontario surtax
+ *  crossings. Highest slice first. taxSaved is measured by re-running the real
+ *  tax functions, so BPA phase-out and surtax are already inside the number,
+ *  and the slices always sum back to totalIncomeTax(). */
+export function marginalSlices(taxableIncome: number, province: Province): MarginalSlice[] {
+  if (taxableIncome <= 0) return []
+  const cuts = new Set<number>([0, taxableIncome])
+  for (const b of FEDERAL_BRACKETS) if (b.upTo < taxableIncome) cuts.add(b.upTo)
+  for (const b of PROVINCIAL_TAX[province].brackets) if (b.upTo < taxableIncome) cuts.add(b.upTo)
+  if (province === 'ON') {
+    for (const threshold of [5_818, 7_446]) {
+      const at = incomeAtProvincialBase(threshold, province)
+      if (at > 0 && at < taxableIncome) cuts.add(at)
+    }
+  }
+  const points = [...cuts].sort((a, b) => a - b)
+  const slices: MarginalSlice[] = []
+  for (let i = points.length - 1; i > 0; i--) {
+    const from = points[i - 1]
+    const to = points[i]
+    const amount = to - from
+    if (amount <= 0) continue
+    const taxSaved = totalIncomeTax(to, province) - totalIncomeTax(from, province)
+    const rate = (taxSaved / amount) * 100
+    const prev = slices[slices.length - 1]
+    if (prev && Math.abs(prev.rate - rate) < 0.005) {
+      // Same rate as the slice above: widen that one downward instead of
+      // showing the reader two rungs with an identical percentage.
+      prev.from = from
+      prev.amount = prev.to - from
+      prev.taxSaved = totalIncomeTax(prev.to, province) - totalIncomeTax(from, province)
+      prev.rate = (prev.taxSaved / prev.amount) * 100
+      continue
+    }
+    slices.push({ from, to, amount, rate, taxSaved })
+  }
+  return slices
+}
+
+/** 2026 RRSP dollar limit (CRA indexed figure). */
+export const RRSP_DOLLAR_LIMIT_2026 = 33_810
+
+/** Room estimated from income alone: 18% of earned income, capped. Ignores
+ *  carry-forward and pension adjustments, so the UI must call it an estimate. */
+export function estimateRrspRoom(earnedIncome: number): number {
+  if (earnedIncome <= 0) return 0
+  return Math.min(earnedIncome * 0.18, RRSP_DOLLAR_LIMIT_2026)
+}
+
 export function effectiveRate(income: number, province: Province): number {
   if (income <= 0) return 0
   return (totalIncomeTax(income, province) / income) * 100
