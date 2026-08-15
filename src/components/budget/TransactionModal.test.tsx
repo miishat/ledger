@@ -129,3 +129,69 @@ describe('TransactionModal scrim dismissal', () => {
     expect(onClose).toHaveBeenCalled()
   })
 })
+
+describe('TransactionModal splits, tags and note', () => {
+  it('saves the slices the user entered and shows what is left to allocate', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: {},
+    })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '180' } })
+    fireEvent.blur(screen.getByPlaceholderText('0.00'))
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
+
+    const sliceAmounts = screen.getAllByLabelText('Slice amount')
+    fireEvent.change(sliceAmounts[0], { target: { value: '120' } })
+    fireEvent.blur(sliceAmounts[0])
+
+    expect(screen.getByText(/\$60.*left to allocate/i)).toBeInTheDocument()
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.amount).toBe(180)
+    expect(saved.splits).toEqual([{ categoryId: 'groceries', amount: 120 }])
+  })
+
+  it('saves tags lower-cased and de-duplicated, and saves the note', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
+      transactions: {},
+    })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '20' } })
+    fireEvent.blur(screen.getByPlaceholderText('0.00'))
+    fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'Trip, trip , Reimbursable' } })
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: 'split with Sam' } })
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.tags).toEqual(['trip', 'reimbursable'])
+    expect(saved.note).toBe('split with Sam')
+  })
+
+  it('leaves splits undefined when the user never opens the split editor', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
+      transactions: {},
+    })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '20' } })
+    fireEvent.blur(screen.getByPlaceholderText('0.00'))
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.splits).toBeUndefined()
+    expect(saved.tags).toBeUndefined()
+  })
+})
