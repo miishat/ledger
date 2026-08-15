@@ -46,11 +46,16 @@ export function resultsByTicker(trades: Trade[]): TickerResult[] {
         // A sell of more than is held closes the position rather than going
         // short: this app tracks holdings, not short positions.
         const sold = Math.min(t.quantity, quantity)
-        const avg = quantity > 0 ? bookCost / quantity : 0
-        proceeds += sold * t.price - t.fees
-        costOfSold += sold * avg
-        quantity -= sold
-        bookCost = quantity > 0 ? bookCost - sold * avg : 0
+        // No units change hands when nothing is held to sell, so there is
+        // nothing to realise. Do not subtract the fee: that would invent a
+        // loss with no economic basis.
+        if (sold > 0) {
+          const avg = bookCost / quantity
+          proceeds += sold * t.price - t.fees
+          costOfSold += sold * avg
+          quantity -= sold
+          bookCost = quantity > 0 ? bookCost - sold * avg : 0
+        }
       }
     }
 

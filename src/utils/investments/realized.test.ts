@@ -86,6 +86,37 @@ describe('resultsByTicker', () => {
     expect(r.quantity).toBe(0)
     expect(r.avgCost).toBe(0)
   })
+
+  it('realises nothing for a sell with a fee against a ticker with no prior buys', () => {
+    const [r] = resultsByTicker([
+      t({ date: '2026-01-05', side: 'sell', quantity: 10, price: 120, fees: 5 }),
+    ])
+    expect(r.quantity).toBe(0)
+    expect(r.realized).toBe(0)
+    expect(r.proceeds).toBe(0)
+    expect(r.costOfSold).toBe(0)
+  })
+
+  it('applies the fee once when a sell oversells a held position', () => {
+    const [r] = resultsByTicker([
+      t({ date: '2026-01-05', quantity: 5, price: 100 }),
+      t({ date: '2026-02-05', side: 'sell', quantity: 10, price: 120, fees: 5 }),
+    ])
+    expect(r.quantity).toBe(0)
+    expect(r.proceeds).toBe(595)
+    expect(r.costOfSold).toBe(500)
+    expect(r.realized).toBe(95)
+  })
+
+  it('adds nothing further for a sell with a fee after the position is already closed', () => {
+    const [r] = resultsByTicker([
+      t({ date: '2026-01-05', quantity: 5, price: 100 }),
+      t({ date: '2026-02-05', side: 'sell', quantity: 5, price: 120 }),
+      t({ date: '2026-03-05', side: 'sell', quantity: 5, price: 130, fees: 5 }),
+    ])
+    expect(r.quantity).toBe(0)
+    expect(r.realized).toBe(100)
+  })
 })
 
 describe('totalRealized', () => {
