@@ -16,7 +16,7 @@ pre-1.0 beta.
 - Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
 
 ### Fixed
-- Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income
+- Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income. Where a band is too narrow for its full figures, such as on a phone, its caption shortens to $0 to $54k rather than running into the band beside it
 
 ## [0.9.0-beta] - 2026-08-15
 
