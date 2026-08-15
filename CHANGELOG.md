@@ -6,6 +6,21 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.0-beta] - 2026-08-15
+
+### Added
+- Budgeting: a transaction can be split across several categories, so one shop that was part groceries and part household counts as both. Every budget figure, the 50/30/20 split and the category charts follow the slices
+- Budgeting: transactions take tags and a note, and the search box matches both
+- Budgeting: importing a CSV now marks rows that look like something already in your budget. Accept All takes only the rest, and there is a one-click way to reject the duplicates
+- Undo now covers deleting an account, deleting a category or group, clearing all transactions, clearing the triage inbox, and accepting a whole import, not just deleting a transaction. The offer appears in one place at the bottom of the screen
+- Dashboard: a Customize panel to switch widgets off and set their order, with up and down buttons so reordering works on a phone
+- Net worth: an Edit history window on the trend chart to add, correct or delete dated figures, so you can backfill months from before you installed the app. A point is also recorded each day you open it, so the trend is sampled by time rather than by how often you happen to edit an account
+- Investments: a Trades tab. Record your buys and sells to see realized gains for the year, your adjusted cost base per holding, and a warning when the trades you entered disagree with an imported holding
+- Investments: prices and exchange rates now say how old they are and offer a refresh where the figure is shown, instead of only saying "cache" or "stale"
+
+### Fixed
+- A widget that hit unexpected data used to blank the whole page. Now it fails inside its own card with a Try again button and the rest of the page keeps working
+
 ## [0.8.1-beta] - 2026-08-14
 
 ### Added
