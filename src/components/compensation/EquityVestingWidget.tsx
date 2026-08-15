@@ -19,47 +19,56 @@ const cad = (v: number) =>
 
 // Module scope, not inside the component: a component created during render is
 // a new type on every render, so React remounts the tooltip each time.
-const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProps) => {
-  if (active && payload && payload.length) {
-    const barPayloads = payload.filter(
-      (p: ChartTooltipPayloadItem) => p.dataKey !== 'cumulativeVested' && p.dataKey !== 'vestValue',
-    );
+export const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProps) => {
+  if (!active || !payload || payload.length === 0) return null;
 
-    if (barPayloads.length === 0) return null;
+  const barPayloads = payload.filter(
+    (p: ChartTooltipPayloadItem) => p.dataKey !== 'unvestedRemaining' && p.dataKey !== 'vestValue',
+  );
+  const unvested = payload.find(
+    (p: ChartTooltipPayloadItem) => p.dataKey === 'unvestedRemaining',
+  )?.value;
 
-    const totalVest = barPayloads.reduce((sum, p) => sum + (p.value ?? 0), 0);
+  const vestingRows = barPayloads.filter((p) => (p.value ?? 0) > 0);
+  const totalVest = barPayloads.reduce((sum, p) => sum + (p.value ?? 0), 0);
 
-    return (
-      <div className="themed-card rounded-lg p-3 min-w-[200px]" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
-        <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
+  return (
+    <div className="themed-card rounded-lg p-3 min-w-[200px]" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+      <p className="font-semibold text-[var(--color-text-primary)] mb-2">{label}</p>
 
+      {vestingRows.length > 0 && (
         <div className="flex flex-col gap-1 mb-2">
-          {barPayloads.map((p, i) => {
-            if ((p.value ?? 0) === 0) return null;
-            return (
-              <div key={i} className="flex justify-between items-center gap-4 text-[13px]">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
-                  <span className="text-[var(--color-text-secondary)]">{p.name}</span>
-                </div>
-                <span className="text-[var(--color-text-primary)] font-medium">
-                  {cad(p.value ?? 0)}
-                </span>
+          {vestingRows.map((p, i) => (
+            <div key={i} className="flex justify-between items-center gap-4 text-[13px]">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
+                <span className="text-[var(--color-text-secondary)]">{p.name}</span>
               </div>
-            );
-          })}
+              <span className="text-[var(--color-text-primary)] font-medium">
+                {cad(p.value ?? 0)}
+              </span>
+            </div>
+          ))}
         </div>
+      )}
 
-        <div className="flex justify-between items-center gap-4 text-[13px] pt-2 border-t border-[var(--color-border)]">
-          <span className="text-[var(--color-text-primary)] font-semibold">Total Vesting</span>
-          <span className="text-[var(--color-text-primary)] font-bold">
-            {cad(totalVest)}
-          </span>
-        </div>
+      <div
+        className={`flex justify-between items-center gap-4 text-[13px] ${
+          vestingRows.length > 0 ? 'pt-2 border-t border-[var(--color-border)]' : ''
+        }`}
+      >
+        <span className="text-[var(--color-text-secondary)]">Vesting this month</span>
+        <span className="text-[var(--color-text-primary)] font-medium">{cad(totalVest)}</span>
       </div>
-    );
-  }
-  return null;
+
+      {unvested !== undefined && (
+        <div className="flex justify-between items-center gap-4 text-[13px] mt-1">
+          <span className="text-[var(--color-text-secondary)]">Unvested remaining</span>
+          <span className="text-[var(--color-text-primary)] font-bold">{cad(unvested)}</span>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export function EquityVestingWidget() {
@@ -109,6 +118,11 @@ export function EquityVestingWidget() {
     allEvents.push(...taggedEvents)
   })
 
+  // The whole schedule's value, taken from the generated events rather than
+  // shares * price, so the unvested line lands exactly on zero at full vest
+  // even when a schedule's length is not a whole number of vest periods.
+  const totalScheduleValue = allEvents.reduce((sum, e) => sum + e.vestValue, 0)
+
   // Calculate cumulative vested before the window starts
   const windowStartDate = timeMode === 'current-year' ? new Date(targetYear, 0, 1) : new Date(targetYear, currentMonth, 1);
   let cumulativeVested = allEvents.filter(e => e.date && new Date(e.date) < windowStartDate).reduce((sum, e) => sum + e.vestValue, 0);
@@ -131,7 +145,10 @@ export function EquityVestingWidget() {
 
     cumulativeVested += totalVestThisMonth;
     dataRow.vestValue = totalVestThisMonth;
-    dataRow.cumulativeVested = cumulativeVested;
+    // What is still locked up. Clamped at zero because a schedule that has
+    // fully vested must read as nothing outstanding, never as a small
+    // negative from floating point drift.
+    dataRow.unvestedRemaining = Math.max(0, totalScheduleValue - cumulativeVested);
 
     return dataRow;
   })
@@ -157,13 +174,14 @@ export function EquityVestingWidget() {
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 
                 tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} 
               />
-              <YAxis 
-                yAxisId="right" 
-                orientation="right" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} 
-                tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} 
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
+                tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`}
+                domain={[0, totalScheduleValue]}
               />
               <Tooltip 
                 content={<CustomEquityTooltip />} 
@@ -180,17 +198,44 @@ export function EquityVestingWidget() {
                   opacity={0.8} 
                 />
               ))}
-              <Line 
-                yAxisId="right" 
-                type="monotone" 
-                dataKey="cumulativeVested" 
-                name="Cumulative" 
-                stroke="var(--color-accent)" 
-                strokeWidth={2} 
-                dot={false} 
+              {/* stepAfter, not monotone: equity vests in discrete cliffs, so the
+                  amount still locked up holds flat between vest dates and drops
+                  on one. A smoothed curve would imply it accrues continuously. */}
+              <Line
+                yAxisId="right"
+                type="stepAfter"
+                dataKey="unvestedRemaining"
+                name="Unvested remaining"
+                stroke="var(--color-text-secondary)"
+                strokeWidth={2}
+                dot={false}
               />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[var(--color-text-secondary)]">
+          {primaryPackage.rsuGrants.map((grant, index) => (
+            <span key={grant.id} className="inline-flex items-center gap-1.5">
+              <span
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                aria-hidden="true"
+              />
+              {grant.grantName}
+            </span>
+          ))}
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="w-3.5 h-0.5"
+              style={{ backgroundColor: 'var(--color-text-secondary)' }}
+              aria-hidden="true"
+            />
+            Unvested remaining
+          </span>
+          <span className="ml-auto">
+            Valued at {cad(primaryPackage.companyCurrentPrice)} per share
+          </span>
         </div>
       </div>
     </WidgetWrapper>
