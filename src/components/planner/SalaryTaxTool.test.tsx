@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { BracketBar } from './SalaryTaxTool'
+import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
 
 describe('BracketBar', () => {
   it('only shows rate labels when the segment is wide enough (container query)', () => {
@@ -84,5 +84,21 @@ describe('BracketBar', () => {
     expect((full.parentElement as HTMLElement).className).toContain('@container')
     expect(full.className).toContain('@min-[120px]:block')
     expect(compact.className).toContain('@min-[120px]:hidden')
+  })
+})
+
+describe('SalaryTaxTool layout', () => {
+  it('offers an optional RRSP Room field', () => {
+    render(<SalaryTaxTool />)
+    expect(screen.getByLabelText('RRSP Room')).toBeInTheDocument()
+  })
+
+  it('renders the deductions block and the RRSP efficiency block side by side', () => {
+    const { container } = render(<SalaryTaxTool />)
+    expect(screen.getByText(/^Where \$/)).toBeInTheDocument()
+    expect(screen.getByText('RRSP Efficiency')).toBeInTheDocument()
+    const pair = container.querySelector('.lg\\:grid-cols-\\[1\\.35fr_1fr\\]')
+    expect(pair).not.toBeNull()
+    expect(pair?.children).toHaveLength(2)
   })
 })

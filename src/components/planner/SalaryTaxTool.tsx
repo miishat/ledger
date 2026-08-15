@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   effectiveRate,
+  estimateRrspRoom,
   FEDERAL_BRACKETS,
   marginalRate,
   marginalRateBreakdown,
@@ -16,9 +17,11 @@ import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney, formatMoneyCompact } from './format'
+import { DeductionsBreakdown } from './DeductionsBreakdown'
+import { RrspEfficiencyCard } from './RrspEfficiencyCard'
 
 const TOOL_ID = 'salary-tax'
-const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0 }
+const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0, rrspRoom: 0 }
 
 /** Bracket visual: one visually separate segment per bracket, with a rate
  *  label, income-range caption, and accent fill for the portion of income
@@ -88,16 +91,11 @@ export const SalaryTaxTool: React.FC = () => {
 
   const t = takeHomeWithDeductions(income, province, inputs.rrsp, inputs.fhsa)
   const breakdown = marginalRateBreakdown(t.taxableIncome, province)
-  const deductions = [
-    { label: 'Federal Tax', value: t.federal },
-    { label: 'Provincial Tax', value: t.provincial },
-    { label: 'CPP (incl. CPP2)', value: t.cpp },
-    { label: 'EI', value: t.ei },
-  ]
+  const room = inputs.rrspRoom > 0 ? inputs.rrspRoom : estimateRrspRoom(income)
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
         <CalculatorField label="Gross Annual Income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
         <SelectField
           label="Province"
@@ -107,6 +105,7 @@ export const SalaryTaxTool: React.FC = () => {
         />
         <CalculatorField label="RRSP Contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
         <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
+        <CalculatorField label="RRSP Room" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -123,8 +122,9 @@ export const SalaryTaxTool: React.FC = () => {
             <ResultCard label="Net After Contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
           </div>
           <p className="text-[12px] text-text-secondary">
-            RRSP limit is 18% of last year's earned income up to the annual maximum. FHSA limit is
-            $8,000 per year. Contributions here are assumed fully deductible this year.
+            RRSP limit is 18% of last year's earned income up to the annual maximum, or whatever you
+            enter in RRSP Room. FHSA limit is $8,000 per year. Contributions here are assumed fully
+            deductible this year.
           </p>
         </div>
       )}
@@ -153,20 +153,14 @@ export const SalaryTaxTool: React.FC = () => {
         <ResultCard label="Net Biweekly" value={formatMoney(t.net / 26)} />
       </div>
 
-      <div className="themed-card rounded-lg p-4 flex flex-col gap-2">
-        <p className="text-[12px] uppercase tracking-wide text-text-secondary">Deductions</p>
-        {deductions.map((d) => (
-          <div key={d.label} className="flex items-center gap-3">
-            <span className="text-[13px] text-text-secondary w-40 shrink-0">{d.label}</span>
-            <div className="flex-1 h-2 rounded bg-bg-primary/50 overflow-hidden">
-              <div className="h-full bg-accent/70" style={{ width: `${t.gross > 0 ? (d.value / t.gross) * 100 : 0}%` }} />
-            </div>
-            <span className="text-[13px] text-text-primary w-24 text-right">{formatMoney(d.value)}</span>
-          </div>
-        ))}
-        <p className="text-[12px] text-text-secondary mt-2">
-          2026 rates, employee side, basic personal amount only. An estimate, not payroll advice.
-        </p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 items-start">
+        <DeductionsBreakdown t={t} />
+        <RrspEfficiencyCard
+          taxableIncome={t.taxableIncome}
+          province={province}
+          room={room}
+          roomIsEstimate={inputs.rrspRoom <= 0}
+        />
       </div>
     </div>
   )
