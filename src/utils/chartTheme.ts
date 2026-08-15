@@ -1,6 +1,13 @@
 /** Shared recharts tooltip styling: themed box AND themed text (recharts
- *  defaults item text to near-black, which is invisible on dark themes). */
+ *  defaults item text to near-black, which is invisible on dark themes).
+ *
+ *  `wrapperStyle.zIndex` is what keeps a tooltip in front of anything a chart
+ *  is layered under. A donut with a centred total (CompHeroWidget) renders that
+ *  label as an absolutely positioned sibling AFTER the chart, so with both at
+ *  the default `z-index: auto` the label won at paint time and the hovered
+ *  slice's figure appeared behind it. */
 export const chartTooltipStyles = {
+  wrapperStyle: { zIndex: 10 },
   contentStyle: {
     backgroundColor: 'var(--dropdown-bg)',
     border: '1px solid var(--border-color)',

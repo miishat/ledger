@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { sliceColor } from './chartTheme'
+import { chartTooltipStyles, sliceColor } from './chartTheme'
+
+describe('chartTooltipStyles', () => {
+  it('stacks the tooltip above a chart overlay such as a donut centre label', () => {
+    expect(chartTooltipStyles.wrapperStyle.zIndex).toBeGreaterThan(0)
+  })
+})
 
 describe('sliceColor', () => {
   it('uses the raw theme colours for the first six slices', () => {
