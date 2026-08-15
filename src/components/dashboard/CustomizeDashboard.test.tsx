@@ -28,4 +28,14 @@ describe('CustomizeDashboard', () => {
     expect(screen.queryByText('net-worth')).toBeNull()
     expect(screen.getByText('Net Worth Over Time')).toBeInTheDocument()
   })
+
+  it('keeps hidden widgets in the saved order when reordering', () => {
+    useDashboardLayoutStore.setState({ hidden: ['trend'] })
+    render(<CustomizeDashboard open onClose={() => {}} orderedIds={ids} />)
+    fireEvent.click(screen.getByLabelText('Move Portfolio up'))
+    const finalOrder = useDashboardLayoutStore.getState().order
+    expect(finalOrder).toContain('net-worth')
+    expect(finalOrder).toContain('trend')
+    expect(finalOrder).toContain('portfolio')
+  })
 })
