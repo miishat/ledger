@@ -46,10 +46,19 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     .filter(tx => {
       if (!needle) return true;
       const categoryName = tx.categoryId ? categories[tx.categoryId]?.name ?? '' : '';
-      return (
-        tx.description.toLowerCase().includes(needle) ||
-        categoryName.toLowerCase().includes(needle)
-      );
+      const sliceNames = (tx.splits ?? [])
+        .map((s) => (s.categoryId ? categories[s.categoryId]?.name ?? '' : ''))
+        .join(' ');
+      const haystack = [
+        tx.description,
+        categoryName,
+        sliceNames,
+        (tx.tags ?? []).join(' '),
+        tx.note ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -81,12 +90,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
     amountPrefix: tx.type === 'income' ? '+' : '-',
-    categoryLabel: tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+    categoryLabel: tx.splits?.length
+      ? `Split · ${tx.splits.length}`
+      : tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
     badge: tx.shared
       ? `shared · ${tx.shared.sharedWith}`
       : tx.reimbursement
         ? `reimb · ${tx.reimbursement.from}`
         : null,
+    tags: tx.tags ?? [],
+    hasNote: !!tx.note,
   });
 
   const wrapperClass = isExpanded
@@ -230,7 +243,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               </thead>
               <tbody>
                 {txList.map(tx => {
-                  const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
+                  const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
                   return (
                   <tr
                     key={tx.id}
@@ -254,6 +267,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       </span>
                       {badge && (
                         <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
+                      )}
+                      {tags.map((tag) => (
+                        <span key={tag} className="ml-1 px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px] text-text-secondary">
+                          #{tag}
+                        </span>
+                      ))}
+                      {hasNote && (
+                        <span className="ml-1 text-[12px] text-text-secondary" title="Has a note" aria-label="Has a note">
+                          ✎
+                        </span>
                       )}
                     </td>
                     <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
@@ -280,7 +303,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           </div>
           <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
             {txList.map(tx => {
-              const { amountClass, amountPrefix, categoryLabel, badge } = getTransactionDisplay(tx);
+              const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
               return (
               <div
                 key={tx.id}
@@ -323,6 +346,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     </span>
                     {badge && (
                       <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
+                    )}
+                    {tags.map((tag) => (
+                      <span key={tag} className="ml-1 px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px] text-text-secondary">
+                        #{tag}
+                      </span>
+                    ))}
+                    {hasNote && (
+                      <span className="ml-1 text-[12px] text-text-secondary" title="Has a note" aria-label="Has a note">
+                        ✎
+                      </span>
                     )}
                   </span>
                 </div>

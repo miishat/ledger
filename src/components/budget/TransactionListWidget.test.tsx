@@ -277,3 +277,58 @@ describe('TransactionListWidget undo', () => {
     expect(remaining.t2).toBeDefined()
   })
 })
+
+describe('TransactionListWidget splits and tags', () => {
+  const split = {
+    id: 'tx1',
+    date: '2026-08-04',
+    amount: 180,
+    description: 'Costco',
+    type: 'expense' as const,
+    categoryId: 'groceries',
+    splits: [
+      { categoryId: 'groceries', amount: 120 },
+      { categoryId: 'household', amount: 60 },
+    ],
+    tags: ['trip'],
+    note: 'weekly shop',
+  }
+
+  it('labels a split row with the number of slices instead of one category', () => {
+    useBudgetStore.setState({
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: { tx1: split },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Split · 2')).toBeInTheDocument()
+  })
+
+  it('finds a transaction by tag', () => {
+    useBudgetStore.setState({
+      categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
+      transactions: {
+        tx1: split,
+        tx2: { id: 'tx2', date: '2026-08-05', amount: 9, description: 'Coffee', type: 'expense' as const },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'trip' } })
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('Costco')).toBeInTheDocument()
+    expect(within(table).queryByText('Coffee')).toBeNull()
+  })
+
+  it('finds a transaction by note text', () => {
+    useBudgetStore.setState({
+      categories: {},
+      transactions: { tx1: split },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'weekly' } })
+    expect(within(screen.getByRole('table')).getByText('Costco')).toBeInTheDocument()
+  })
+})
