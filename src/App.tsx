@@ -1,6 +1,7 @@
 import { lazy, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useThemeStore } from './store/useThemeStore'
+import { useAccountsStore } from './store/useAccountsStore'
 import { Layout } from './components/Layout'
 
 // Dashboard is the index route, so it stays in the entry chunk: lazy-loading it
@@ -28,6 +29,12 @@ function App() {
       root.classList.add('dark')
     }
   }, [theme])
+
+  // One net worth point per day the app is opened, so the trend is sampled by
+  // time rather than by how often accounts happen to be edited.
+  useEffect(() => {
+    useAccountsStore.getState().ensureDailySnapshot()
+  }, [])
 
   return (
     <HashRouter>
