@@ -19,6 +19,10 @@ export function useFxRates(currencies: (Currency | null)[]) {
   const [sources, setSources] = useState<Partial<Record<Currency, 'override' | 'live' | 'cache'>>>({})
   const [status, setStatus] = useState<FetchStatus>('idle')
   const [stale, setStale] = useState(false)
+  // A single freshness figure for the whole set: the oldest resolved rate,
+  // since that is the one driving `stale` when several currencies differ.
+  const [asOf, setAsOf] = useState<string>()
+  const [source, setSource] = useState<'override' | 'live' | 'cache'>('live')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -47,17 +51,25 @@ export function useFxRates(currencies: (Currency | null)[]) {
       const nextSources: Partial<Record<Currency, 'override' | 'live' | 'cache'>> = {}
       let anyStale = false
       let anyResolved = false
+      let oldestAsOf: string | undefined
+      let oldestSource: 'override' | 'live' | 'cache' = 'live'
       for (const [c, r] of entries) {
         if (!r) continue
         next[c] = r.value.rate
         nextSources[c] = r.source
         anyResolved = true
         if (r.stale) anyStale = true
+        if (!oldestAsOf || new Date(r.asOf).getTime() < new Date(oldestAsOf).getTime()) {
+          oldestAsOf = r.asOf
+          oldestSource = r.source
+        }
       }
       setRates(next)
       setSources(nextSources)
       setStale(anyStale)
       setStatus(anyResolved ? 'success' : 'error')
+      setAsOf(oldestAsOf)
+      setSource(oldestSource)
     })
   }, [key])
 
@@ -80,5 +92,5 @@ export function useFxRates(currencies: (Currency | null)[]) {
     return list.filter((c) => rates[c] === undefined)
   }, [key, rates])
 
-  return { rates, sources, missing, status, stale, refresh }
+  return { rates, sources, missing, status, stale, refresh, asOf, source }
 }

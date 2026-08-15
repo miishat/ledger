@@ -103,4 +103,24 @@ describe('quote currency', () => {
     expect(screen.getByTestId('allocation-cell')).toHaveTextContent('-')
     expect(screen.getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
   })
+
+  it('says how old the price is and offers a refresh', async () => {
+    useMarketDataStore.setState({
+      quotes: {
+        VFV: {
+          value: { ticker: 'VFV', price: 130, currency: 'CAD', asOf: '2026-08-14T11:00:00Z' },
+          fetchedAt: '2026-08-14T11:00:00Z',
+        },
+      },
+    })
+    const holding = {
+      id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD' as const, account: 'RRSP',
+    }
+    render(
+      <table><tbody>
+        <HoldingRow holding={holding} rates={{}} totalValueCad={1000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+    expect(await screen.findByLabelText('Refresh VFV price')).toBeInTheDocument()
+  })
 })

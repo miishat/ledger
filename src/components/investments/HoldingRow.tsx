@@ -10,6 +10,7 @@ import { formatMoney } from '../planner/format'
 import { pct } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
 import { ThemedSelect } from '../ui/ThemedSelect'
+import { DataFreshness } from '../ui/DataFreshness'
 
 interface HoldingRowProps {
   holding: Holding
@@ -62,7 +63,20 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
           {priceUnconvertible && quoteCurrency ? (
             <span className="text-error" title={`Price quoted in ${quoteCurrency}, no rate into ${holding.currency ?? 'unset currency'}`}> · unconverted</span>
           ) : null}
-          {live.data ? ` · ${live.data.source}${live.data.stale ? ' (stale)' : ''}` : ' · no quote'}
+          {live.data ? (
+            <>
+              {' · '}
+              <DataFreshness
+                source={live.data.source}
+                asOf={live.data.asOf}
+                stale={live.data.stale}
+                onRefresh={() => live.refresh(true)}
+                label={`${holding.ticker} price`}
+              />
+            </>
+          ) : (
+            ' · no quote'
+          )}
         </span>
       </td>
       <td className="py-2 pr-3 text-right text-text-secondary">{holding.quantity}</td>

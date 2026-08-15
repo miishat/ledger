@@ -74,4 +74,13 @@ describe('PortfolioRollupWidget FX handling', () => {
     expect(await screen.findByText('$1,000')).toBeInTheDocument()
     expect(screen.queryByText(/excluded, no FX rate/)).toBeNull()
   })
+
+  it('tells you how old the prices behind the rollup are', () => {
+    usePortfolioStore.setState({
+      holdings: [{ id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'RRSP' }],
+      importedAt: '2026-08-10T12:00:00Z',
+    })
+    renderWidget()
+    expect(screen.getByText(/Cached|Live|imported/i)).toBeInTheDocument()
+  })
 })
