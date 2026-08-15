@@ -5,6 +5,7 @@ import { ThemeBackground } from './theme/ThemeBackground'
 import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
+import { UndoToast } from './ui/UndoToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
@@ -206,6 +207,7 @@ export const Layout: React.FC = () => {
         onOpenWhatsNew={() => setWhatsNewOpen(true)}
         onOpenDisclaimer={() => setDisclaimerOpen(true)}
       />
+      <UndoToast />
     </div>
   )
 }
