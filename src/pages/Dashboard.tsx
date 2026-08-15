@@ -12,36 +12,11 @@ import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWi
 import { UpcomingVestsWidget } from '../components/dashboard/widgets/UpcomingVestsWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 import { useIsDesktop } from '../hooks/useMediaQuery';
+import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
+import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './dashboardWidgets';
 
-// Canonical default widget order/ids, hoisted to module scope so it is a stable
-// reference across renders (ids are what get persisted/reordered, not the elements).
-// NOTE: 'net-worth' = NetWorthTrendWidget (the trend chart) and 'trend' = NetWorthWidget
-// (the point-in-time figure). This naming looks swapped but is deliberate/historical -
-// these ids are persisted in stored layouts, so do NOT "fix" the pairing here, it would
-// orphan existing users' saved widget order.
-const DASHBOARD_WIDGET_IDS: string[] = [
-  'net-worth',
-  'trend',
-  'monthly-summary',
-  'bank',
-  'investment-accounts',
-  'income',
-  'expense',
-  'receivable',
-  'other',
-  'debt',
-  'portfolio',
-  'budget-health',
-  'top-goal',
-  'upcoming-vests',
-];
-
-// Grid placement lives on the draggable wrapper div (the actual grid child), not on the
-// widget's own root element, since Tailwind col-span only affects direct grid children.
-const WIDGET_SPAN: Record<string, string> = {
-  'net-worth': 'md:col-span-2',
-  trend: 'col-span-1 md:col-span-2 lg:col-span-1',
-};
+// Re-exported so callers (and tests) can import ids/labels from this module too.
+export { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS };
 
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -49,6 +24,8 @@ export const Dashboard: React.FC = () => {
   const moveWidget = useDashboardLayoutStore((s) => s.moveWidget);
   const storedOrder = useDashboardLayoutStore((s) => s.order);
   const setOrder = useDashboardLayoutStore((s) => s.setOrder);
+  const hidden = useDashboardLayoutStore((s) => s.hidden);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
   // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
@@ -86,6 +63,11 @@ export const Dashboard: React.FC = () => {
     })
     .filter((w): w is { id: string; element: React.ReactNode } => w !== null);
 
+  // Hidden widgets stay out of the render but orderedIds (all ids, hidden
+  // included) still goes to the Customize panel and to moveBy, so a hidden
+  // widget's position survives instead of being dropped from saved layout.
+  const visibleWidgets = resolvedWidgets.filter((w) => !hidden.includes(w.id));
+
   return (
     <div className="min-h-full w-full">
       <div className="mb-8 flex justify-between items-center">
@@ -93,10 +75,17 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>
           <p className="text-[14px] text-text-secondary mt-1">All your accounts, balances, and trends in one place.</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setCustomizeOpen(true)}
+          className="px-3 py-2 rounded-md text-[13px] font-medium border border-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+        >
+          Customize
+        </button>
       </div>
 
       <BentoGrid>
-        {resolvedWidgets.map(({ id, element }) => {
+        {visibleWidgets.map(({ id, element }) => {
           return (
             <div
               key={id}
@@ -118,6 +107,8 @@ export const Dashboard: React.FC = () => {
           );
         })}
       </BentoGrid>
+
+      <CustomizeDashboard open={customizeOpen} onClose={() => setCustomizeOpen(false)} orderedIds={orderedIds} />
     </div>
   );
 };
