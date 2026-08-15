@@ -63,4 +63,26 @@ describe('BracketBar', () => {
     expect(segment.className).toContain('min-w-0')
     expect(segment.className).not.toContain('shrink-0')
   })
+
+  it('shortens the range caption in segments too narrow for the full figures', () => {
+    render(
+      <BracketBar
+        title="Ontario"
+        income={193000}
+        brackets={[
+          { upTo: 53891, rate: 0.0505 },
+          { upTo: 107785, rate: 0.0915 },
+          { upTo: 150000, rate: 0.1116 },
+          { upTo: 220000, rate: 0.1216 },
+          { upTo: Infinity, rate: 0.1316 },
+        ]}
+      />,
+    )
+    const full = screen.getByText('$0 to $53,891')
+    const compact = screen.getByText('$0 to $54k')
+    // the segment must be its own query container for the swap to resolve
+    expect((full.parentElement as HTMLElement).className).toContain('@container')
+    expect(full.className).toContain('@min-[120px]:block')
+    expect(compact.className).toContain('@min-[120px]:hidden')
+  })
 })

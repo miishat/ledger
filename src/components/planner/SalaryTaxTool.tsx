@@ -15,7 +15,7 @@ import {
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 
 const TOOL_ID = 'salary-tax'
 const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0 }
@@ -42,7 +42,7 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
           const filledPct = (s.end - s.start > 0 ? filledTo / (s.end - s.start) : 0) * 100
           const active = income > s.start
           return (
-            <div key={s.start} className="flex flex-col gap-1 min-w-0" style={{ flex: `${width} 1 0%` }}>
+            <div key={s.start} className="@container flex flex-col gap-1 min-w-0" style={{ flex: `${width} 1 0%` }}>
               <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
                    title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
                 <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
@@ -50,7 +50,10 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
                   {(s.rate * 100).toFixed(1)}%
                 </span>
               </div>
-              <span className="text-[10px] text-text-secondary text-center whitespace-nowrap">
+              <span className="text-[10px] text-text-secondary text-center whitespace-nowrap @min-[120px]:hidden">
+                {formatMoneyCompact(s.start)}{s.end < cap ? ` to ${formatMoneyCompact(s.end)}` : '+'}
+              </span>
+              <span className="hidden text-[10px] text-text-secondary text-center whitespace-nowrap @min-[120px]:block">
                 {formatMoney(s.start)}{s.end < cap ? ` to ${formatMoney(s.end)}` : '+'}
               </span>
             </div>
