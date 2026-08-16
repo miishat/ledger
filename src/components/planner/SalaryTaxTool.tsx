@@ -155,7 +155,7 @@ export const SalaryTaxTool: React.FC = () => {
         <ResultCard label="Net Biweekly" value={formatMoney(t.net / 26)} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4">
         <DeductionsBreakdown t={t} />
         <RrspEfficiencyCard
           taxableIncome={t.taxableIncome}

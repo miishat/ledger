@@ -40,9 +40,15 @@ describe('DeductionsBreakdown', () => {
     expect(screen.getByText(/share of gross income/i)).toBeInTheDocument()
   })
 
-  it('states the total deductions figure', () => {
+  it('renders a Total Deductions summary row with the total amount', () => {
     render(<DeductionsBreakdown t={sample} />)
-    expect(screen.getByText(/Total deductions \$66,212/)).toBeInTheDocument()
+    expect(screen.getByText('Total Deductions')).toBeInTheDocument()
+    expect(screen.getByText('$66,212')).toBeInTheDocument()
+  })
+
+  it('no longer states the total deductions figure in the caption', () => {
+    render(<DeductionsBreakdown t={sample} />)
+    expect(screen.queryByText(/Total deductions \$66,212/)).not.toBeInTheDocument()
   })
 
   it('warns that net pay still includes any RRSP or FHSA contribution entered', () => {

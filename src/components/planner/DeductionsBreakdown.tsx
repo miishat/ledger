@@ -27,8 +27,11 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
     `net pay ${formatMoney(t.net)}`,
   ].join(', ')
 
+  const totalPct = pct(total)
+  const totalPctRounded = totalPct.toFixed(0)
+
   return (
-    <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
+    <div className="themed-card rounded-lg p-4 flex flex-col gap-3 h-full">
       <p className="text-[12px] uppercase tracking-wide text-text-secondary">
         Where {formatMoney(t.gross)} Goes
       </p>
@@ -69,7 +72,7 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 mt-1">
+      <div className="flex flex-1 flex-col justify-between gap-2 py-3">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center gap-3">
             <span className="text-[13px] text-text-secondary w-36 shrink-0">{r.label}</span>
@@ -84,9 +87,20 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
         ))}
       </div>
 
+      <div className="border-t border-border pt-3 flex items-center gap-3">
+        <span className="text-[13px] text-text-primary w-36 shrink-0">Total Deductions</span>
+        <div className="flex-1 h-2 rounded bg-bg-primary/50 overflow-hidden flex">
+          {rows.map((r) => (
+            <div key={r.label} style={{ width: `${pct(r.value)}%`, background: r.color }} />
+          ))}
+        </div>
+        <span className="text-[12px] text-text-secondary w-10 text-right">{totalPctRounded}%</span>
+        <span className="text-[13px] text-text-primary font-semibold w-24 text-right">{formatMoney(total)}</span>
+      </div>
+
       <p className="text-[12px] text-text-secondary">
-        Bars are each deduction's share of gross income. Total deductions {formatMoney(total)}. Net
-        pay here still includes any RRSP or FHSA contribution you entered.
+        Bars are each deduction's share of gross income. Net pay here still includes any RRSP or
+        FHSA contribution you entered.
       </p>
       <p className="text-[12px] text-text-secondary">
         2026 rates, employee side, basic personal amount only. An estimate, not payroll advice.

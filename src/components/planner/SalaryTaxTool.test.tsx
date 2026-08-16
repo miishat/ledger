@@ -132,6 +132,13 @@ describe('SalaryTaxTool layout', () => {
     expect(pair?.children).toHaveLength(2)
   })
 
+  it('stretches the paired cards to a common height instead of aligning to the top', () => {
+    const { container } = render(<SalaryTaxTool />)
+    const pair = container.querySelector('.lg\\:grid-cols-\\[1\\.35fr_1fr\\]')
+    expect(pair).not.toBeNull()
+    expect(pair?.className).not.toContain('items-start')
+  })
+
   it('passes the full estimated room through to the efficiency card when nothing has been contributed', () => {
     render(<SalaryTaxTool />)
     const expectedRoom = formatMoney(estimateRrspRoom(100000))

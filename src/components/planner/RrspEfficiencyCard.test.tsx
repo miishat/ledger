@@ -55,4 +55,12 @@ describe('RrspEfficiencyCard', () => {
     render(<RrspEfficiencyCard taxableIncome={10_000} province="ON" room={1_800} roomIsEstimate />)
     expect(screen.getByText(/pay no income tax at this income/i)).toBeInTheDocument()
   })
+
+  it('puts the room caption before the room bar in DOM order', () => {
+    render(<RrspEfficiencyCard taxableIncome={193_000} province="ON" room={33_810} roomIsEstimate />)
+    const caption = screen.getByText(/Uses \d+% of your \$33,810 estimated remaining room/i)
+    const bar = screen.getByRole('progressbar', { name: /remaining room used/i })
+    // caption should come before bar: caption's position compared to bar is "preceding"
+    expect(caption.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

@@ -39,7 +39,7 @@ export const RrspEfficiencyCard: React.FC<{
 
   if (!top || top.rate <= 0) {
     return (
-      <div className="themed-card rounded-lg p-4 flex flex-col gap-2">
+      <div className="themed-card rounded-lg p-4 flex flex-col gap-2 h-full">
         <p className="text-[12px] uppercase tracking-wide text-text-secondary">RRSP Efficiency</p>
         <p className="text-[13px] text-text-secondary">
           {taxableIncome <= 0
@@ -59,7 +59,7 @@ export const RrspEfficiencyCard: React.FC<{
     : `${formatMoney(room)} remaining room`
 
   return (
-    <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
+    <div className="themed-card rounded-lg p-4 flex flex-col gap-3 h-full">
       <p className="text-[12px] uppercase tracking-wide text-text-secondary">RRSP Efficiency</p>
 
       <div className="flex items-baseline gap-2">
@@ -82,18 +82,25 @@ export const RrspEfficiencyCard: React.FC<{
         )}
       </div>
 
-      <div className="border-t border-border pt-3 flex flex-col gap-1.5">
+      <div className="mt-auto border-t border-border pt-3 flex flex-col gap-1.5">
         <p className="text-[13px] text-text-primary">
           {formatMoney(top.amount)} RRSP clears your top band, saving {formatMoney(top.taxSaved)}
         </p>
-        <div className="h-1.5 rounded bg-bg-primary/50 overflow-hidden">
-          <div className="h-full rounded bg-accent" style={{ width: `${usedPct}%` }} />
-        </div>
         <p className="text-[12px] text-text-secondary">
           {fits
             ? `Uses ${usedPct.toFixed(0)}% of your ${roomLabel}`
             : `Exceeds your ${roomLabel} by ${formatMoney(top.amount - room)}`}
         </p>
+        <div
+          className="h-1.5 rounded bg-bg-primary/50 overflow-hidden"
+          role="progressbar"
+          aria-label="Remaining room used"
+          aria-valuenow={Math.round(usedPct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="h-full rounded bg-accent" style={{ width: `${usedPct}%` }} />
+        </div>
       </div>
 
       <p className="text-[12px] text-text-secondary">
