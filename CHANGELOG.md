@@ -10,7 +10,7 @@ pre-1.0 beta.
 
 ### Added
 - Salary & Tax: an RRSP Efficiency block next to your deductions. It shows how much of your income sits in each marginal band, what sheltering each band would save, and the contribution that clears your top band
-- Salary & Tax: an optional RRSP Room field. Leave it empty and the tool estimates your room at 18% of income up to the annual maximum, and says that it is an estimate
+- Salary & Tax: an optional RRSP Room field. Leave it empty and the tool estimates your room at 18% of income up to the annual maximum, and says that it is an estimate. The room bar counts what is left after the contribution you have already entered, so a suggestion never quietly pushes you past your limit
 
 ### Changed
 - Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
