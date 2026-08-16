@@ -92,7 +92,7 @@ export const RrspEfficiencyCard: React.FC<{
         <p className="text-[12px] text-text-secondary">
           {fits
             ? `Uses ${usedPct.toFixed(0)}% of your ${roomLabel}`
-            : `Exceeds your room by ${formatMoney(top.amount - room)} (${roomLabel})`}
+            : `Exceeds your ${roomLabel} by ${formatMoney(top.amount - room)}`}
         </p>
       </div>
 
