@@ -53,21 +53,23 @@ export const RentVsBuyCalculator: React.FC = () => {
         <ResultCard label={`Buying cost by year ${last?.year ?? 0}`} value={formatMoney(last?.buyCost ?? 0)} />
       </div>
 
-      <div className="themed-card rounded-lg p-4 h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
-            <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
-            <Tooltip
-              formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-              {...chartTooltipStyles}
-            />
-            <Legend />
-            <Line type="monotone" dataKey="Renting" stroke="var(--text-secondary)" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="Buying" stroke="var(--accent)" dot={false} strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="themed-card rounded-lg p-4 flex flex-col">
+        <div className="h-[288px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
+              <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+              <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
+              <Tooltip
+                formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
+                {...chartTooltipStyles}
+              />
+              <Legend />
+              <Line type="monotone" dataKey="Renting" stroke="var(--text-secondary)" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="Buying" stroke="var(--accent)" dot={false} strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
         <p className="text-[12px] text-text-secondary mt-2">
           Cumulative unrecoverable costs only: rent vs interest, taxes, maintenance and the return your down payment could have earned.
         </p>

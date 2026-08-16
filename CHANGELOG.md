@@ -15,12 +15,14 @@ pre-1.0 beta.
 ### Changed
 - Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
 - Compensation: the line on the Equity Vesting Schedule now tracks the equity you have not vested yet, falling as each grant vests, instead of the total vested so far. Hovering any month gives you the figure, including months where nothing vests, and the chart now names each grant and states the share price the value depends on. The area under the line is filled in your current theme's colour
+- Planner: the Raise vs Inflation verdict now sits in a banner coloured by the outcome instead of a loose line
 
 ### Fixed
 - Compensation: a grant whose first tranche vested in the very first month of the chart did not show that vest, so the line started flat
 - Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
 - Dashboard: the Net Worth Over Time chart wrote its side labels out in full, so a figure like $316,621 ran into the first date underneath it and the bottom corner read as one run-on line. The side labels are now shortened to $316k, matching every other chart
 - Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income. Where a band is too narrow for its full figures, such as on a phone, its caption shortens to $0 to $54k rather than running into the band beside it
+- Planner: the Rent vs Buy chart's explanatory caption was rendering outside the chart card
 
 ## [0.9.0-beta] - 2026-08-15
 
