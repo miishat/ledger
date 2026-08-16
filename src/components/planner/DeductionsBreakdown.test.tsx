@@ -45,6 +45,13 @@ describe('DeductionsBreakdown', () => {
     expect(screen.getByText(/Total deductions \$66,212/)).toBeInTheDocument()
   })
 
+  it('warns that net pay still includes any RRSP or FHSA contribution entered', () => {
+    render(<DeductionsBreakdown t={sample} />)
+    expect(
+      screen.getByText(/net pay here still includes any rrsp or fhsa contribution you entered/i),
+    ).toBeInTheDocument()
+  })
+
   it('does not divide by zero at no income', () => {
     render(
       <DeductionsBreakdown

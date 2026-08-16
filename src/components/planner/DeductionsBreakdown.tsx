@@ -85,7 +85,8 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
       </div>
 
       <p className="text-[12px] text-text-secondary">
-        Bars are each deduction's share of gross income. Total deductions {formatMoney(total)}.
+        Bars are each deduction's share of gross income. Total deductions {formatMoney(total)}. Net
+        pay here still includes any RRSP or FHSA contribution you entered.
       </p>
       <p className="text-[12px] text-text-secondary">
         2026 rates, employee side, basic personal amount only. An estimate, not payroll advice.
