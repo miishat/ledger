@@ -86,11 +86,6 @@ export const RrspEfficiencyCard: React.FC<{
         <p className="text-[13px] text-text-primary">
           {formatMoney(top.amount)} RRSP clears your top band, saving {formatMoney(top.taxSaved)}
         </p>
-        <p className="text-[12px] text-text-secondary">
-          {fits
-            ? `Uses ${usedPct.toFixed(0)}% of your ${roomLabel}`
-            : `Exceeds your ${roomLabel} by ${formatMoney(top.amount - room)}`}
-        </p>
         <div
           className="h-1.5 rounded bg-bg-primary/50 overflow-hidden"
           role="progressbar"
@@ -101,6 +96,11 @@ export const RrspEfficiencyCard: React.FC<{
         >
           <div className="h-full rounded bg-accent" style={{ width: `${usedPct}%` }} />
         </div>
+        <p className="text-[12px] text-text-secondary">
+          {fits
+            ? `Uses ${usedPct.toFixed(0)}% of your ${roomLabel}`
+            : `Exceeds your ${roomLabel} by ${formatMoney(top.amount - room)}`}
+        </p>
       </div>
 
       <p className="text-[12px] text-text-secondary">
