@@ -15,6 +15,7 @@ pre-1.0 beta.
 ### Changed
 - Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
 - Compensation: the line on the Equity Vesting Schedule now tracks the equity you have not vested yet, falling as each grant vests, instead of the total vested so far. Hovering any month gives you the figure, including months where nothing vests, and the chart now names each grant and states the share price the value depends on. The area under the line is filled in your current theme's colour
+- Planner: the Raise vs Inflation verdict now sits in a banner coloured by the outcome instead of a loose line
 
 ### Fixed
 - Compensation: a grant whose first tranche vested in the very first month of the chart did not show that vest, so the line started flat
