@@ -22,6 +22,7 @@ pre-1.0 beta.
 - Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
 - Dashboard: the Net Worth Over Time chart wrote its side labels out in full, so a figure like $316,621 ran into the first date underneath it and the bottom corner read as one run-on line. The side labels are now shortened to $316k, matching every other chart
 - Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income. Where a band is too narrow for its full figures, such as on a phone, its caption shortens to $0 to $54k rather than running into the band beside it
+- Planner: the Rent vs Buy chart's explanatory caption was rendering outside the chart card
 
 ## [0.9.0-beta] - 2026-08-15
 
