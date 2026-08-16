@@ -96,7 +96,7 @@ describe('BracketBar', () => {
   })
 
   it('hides the caption entirely below 88px, and bounds the segment column so nothing can paint over a neighbour', () => {
-    const { container } = render(
+    render(
       <BracketBar
         title="Ontario"
         income={193000}

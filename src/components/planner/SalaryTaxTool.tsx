@@ -123,9 +123,10 @@ export const SalaryTaxTool: React.FC = () => {
             <ResultCard label="Net After Contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
           </div>
           <p className="text-[12px] text-text-secondary">
-            RRSP limit is 18% of last year's earned income up to the annual maximum, or whatever you
-            enter in RRSP Room. FHSA limit is $8,000 per year. Contributions here are assumed fully
-            deductible this year.
+            RRSP limit is estimated as 18% of the gross income entered above, up to the annual
+            maximum, or whatever you enter in RRSP Room. Your CRA notice of assessment has your real
+            number. FHSA limit is $8,000 per year. Contributions here are assumed fully deductible
+            this year.
           </p>
         </div>
       )}
