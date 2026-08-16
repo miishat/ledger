@@ -37,6 +37,11 @@ const FEDERAL_BPA_MAX = 16_452
 const FEDERAL_BPA_MIN = 14_829 // 2025 floor 14,538 × 1.02 indexation
 const QC_ABATEMENT = 0.165
 
+// Ontario surtax: 20% of ON tax over the first threshold plus 36% of ON tax
+// over the second. Shared by provincialTaxParts (the tax itself) and
+// marginalSlices (the slice cuts that measure it), so the two stay in sync.
+const ON_SURTAX_THRESHOLDS: [number, number] = [5_818, 7_446]
+
 export const PROVINCIAL_TAX: Record<Province, { name: string; brackets: Bracket[]; bpa: number }> = {
   BC: {
     name: 'British Columbia',
@@ -232,9 +237,9 @@ export function provincialTaxParts(
   const gross = bracketTax(income, brackets)
   const credit = bpa * brackets[0].rate
   const base = Math.max(0, gross - credit)
-  // Ontario surtax: 20% of ON tax over $5,818 plus 36% of ON tax over $7,446.
+  const [surtaxLow, surtaxHigh] = ON_SURTAX_THRESHOLDS
   const surtax =
-    province === 'ON' ? Math.max(0, base - 5_818) * 0.2 + Math.max(0, base - 7_446) * 0.36 : 0
+    province === 'ON' ? Math.max(0, base - surtaxLow) * 0.2 + Math.max(0, base - surtaxHigh) * 0.36 : 0
   return { base, surtax }
 }
 
@@ -316,7 +321,7 @@ export function marginalSlices(taxableIncome: number, province: Province): Margi
   for (const b of FEDERAL_BRACKETS) if (b.upTo < taxableIncome) cuts.add(b.upTo)
   for (const b of PROVINCIAL_TAX[province].brackets) if (b.upTo < taxableIncome) cuts.add(b.upTo)
   if (province === 'ON') {
-    for (const threshold of [5_818, 7_446]) {
+    for (const threshold of ON_SURTAX_THRESHOLDS) {
       const at = incomeAtProvincialBase(threshold, province)
       if (at > 0 && at < taxableIncome) cuts.add(at)
     }
