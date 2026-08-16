@@ -94,6 +94,27 @@ describe('BracketBar', () => {
     expect(full.className).toContain('@min-[120px]:block')
     expect(compact.className).toContain('@min-[120px]:hidden')
   })
+
+  it('hides the caption entirely below 88px, and bounds the segment column so nothing can paint over a neighbour', () => {
+    const { container } = render(
+      <BracketBar
+        title="Ontario"
+        income={193000}
+        brackets={[
+          { upTo: 53891, rate: 0.0505 },
+          { upTo: 107785, rate: 0.0915 },
+          { upTo: 150000, rate: 0.1116 },
+          { upTo: 220000, rate: 0.1216 },
+          { upTo: Infinity, rate: 0.1316 },
+        ]}
+      />,
+    )
+    const compact = screen.getByText('$0 to $54k')
+    expect(compact.className).toContain('hidden')
+    expect(compact.className).toContain('@min-[88px]:block')
+    const column = screen.getByText('$0 to $53,891').closest('.min-w-0') as HTMLElement
+    expect(column.className).toContain('overflow-hidden')
+  })
 })
 
 describe('SalaryTaxTool layout', () => {
