@@ -2,11 +2,14 @@ import {
   cppContribution,
   effectiveRate,
   eiPremium,
+  estimateRrspRoom,
   federalTax,
   marginalRate,
   marginalRateBreakdown,
+  marginalSlices,
   provincialTax,
   provincialTaxParts,
+  RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
   takeHomeWithDeductions,
   totalIncomeTax,
@@ -141,5 +144,87 @@ describe('takeHomeWithDeductions', () => {
   it('contributions above gross clamp taxable income at zero', () => {
     const d = takeHomeWithDeductions(30000, 'ON', 40000, 8000)
     expect(d.taxableIncome).toBe(0)
+  })
+})
+
+describe('marginalSlices', () => {
+  it('returns nothing for zero or negative income', () => {
+    expect(marginalSlices(0, 'ON')).toEqual([])
+    expect(marginalSlices(-5000, 'ON')).toEqual([])
+  })
+
+  it('covers the whole income with no gaps, highest slice first', () => {
+    const slices = marginalSlices(193_000, 'ON')
+    expect(slices.length).toBeGreaterThan(1)
+    expect(slices[0].to).toBe(193_000)
+    expect(slices[slices.length - 1].from).toBe(0)
+    for (let i = 0; i < slices.length - 1; i++) {
+      expect(slices[i].from).toBe(slices[i + 1].to)
+    }
+    const covered = slices.reduce((sum, s) => sum + s.amount, 0)
+    expect(covered).toBeCloseTo(193_000, 6)
+  })
+
+  it('slice savings add up to the total income tax', () => {
+    const slices = marginalSlices(193_000, 'ON')
+    const saved = slices.reduce((sum, s) => sum + s.taxSaved, 0)
+    expect(saved).toBeCloseTo(totalIncomeTax(193_000, 'ON'), 6)
+  })
+
+  it('rates fall as you go down the slices', () => {
+    const slices = marginalSlices(193_000, 'ON')
+    for (let i = 0; i < slices.length - 1; i++) {
+      expect(slices[i].rate).toBeGreaterThan(slices[i + 1].rate)
+    }
+  })
+
+  it('puts the top slice on the federal bracket edge and matches the marginal rate', () => {
+    const slices = marginalSlices(193_000, 'ON')
+    expect(slices[0].from).toBe(181_440)
+    expect(slices[0].amount).toBeCloseTo(11_560, 6)
+    expect(slices[0].rate).toBeCloseTo(marginalRate(193_000, 'ON'), 1)
+  })
+
+  it('splits on the Ontario surtax thresholds, not only on brackets', () => {
+    const slices = marginalSlices(193_000, 'ON')
+    const bracketEdges = new Set([53_891, 107_785, 150_000, 58_523, 117_045, 181_440, 0])
+    const surtaxCuts = slices.map((s) => s.from).filter((f) => !bracketEdges.has(f))
+    expect(surtaxCuts.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('merges neighbouring bands that share a rate into one slice', () => {
+    // AB has a single 10% band spanning both the 61,200 and 154,259 edges only
+    // once you are above them, so a mid-band income yields fewer slices than cuts.
+    const slices = marginalSlices(120_000, 'AB')
+    const rates = slices.map((s) => Math.round(s.rate * 100))
+    expect(new Set(rates).size).toBe(rates.length)
+  })
+
+  it('handles a province with no surtax', () => {
+    const slices = marginalSlices(90_000, 'BC')
+    const saved = slices.reduce((sum, s) => sum + s.taxSaved, 0)
+    expect(saved).toBeCloseTo(totalIncomeTax(90_000, 'BC'), 6)
+  })
+
+  it('returns a single zero-rate slice for income under every credit', () => {
+    const slices = marginalSlices(10_000, 'ON')
+    expect(slices).toHaveLength(1)
+    expect(slices[0].rate).toBe(0)
+    expect(slices[0].taxSaved).toBe(0)
+  })
+})
+
+describe('estimateRrspRoom', () => {
+  it('is 18% of earned income below the dollar limit', () => {
+    expect(estimateRrspRoom(100_000)).toBeCloseTo(18_000, 6)
+  })
+
+  it('caps at the annual dollar limit', () => {
+    expect(estimateRrspRoom(500_000)).toBe(RRSP_DOLLAR_LIMIT_2026)
+  })
+
+  it('is zero for no income', () => {
+    expect(estimateRrspRoom(0)).toBe(0)
+    expect(estimateRrspRoom(-100)).toBe(0)
   })
 })

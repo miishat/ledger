@@ -6,6 +6,22 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.1-beta] - 2026-08-15
+
+### Added
+- Salary & Tax: an RRSP Efficiency block next to your deductions. It shows how much of your income sits in each marginal band, what sheltering each band would save, and the contribution that clears your top band
+- Salary & Tax: an optional RRSP Room field. Leave it empty and the tool estimates your room at 18% of income up to the annual maximum, and says that it is an estimate. The room bar counts what is left after the contribution you have already entered, so a suggestion never quietly pushes you past your limit
+
+### Changed
+- Salary & Tax: the Deductions block now opens with a single bar of your whole gross income split into federal tax, provincial tax, CPP, EI and net pay, so the width of the bar means something. The four deduction bars below it are still shares of gross, and now say so
+- Compensation: the line on the Equity Vesting Schedule now tracks the equity you have not vested yet, falling as each grant vests, instead of the total vested so far. Hovering any month gives you the figure, including months where nothing vests, and the chart now names each grant and states the share price the value depends on. The area under the line is filled in your current theme's colour
+
+### Fixed
+- Compensation: a grant whose first tranche vested in the very first month of the chart did not show that vest, so the line started flat
+- Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
+- Dashboard: the Net Worth Over Time chart wrote its side labels out in full, so a figure like $316,621 ran into the first date underneath it and the bottom corner read as one run-on line. The side labels are now shortened to $316k, matching every other chart
+- Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income. Where a band is too narrow for its full figures, such as on a phone, its caption shortens to $0 to $54k rather than running into the band beside it
+
 ## [0.9.0-beta] - 2026-08-15
 
 ### Added
@@ -19,13 +35,8 @@ pre-1.0 beta.
 - If you use Drive sync, update Ledger on every device before recording trades. A device still on an older version does not know about the Trades tab, and a sync from it will remove your trade log from the other devices
 - Investments: prices and exchange rates now say how old they are and offer a refresh where the figure is shown, instead of only saying "cache" or "stale"
 
-### Changed
-- Compensation: the line on the Equity Vesting Schedule now tracks the equity you have not vested yet, falling as each grant vests, instead of the total vested so far. Hovering any month gives you the figure, including months where nothing vests, and the chart now names each grant and states the share price the value depends on
-
 ### Fixed
 - A widget that hit unexpected data used to blank the whole page. Now it fails inside its own card with a Try again button and the rest of the page keeps working
-- Charts: the hover tooltip could be drawn behind a chart's own labels, so the figure you were pointing at sat underneath the total in the middle of the Compensation donut
-- Dashboard: the Net Worth Over Time chart wrote its side labels out in full, so a figure like $316,621 ran into the first date underneath it and the bottom corner read as one run-on line. The side labels are now shortened to $316k, matching every other chart
 
 ## [0.8.1-beta] - 2026-08-14
 
