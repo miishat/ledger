@@ -91,7 +91,8 @@ export const SalaryTaxTool: React.FC = () => {
 
   const t = takeHomeWithDeductions(income, province, inputs.rrsp, inputs.fhsa)
   const breakdown = marginalRateBreakdown(t.taxableIncome, province)
-  const room = inputs.rrspRoom > 0 ? inputs.rrspRoom : estimateRrspRoom(income)
+  const totalRoom = inputs.rrspRoom > 0 ? inputs.rrspRoom : estimateRrspRoom(income)
+  const room = Math.max(0, totalRoom - inputs.rrsp)
 
   return (
     <div className="flex flex-col gap-6">

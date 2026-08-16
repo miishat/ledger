@@ -1,5 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
+import { usePlannerStore } from '../../store/usePlannerStore'
+import { estimateRrspRoom } from '../../utils/finance/canadaTax'
+import { formatMoney } from './format'
+
+const initialState = usePlannerStore.getState()
+beforeEach(() => {
+  localStorage.clear()
+  usePlannerStore.setState(initialState, true)
+})
 
 describe('BracketBar', () => {
   it('only shows rate labels when the segment is wide enough (container query)', () => {
@@ -100,5 +109,20 @@ describe('SalaryTaxTool layout', () => {
     const pair = container.querySelector('.lg\\:grid-cols-\\[1\\.35fr_1fr\\]')
     expect(pair).not.toBeNull()
     expect(pair?.children).toHaveLength(2)
+  })
+
+  it('passes the full estimated room through to the efficiency card when nothing has been contributed', () => {
+    render(<SalaryTaxTool />)
+    const expectedRoom = formatMoney(estimateRrspRoom(100000))
+    expect(screen.getByText(new RegExp(`${expectedRoom.replace('$', '\\$')} estimated remaining room`, 'i'))).toBeInTheDocument()
+  })
+
+  it('subtracts an already-entered RRSP contribution from the room shown by the efficiency card', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 193000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 20000)
+    render(<SalaryTaxTool />)
+    const totalRoom = estimateRrspRoom(193000)
+    const remaining = formatMoney(Math.max(0, totalRoom - 20000))
+    expect(screen.getByText(new RegExp(`${remaining.replace('$', '\\$')} estimated remaining room`, 'i'))).toBeInTheDocument()
   })
 })

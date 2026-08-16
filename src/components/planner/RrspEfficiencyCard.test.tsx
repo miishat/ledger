@@ -28,22 +28,22 @@ describe('RrspEfficiencyCard', () => {
 
   it('marks estimated room as an estimate', () => {
     render(<RrspEfficiencyCard taxableIncome={193_000} province="ON" room={33_810} roomIsEstimate />)
-    expect(screen.getByText(/\$33,810 estimated room/i)).toBeInTheDocument()
+    expect(screen.getByText(/\$33,810 estimated remaining room/i)).toBeInTheDocument()
   })
 
   it('drops the estimate wording when the room came from the user', () => {
     render(
       <RrspEfficiencyCard taxableIncome={193_000} province="ON" room={20_000} roomIsEstimate={false} />,
     )
-    expect(screen.getByText(/\$20,000 room/i)).toBeInTheDocument()
-    expect(screen.queryByText(/estimated room/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/\$20,000 remaining room/i)).toBeInTheDocument()
+    expect(screen.queryByText(/estimated remaining room/i)).not.toBeInTheDocument()
   })
 
   it('says so when the target does not fit in the room', () => {
     render(
       <RrspEfficiencyCard taxableIncome={193_000} province="ON" room={5_000} roomIsEstimate={false} />,
     )
-    expect(screen.getByText(/exceeds your room/i)).toBeInTheDocument()
+    expect(screen.getByText(/exceeds your .*room by/i)).toBeInTheDocument()
   })
 
   it('handles income with nothing to shelter', () => {

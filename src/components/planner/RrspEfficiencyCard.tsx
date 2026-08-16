@@ -54,7 +54,9 @@ export const RrspEfficiencyCard: React.FC<{
   const rest = slices[2]
   const fits = top.amount <= room
   const usedPct = room > 0 ? Math.min((top.amount / room) * 100, 100) : 0
-  const roomLabel = roomIsEstimate ? `${formatMoney(room)} estimated room` : `${formatMoney(room)} room`
+  const roomLabel = roomIsEstimate
+    ? `${formatMoney(room)} estimated remaining room`
+    : `${formatMoney(room)} remaining room`
 
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-3">
