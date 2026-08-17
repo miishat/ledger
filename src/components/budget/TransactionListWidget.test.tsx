@@ -411,13 +411,32 @@ describe('TransactionListWidget selection at scale', () => {
       }
       useBudgetStore.setState({ transactions, categories: {} })
 
-      render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+      // jsdom never lays out elements, so the scroll container's real
+      // clientHeight is always 0. Left alone, computeWindow's "not measured
+      // yet" fallback renders all 600 (then 100) rows into jsdom on every
+      // assertion below, which is slow enough under load to flirt with the
+      // test timeout. Stub a realistic viewport height so the widget windows
+      // rows the same way it would in a real browser, keeping this test's
+      // cost proportional to what's actually on screen rather than to the
+      // full dataset.
+      const clientHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight')
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 480 })
 
-      fireEvent.click(screen.getByLabelText('Select all transactions'))
-      expect(screen.getByText('600 selected')).toBeInTheDocument()
+      try {
+        render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
 
-      fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'COFFEE' } })
-      expect(screen.getByText('100 selected')).toBeInTheDocument()
+        fireEvent.click(screen.getByLabelText('Select all transactions'))
+        expect(screen.getByText('600 selected')).toBeInTheDocument()
+
+        fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'COFFEE' } })
+        expect(screen.getByText('100 selected')).toBeInTheDocument()
+      } finally {
+        if (clientHeightDescriptor) {
+          Object.defineProperty(HTMLElement.prototype, 'clientHeight', clientHeightDescriptor)
+        } else {
+          delete (HTMLElement.prototype as { clientHeight?: number }).clientHeight
+        }
+      }
     },
     30000
   )
