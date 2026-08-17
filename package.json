@@ -9,6 +9,7 @@
     "test": "vitest",
     "lint": "eslint .",
     "preview": "vite preview",
+    "check:bundle": "node scripts/check-bundle.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {
