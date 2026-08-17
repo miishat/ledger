@@ -11,19 +11,18 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      workbox: {
-        // The chart bundle is large and only some routes render charts, so it
-        // is fetched on demand and cached after first use instead of being
-        // pushed into the install-time precache.
-        globIgnores: ['**/charts-*.js'],
-        runtimeCaching: [
-          {
-            urlPattern: /\/assets\/charts-.*\.js$/,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'ledger-charts' },
-          },
-        ],
-      },
+      // Chunk splitting (see codeSplitting.groups below) keeps the chart
+      // library out of the main entry bundle, so it does not block first
+      // paint or bloat every route's parse cost with code most routes never
+      // use. That entry-chunk-size win is real. But this rolldown version
+      // cannot express reachability-correct code splitting for this
+      // dependency: the entry chunk always statically imports the charts
+      // chunk regardless of how the manual chunking is configured, so the
+      // chunk is not actually fetched on demand, it loads on every visit.
+      // Excluding it from the precache on that assumption meant a PWA
+      // install followed by going offline before the runtime cache filled
+      // in rendered a blank page. So the chart chunk stays in the normal
+      // precache like everything else the entry needs at first paint.
       manifest: {
         name: 'Ledger',
         short_name: 'Ledger',
