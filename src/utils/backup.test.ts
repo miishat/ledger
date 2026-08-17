@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText, BACKUP_KEYS } from './backup'
-import { STORAGE_KEYS } from '../store/storageKeys'
+import { STORAGE_KEYS, NON_BACKUP_KEY_NAMES } from '../store/storageKeys'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -188,7 +188,9 @@ describe('backup key coverage', () => {
   })
 
   it('covers every registered store except the declared exclusions', () => {
-    const expected = Object.values(STORAGE_KEYS).filter((k) => k !== STORAGE_KEYS.sync && k !== STORAGE_KEYS.demo)
+    const expected = (Object.keys(STORAGE_KEYS) as Array<keyof typeof STORAGE_KEYS>)
+      .filter((name) => !NON_BACKUP_KEY_NAMES.includes(name))
+      .map((name) => STORAGE_KEYS[name])
     expect([...BACKUP_KEYS].sort()).toEqual([...expected].sort())
   })
 

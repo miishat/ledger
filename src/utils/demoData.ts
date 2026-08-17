@@ -33,28 +33,41 @@ export function buildDemoData(): {
     'demo-cat-3': { id: 'demo-cat-3', groupId: DEMO_GROUP_INCOME, name: 'Salary', targetAmount: 0 },
   }
 
-  const seed: Array<[string, number, string, 'income' | 'expense', string]> = [
-    ['Grocery run', 82.4, 'demo-cat-1', 'expense', '-01-06'],
-    ['Transit pass', 156, 'demo-cat-2', 'expense', '-01-08'],
-    ['Paycheque', 3200, 'demo-cat-3', 'income', '-01-15'],
-    ['Grocery run', 61.15, 'demo-cat-1', 'expense', '-01-18'],
-    ['Rideshare', 24.8, 'demo-cat-2', 'expense', '-01-20'],
-    ['Grocery run', 94.02, 'demo-cat-1', 'expense', '-01-27'],
-    ['Paycheque', 3200, 'demo-cat-3', 'income', '-01-30'],
-    ['Grocery run', 77.6, 'demo-cat-1', 'expense', '-02-04'],
-    ['Transit pass', 156, 'demo-cat-2', 'expense', '-02-08'],
-    ['Paycheque', 3200, 'demo-cat-3', 'income', '-02-15'],
-    ['Grocery run', 88.31, 'demo-cat-1', 'expense', '-02-19'],
-    ['Rideshare', 18.45, 'demo-cat-2', 'expense', '-02-24'],
+  // 'prev' and 'cur' below stand for the previous and current month, resolved
+  // from the real date at call time so demo data always lands in the app's
+  // default current-month views, regardless of when demo mode is loaded.
+  const seed: Array<[string, number, string, 'income' | 'expense', 'prev' | 'cur', number]> = [
+    ['Grocery run', 82.4, 'demo-cat-1', 'expense', 'prev', 6],
+    ['Transit pass', 156, 'demo-cat-2', 'expense', 'prev', 8],
+    ['Paycheque', 3200, 'demo-cat-3', 'income', 'prev', 15],
+    ['Grocery run', 61.15, 'demo-cat-1', 'expense', 'prev', 18],
+    ['Rideshare', 24.8, 'demo-cat-2', 'expense', 'prev', 20],
+    ['Grocery run', 94.02, 'demo-cat-1', 'expense', 'prev', 27],
+    ['Paycheque', 3200, 'demo-cat-3', 'income', 'prev', 30],
+    ['Grocery run', 77.6, 'demo-cat-1', 'expense', 'cur', 4],
+    ['Transit pass', 156, 'demo-cat-2', 'expense', 'cur', 8],
+    ['Paycheque', 3200, 'demo-cat-3', 'income', 'cur', 15],
+    ['Grocery run', 88.31, 'demo-cat-1', 'expense', 'cur', 19],
+    ['Rideshare', 18.45, 'demo-cat-2', 'expense', 'cur', 24],
   ]
 
-  const year = new Date().getFullYear()
+  const now = new Date()
+  const curYear = now.getFullYear()
+  const curMonth = now.getMonth() // 0-based
+  // January (curMonth 0) rolls the previous month back to December of the prior year.
+  const prevYear = curMonth === 0 ? curYear - 1 : curYear
+  const prevMonth = curMonth === 0 ? 11 : curMonth - 1
+
+  const monthPrefix = (year: number, month: number): string =>
+    `${year}-${String(month + 1).padStart(2, '0')}`
+
   const transactions: Record<string, Transaction> = {}
-  seed.forEach(([description, amount, categoryId, type, suffix], i) => {
+  seed.forEach(([description, amount, categoryId, type, which, day], i) => {
     const id = `demo-tx-${i + 1}`
+    const prefix = which === 'cur' ? monthPrefix(curYear, curMonth) : monthPrefix(prevYear, prevMonth)
     transactions[id] = {
       id,
-      date: `${year}${suffix}`,
+      date: `${prefix}-${String(day).padStart(2, '0')}`,
       amount,
       description,
       type,

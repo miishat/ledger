@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '../store/storageKeys'
+
 export type ReminderSupport = 'unsupported' | 'denied' | 'granted' | 'default'
 
 /** Notification support varies: installed iOS PWAs historically expose no
@@ -30,8 +32,8 @@ export function dueReminders(
     .map((i) => ({ key: i.key, label: i.label }))
 }
 
-const REMINDERS_ENABLED_KEY = 'ledger-reminders-enabled'
-const LAST_NOTIFIED_KEY = 'ledger-reminders-last-notified'
+const REMINDERS_ENABLED_KEY = STORAGE_KEYS.reminders
+const LAST_NOTIFIED_KEY = STORAGE_KEYS.remindersLastNotified
 
 /** Plain localStorage, not a zustand store: this is a small enabled flag plus
  *  a per-key "last notified" map, neither of which needs the persist

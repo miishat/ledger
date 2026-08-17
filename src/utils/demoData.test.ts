@@ -15,6 +15,24 @@ describe('demo data', () => {
     }
   })
 
+  it('spans only the current month and the immediately preceding month', () => {
+    const now = new Date()
+    const curYear = now.getFullYear()
+    const curMonth = now.getMonth()
+    const prevYear = curMonth === 0 ? curYear - 1 : curYear
+    const prevMonth = curMonth === 0 ? 11 : curMonth - 1
+    const allowedPrefixes = new Set([
+      `${curYear}-${String(curMonth + 1).padStart(2, '0')}`,
+      `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`,
+    ])
+
+    const { transactions } = buildDemoData()
+    for (const tx of Object.values(transactions)) {
+      const prefix = tx.date.slice(0, 7)
+      expect(allowedPrefixes.has(prefix)).toBe(true)
+    }
+  })
+
   it('reports demo state from the flag', () => {
     expect(isDemoActive()).toBe(false)
     localStorage.setItem(DEMO_FLAG_KEY, 'on')
