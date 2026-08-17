@@ -2,6 +2,7 @@ import { render, screen, within, fireEvent } from '@testing-library/react'
 import { TransactionListWidget } from './TransactionListWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useUndoStore } from '../../store/useUndoStore'
+import type { Transaction } from '../../types/budget'
 
 const initialState = useBudgetStore.getState()
 
