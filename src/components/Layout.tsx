@@ -165,39 +165,43 @@ export const Layout: React.FC = () => {
         </div>
       </nav>
 
-      {isDemoActive() && (
-        <div
-          role="status"
-          className="fixed top-0 inset-x-0 z-30 bg-accent/15 border-b border-accent/40 px-4 py-1.5 text-center text-[12px] text-text-primary"
-        >
-          Demo data is loaded. It is excluded from backups and Drive sync.
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8"
-      >
-        <ErrorBoundary key={location.pathname}>
-          <Suspense
-            fallback={
-              <div
-                role="status"
-                aria-label="Loading page"
-                className="flex items-center justify-center py-24 text-[13px] text-text-secondary"
-              >
-                Loading...
-              </div>
-            }
+      {/* Main Content Area. Wrapped in a column so the demo banner sits in
+          normal document flow above <main> rather than floating fixed over
+          it, which used to cover the sidebar brand area and page content. */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative z-10">
+        {isDemoActive() && (
+          <div
+            role="status"
+            className="shrink-0 bg-accent/15 border-b border-accent/40 px-4 py-1.5 text-center text-[12px] text-text-primary"
           >
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
-          </Suspense>
-        </ErrorBoundary>
-      </main>
+            Demo data is loaded. It is excluded from backups and Drive sync.
+          </div>
+        )}
+
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8"
+        >
+          <ErrorBoundary key={location.pathname}>
+            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-label="Loading page"
+                  className="flex items-center justify-center py-24 text-[13px] text-text-secondary"
+                >
+                  Loading...
+                </div>
+              }
+            >
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+      </div>
 
       {/* Mobile bottom tab bar */}
       <nav

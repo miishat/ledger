@@ -3,22 +3,80 @@ import { Download, Upload, Sparkles, X } from 'lucide-react'
 import { backupToBlob, backupFilename, parseBackupText, restoreBackup } from '../../utils/backup'
 import { buildDemoData, buildDemoCategoryGroups, isDemoActive, DEMO_FLAG_KEY } from '../../utils/demoData'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { useUndoStore } from '../../store/useUndoStore'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
+
+/** Same id-prefix scheme the backup scrub in utils/backup.ts relies on to
+ *  keep demo rows out of backups and Drive sync. Reusing the prefix here
+ *  keeps "Clear demo data" symmetric with that scrub: both treat a
+ *  demo-prefixed id as the sole signal that a record is demo data. */
+const isDemoId = (id: string) => id.startsWith('demo-')
+
+/** Drops only demo-prefixed keys from a record map, leaving any real records
+ *  (including ones added while demo mode happened to be active) untouched. */
+function withoutDemoRecords<T>(records: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(Object.entries(records).filter(([id]) => !isDemoId(id)))
+}
 
 export const BackupControls: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [demoActive, setDemoActive] = useState(() => isDemoActive())
+  const [confirmLoadOpen, setConfirmLoadOpen] = useState(false)
+  const offerUndo = useUndoStore((s) => s.offerUndo)
 
-  const handleLoadDemo = () => {
+  const applyDemoData = () => {
+    const previous = useBudgetStore.getState()
+    const hadRealData =
+      Object.keys(previous.transactions).length > 0 ||
+      Object.keys(previous.categories).length > 0 ||
+      Object.keys(previous.categoryGroups).length > 0
+
     const { transactions, categories } = buildDemoData()
     const categoryGroups = buildDemoCategoryGroups()
     localStorage.setItem(DEMO_FLAG_KEY, 'on')
     useBudgetStore.setState({ transactions, categories, categoryGroups })
     setDemoActive(true)
+
+    if (hadRealData) {
+      offerUndo('Loaded demo data, replacing existing data', () => {
+        localStorage.removeItem(DEMO_FLAG_KEY)
+        useBudgetStore.setState({
+          transactions: previous.transactions,
+          categories: previous.categories,
+          categoryGroups: previous.categoryGroups,
+        })
+        setDemoActive(false)
+      })
+    }
+  }
+
+  const handleLoadDemo = () => {
+    const { transactions, categories, categoryGroups } = useBudgetStore.getState()
+    const hasRealData =
+      Object.keys(transactions).length > 0 ||
+      Object.keys(categories).length > 0 ||
+      Object.keys(categoryGroups).length > 0
+
+    if (hasRealData) {
+      setConfirmLoadOpen(true)
+      return
+    }
+    applyDemoData()
+  }
+
+  const confirmLoadDemo = () => {
+    setConfirmLoadOpen(false)
+    applyDemoData()
   }
 
   const handleClearDemo = () => {
     localStorage.removeItem(DEMO_FLAG_KEY)
-    useBudgetStore.setState({ transactions: {}, categories: {}, categoryGroups: {} })
+    const { transactions, categories, categoryGroups } = useBudgetStore.getState()
+    useBudgetStore.setState({
+      transactions: withoutDemoRecords(transactions),
+      categories: withoutDemoRecords(categories),
+      categoryGroups: withoutDemoRecords(categoryGroups),
+    })
     setDemoActive(false)
   }
 
@@ -79,6 +137,15 @@ export const BackupControls: React.FC = () => {
           <Sparkles className="w-4 h-4" /> Load demo data
         </button>
       )}
+      <ConfirmDialog
+        open={confirmLoadOpen}
+        title="Load demo data?"
+        message="You already have data in Ledger. Loading demo data will replace your transactions, categories, and category groups. You can undo this right after."
+        confirmLabel="Replace with demo data"
+        tone="danger"
+        onConfirm={confirmLoadDemo}
+        onCancel={() => setConfirmLoadOpen(false)}
+      />
     </div>
   )
 }
