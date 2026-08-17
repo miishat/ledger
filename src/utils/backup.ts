@@ -32,6 +32,26 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/** Demo records share the budget store with real data, so excluding the demo
+ *  flag key alone is not enough: a backup taken while demo mode is active
+ *  would otherwise carry demo-cat and demo-tx rows along with the flag gone.
+ *  Strip anything id-prefixed demo- out of the budget payload before it is
+ *  written to a backup or Drive snapshot. */
+function stripDemoRecords(parsed: unknown): unknown {
+  if (!isPlainObject(parsed)) return parsed
+  const state = parsed.state
+  if (!isPlainObject(state)) return parsed
+  const scrubMap = (value: unknown): unknown => {
+    if (!isPlainObject(value)) return value
+    return Object.fromEntries(Object.entries(value).filter(([id]) => !id.startsWith('demo-')))
+  }
+  const nextState: Record<string, unknown> = { ...state }
+  for (const field of ['transactions', 'categories', 'categoryGroups']) {
+    if (field in nextState) nextState[field] = scrubMap(nextState[field])
+  }
+  return { ...parsed, state: nextState }
+}
+
 function assertValidEnvelope(env: BackupEnvelope | null | undefined): asserts env is BackupEnvelope {
   if (!env || env.app !== 'ledger' || typeof env.version !== 'number' || env.version > BACKUP_VERSION) {
     throw new Error('Invalid Ledger backup file')
@@ -47,7 +67,8 @@ export function buildBackup(meta?: BackupMeta): BackupEnvelope {
     const raw = localStorage.getItem(key)
     if (raw === null) continue
     try {
-      data[key] = JSON.parse(raw)
+      const parsed = JSON.parse(raw)
+      data[key] = key === STORAGE_KEYS.budget ? stripDemoRecords(parsed) : parsed
     } catch {
       data[key] = raw
     }

@@ -17,6 +17,7 @@ import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
+import { isDemoActive } from '../utils/demoData'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -163,6 +164,15 @@ export const Layout: React.FC = () => {
           </div>
         </div>
       </nav>
+
+      {isDemoActive() && (
+        <div
+          role="status"
+          className="fixed top-0 inset-x-0 z-30 bg-accent/15 border-b border-accent/40 px-4 py-1.5 text-center text-[12px] text-text-primary"
+        >
+          Demo data is loaded. It is excluded from backups and Drive sync.
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main

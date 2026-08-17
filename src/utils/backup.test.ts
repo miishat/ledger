@@ -164,8 +164,31 @@ describe('backup key coverage', () => {
     expect(BACKUP_KEYS).not.toContain('ledger-sync')
   })
 
+  it('leaves the demo flag and demo budget data out of the backup', () => {
+    expect(BACKUP_KEYS).not.toContain('ledger-demo-mode')
+    localStorage.setItem('ledger-demo-mode', 'on')
+    localStorage.setItem(
+      'ledger-budget',
+      JSON.stringify({
+        state: {
+          transactions: {
+            'demo-tx-1': { id: 'demo-tx-1', description: 'Grocery run' },
+            'real-tx-1': { id: 'real-tx-1', description: 'Rent' },
+          },
+          categories: { 'demo-cat-1': { id: 'demo-cat-1', name: 'Groceries' } },
+        },
+      }),
+    )
+    const env = buildBackup()
+    expect(env.data['ledger-demo-mode']).toBeUndefined()
+    const budgetState = (env.data['ledger-budget'] as { state: { transactions: Record<string, unknown>; categories: Record<string, unknown> } }).state
+    expect(budgetState.transactions['demo-tx-1']).toBeUndefined()
+    expect(budgetState.transactions['real-tx-1']).toEqual({ id: 'real-tx-1', description: 'Rent' })
+    expect(budgetState.categories['demo-cat-1']).toBeUndefined()
+  })
+
   it('covers every registered store except the declared exclusions', () => {
-    const expected = Object.values(STORAGE_KEYS).filter((k) => k !== STORAGE_KEYS.sync)
+    const expected = Object.values(STORAGE_KEYS).filter((k) => k !== STORAGE_KEYS.sync && k !== STORAGE_KEYS.demo)
     expect([...BACKUP_KEYS].sort()).toEqual([...expected].sort())
   })
 

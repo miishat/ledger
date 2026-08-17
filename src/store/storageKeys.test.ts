@@ -30,6 +30,7 @@ describe('storage key registry', () => {
       recurring: 'ledger-recurring',
       sync: 'ledger-sync',
       trades: 'ledger-trades',
+      demo: 'ledger-demo-mode',
     })
   })
 
@@ -39,8 +40,10 @@ describe('storage key registry', () => {
   })
 
   it('finds every persisted store', () => {
+    // demo is a plain localStorage flag, not a zustand persist store, so it
+    // is excluded from this count.
     const persisted = Object.entries(storeSources).filter(([, src]) => src.includes('persist('))
-    expect(persisted.length).toBe(Object.keys(STORAGE_KEYS).length)
+    expect(persisted.length).toBe(Object.keys(STORAGE_KEYS).length - 1)
   })
 
   it('has every persisted store take its key from the registry', () => {
