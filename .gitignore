@@ -26,3 +26,7 @@ csv-examples/
 
 # SDD scratch (subagent-driven-development ledger/briefs/reports)
 .superpowers/sdd/
+
+/test-results/
+/playwright-report/
+/blob-report/
