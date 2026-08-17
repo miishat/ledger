@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText, BACKUP_KEYS } from './backup'
-import { STORAGE_KEYS, NON_BACKUP_KEY_NAMES } from '../store/storageKeys'
+import { STORAGE_KEYS } from '../store/storageKeys'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -188,9 +188,28 @@ describe('backup key coverage', () => {
   })
 
   it('covers every registered store except the declared exclusions', () => {
-    const expected = (Object.keys(STORAGE_KEYS) as Array<keyof typeof STORAGE_KEYS>)
-      .filter((name) => !NON_BACKUP_KEY_NAMES.includes(name))
-      .map((name) => STORAGE_KEYS[name])
+    // This list is written out by hand on purpose, not derived from
+    // NON_BACKUP_KEY_NAMES. If it were computed from that same list, this
+    // test would only check that backup.ts re-implements a formula copied
+    // from itself, and a mistaken addition to NON_BACKUP_KEY_NAMES would
+    // pass silently on both sides. Adding a new non-backup key must force a
+    // human to update this list too.
+    const expected = [
+      STORAGE_KEYS.accounts,
+      STORAGE_KEYS.budget,
+      STORAGE_KEYS.compensation,
+      STORAGE_KEYS.theme,
+      STORAGE_KEYS.triage,
+      STORAGE_KEYS.marketData,
+      STORAGE_KEYS.planner,
+      STORAGE_KEYS.analyses,
+      STORAGE_KEYS.portfolio,
+      STORAGE_KEYS.portfolioReport,
+      STORAGE_KEYS.dashboardLayout,
+      STORAGE_KEYS.wheel,
+      STORAGE_KEYS.recurring,
+      STORAGE_KEYS.trades,
+    ]
     expect([...BACKUP_KEYS].sort()).toEqual([...expected].sort())
   })
 
