@@ -1,10 +1,11 @@
-import React from 'react'
-import { Database, LineChart, Palette, RefreshCw, Settings, X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Bell, Database, LineChart, Palette, RefreshCw, Settings, X } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
 import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
 import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
 import { DriveSyncControls } from './DriveSyncControls'
+import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSupport } from '../../utils/reminders'
 
 interface SettingsSheetProps {
   open: boolean
@@ -30,6 +31,65 @@ const SectionCard: React.FC<{ icon: React.ReactNode; title: string; badge?: Reac
     {children}
   </section>
 )
+
+/** Opt-in control for recurring-bill reminders. Notification.requestPermission()
+ *  is only ever called from this button's click handler, never on mount or in
+ *  an effect: some browsers auto-deny (and remember the denial) a permission
+ *  prompt that fires without a direct user gesture. */
+const ReminderSettings: React.FC = () => {
+  const [support, setSupport] = useState<ReminderSupport>(() => reminderSupport())
+  const [enabled, setEnabled] = useState(() => remindersEnabled())
+
+  const handleEnable = () => {
+    void Notification.requestPermission().then((result) => {
+      setSupport(result === 'granted' ? 'granted' : result === 'denied' ? 'denied' : 'default')
+      if (result === 'granted') {
+        setRemindersEnabled(true)
+        setEnabled(true)
+      }
+    })
+  }
+
+  if (support === 'unsupported') {
+    return <p className="text-[13px] text-text-secondary">Notifications aren't supported in this browser.</p>
+  }
+
+  if (support === 'denied') {
+    return (
+      <p className="text-[13px] text-text-secondary">
+        Notifications are blocked for this site. Allow them in your browser's site settings to get bill reminders.
+      </p>
+    )
+  }
+
+  if (support === 'granted') {
+    return (
+      <label className="flex items-center gap-2 text-[13px] text-text-primary">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => {
+            setRemindersEnabled(e.target.checked)
+            setEnabled(e.target.checked)
+          }}
+        />
+        Remind me before upcoming recurring bills
+      </label>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-[13px] text-text-secondary">Get a reminder a few days before recurring bills are due.</p>
+      <button
+        onClick={handleEnable}
+        className="text-[12px] font-medium text-accent hover:underline whitespace-nowrap"
+      >
+        Enable reminders
+      </button>
+    </div>
+  )
+}
 
 /** Single settings hub: Appearance, Market data, Backup as section cards,
  *  About as a footer row. Modal on desktop, bottom sheet on mobile. */
@@ -70,6 +130,10 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
 
     <SectionCard icon={<RefreshCw className="w-4 h-4" />} title="Sync">
       <DriveSyncControls />
+    </SectionCard>
+
+    <SectionCard icon={<Bell className="w-4 h-4" />} title="Reminders">
+      <ReminderSettings />
     </SectionCard>
 
     <div className="flex items-center justify-between pt-2 border-t border-border">

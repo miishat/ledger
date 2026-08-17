@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Repeat, EyeOff, CalendarClock } from 'lucide-react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useRecurringStore } from '../../store/useRecurringStore'
 import { detectRecurring, upcomingWithin } from '../../utils/budget/recurring'
+import { dispatchReminders } from '../../utils/reminders'
 import { formatMoney } from '../planner/format'
 
 const UPCOMING_DAYS = 30
@@ -26,6 +27,18 @@ export const SubscriptionsWidget: React.FC = () => {
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const upcoming = upcomingWithin(items, today, UPCOMING_DAYS)
   const upcomingTotal = upcoming.reduce((s, i) => s + i.avgAmount, 0)
+
+  // Reminders are opt-in (see Settings > Reminders) and dispatchReminders()
+  // itself is a no-op unless Notification permission has been granted, so
+  // this runs unconditionally: it fires real notifications only for users
+  // who already turned the feature on.
+  useEffect(() => {
+    dispatchReminders(
+      detected.map((i) => ({ key: i.key, label: i.description, nextDate: i.nextExpected })),
+      { ignoredKeys },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, ignoredKeys])
 
   return (
     <WidgetWrapper title="Subscriptions & Recurring">
