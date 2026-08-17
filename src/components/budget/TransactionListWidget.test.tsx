@@ -375,3 +375,31 @@ describe('undo via the global store', () => {
     expect(Object.keys(useBudgetStore.getState().transactions).sort()).toEqual(['tx1', 'tx2'])
   })
 })
+
+describe('TransactionListWidget selection at scale', () => {
+  it(
+    'keeps selection scoped to visible rows when the search narrows',
+    async () => {
+      const transactions: Record<string, Transaction> = {}
+      for (let i = 0; i < 600; i++) {
+        transactions[`t${i}`] = {
+          id: `t${i}`,
+          date: '2026-08-04',
+          amount: 10,
+          description: i < 100 ? `COFFEE ${i}` : `GROCERY ${i}`,
+          type: 'expense',
+        }
+      }
+      useBudgetStore.setState({ transactions, categories: {} })
+
+      render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+
+      fireEvent.click(screen.getByLabelText('Select all transactions'))
+      expect(screen.getByText('600 selected')).toBeInTheDocument()
+
+      fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'COFFEE' } })
+      expect(screen.getByText('100 selected')).toBeInTheDocument()
+    },
+    30000
+  )
+})

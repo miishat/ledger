@@ -71,7 +71,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   // Selection is scoped to what is currently visible: narrowing the search must
   // not leave invisible rows armed for deletion.
   const visibleIds = txList.map((tx) => tx.id);
-  const selected = selectedIds.filter((id) => visibleIds.includes(id));
+  const visibleIdSet = new Set(visibleIds);
+  const selected = selectedIds.filter((id) => visibleIdSet.has(id));
+  const selectedSet = new Set(selected);
   const allVisibleSelected = visibleIds.length > 0 && selected.length === visibleIds.length;
 
   const toggleRow = (id: string) =>
@@ -230,7 +232,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       <input
                         type="checkbox"
                         aria-label="Select transaction"
-                        checked={selected.includes(tx.id)}
+                        checked={selectedSet.has(tx.id)}
                         onChange={() => toggleRow(tx.id)}
                         className="accent-[var(--color-accent)]"
                       />
@@ -290,7 +292,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   <input
                     type="checkbox"
                     aria-label="Select transaction"
-                    checked={selected.includes(tx.id)}
+                    checked={selectedSet.has(tx.id)}
                     onChange={() => toggleRow(tx.id)}
                     onClick={(e) => e.stopPropagation()}
                     className="mt-1 shrink-0 accent-[var(--color-accent)]"
@@ -370,7 +372,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         confirmLabel="Delete"
         tone="danger"
         onConfirm={() => {
-          deleteWithUndo(txList.filter((tx) => selected.includes(tx.id)));
+          deleteWithUndo(txList.filter((tx) => selectedSet.has(tx.id)));
           setSelectedIds([]);
           setConfirmBulkDeleteOpen(false);
         }}
