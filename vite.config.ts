@@ -66,17 +66,17 @@ export default defineConfig({
               // recharts's own state management (redux/immer/reselect) is
               // only ever loaded alongside recharts, so it is split into a
               // second charts-prefixed chunk to keep the primary chart
-              // chunk under budget while still being excluded from the
-              // precache and covered by the same runtime-caching pattern.
+              // chunk under budget. Both charts chunks are precached; see
+              // the comment above the VitePWA plugin for why.
               name: 'charts-vendor',
               test: /node_modules[\\/](@reduxjs[\\/]toolkit|redux|redux-thunk|react-redux|reselect|immer)[\\/]/,
               priority: 3,
             },
             {
               // recharts pulls in d3 and victory-vendor. Grouping them
-              // keeps the chart dependency in one lazily loaded chunk
-              // instead of being hoisted into whichever shared chunk
-              // imports it first.
+              // keeps the chart dependency in its own chunk instead of
+              // being hoisted into whichever shared chunk imports it first,
+              // so unrelated routes do not pay to parse it.
               name: 'charts',
               test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/,
               priority: 2,

@@ -18,12 +18,12 @@ import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './da
 export { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS };
 
 // NetWorthTrendWidget pulls in recharts, which is split into its own build
-// chunk and deliberately excluded from the PWA precache (it's expected to be
-// fetched on demand). Dashboard itself stays in the entry chunk (see
-// App.tsx), so if this import were static, the chart chunk would end up in
-// the entry's synchronous graph on every route, eager but uncached, which
-// produced a blank page offline. Lazy-loading the widget keeps the chart
-// chunk out of the entry and fetches it only when the widget actually mounts.
+// chunk (see vite.config.ts). The chart chunk itself now loads eagerly for
+// every visit regardless of this lazy boundary, since this bundler version
+// cannot express reachability-correct splitting for it and it stays in the
+// PWA precache rather than being fetched on demand. Lazy-loading the widget
+// still defers parsing and executing the chart code until it actually
+// mounts, which is a real render-time benefit independent of network timing.
 const NetWorthTrendWidget = React.lazy(() =>
   import('../components/dashboard/widgets/NetWorthTrendWidget').then((m) => ({ default: m.NetWorthTrendWidget }))
 );
