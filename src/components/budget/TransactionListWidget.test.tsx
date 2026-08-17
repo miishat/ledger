@@ -377,6 +377,24 @@ describe('undo via the global store', () => {
   })
 })
 
+describe('TransactionListWidget keyboard access', () => {
+  it('opens a row for editing with Enter and with Space', () => {
+    useBudgetStore.setState({
+      transactions: {
+        a1: { id: 'a1', date: '2026-08-04', amount: 20, description: 'KEYBOARD ROW', type: 'expense' },
+      },
+      categories: {},
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+
+    const row = screen.getByRole('button', { name: /KEYBOARD ROW/ })
+    expect(row).toHaveAttribute('tabindex', '0')
+
+    fireEvent.keyDown(row, { key: 'Enter' })
+    expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
+  })
+})
+
 describe('TransactionListWidget selection at scale', () => {
   it(
     'keeps selection scoped to visible rows when the search narrows',

@@ -261,8 +261,17 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   return (
                   <tr
                     key={tx.id}
-                    className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Edit ${tx.description}`}
+                    className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
                     onClick={() => setEditingTransaction(tx)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' && e.key !== ' ') return
+                      // Space would otherwise scroll the list out from under the row.
+                      e.preventDefault()
+                      setEditingTransaction(tx)
+                    }}
                   >
                     <td className="py-3 w-8" onClick={(e) => e.stopPropagation()}>
                       <input
