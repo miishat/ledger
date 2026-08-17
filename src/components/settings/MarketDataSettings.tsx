@@ -43,7 +43,7 @@ export const MarketDataSection: React.FC = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={apiKey ? 'Replace API key…' : 'Paste API key…'}
-          className="flex-1 min-w-0 px-3 py-2 rounded-md border border-border bg-bg-primary/50 text-text-primary text-sm placeholder:text-text-secondary/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          className="flex-1 min-w-0 px-3 py-2 rounded-md border border-border bg-bg-primary/50 text-text-primary text-sm placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         />
         <button
           onClick={handleSave}

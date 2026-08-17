@@ -221,7 +221,7 @@ export const DriveSyncControls: React.FC = () => {
           Disconnect
         </button>
       </div>
-      <p className="text-[11px] text-text-secondary/70">
+      <p className="text-[11px] text-text-secondary">
         Forgets the Drive link only. Nothing is deleted.
       </p>
 

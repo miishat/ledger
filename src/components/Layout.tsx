@@ -135,7 +135,7 @@ export const Layout: React.FC = () => {
             onClick={() => setWhatsNewOpen(true)}
             title="What's New"
             aria-label={`Version ${__APP_VERSION__}. Open What's New`}
-            className="text-[11px] text-text-secondary/70 hover:text-accent transition-colors pr-2"
+            className="text-[11px] text-text-secondary hover:text-accent transition-colors pr-2"
           >
             v{__APP_VERSION__}
           </button>
