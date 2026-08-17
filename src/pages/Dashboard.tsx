@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { BentoGrid } from '../components/dashboard/BentoGrid';
 import { NetWorthWidget } from '../components/dashboard/widgets/NetWorthWidget';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
 import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget';
 import { AccountCategoryWidget } from '../components/dashboard/AccountCategoryWidget';
-import { NetWorthTrendWidget } from '../components/dashboard/widgets/NetWorthTrendWidget';
 import { PortfolioRollupWidget } from '../components/dashboard/widgets/PortfolioRollupWidget';
 import { BudgetHealthWidget } from '../components/dashboard/widgets/BudgetHealthWidget';
 import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWidget';
@@ -17,6 +16,17 @@ import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './da
 
 // Re-exported so callers (and tests) can import ids/labels from this module too.
 export { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS };
+
+// NetWorthTrendWidget pulls in recharts, which is split into its own build
+// chunk and deliberately excluded from the PWA precache (it's expected to be
+// fetched on demand). Dashboard itself stays in the entry chunk (see
+// App.tsx), so if this import were static, the chart chunk would end up in
+// the entry's synchronous graph on every route, eager but uncached, which
+// produced a blank page offline. Lazy-loading the widget keeps the chart
+// chunk out of the entry and fetches it only when the widget actually mounts.
+const NetWorthTrendWidget = React.lazy(() =>
+  import('../components/dashboard/widgets/NetWorthTrendWidget').then((m) => ({ default: m.NetWorthTrendWidget }))
+);
 
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -31,7 +41,14 @@ export const Dashboard: React.FC = () => {
   // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
   // (recomputed each render), so the elements themselves cannot be hoisted alongside the ids.
   const DASHBOARD_WIDGETS: { id: string; element: React.ReactNode }[] = [
-    { id: 'net-worth', element: <NetWorthTrendWidget /> },
+    {
+      id: 'net-worth',
+      element: (
+        <Suspense fallback={<div className="min-h-[292px]" aria-hidden="true" />}>
+          <NetWorthTrendWidget />
+        </Suspense>
+      ),
+    },
     { id: 'trend', element: <NetWorthWidget /> },
     { id: 'monthly-summary', element: <MonthlySummaryWidget range={{ from: currentMonth, to: currentMonth }} /> },
     { id: 'bank', element: <AccountCategoryWidget title="Bank Accounts" type="bank" /> },
