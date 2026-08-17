@@ -8,6 +8,7 @@ import { UpdateToast } from './ui/UpdateToast'
 import { UndoToast } from './ui/UndoToast'
 import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
+import { ShortcutsHelp } from './ui/ShortcutsHelp'
 import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search } from 'lucide-react'
 import { LedgerMark } from './ui/LedgerMark'
@@ -23,6 +24,7 @@ export const Layout: React.FC = () => {
   const swUpdate = useSWUpdate()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   // Captured once at mount: the last-seen-version effect below overwrites the key.
   const [shouldShowNews] = useState(() =>
     shouldShowWhatsNew(localStorage.getItem(LAST_SEEN_VERSION_KEY), __APP_VERSION__)
@@ -46,6 +48,15 @@ export const Layout: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setPaletteOpen(true)
+        return
+      }
+      // Do not hijack "?" while the user is typing into a field.
+      const el = e.target as HTMLElement | null
+      const typing =
+        !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      if (e.key === '?' && !typing) {
+        e.preventDefault()
+        setShortcutsOpen(true)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -216,6 +227,7 @@ export const Layout: React.FC = () => {
       <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} onOpenDisclaimer={() => setDisclaimerOpen(true)} swUpdate={swUpdate} />
       <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <SettingsSheet
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
