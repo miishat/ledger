@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { computeWindow } from '../../utils/virtualWindow';
 import { TransactionModal } from './TransactionModal';
 import type { Transaction } from '../../types/budget';
 import { Trash2, Maximize2, Minimize2, Receipt, Search } from 'lucide-react';
@@ -75,6 +76,30 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const selected = selectedIds.filter((id) => visibleIdSet.has(id));
   const selectedSet = new Set(selected);
   const allVisibleSelected = visibleIds.length > 0 && selected.length === visibleIds.length;
+
+  const ROW_HEIGHT = 48;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+
+  const windowed = computeWindow({
+    scrollTop,
+    viewportHeight,
+    rowHeight: ROW_HEIGHT,
+    totalRows: txList.length,
+    overscan: 8,
+  });
+  const visibleRows = txList.slice(windowed.startIndex, windowed.endIndex);
+
+  // Measure the scroll container once it mounts (and whenever the layout
+  // toggles between expanded/collapsed) so the first paint already windows
+  // the rows instead of waiting for a scroll event to measure clientHeight.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded, txList.length > 0]);
 
   const toggleRow = (id: string) =>
     setSelectedIds((current) =>
@@ -198,7 +223,15 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           )}
         </div>
       ) : (
-        <div className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : ''}`}>
+        <div
+          ref={scrollRef}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setScrollTop(el.scrollTop);
+            if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
+          }}
+          className={`overflow-x-auto ${isExpanded ? 'flex-1 overflow-y-auto' : 'max-h-[560px] overflow-y-auto'}`}
+        >
           <div className="hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -220,7 +253,10 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                 </tr>
               </thead>
               <tbody>
-                {txList.map(tx => {
+                {windowed.padTop > 0 && (
+                  <tr aria-hidden="true"><td colSpan={6} style={{ height: windowed.padTop, padding: 0 }} /></tr>
+                )}
+                {visibleRows.map(tx => {
                   const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
                   return (
                   <tr
@@ -275,6 +311,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   </tr>
                   );
                 })}
+                {windowed.padBottom > 0 && (
+                  <tr aria-hidden="true"><td colSpan={6} style={{ height: windowed.padBottom, padding: 0 }} /></tr>
+                )}
               </tbody>
             </table>
           </div>
