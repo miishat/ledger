@@ -12,6 +12,9 @@ import { UpcomingVestsWidget } from '../components/dashboard/widgets/UpcomingVes
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 import { useIsDesktop } from '../hooks/useMediaQuery';
 import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
+import { FirstRunChecklist } from '../components/dashboard/FirstRunChecklist';
+import { useAccountsStore } from '../store/useAccountsStore';
+import { useBudgetStore } from '../store/useBudgetStore';
 import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './dashboardWidgets';
 
 // Re-exported so callers (and tests) can import ids/labels from this module too.
@@ -37,6 +40,8 @@ export const Dashboard: React.FC = () => {
   const hidden = useDashboardLayoutStore((s) => s.hidden);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const isDesktop = useIsDesktop();
+  const accountCount = useAccountsStore((s) => s.accounts.length);
+  const transactionCount = useBudgetStore((s) => Object.keys(s.transactions).length);
 
   // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
   // (recomputed each render), so the elements themselves cannot be hoisted alongside the ids.
@@ -100,6 +105,8 @@ export const Dashboard: React.FC = () => {
           Customize
         </button>
       </div>
+
+      <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />
 
       <BentoGrid>
         {visibleWidgets.map(({ id, element }) => {
