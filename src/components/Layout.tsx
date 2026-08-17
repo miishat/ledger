@@ -67,6 +67,13 @@ export const Layout: React.FC = () => {
 
   return (
     <div className="flex h-dvh bg-transparent text-text-primary overflow-hidden relative">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-bg-secondary focus:px-4 focus:py-2 focus:text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+      >
+        Skip to content
+      </a>
+
       {/* Dynamic Theme Background Decorators */}
       <ThemeBackground theme={theme} />
 
@@ -86,7 +93,7 @@ export const Layout: React.FC = () => {
         <div>
           <div className="p-6 pb-3 flex items-center gap-2.5">
             <LedgerMark size={26} className="text-accent shrink-0" />
-            <h1 className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</h1>
+            <span className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</span>
           </div>
 
           <div className="px-4">
@@ -143,7 +150,11 @@ export const Layout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 relative z-10 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8"
+      >
         <ErrorBoundary key={location.pathname}>
           <Suspense
             fallback={

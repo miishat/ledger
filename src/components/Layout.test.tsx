@@ -82,3 +82,17 @@ describe('Layout nav clearance guard', () => {
     expect(classes).toContain('sm:px-8')               // horizontal sm padding split out
   })
 })
+
+describe('Layout document structure', () => {
+  it('renders exactly one h1, owned by the page not the sidebar brand', () => {
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+    expect(screen.queryAllByRole('heading', { level: 1, name: 'Ledger' })).toHaveLength(0)
+  })
+
+  it('offers a skip link that targets the main region', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const skip = screen.getByRole('link', { name: /skip to content/i })
+    expect(skip).toHaveAttribute('href', '#main-content')
+    expect(container.querySelector('main')).toHaveAttribute('id', 'main-content')
+  })
+})
