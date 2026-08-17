@@ -11,6 +11,7 @@ import { CommandPalette } from './CommandPalette'
 import { ErrorBoundary } from './ErrorBoundary'
 import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search } from 'lucide-react'
 import { LedgerMark } from './ui/LedgerMark'
+import { SyncStatusChip } from './sync/SyncStatusChip'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
@@ -131,21 +132,24 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Settings Dock */}
-        <div className="p-4 border-t border-border bg-bg-primary/20 flex items-center justify-between">
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
-          >
-            <Settings className="w-4 h-4" /> Settings
-          </button>
-          <button
-            onClick={() => setWhatsNewOpen(true)}
-            title="What's New"
-            aria-label={`Version ${__APP_VERSION__}. Open What's New`}
-            className="text-[11px] text-text-secondary hover:text-accent transition-colors pr-2"
-          >
-            v{__APP_VERSION__}
-          </button>
+        <div className="p-4 border-t border-border bg-bg-primary/20 flex flex-col gap-2">
+          <SyncStatusChip onOpenSettings={() => setSettingsOpen(true)} />
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
+            >
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+            <button
+              onClick={() => setWhatsNewOpen(true)}
+              title="What's New"
+              aria-label={`Version ${__APP_VERSION__}. Open What's New`}
+              className="text-[11px] text-text-secondary hover:text-accent transition-colors pr-2"
+            >
+              v{__APP_VERSION__}
+            </button>
+          </div>
         </div>
       </nav>
 
