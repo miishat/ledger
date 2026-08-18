@@ -6,6 +6,26 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.2-beta] - 2026-08-17
+
+### Added
+- Demo mode, in Settings under Backup: load a sample two months of transactions to see what a populated Ledger looks like before you enter your own. A banner marks it while it is on, the sample records never reach a backup file or a Drive sync, and clearing it removes only the sample records so anything you entered yourself survives. If you already have transactions, loading it asks first and offers an undo
+- Recurring bills: optional reminders for bills falling due in the next few days. Turn them on in Settings, which is the only point Ledger asks your browser for notification permission
+- Drive sync: a status chip in the sidebar reading up to date, stale, or never synced, so you no longer have to open Settings to learn whether this device is current
+- A keyboard shortcuts list, opened with the ? key
+- Dashboard: a Getting started checklist on a fresh install, pointing at your first account and first transaction, which disappears once both are done
+- A Skip to content link, so keyboard and screen reader users can jump past the sidebar on every page
+
+### Changed
+- Budgeting: the transaction table now renders only the rows on screen. A list of several thousand transactions stays responsive while scrolling, searching and selecting, where it previously mounted every row at once. Selecting across a large filtered list is much faster too
+- Budgeting: a transaction row can be opened with Enter or Space once focused, instead of needing a click
+- The app's main code bundle is now less than half its former size, and the chart library, React and the router sit in their own files, so an update re-downloads less than it used to
+- Geometric Light: the blue accent is slightly darker. The old shade fell below the WCAG AA contrast minimum against white wherever it was used for normal-size text, such as the active sidebar link
+
+### Fixed
+- Several small labels were too faint to meet the contrast minimum in the default theme: the version number in the sidebar, the help line under Drive sync, and the placeholder in the market data API key box
+- Every page carried two top-level headings, one from the sidebar and one from the page itself, which made screen reader navigation ambiguous. The sidebar brand is no longer a heading
+
 ## [0.9.1-beta] - 2026-08-15
 
 ### Added
