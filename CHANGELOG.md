@@ -6,6 +6,22 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.3-beta] - 2026-08-18
+
+### Added
+- Drive sync: an automatic sync option in Settings. Once you have synced manually at least once in a browser session, Ledger keeps that device current in the background, but only when there is nothing to decide, pulling or pushing on your behalf when the two sides agree cleanly. Anything that could overwrite work done on another device still stops and waits for you to resolve it in Settings, exactly as manual sync always has
+- Dashboard: the Getting started checklist can now be dismissed with its own close control, for anyone who wants it gone before finishing both steps
+
+### Changed
+- Budgeting: the transaction table now renders only the rows on screen on phones as well as on desktop, so a long list stays responsive while scrolling and searching on both. The card list used on phones no longer mounts every card up front
+- Budgeting: a transaction row can now be opened with Enter or Space once focused on phones as well as on desktop, instead of needing a tap or a click
+- The app now starts noticeably faster, especially on a phone or a slower connection, because the chart library no longer loads until a page that actually shows a chart is opened
+
+### Fixed
+- Recurring bills: a reminder for a bill due today now fires. Previously the due-date check missed bills due on the current day and only caught ones due in the next few days
+- The demo data banner could keep showing after demo data was cleared, or fail to reappear after demo data was loaded again in the same session, in a few sequences involving undo. It now tracks the same underlying state every code path that can change it, including undo, so it always matches whether sample data is actually loaded
+- Several labels dimmed with reduced opacity, such as helper text and secondary figures, fell below the WCAG AA contrast minimum in the default theme. They are now shown at full opacity
+
 ## [0.9.2-beta] - 2026-08-17
 
 ### Added

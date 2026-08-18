@@ -1,7 +1,7 @@
 {
   "name": "vite-temp",
   "private": true,
-  "version": "0.9.2-beta",
+  "version": "0.9.3-beta",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,7 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:eager": "node scripts/check-eager-graph.mjs",
     "e2e": "playwright test",
-    "verify": "npm run lint && npm test -- --run && npm run build && npm run check:bundle && npm run e2e"
+    "verify": "npm run lint && npm test -- --run && npm run build && npm run check:bundle && npm run check:eager && npm run e2e"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
