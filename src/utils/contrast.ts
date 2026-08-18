@@ -24,3 +24,15 @@ export function contrastRatio(a: string, b: string): number {
   const lb = luminance(cb)
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
 }
+
+/** Flattens a partly transparent foreground onto an opaque background, which
+ *  is what a Tailwind opacity modifier such as text-white/50 actually renders.
+ *  Contrast math needs the flattened colour, not the token's own value. */
+export function compositeOver(fg: string, bg: string, alpha: number): string {
+  const f = parseHex(fg)
+  const b = parseHex(bg)
+  if (!f || !b) return fg
+  const mix = (i: number) => Math.round(f[i] * alpha + b[i] * (1 - alpha))
+  const hex = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${hex(mix(0))}${hex(mix(1))}${hex(mix(2))}`
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { contrastRatio } from './contrast'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { resolve, join } from 'node:path'
+import { contrastRatio, compositeOver } from './contrast'
 
 const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8')
 
@@ -50,4 +50,44 @@ describe('theme token contrast', () => {
       expect(contrastRatio(block.tokens['text-primary'], block.tokens['bg-primary'])).toBeGreaterThanOrEqual(4.5)
     },
   )
+})
+
+describe('opacity-modified text', () => {
+  it('composites a colour over a background at an alpha', () => {
+    expect(compositeOver('#ffffff', '#000000', 0.5)).toBe('#808080')
+    expect(compositeOver('#ffffff', '#000000', 1)).toBe('#ffffff')
+    expect(compositeOver('#ffffff', '#000000', 0)).toBe('#000000')
+  })
+
+  // Tailwind's /50 modifier on a text token fell below AA in every theme.
+  // Anything reintroducing it should fail here rather than reaching users.
+  it.each(themeBlocks().map((b) => [b.name, b] as const))(
+    '%s secondary text at 50 percent opacity is below AA, so the modifier must not be used',
+    (_name, block) => {
+      const faded = compositeOver(block.tokens['text-secondary'], block.tokens['bg-primary'], 0.5)
+      expect(contrastRatio(faded, block.tokens['bg-primary'])).toBeLessThan(4.5)
+    },
+  )
+})
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name)
+    if (statSync(p).isDirectory()) return sourceFiles(p)
+    return p.endsWith('.tsx') || p.endsWith('.ts') ? [p] : []
+  })
+}
+
+describe('opacity modifiers on text tokens', () => {
+  it('never uses an alpha low enough to break AA', () => {
+    const offenders: string[] = []
+    for (const file of sourceFiles(resolve(__dirname, '..'))) {
+      if (file.endsWith('.test.ts') || file.endsWith('.test.tsx')) continue
+      const src = readFileSync(file, 'utf8')
+      for (const m of src.matchAll(/text-text-secondary\/(\d+)/g)) {
+        if (Number(m[1]) < 80) offenders.push(`${file}: ${m[0]}`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
 })
