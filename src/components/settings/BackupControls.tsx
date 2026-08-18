@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Download, Upload, Sparkles, X } from 'lucide-react'
 import { backupToBlob, backupFilename, parseBackupText, restoreBackup } from '../../utils/backup'
-import { buildDemoData, buildDemoCategoryGroups, isDemoActive, DEMO_FLAG_KEY } from '../../utils/demoData'
+import { buildDemoData, buildDemoCategoryGroups, isDemoActive, setDemoActive as setDemoFlag } from '../../utils/demoData'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useUndoStore } from '../../store/useUndoStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
@@ -33,13 +33,13 @@ export const BackupControls: React.FC = () => {
 
     const { transactions, categories } = buildDemoData()
     const categoryGroups = buildDemoCategoryGroups()
-    localStorage.setItem(DEMO_FLAG_KEY, 'on')
+    setDemoFlag(true)
     useBudgetStore.setState({ transactions, categories, categoryGroups })
     setDemoActive(true)
 
     if (hadRealData) {
       offerUndo('Loaded demo data, replacing existing data', () => {
-        localStorage.removeItem(DEMO_FLAG_KEY)
+        setDemoFlag(false)
         useBudgetStore.setState({
           transactions: previous.transactions,
           categories: previous.categories,
@@ -70,7 +70,7 @@ export const BackupControls: React.FC = () => {
   }
 
   const handleClearDemo = () => {
-    localStorage.removeItem(DEMO_FLAG_KEY)
+    setDemoFlag(false)
     const { transactions, categories, categoryGroups } = useBudgetStore.getState()
     useBudgetStore.setState({
       transactions: withoutDemoRecords(transactions),

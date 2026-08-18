@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
@@ -17,7 +17,7 @@ import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
-import { isDemoActive } from '../utils/demoData'
+import { isDemoActive, subscribeDemoActive } from '../utils/demoData'
 import { isAutoSyncEnabled, autoSyncAction } from '../utils/autoSync'
 import { previewPush, previewPull, performPush, performPull } from '../utils/syncService'
 import { getCachedToken } from '../utils/driveAuth'
@@ -26,6 +26,7 @@ import { useSyncStore } from '../store/useSyncStore'
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
+  const demoActive = useSyncExternalStore(subscribeDemoActive, isDemoActive, () => false)
   const swUpdate = useSWUpdate()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -217,7 +218,7 @@ export const Layout: React.FC = () => {
           normal document flow above <main> rather than floating fixed over
           it, which used to cover the sidebar brand area and page content. */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative z-10">
-        {isDemoActive() && (
+        {demoActive && (
           <div
             role="status"
             className="shrink-0 bg-accent/15 border-b border-accent/40 px-4 py-1.5 text-center text-[12px] text-text-primary"

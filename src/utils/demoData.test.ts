@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { buildDemoData, isDemoActive, DEMO_FLAG_KEY } from './demoData'
+import { buildDemoData, isDemoActive, DEMO_FLAG_KEY, subscribeDemoActive, setDemoActive } from './demoData'
 import { NON_BACKUP_KEY_NAMES, STORAGE_KEYS } from '../store/storageKeys'
 
 beforeEach(() => localStorage.clear())
@@ -42,5 +42,24 @@ describe('demo data', () => {
   it('keeps the demo flag out of backups', () => {
     expect(NON_BACKUP_KEY_NAMES).toContain('demo')
     expect(STORAGE_KEYS.demo).toBe(DEMO_FLAG_KEY)
+  })
+})
+
+describe('demo flag subscription', () => {
+  it('notifies subscribers when the flag is set and cleared', () => {
+    let calls = 0
+    const unsubscribe = subscribeDemoActive(() => { calls++ })
+
+    setDemoActive(true)
+    expect(isDemoActive()).toBe(true)
+    expect(calls).toBe(1)
+
+    setDemoActive(false)
+    expect(isDemoActive()).toBe(false)
+    expect(calls).toBe(2)
+
+    unsubscribe()
+    setDemoActive(true)
+    expect(calls).toBe(2)
   })
 })

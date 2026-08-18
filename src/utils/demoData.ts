@@ -8,6 +8,24 @@ export function isDemoActive(): boolean {
   return localStorage.getItem(DEMO_FLAG_KEY) !== null
 }
 
+const listeners = new Set<() => void>()
+
+/** The banner in Layout is the only on-screen signal that the figures shown
+ *  are sample data, so it has to track the flag exactly. A plain localStorage
+ *  read cannot do that: nothing re-renders when the value changes, which left
+ *  the banner on screen after the data behind it was cleared. */
+export function subscribeDemoActive(onChange: () => void): () => void {
+  listeners.add(onChange)
+  return () => { listeners.delete(onChange) }
+}
+
+export function setDemoActive(on: boolean): void {
+  if (typeof localStorage === 'undefined') return
+  if (on) localStorage.setItem(DEMO_FLAG_KEY, 'on')
+  else localStorage.removeItem(DEMO_FLAG_KEY)
+  for (const l of listeners) l()
+}
+
 const DEMO_GROUP_EXPENSE = 'demo-group-expense'
 const DEMO_GROUP_INCOME = 'demo-group-income'
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { setDemoActive } from '../utils/demoData'
 
 vi.mock('../hooks/useSWUpdate', () => ({
   useSWUpdate: () => ({
@@ -94,5 +95,19 @@ describe('Layout document structure', () => {
     const skip = screen.getByRole('link', { name: /skip to content/i })
     expect(skip).toHaveAttribute('href', '#main-content')
     expect(container.querySelector('main')).toHaveAttribute('id', 'main-content')
+  })
+})
+
+describe('Layout demo banner', () => {
+  it('shows and hides with the demo flag without a reload', async () => {
+    setDemoActive(false)
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+    expect(screen.queryByText(/Demo data is loaded/i)).not.toBeInTheDocument()
+
+    await act(async () => { setDemoActive(true) })
+    expect(screen.getByText(/Demo data is loaded/i)).toBeInTheDocument()
+
+    await act(async () => { setDemoActive(false) })
+    expect(screen.queryByText(/Demo data is loaded/i)).not.toBeInTheDocument()
   })
 })
