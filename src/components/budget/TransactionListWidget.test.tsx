@@ -1,4 +1,5 @@
-import { render, screen, within, fireEvent } from '@testing-library/react'
+import { Profiler } from 'react'
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { TransactionListWidget } from './TransactionListWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useUndoStore } from '../../store/useUndoStore'
@@ -458,4 +459,72 @@ describe('TransactionListWidget selection at scale', () => {
     },
     30000
   )
+})
+
+describe('TransactionListWidget row-height measurement loop safety', () => {
+  it('stops re-rendering once the measured row height stabilizes, instead of looping forever', async () => {
+    // jsdom never lays out elements, so getBoundingClientRect on a real row
+    // always reports 0, which would trivially (and misleadingly) satisfy the
+    // "no infinite loop" property since the effect's `h &&` guard would never
+    // even fire. Stub a fixed, non-nominal height (taller than the 48px
+    // fallback, as a row wrapping several tag chips would be) so the
+    // measurement effect actually exercises its update-then-stabilize path.
+    const rectDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'getBoundingClientRect')
+    HTMLElement.prototype.getBoundingClientRect = function () {
+      return { height: 64, width: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {} }
+    }
+    const clientHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight')
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 480 })
+
+    const transactions: Record<string, Transaction> = {}
+    for (let i = 0; i < 30; i++) {
+      transactions[`t${i}`] = {
+        id: `t${i}`,
+        date: '2026-08-04',
+        amount: 10,
+        description: `TX ${i}`,
+        type: 'expense',
+        tags: ['alpha', 'beta', 'gamma', 'delta', 'epsilon'],
+      }
+    }
+    useBudgetStore.setState({ transactions, categories: {} })
+
+    let renderCount = 0
+    const onRender = () => {
+      renderCount += 1
+    }
+
+    try {
+      render(
+        <Profiler id="txlist" onRender={onRender}>
+          <TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />
+        </Profiler>
+      )
+
+      // Let the measurement effect run its course across microtask/paint
+      // cycles, then confirm the render count has stopped climbing: a real
+      // infinite loop would keep incrementing renderCount without bound.
+      await waitFor(() => {
+        expect(renderCount).toBeGreaterThan(0)
+      })
+      const countAfterSettle = renderCount
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      expect(renderCount).toBe(countAfterSettle)
+      // Bounded and small: initial mount + at most one measurement-driven
+      // update, never dozens of renders from a runaway effect.
+      expect(renderCount).toBeLessThanOrEqual(5)
+    } finally {
+      if (rectDescriptor) {
+        Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', rectDescriptor)
+      } else {
+        delete (HTMLElement.prototype as { getBoundingClientRect?: unknown }).getBoundingClientRect
+      }
+      if (clientHeightDescriptor) {
+        Object.defineProperty(HTMLElement.prototype, 'clientHeight', clientHeightDescriptor)
+      } else {
+        delete (HTMLElement.prototype as { clientHeight?: number }).clientHeight
+      }
+    }
+  })
 })

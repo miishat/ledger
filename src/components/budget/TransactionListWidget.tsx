@@ -77,15 +77,30 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const selectedSet = new Set(selected);
   const allVisibleSelected = visibleIds.length > 0 && selected.length === visibleIds.length;
 
-  const ROW_HEIGHT = 48;
+  // Measured from the first rendered row rather than assumed: a row carrying
+  // several tag chips wraps and exceeds the nominal height, which would
+  // desynchronise the spacer rows from the real scroll offset. The constant is
+  // only the pre-measurement fallback.
+  const NOMINAL_ROW_HEIGHT = 48;
+  const [rowHeight, setRowHeight] = useState(NOMINAL_ROW_HEIGHT);
+  const firstRowRef = useRef<HTMLTableRowElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
 
+  // Intentionally no dependency array: this re-measures after every render so
+  // it catches height changes from wrapped tag chips, and the `> 1` guard
+  // below stops it looping once the measured value stabilizes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately unconditional; see comment above
+  useEffect(() => {
+    const h = firstRowRef.current?.getBoundingClientRect().height;
+    if (h && Math.abs(h - rowHeight) > 1) setRowHeight(h);
+  });
+
   const windowed = computeWindow({
     scrollTop,
     viewportHeight,
-    rowHeight: ROW_HEIGHT,
+    rowHeight,
     totalRows: txList.length,
     overscan: 8,
   });
@@ -279,11 +294,12 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                 {windowed.padTop > 0 && (
                   <tr aria-hidden="true"><td colSpan={6} style={{ height: windowed.padTop, padding: 0 }} /></tr>
                 )}
-                {visibleRows.map(tx => {
+                {visibleRows.map((tx, i) => {
                   const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
                   return (
                   <tr
                     key={tx.id}
+                    ref={i === 0 ? firstRowRef : undefined}
                     className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
                     onClick={() => setEditingTransaction(tx)}
                   >
