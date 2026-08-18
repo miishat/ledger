@@ -101,6 +101,29 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded, txList.length > 0]);
 
+  // Cards are taller than table rows and carry a 12px gap. This is an
+  // estimate, which is why the overscan below is generous: computeWindow
+  // degrades to rendering everything when the container is unmeasured, so a
+  // wrong estimate costs scroll smoothness, never correctness.
+  const CARD_HEIGHT = 116;
+  const cardScrollRef = useRef<HTMLDivElement>(null);
+  const [cardScrollTop, setCardScrollTop] = useState(0);
+  const [cardViewportHeight, setCardViewportHeight] = useState(0);
+
+  useEffect(() => {
+    const el = cardScrollRef.current;
+    if (el && el.clientHeight !== cardViewportHeight) setCardViewportHeight(el.clientHeight);
+  }, [cardViewportHeight]);
+
+  const cardWindow = computeWindow({
+    scrollTop: cardScrollTop,
+    viewportHeight: cardViewportHeight,
+    rowHeight: CARD_HEIGHT,
+    totalRows: txList.length,
+    overscan: 6,
+  });
+  const visibleCards = txList.slice(cardWindow.startIndex, cardWindow.endIndex);
+
   const toggleRow = (id: string) =>
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
@@ -337,8 +360,20 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               </tbody>
             </table>
           </div>
-          <div data-testid="transactions-cards" className="md:hidden flex flex-col gap-3">
-            {txList.map(tx => {
+          <div
+            data-testid="transactions-cards"
+            ref={cardScrollRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              setCardScrollTop(el.scrollTop);
+              if (el.clientHeight !== cardViewportHeight) setCardViewportHeight(el.clientHeight);
+            }}
+            className="md:hidden flex flex-col gap-3 max-h-[70dvh] overflow-y-auto"
+          >
+            {cardWindow.padTop > 0 && (
+              <div aria-hidden="true" style={{ height: cardWindow.padTop }} />
+            )}
+            {visibleCards.map(tx => {
               const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
               return (
               <div
@@ -397,6 +432,9 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               </div>
               );
             })}
+            {cardWindow.padBottom > 0 && (
+              <div aria-hidden="true" style={{ height: cardWindow.padBottom }} />
+            )}
           </div>
         </div>
       )}
