@@ -25,7 +25,13 @@ describe('App routing', () => {
     render(<App />)
     // The shell stays mounted while the chunk loads, so the sidebar is present
     // before the page itself is.
-    expect(await screen.findByRole('heading', { name: 'Budgeting' })).toBeInTheDocument()
+    // Full-suite runs contend for CPU across many parallel worker threads, so
+    // a lazy chunk that resolves in single-digit ms in isolation can take
+    // well over the default 1000ms timeout under that load. Use a generous
+    // timeout here rather than in isolation-only runs.
+    expect(
+      await screen.findByRole('heading', { name: 'Budgeting' }, { timeout: 5000 }),
+    ).toBeInTheDocument()
     window.location.hash = ''
   })
 })
