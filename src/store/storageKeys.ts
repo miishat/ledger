@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   demo: 'ledger-demo-mode',
   reminders: 'ledger-reminders-enabled',
   remindersLastNotified: 'ledger-reminders-last-notified',
+  autoSync: 'ledger-auto-sync',
 } as const
 
 export type StorageKeyName = keyof typeof STORAGE_KEYS
@@ -34,4 +35,4 @@ export type StorageKeyName = keyof typeof STORAGE_KEYS
  *  (device id, device name, revision, folder id) describes this device's
  *  relationship with Drive, so restoring it onto another device would make two
  *  machines claim the same identity. */
-export const NON_BACKUP_KEY_NAMES: StorageKeyName[] = ['sync', 'demo', 'reminders', 'remindersLastNotified']
+export const NON_BACKUP_KEY_NAMES: StorageKeyName[] = ['sync', 'demo', 'reminders', 'remindersLastNotified', 'autoSync']

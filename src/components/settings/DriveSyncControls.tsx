@@ -4,6 +4,7 @@ import { useSyncStore } from '../../store/useSyncStore'
 import { requestAccessToken, getCachedToken, clearCachedToken } from '../../utils/driveAuth'
 import { previewPush, previewPull, performPush, performPull } from '../../utils/syncService'
 import type { SnapshotMeta } from '../../utils/syncDecision'
+import { isAutoSyncEnabled, setAutoSyncEnabled } from '../../utils/autoSync'
 
 type Pending =
   | {
@@ -54,6 +55,7 @@ export const DriveSyncControls: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
+  const [autoSync, setAutoSync] = useState(() => isAutoSyncEnabled())
 
   const token = async (): Promise<string> => getCachedToken() ?? (await requestAccessToken(clientId!))
 
@@ -196,6 +198,19 @@ export const DriveSyncControls: React.FC = () => {
           <CloudDownload className="w-4 h-4" /> Pull from Drive
         </button>
       </div>
+
+      <label className="flex items-center gap-2 text-[12px] text-text-secondary">
+        <input
+          type="checkbox"
+          checked={autoSync}
+          onChange={(e) => {
+            setAutoSyncEnabled(e.target.checked)
+            setAutoSync(e.target.checked)
+          }}
+          className="shrink-0"
+        />
+        Sync automatically here when there is nothing to resolve. Conflicts still wait for you in this panel.
+      </label>
 
       <label className="flex items-center gap-2 text-[12px] text-text-secondary">
         This device

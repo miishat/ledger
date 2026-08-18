@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
@@ -18,6 +18,10 @@ import { useSWUpdate } from '../hooks/useSWUpdate'
 import { DisclaimerModal } from './ui/DisclaimerModal'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
 import { isDemoActive } from '../utils/demoData'
+import { isAutoSyncEnabled, autoSyncAction } from '../utils/autoSync'
+import { previewPush, previewPull, performPush, performPull } from '../utils/syncService'
+import { getCachedToken } from '../utils/driveAuth'
+import { useSyncStore } from '../store/useSyncStore'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -66,6 +70,50 @@ export const Layout: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem(LAST_SEEN_VERSION_KEY, __APP_VERSION__)
+  }, [])
+
+  // Automatic Drive sync: only runs when the user opted in, only acts on
+  // unambiguous decisions, and only uses a token already cached from an
+  // earlier manual connect. It never prompts for consent itself, so it never
+  // pops a sign-in window without a click. The ref guard means a rapid tab
+  // switch (several visibilitychange events in a row) cannot start a second
+  // sync while one is still in flight. Errors are swallowed: a failed
+  // background attempt just leaves the sync chip stale, which is already the
+  // honest signal, rather than surfacing a toast on every transient failure.
+  const autoSyncInFlight = useRef(false)
+  useEffect(() => {
+    const runAutoSync = async () => {
+      if (autoSyncInFlight.current) return
+      if (!isAutoSyncEnabled()) return
+      const { clientId, folderId } = useSyncStore.getState()
+      if (!clientId) return
+      const cachedToken = getCachedToken()
+      if (!cachedToken) return
+
+      autoSyncInFlight.current = true
+      try {
+        const [push, pull] = await Promise.all([previewPush(cachedToken), previewPull(cachedToken)])
+        const action = autoSyncAction({ enabled: true, connected: true, push, pull })
+        if (action === 'pull' && pull.kind === 'clean') {
+          await performPull(cachedToken, pull.remote)
+        } else if (action === 'push' && push.kind === 'clean') {
+          const currentFolderId = folderId ?? useSyncStore.getState().folderId
+          if (!currentFolderId) return
+          await performPush(cachedToken, currentFolderId, push.nextRevision, push.baseRevision)
+        }
+      } catch (err) {
+        console.error('Automatic Drive sync failed:', err)
+      } finally {
+        autoSyncInFlight.current = false
+      }
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+      void runAutoSync()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)
