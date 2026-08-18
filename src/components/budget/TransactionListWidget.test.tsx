@@ -390,7 +390,8 @@ describe('TransactionListWidget keyboard access', () => {
 
     const table = screen.getByRole('table')
     const row = within(table).getByRole('button', { name: /KEYBOARD ROW/ })
-    expect(row).toHaveAttribute('tabindex', '0')
+    row.focus()
+    expect(row).toHaveFocus()
 
     fireEvent.keyDown(row, { key: 'Enter' })
     expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()

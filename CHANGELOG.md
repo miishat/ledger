@@ -9,7 +9,7 @@ pre-1.0 beta.
 ## [0.9.3-beta] - 2026-08-18
 
 ### Added
-- Drive sync: an automatic sync option in Settings. Once you have synced manually at least once in a browser session, Ledger keeps that device current in the background, but only when there is nothing to decide, pulling or pushing on your behalf when the two sides agree cleanly. Anything that could overwrite work done on another device still stops and waits for you to resolve it in Settings, exactly as manual sync always has
+- Drive sync: an automatic sync option in Settings. Once you have synced manually at least once in a browser session, Ledger keeps that device current in the background, but only when there is nothing to decide, pulling or pushing on your behalf when the two sides agree cleanly. Anything that could overwrite work done on another device still stops and waits for you to resolve it in Settings, exactly as manual sync always has. Automatic sync uploads the same snapshot manual sync does, including any market data API key you have entered.
 - Dashboard: the Getting started checklist can now be dismissed with its own close control, for anyone who wants it gone before finishing both steps
 
 ### Changed

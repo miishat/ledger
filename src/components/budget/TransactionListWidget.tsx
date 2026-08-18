@@ -316,8 +316,6 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     <td className="py-3 text-[14px]">
                       <button
                         type="button"
-                        role="button"
-                        tabIndex={0}
                         aria-label={`Edit ${tx.description}`}
                         className="text-left bg-transparent border-0 p-0 m-0 font-inherit text-inherit cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
                         onClick={(e) => {
@@ -408,8 +406,6 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   />
                   <button
                     type="button"
-                    role="button"
-                    tabIndex={0}
                     aria-label={`Edit ${tx.description}`}
                     onClick={(e) => {
                       e.stopPropagation();
