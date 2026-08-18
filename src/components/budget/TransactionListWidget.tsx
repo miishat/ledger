@@ -379,8 +379,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               <div
                 key={tx.id}
                 data-testid={`transaction-card-${tx.id}`}
-                onClick={() => setEditingTransaction(tx)}
-                className="themed-card rounded-lg p-3 flex flex-col gap-2 cursor-pointer"
+                className="themed-card rounded-lg p-3 flex flex-col gap-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <input
@@ -391,12 +390,29 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     onClick={(e) => e.stopPropagation()}
                     className="mt-1 shrink-0 accent-[var(--color-accent)]"
                   />
-                  <div className="flex items-center justify-between flex-1 min-w-0">
+                  <button
+                    type="button"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Edit ${tx.description}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTransaction(tx);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' && e.key !== ' ') return
+                      // Space would otherwise scroll the card list out from under
+                      // the focused card.
+                      e.preventDefault()
+                      setEditingTransaction(tx)
+                    }}
+                    className="flex items-center justify-between flex-1 min-w-0 text-left bg-transparent border-0 p-0 m-0 font-inherit text-inherit cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                  >
                     <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
                     <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
                       {amountPrefix}{formatMoney(tx.amount)}
                     </span>
-                  </div>
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

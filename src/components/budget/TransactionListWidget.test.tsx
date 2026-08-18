@@ -66,8 +66,8 @@ describe('TransactionListWidget mobile layout', () => {
     const delClasses = deleteBtn.className.split(/\s+/)
     expect(delClasses.some((c) => /^p-(3|3\.5|4)$/.test(c))).toBe(true)
 
-    // Edit remains reachable: clicking the card (outside the delete button) opens the edit modal
-    const editTrigger = cardScope.getByTestId('transaction-card-tx1')
+    // Edit remains reachable: clicking the card's description/amount button opens the edit modal
+    const editTrigger = cardScope.getByRole('button', { name: /Edit Coffee/ })
     fireEvent.click(editTrigger)
     expect(screen.getByDisplayValue('Coffee')).toBeInTheDocument()
   })
@@ -387,10 +387,28 @@ describe('TransactionListWidget keyboard access', () => {
     })
     render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
 
-    const row = screen.getByRole('button', { name: /KEYBOARD ROW/ })
+    const table = screen.getByRole('table')
+    const row = within(table).getByRole('button', { name: /KEYBOARD ROW/ })
     expect(row).toHaveAttribute('tabindex', '0')
 
     fireEvent.keyDown(row, { key: 'Enter' })
+    expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
+  })
+})
+
+describe('TransactionListWidget mobile card keyboard access', () => {
+  it('exposes each card as a button and opens it with Enter', () => {
+    useBudgetStore.setState({
+      transactions: {
+        m1: { id: 'm1', date: '2026-08-04', amount: 20, description: 'CARD ROW', type: 'expense' },
+      },
+      categories: {},
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+
+    const cards = screen.getAllByRole('button', { name: /Edit CARD ROW/ })
+    expect(cards.length).toBeGreaterThan(0)
+    fireEvent.keyDown(cards[0], { key: 'Enter' })
     expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
   })
 })
