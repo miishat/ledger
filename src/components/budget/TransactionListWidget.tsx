@@ -261,17 +261,8 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   return (
                   <tr
                     key={tx.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Edit ${tx.description}`}
-                    className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                    className="border-b border-border/50 hover:bg-bg-primary/50 transition-colors group cursor-pointer"
                     onClick={() => setEditingTransaction(tx)}
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter' && e.key !== ' ') return
-                      // Space would otherwise scroll the list out from under the row.
-                      e.preventDefault()
-                      setEditingTransaction(tx)
-                    }}
                   >
                     <td className="py-3 w-8" onClick={(e) => e.stopPropagation()}>
                       <input
@@ -283,7 +274,27 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       />
                     </td>
                     <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
-                    <td className="py-3 text-[14px]">{tx.description}</td>
+                    <td className="py-3 text-[14px]">
+                      <button
+                        type="button"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Edit ${tx.description}`}
+                        className="text-left bg-transparent border-0 p-0 m-0 font-inherit text-inherit cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingTransaction(tx);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter' && e.key !== ' ') return
+                          // Space would otherwise scroll the list out from under the row.
+                          e.preventDefault()
+                          setEditingTransaction(tx)
+                        }}
+                      >
+                        {tx.description}
+                      </button>
+                    </td>
                     <td className="py-3 text-[14px]">
                       <span className="px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px]">
                         {categoryLabel}
