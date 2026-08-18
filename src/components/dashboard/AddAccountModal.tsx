@@ -71,7 +71,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Chase Checking"
-          className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent"
+          className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
           required
         />
       </div>
@@ -82,7 +82,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
           value={value}
           onCommit={setValue}
           placeholder="0.00"
-          className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent"
+          className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
         />
       </div>
 

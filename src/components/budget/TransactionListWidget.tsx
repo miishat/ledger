@@ -140,7 +140,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search transactions"
               placeholder="Search"
-              className="h-[34px] w-40 sm:w-48 pl-7 pr-2 text-[13px] bg-bg-primary border border-border rounded-md text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent shadow-sm"
+              className="h-[34px] w-40 sm:w-48 pl-7 pr-2 text-[13px] bg-bg-primary border border-border rounded-md text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent shadow-sm"
             />
           </div>
           <ThemedSelect
