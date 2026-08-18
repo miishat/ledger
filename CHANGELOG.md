@@ -17,8 +17,8 @@ pre-1.0 beta.
 - A Skip to content link, so keyboard and screen reader users can jump past the sidebar on every page
 
 ### Changed
-- Budgeting: the transaction table now renders only the rows on screen. A list of several thousand transactions stays responsive while scrolling, searching and selecting, where it previously mounted every row at once. Selecting across a large filtered list is much faster too
-- Budgeting: a transaction row can be opened with Enter or Space once focused, instead of needing a click
+- Budgeting: on desktop, the transaction table now renders only the rows on screen, so a list of several thousand transactions stays responsive while scrolling and searching, where it previously mounted every row at once. The card list used on phones is unchanged for now. Selecting across a large filtered list is faster in both
+- Budgeting: on desktop, a transaction row can be opened with Enter or Space once focused, instead of needing a click. The card list used on phones still needs a tap
 - The app's main code bundle is now less than half its former size, and the chart library, React and the router sit in their own files, so an update re-downloads less than it used to
 - Geometric Light: the blue accent is slightly darker. The old shade fell below the WCAG AA contrast minimum against white wherever it was used for normal-size text, such as the active sidebar link
 
