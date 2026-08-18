@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:bundle": "node scripts/check-bundle.mjs",
+    "check:eager": "node scripts/check-eager-graph.mjs",
     "e2e": "playwright test",
     "verify": "npm run lint && npm test -- --run && npm run build && npm run check:bundle && npm run e2e"
   },

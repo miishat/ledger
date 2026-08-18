@@ -11,18 +11,25 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      // Chunk splitting (see codeSplitting.groups below) keeps the chart
-      // library out of the main entry bundle, so it does not block first
-      // paint or bloat every route's parse cost with code most routes never
-      // use. That entry-chunk-size win is real. But this rolldown version
-      // cannot express reachability-correct code splitting for this
-      // dependency: the entry chunk always statically imports the charts
-      // chunk regardless of how the manual chunking is configured, so the
-      // chunk is not actually fetched on demand, it loads on every visit.
-      // Excluding it from the precache on that assumption meant a PWA
-      // install followed by going offline before the runtime cache filled
-      // in rendered a blank page. So the chart chunk stays in the normal
-      // precache like everything else the entry needs at first paint.
+      // The chart library (recharts and friends) is kept out of the eager
+      // entry graph two ways: nothing on the always-mounted Command Palette
+      // path imports a component that pulls in recharts (see
+      // scripts/check-eager-graph.mjs, which fails the build if that is ever
+      // undone), and the Dashboard/Planner widgets that do use recharts are
+      // React.lazy-loaded. Naming those chunks with a `charts-` prefix used
+      // to rely on manual `codeSplitting.groups` entries for `charts` and
+      // `charts-vendor`, but that API force-links every declared group's
+      // chunk into the entry for this rolldown version regardless of true
+      // reachability, which defeated the whole point once the entry no
+      // longer actually needed recharts. The `charts-` naming is done in
+      // output.chunkFileNames below instead, which only affects the
+      // filename, not what gets linked into the entry. The chart chunk is
+      // now genuinely deferred, but it is still kept in the PWA precache
+      // deliberately: e2e/offline.spec.ts guards against a blank page when
+      // offline before the runtime cache has filled in, and re-excluding
+      // the chart chunk from precache to chase the "on demand" ideal would
+      // need a new e2e case proving no such regression, which was not
+      // attempted here.
       manifest: {
         name: 'Ledger',
         short_name: 'Ledger',
@@ -60,27 +67,24 @@ export default defineConfig({
         // `codeSplitting.groups` directly (rolldown's non-deprecated,
         // documented API) gives each named chunk its own group so the split
         // actually takes effect.
+        //
+        // recharts and its redux/immer/d3/victory-vendor dependencies are
+        // deliberately NOT declared as a codeSplitting group here (unlike
+        // motion/vendor-react/vendor-router below). For this rolldown
+        // version, a codeSplitting.groups entry force-links its chunk into
+        // the entry unconditionally, regardless of whether anything on the
+        // entry's actual import graph still reaches it. That was harmless
+        // while recharts truly was eagerly reachable (via the Command
+        // Palette's planner tool registry), but once that reachability was
+        // fixed (see scripts/check-eager-graph.mjs), the group declaration
+        // itself became the thing keeping the chart chunk linked into the
+        // entry. Leaving recharts out of codeSplitting.groups lets
+        // rolldown's default chunking correctly defer it; the `charts-`
+        // filename prefix (for naming and precache-matching purposes) is
+        // applied in chunkFileNames below instead, which affects only the
+        // output filename, not what gets linked into the entry.
         codeSplitting: {
           groups: [
-            {
-              // recharts's own state management (redux/immer/reselect) is
-              // only ever loaded alongside recharts, so it is split into a
-              // second charts-prefixed chunk to keep the primary chart
-              // chunk under budget. Both charts chunks are precached; see
-              // the comment above the VitePWA plugin for why.
-              name: 'charts-vendor',
-              test: /node_modules[\\/](@reduxjs[\\/]toolkit|redux|redux-thunk|react-redux|reselect|immer)[\\/]/,
-              priority: 3,
-            },
-            {
-              // recharts pulls in d3 and victory-vendor. Grouping them
-              // keeps the chart dependency in its own chunk instead of
-              // being hoisted into whichever shared chunk imports it first,
-              // so unrelated routes do not pay to parse it.
-              name: 'charts',
-              test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/,
-              priority: 2,
-            },
             {
               name: 'motion',
               test: /node_modules[\\/](framer-motion|motion-dom)[\\/]/,
@@ -102,6 +106,19 @@ export default defineConfig({
               priority: 1,
             },
           ],
+        },
+        // recharts's own module graph (recharts itself, d3-*, victory-vendor,
+        // and its redux/immer/reselect state management) is not declared as
+        // a codeSplitting group (see the comment above) so rolldown's
+        // default chunking decides where those modules land based on true
+        // reachability. This chunkFileNames hook only renames whichever
+        // chunk(s) end up containing those modules to a `charts-` prefixed
+        // name, so scripts/check-bundle.mjs and the PWA precache matching
+        // that expect a `charts-*.js` chunk keep working.
+        chunkFileNames: (chunkInfo) => {
+          const CHART_MODULE_RE = /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor|@reduxjs[\\/]toolkit|redux|redux-thunk|react-redux|reselect|immer)[\\/]/
+          const isChartChunk = chunkInfo.moduleIds.some((id) => CHART_MODULE_RE.test(id))
+          return isChartChunk ? 'assets/charts-[name]-[hash].js' : 'assets/[name]-[hash].js'
         },
       },
     },

@@ -30,10 +30,11 @@ for (const f of sized) {
 const charts = sized.find((f) => f.name.startsWith('charts-'))
 if (!charts) failures.push('expected a dedicated charts-*.js chunk')
 
-// The chart chunk is unconditionally imported by the entry chunk (a rolldown
-// limitation for this module graph), so it is expected to be precached along
-// with everything else the app needs at first paint. It is fine, and
-// intended, for it to show up in the service worker precache manifest.
+// The chart chunk is genuinely deferred (not statically imported by the
+// entry chunk); see vite.config.ts for how chunkFileNames names it. It is
+// still kept in the PWA precache deliberately, see the comment above the
+// VitePWA plugin in vite.config.ts, so it is fine and expected for it to
+// show up in the service worker precache manifest.
 
 console.log('Chunks:')
 for (const f of [...sized].sort((a, b) => b.kb - a.kb))

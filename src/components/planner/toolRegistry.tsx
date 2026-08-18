@@ -1,18 +1,5 @@
-import React from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeftRight, Building2, CreditCard, Home, Hourglass, Landmark, LineChart, Percent, ShieldCheck, Target, TrendingDown, TrendingUp } from 'lucide-react'
-import { ForecasterTool } from './forecaster/ForecasterTool'
-import { CompoundInterestCalculator } from './CompoundInterestCalculator'
-import { DebtPayoffCalculator } from './DebtPayoffCalculator'
-import { EmergencyFundCalculator } from './EmergencyFundCalculator'
-import { SavingsGoalCalculator } from './SavingsGoalCalculator'
-import { CurrencyConverter } from './CurrencyConverter'
-import { RaiseInflationCalculator } from './RaiseInflationCalculator'
-import { MortgageCalculator } from './MortgageCalculator'
-import { RentVsBuyCalculator } from './RentVsBuyCalculator'
-import { SalaryTaxTool } from './SalaryTaxTool'
-import { InflationAdjusterCalculator } from './InflationAdjusterCalculator'
-import { RateConverterCalculator } from './RateConverterCalculator'
 
 export type PlannerToolGroup =
   | 'Forecasting & Growth'
@@ -41,7 +28,6 @@ export interface PlannerTool {
   description: string
   group: PlannerToolGroup
   icon: LucideIcon
-  component: React.ComponentType
   info: ToolInfo
 }
 
@@ -55,7 +41,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Your history projected forward: scenarios, FIRE date, goals, Monte Carlo.',
     group: 'Forecasting & Growth',
     icon: TrendingUp,
-    component: ForecasterTool,
     info: {
       howTo: 'Project your net worth forward. Start from your dashboard net worth or a manual balance, set monthly savings and assumptions, then read the FI Number, projected FI date, and Monte Carlo odds below the chart. FI Number is the portfolio size at which annual withdrawals at your chosen rate cover your annual spending, the point where work becomes optional.',
       params: [
@@ -79,7 +64,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'See how a starting balance and monthly contributions grow over time.',
     group: 'Forecasting & Growth',
     icon: LineChart,
-    component: CompoundInterestCalculator,
     info: {
       howTo: 'See how a starting balance plus monthly contributions grows. Adjust the rate and years and watch the balance curve.',
       params: [
@@ -96,7 +80,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Solve for any variable: contribution, time, required return, or final balance.',
     group: 'Savings',
     icon: Target,
-    component: SavingsGoalCalculator,
     info: {
       howTo: 'Pick which variable to solve for, fill in the other three, and the tool computes the missing one.',
       params: [
@@ -114,7 +97,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'How many months of expenses you have covered, and the gap to your target.',
     group: 'Savings',
     icon: ShieldCheck,
-    component: EmergencyFundCalculator,
     info: {
       howTo: 'Enter monthly expenses, current fund, and a target in months to see coverage and the gap.',
       params: [
@@ -130,7 +112,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'USD ⇄ CAD with live rates, historical lookup, and manual fallback.',
     group: 'Utilities',
     icon: ArrowLeftRight,
-    component: CurrencyConverter,
     info: {
       howTo: 'Convert USD and CAD using live rates. Pick a historical date for past rates, or type a manual rate if offline.',
       params: [
@@ -147,7 +128,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Is my raise a real raise? Nominal vs inflation-adjusted.',
     group: 'Income & Tax',
     icon: TrendingDown,
-    component: RaiseInflationCalculator,
     info: {
       howTo: 'Compare your raise to inflation to see the real change in buying power.',
       params: [
@@ -163,7 +143,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Snowball vs avalanche: payoff date, total interest, extra-payment impact.',
     group: 'Debt & Housing',
     icon: CreditCard,
-    component: DebtPayoffCalculator,
     info: {
       howTo: 'List your debts with balance, APR, and minimum payment. Choose avalanche (highest APR first) or snowball (smallest balance first), add any extra monthly amount, and compare payoff time and interest.',
       params: [
@@ -181,7 +160,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Payment, amortization curve, and how much house you can afford.',
     group: 'Debt & Housing',
     icon: Home,
-    component: MortgageCalculator,
     info: {
       howTo: 'Payment mode computes the monthly payment and amortization curve from price, down payment, rate, and years. Affordability mode estimates the largest home price your income supports.',
       params: [
@@ -202,7 +180,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Cumulative-cost crossover: when (if ever) buying beats renting.',
     group: 'Debt & Housing',
     icon: Building2,
-    component: RentVsBuyCalculator,
     info: {
       howTo: 'Compare cumulative cost of renting vs buying over time and find the crossover year, if any.',
       params: [
@@ -225,7 +202,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'Gross to net for any province. 2026 tax breakdown, marginal/effective rates, CPP and EI.',
     group: 'Income & Tax',
     icon: Landmark,
-    component: SalaryTaxTool,
     info: {
       howTo: 'Enter gross income and province for a full 2026 tax breakdown: federal and provincial brackets, CPP and EI, net pay per period. Add RRSP and FHSA contributions to see the tax you save.',
       params: [
@@ -244,7 +220,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: "What today's dollars cost later, or what a future amount is worth today.",
     group: 'Utilities',
     icon: Hourglass,
-    component: InflationAdjusterCalculator,
     info: {
       howTo: "Convert money across time. Future Cost mode shows what today's amount will cost after years of inflation. Useful for checking what a savings goal will really be worth when you reach it. Today's Value mode discounts a future amount back to present-day dollars.",
       params: [
@@ -261,7 +236,6 @@ export const PLANNER_TOOLS: PlannerTool[] = [
     description: 'APR ⇄ APY across compounding frequencies, and CAGR from any start/end value.',
     group: 'Utilities',
     icon: Percent,
-    component: RateConverterCalculator,
     info: {
       howTo: 'Normalize rates so they compare fairly. APR ⇄ APY mode converts between the nominal rate banks advertise and the effective annual rate you actually earn or pay, for a given compounding frequency. CAGR mode turns a total gain ("$10k became $14k in 3 years") into the equivalent steady annual return.',
       params: [
