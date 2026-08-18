@@ -125,4 +125,57 @@ describe('Layout automatic Drive sync', () => {
     expect(container.querySelector('main')).not.toBeNull()
     expect(console.error).toHaveBeenCalled()
   })
+
+  it('does not write when the pull decision needs the user to resolve something', async () => {
+    setAutoSyncEnabled(true)
+    previewPull.mockResolvedValue({
+      kind: 'would-lose-local',
+      remote: {
+        fileId: 'file-1',
+        name: 'snapshot.json',
+        createdTime: '2026-08-01T00:00:00.000Z',
+        revision: 4,
+        deviceId: 'device-2',
+        deviceName: 'Other device',
+      },
+    })
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+
+    await act(async () => {
+      fireVisible()
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(performPush).not.toHaveBeenCalled()
+    expect(performPull).not.toHaveBeenCalled()
+  })
+
+  it('writes exactly once on a genuinely clean pull decision', async () => {
+    setAutoSyncEnabled(true)
+    const remote = {
+      fileId: 'file-1',
+      name: 'snapshot.json',
+      createdTime: '2026-08-01T00:00:00.000Z',
+      revision: 4,
+      deviceId: 'device-2',
+      deviceName: 'Other device',
+    }
+    previewPush.mockResolvedValue({ kind: 'nothing-to-push' })
+    previewPull.mockResolvedValue({ kind: 'clean', remote })
+    performPull.mockResolvedValue(undefined)
+    render(<MemoryRouter><Layout /></MemoryRouter>)
+
+    await act(async () => {
+      fireVisible()
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(performPull).toHaveBeenCalledTimes(1)
+    expect(performPull).toHaveBeenCalledWith('cached-token', remote)
+    expect(performPush).not.toHaveBeenCalled()
+  })
 })

@@ -210,6 +210,7 @@ export const DriveSyncControls: React.FC = () => {
           className="shrink-0"
         />
         Sync automatically here when there is nothing to resolve. Conflicts still wait for you in this panel.
+        Automatic sync resumes after your next manual push or pull in this session, it does not stay primed across a reload.
       </label>
 
       <label className="flex items-center gap-2 text-[12px] text-text-secondary">
