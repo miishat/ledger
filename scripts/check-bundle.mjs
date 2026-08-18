@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs'
+import { readdirSync, statSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ASSETS = 'dist/assets'
@@ -29,8 +29,20 @@ for (const f of sized) {
 
 const charts = sized.find((f) => f.name.startsWith('charts-'))
 if (!charts) failures.push('expected a dedicated charts-*.js chunk')
+else {
+  // Verify the entry chunk does not statically import any charts chunk.
+  // The charts chunks must be deferred (loaded dynamically), not eagerly
+  // bundled into the entry point. After commit b3fa40b, the chunkFileNames
+  // heuristic names any chunk containing a chart-related module with the
+  // charts- prefix, but that no longer guarantees the chunk is deferred.
+  const entryContent = readFileSync(join(ASSETS, entry.name), 'utf8')
+  const chartsImportPattern = /import\s*\{[^}]*\}\s*from\s*["']\.\/charts-/
+  if (chartsImportPattern.test(entryContent)) {
+    failures.push(`entry chunk ${entry.name} statically imports a charts-*.js chunk (should be deferred, not eager)`)
+  }
+}
 
-// The chart chunk is genuinely deferred (not statically imported by the
+// The chart chunks are genuinely deferred (not statically imported by the
 // entry chunk); see vite.config.ts for how chunkFileNames names it. It is
 // still kept in the PWA precache deliberately, see the comment above the
 // VitePWA plugin in vite.config.ts, so it is fine and expected for it to
