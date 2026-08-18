@@ -9,6 +9,12 @@ const ASSETS = 'dist/assets'
 const MAX_ENTRY_KB = 300
 const MAX_ANY_CHUNK_KB = 400
 
+// Total raw bytes the browser must fetch and evaluate before first paint:
+// the entry chunk plus everything it statically imports, transitively. The
+// per-chunk budgets above cannot see this, so splitting one eager chunk into
+// three eager chunks used to pass while changing nothing for the user.
+const MAX_INITIAL_LOAD_KB = 620
+
 const files = readdirSync(ASSETS).filter((f) => f.endsWith('.js'))
 const sized = files.map((f) => ({
   name: f,
@@ -47,6 +53,39 @@ else {
 // still kept in the PWA precache deliberately, see the comment above the
 // VitePWA plugin in vite.config.ts, so it is fine and expected for it to
 // show up in the service worker precache manifest.
+
+function staticDeps(file) {
+  const src = readFileSync(join(ASSETS, file), 'utf8')
+  const out = new Set()
+  const re = /from\s*["']\.\/([A-Za-z0-9_.-]+\.js)["']/g
+  let m
+  while ((m = re.exec(src))) out.add(m[1])
+  const re2 = /import\s*["']\.\/([A-Za-z0-9_.-]+\.js)["']/g
+  while ((m = re2.exec(src))) out.add(m[1])
+  return [...out]
+}
+
+const initial = new Set()
+if (entry) {
+  const walk = [entry.name]
+  while (walk.length) {
+    const f = walk.pop()
+    if (initial.has(f)) continue
+    initial.add(f)
+    for (const d of staticDeps(f)) if (!initial.has(d)) walk.push(d)
+  }
+}
+const initialKb = [...initial].reduce(
+  (sum, n) => sum + (sized.find((f) => f.name === n)?.kb ?? 0),
+  0,
+)
+console.log(`\nInitial load graph: ${initial.size} chunks, ${initialKb.toFixed(1)} kB raw`)
+for (const n of [...initial].sort()) console.log(`    ${n}`)
+if (initialKb > MAX_INITIAL_LOAD_KB) {
+  failures.push(
+    `initial load graph is ${initialKb.toFixed(1)} kB, budget ${MAX_INITIAL_LOAD_KB} kB`,
+  )
+}
 
 console.log('Chunks:')
 for (const f of [...sized].sort((a, b) => b.kb - a.kb))
