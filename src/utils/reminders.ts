@@ -19,15 +19,20 @@ export function dueReminders(
 ): Array<{ key: string; label: string }> {
   const lead = opts.leadDays ?? DEFAULT_LEAD_DAYS
   const ignored = new Set(opts.ignoredKeys)
-  const start = opts.now.getTime()
-  const end = start + lead * 86_400_000
+
+  // Compare whole days, not instants. A nextDate of "2026-08-16" parses to UTC
+  // midnight, which is already in the past by the time anyone opens the app on
+  // the 16th, so an instant comparison silently skipped the due date itself.
+  const dayIndex = (d: Date) => Math.floor(d.getTime() / 86_400_000)
+  const today = dayIndex(opts.now)
 
   return items
     .filter((i) => !ignored.has(i.key))
     .filter((i) => {
       const t = new Date(i.nextDate).getTime()
       if (Number.isNaN(t)) return false
-      return t >= start && t <= end
+      const offset = dayIndex(new Date(t)) - today
+      return offset >= 0 && offset <= lead
     })
     .map((i) => ({ key: i.key, label: i.label }))
 }
