@@ -34,6 +34,7 @@ describe('storage key registry', () => {
       reminders: 'ledger-reminders-enabled',
       remindersLastNotified: 'ledger-reminders-last-notified',
       autoSync: 'ledger-auto-sync',
+      checklistDismissed: 'ledger-checklist-dismissed',
     })
   })
 
@@ -43,11 +44,11 @@ describe('storage key registry', () => {
   })
 
   it('finds every persisted store', () => {
-    // demo, reminders, remindersLastNotified, and autoSync are plain
-    // localStorage flags, not zustand persist stores, so they are excluded
-    // from this count.
+    // demo, reminders, remindersLastNotified, autoSync, and checklistDismissed
+    // are plain localStorage flags, not zustand persist stores, so they are
+    // excluded from this count.
     const persisted = Object.entries(storeSources).filter(([, src]) => src.includes('persist('))
-    expect(persisted.length).toBe(Object.keys(STORAGE_KEYS).length - 4)
+    expect(persisted.length).toBe(Object.keys(STORAGE_KEYS).length - 5)
   })
 
   it('has every persisted store take its key from the registry', () => {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { FirstRunChecklist } from './FirstRunChecklist'
 
@@ -19,6 +19,25 @@ describe('FirstRunChecklist', () => {
 
   it('renders nothing once every step is done', () => {
     const { container } = wrap(<FirstRunChecklist accountCount={1} transactionCount={5} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe('FirstRunChecklist dismissal', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('offers a dismiss control and hides the checklist when used', () => {
+    wrap(<FirstRunChecklist accountCount={0} transactionCount={0} />)
+    fireEvent.click(screen.getByRole('button', { name: /dismiss getting started/i }))
+    expect(screen.queryByText('Add your first account')).not.toBeInTheDocument()
+  })
+
+  it('stays dismissed on a later render', () => {
+    const first = wrap(<FirstRunChecklist accountCount={0} transactionCount={0} />)
+    fireEvent.click(screen.getByRole('button', { name: /dismiss getting started/i }))
+    first.unmount()
+
+    const { container } = wrap(<FirstRunChecklist accountCount={0} transactionCount={0} />)
     expect(container).toBeEmptyDOMElement()
   })
 })
