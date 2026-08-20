@@ -132,3 +132,22 @@ test('no dashboard text is clipped by its own container', async ({ page }) => {
   )
   expect(clipped).toEqual([])
 })
+
+// The audit could not verify this and flagged it as an open question: if a
+// series value is only readable from a hover tooltip, it is unreadable on a
+// phone. Playwright's iPhone fixture has hasTouch, so page.tap exercises the
+// real touch path.
+test('a chart reveals its values on tap', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  const chart = page.locator('.recharts-wrapper').first()
+  await expect(chart).toBeVisible()
+  // The mortgage chart sits below three stacked result cards on a 375px-wide
+  // phone, so it starts outside the viewport. A real thumb would scroll down
+  // to it before tapping; page.touchscreen.tap uses raw viewport coordinates
+  // and does not scroll on its own, so do it explicitly first.
+  await chart.scrollIntoViewIfNeeded()
+  const box = (await chart.boundingBox())!
+  await page.touchscreen.tap(box.x + box.width * 0.6, box.y + box.height * 0.5)
+  await expect(page.locator('.recharts-tooltip-wrapper')).toBeVisible({ timeout: 2000 })
+})

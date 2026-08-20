@@ -72,6 +72,22 @@ export const MortgageCalculator: React.FC = () => {
     })
   const emphasizeBaseline = frequency === 'monthly' && extras.length === 0
 
+  // Recharts' Tooltip trigger="click" listens for a native click event, but a
+  // touchstart on a phone does not reliably synthesize one on the SVG surface.
+  // Forward the touch point as a click so tapping the chart reveals its
+  // tooltip on touch devices, not just under a mouse.
+  const handleChartTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0]
+    if (!touch) return
+    const target = document.elementFromPoint(touch.clientX, touch.clientY)
+    target?.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+    }))
+  }
+
   const housingBudget = (inputs.income * (inputs.gdsPct / 100)) / 12 - inputs.propertyTaxMonthly - HEATING_MONTHLY
   const affordablePrincipal = Math.max(0, principalFromPayment(housingBudget, inputs.ratePct, inputs.years))
   const affordablePrice = affordablePrincipal + downPayment
@@ -173,13 +189,17 @@ export const MortgageCalculator: React.FC = () => {
             </>
           )}
 
-          <div className="themed-card rounded-lg p-4 h-[300px]">
+          <div
+            className="themed-card rounded-lg p-4 h-[240px] sm:h-[300px]"
+            onTouchStart={handleChartTouchStart}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
                 <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
                 <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
                 <Tooltip
+                  trigger="click"
                   formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
                   {...chartTooltipStyles}
                 />

@@ -52,7 +52,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
         <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
       </div>
       <div className="themed-card rounded-lg p-4">
-        <div className="h-[300px]">
+        <div className="h-[240px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />

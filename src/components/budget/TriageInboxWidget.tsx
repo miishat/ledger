@@ -64,7 +64,7 @@ export const TriageInboxWidget: React.FC = () => {
           <Check size={14} /> Accept All ({acceptableCount})
         </button>
       </div>
-      <div className="flex flex-col gap-3 mt-3 max-h-[400px] overflow-y-auto pr-2">
+      <div className="flex flex-col gap-3 mt-3 max-h-[280px] sm:max-h-[400px] overflow-y-auto pr-2">
         {txList.map(tx => (
           <div key={tx.id} className="flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
             <div className="flex justify-between items-start">

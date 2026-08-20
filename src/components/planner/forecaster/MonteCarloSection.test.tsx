@@ -21,7 +21,7 @@ describe('MonteCarloSection layout', () => {
     const card = note.closest('.themed-card') as HTMLElement
     expect(card).toBeTruthy()
     expect(card.className).not.toMatch(/h-\[300px\]/)
-    const chartWrapper = card.querySelector('.h-\\[300px\\]')
+    const chartWrapper = card.querySelector('.sm\\:h-\\[300px\\]')
     expect(chartWrapper).toBeTruthy()
   })
 
