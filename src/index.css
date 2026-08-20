@@ -289,6 +289,37 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Tap-target floor. Apple and Android both put the minimum comfortable
+   touch target at 44px; WCAG 2.5.5 agrees and 2.5.8 sets a hard floor of
+   24px. The audit found 67 controls between 18px and 37px tall, spread
+   over 30 files with no shared primitive, so this is enforced here rather
+   than at each call site: a new 26px pill in a new component is covered
+   automatically. Mobile only, so desktop density is unchanged.
+
+   min-width is deliberately not applied to <a>, because a link inside a
+   sentence must stay inline and would otherwise stretch the line box.
+   Anything that genuinely must stay smaller opts out with .tap-exempt.
+
+   Same compound query as the input floor above, for the same reason: it
+   must be the exact negation of `desktop`, or a landscape phone (wide
+   enough to fail a plain max-width check, short enough to still show the
+   mobile bars) keeps its sub-44px controls. */
+@media (max-width: 767px), (max-height: 499px) {
+  button:not(.tap-exempt),
+  [role='button']:not(.tap-exempt),
+  summary:not(.tap-exempt) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  a[href]:not(.tap-exempt),
+  input:not([type='hidden']):not(.tap-exempt),
+  textarea:not(.tap-exempt),
+  select:not(.tap-exempt) {
+    min-height: 44px;
+  }
+}
+
 /* Animations for specialized backgrounds */
 @keyframes float-slow-1 {
   0% { transform: translate(0px, 0px) scale(1); }
