@@ -214,6 +214,35 @@ export const Layout: React.FC = () => {
           normal document flow above <main> rather than floating fixed over
           it, which used to cover the sidebar brand area and page content. */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative z-10">
+        {/* Mobile top bar. The sidebar's brand, search and settings have no
+            home on a phone: the command palette had no touch entry point at
+            all, and settings was crowding the tab bar into six slots that
+            truncated "Compensation". Both live here now, and the bar below
+            keeps five roomy tabs. */}
+        <header
+          data-testid="mobile-topbar"
+          className="desktop:hidden shrink-0 flex items-center gap-2 px-4 h-12 border-b border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)]"
+        >
+          <LedgerMark size={20} className="text-accent shrink-0" />
+          <span className="text-[17px] font-bold tracking-tighter text-accent font-display">Ledger</span>
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Search"
+            className="ml-auto flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Settings"
+            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </header>
+
         {demoActive && (
           <div
             role="status"
@@ -267,19 +296,10 @@ export const Layout: React.FC = () => {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="max-w-full truncate px-0.5">{item.name}</span>
+              <span className="max-w-full truncate px-0.5 tracking-tight">{item.name}</span>
             </Link>
           )
         })}
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="Settings"
-          className="flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
-        >
-          <Settings className="w-5 h-5" />
-          <span className="max-w-full truncate px-0.5">Settings</span>
-        </button>
       </nav>
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />

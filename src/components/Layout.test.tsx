@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { setDemoActive } from '../utils/demoData'
+import { resetMatchMedia } from '../test-utils/matchMedia'
+import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
 
 vi.mock('../hooks/useSWUpdate', () => ({
   useSWUpdate: () => ({
@@ -26,9 +28,11 @@ describe('Layout mobile chrome', () => {
 
 describe('Layout desktop sidebar', () => {
   it('has no tagline and opens the command palette from the search button', () => {
-    render(<MemoryRouter><Layout /></MemoryRouter>)
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
     expect(screen.queryByText('Command Center')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /search/i }))
+    const sidebar = container.querySelector('nav.desktop\\:flex')!
+    const search = Array.from(sidebar.querySelectorAll('button')).find((b) => /search/i.test(b.textContent || ''))!
+    fireEvent.click(search)
     expect(screen.getByPlaceholderText('Jump to a page or tool…')).toBeInTheDocument()
   })
 
@@ -60,7 +64,7 @@ describe('Layout mobile bottom nav sizing', () => {
     render(<MemoryRouter><Layout /></MemoryRouter>)
     const bar = screen.getByRole('navigation', { name: 'Primary' })
     const cells = Array.from(bar.children) as HTMLElement[]
-    expect(cells.length).toBe(6) // 5 links + Settings button
+    expect(cells.length).toBe(5) // 5 links; Settings moved to the mobile top bar
     for (const cell of cells) {
       const classes = cell.className.split(/\s+/)
       expect(classes).toContain('flex-1')
@@ -68,7 +72,7 @@ describe('Layout mobile bottom nav sizing', () => {
     }
     // each label is truncation-safe
     const labels = bar.querySelectorAll('.truncate')
-    expect(labels.length).toBe(6)
+    expect(labels.length).toBe(5)
   })
 })
 
@@ -131,5 +135,40 @@ describe('Layout landscape chrome', () => {
     const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
     expect(container.querySelector('nav.desktop\\:hidden')).not.toBeNull()
     expect(container.querySelector('nav.md\\:hidden')).toBeNull()
+  })
+})
+
+describe('Layout mobile top bar', () => {
+  afterEach(() => {
+    resetMatchMedia()
+    localStorage.removeItem(DISCLAIMER_ACK_KEY)
+  })
+
+  it('opens the command palette from a mobile-reachable button', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const topbar = container.querySelector('[data-testid="mobile-topbar"]')!
+    expect(topbar).not.toBeNull()
+    expect(topbar.className).toMatch(/desktop:hidden/)
+    const search = topbar.querySelector('button[aria-label="Search"]') as HTMLButtonElement
+    fireEvent.click(search)
+    expect(screen.getByPlaceholderText('Jump to a page or tool…')).toBeInTheDocument()
+  })
+
+  it('opens settings from the top bar', () => {
+    // Seed the disclaimer ack so the disclaimer dialog isn't also open,
+    // which would otherwise make the dialog role ambiguous here.
+    localStorage.setItem(DISCLAIMER_ACK_KEY, new Date().toISOString())
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const topbar = container.querySelector('[data-testid="mobile-topbar"]')!
+    fireEvent.click(topbar.querySelector('button[aria-label="Settings"]') as HTMLButtonElement)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('leaves the bottom bar with exactly the five routes', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const bar = container.querySelector('nav.desktop\\:hidden')!
+    expect(bar.querySelectorAll('a').length).toBe(5)
+    // Settings lives in the top bar now, so the bar has no buttons at all.
+    expect(bar.querySelectorAll('button').length).toBe(0)
   })
 })
