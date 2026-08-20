@@ -164,7 +164,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
 
   const wrapperClass = isExpanded
     ? "fixed inset-4 z-50 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col shadow-2xl animate-fade-in"
-    : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[240px] sm:min-h-[300px]";
+    : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[240px] desktop:min-h-[300px]";
 
   return (
     <div className={wrapperClass}>

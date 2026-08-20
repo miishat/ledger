@@ -229,7 +229,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
         </div>
       </div>
 
-      <div className="relative w-full h-[280px] sm:h-[400px]">
+      <div className="relative w-full h-[280px] desktop:h-[400px]">
         {view === 'annualized' ? (
           <>
             <ResponsiveContainer width="100%" height="100%">

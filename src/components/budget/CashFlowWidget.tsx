@@ -127,7 +127,7 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
 
   return (
     <WidgetWrapper title="Cash Flow">
-      <div className="h-[240px] sm:h-[300px] mt-2">
+      <div className="h-[240px] desktop:h-[300px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             data={{ nodes, links }}

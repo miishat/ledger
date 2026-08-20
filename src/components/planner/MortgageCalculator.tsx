@@ -4,6 +4,7 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
 import {
   acceleratedBiweeklySchedule, amortizationSchedule, amortizationScheduleWithExtras, monthlyPayment, principalFromPayment,
   scheduleTotalInterest, type ExtraPayment,
@@ -31,6 +32,7 @@ const DEFAULTS = {
 const HEATING_MONTHLY = 150 // CMHC GDS convention
 
 export const MortgageCalculator: React.FC = () => {
+  const isDesktop = useIsDesktop()
   const inputs = useToolInputs(TOOL_ID, DEFAULTS)
   const setInput = usePlannerStore((s) => s.setInput)
   const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
@@ -210,7 +212,7 @@ export const MortgageCalculator: React.FC = () => {
           )}
 
           <div
-            className="themed-card rounded-lg p-4 h-[240px] sm:h-[300px]"
+            className="themed-card rounded-lg p-4 h-[240px] desktop:h-[300px]"
             onTouchStart={handleChartTouchStart}
             onTouchEnd={handleChartTouchEnd}
           >
@@ -220,7 +222,7 @@ export const MortgageCalculator: React.FC = () => {
                 <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
                 <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
                 <Tooltip
-                  trigger="click"
+                  trigger={isDesktop ? 'hover' : 'click'}
                   formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
                   {...chartTooltipStyles}
                 />

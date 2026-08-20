@@ -54,7 +54,7 @@ export const CategorizationRulesWidget: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex flex-col max-h-[240px] sm:max-h-[300px] overflow-y-auto border border-[var(--color-border)] rounded-md">
+        <div className="flex flex-col max-h-[240px] desktop:max-h-[300px] overflow-y-auto border border-[var(--color-border)] rounded-md">
           {rulesEntries.length === 0 ? (
             <div className="p-4 text-center text-[13px] text-[var(--color-text-secondary)]">No rules created yet.</div>
           ) : (
