@@ -23,7 +23,8 @@ export const PortfolioRollupWidget: React.FC = () => {
     return (
       <WidgetWrapper title="Portfolio">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/investments" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Import a broker CSV</Link> to see your portfolio value here.
+          {/* Exempt from the mobile tap-target floor: this is an inline link inside a sentence, which WCAG 2.5.8 explicitly excludes from the minimum target size, and forcing it to 44px would break the sentence's flow. */}
+          <Link to="/investments" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded tap-exempt">Import a broker CSV</Link> to see your portfolio value here.
         </p>
       </WidgetWrapper>
     )

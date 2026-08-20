@@ -11,7 +11,8 @@ export const BudgetHealthWidget: React.FC = () => {
     return (
       <WidgetWrapper title="This Month's Budget">
         <p className="text-[13px] text-text-secondary mt-2">
-          <Link to="/budget" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded">Add transactions in Budgeting</Link> to see your monthly health here.
+          {/* Exempt from the mobile tap-target floor: this link sits inline in a sentence, and WCAG 2.5.8 excludes inline text links from the minimum target size since forcing 44px would break the flow. */}
+          <Link to="/budget" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded tap-exempt">Add transactions in Budgeting</Link> to see your monthly health here.
         </p>
       </WidgetWrapper>
     )
