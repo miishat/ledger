@@ -313,7 +313,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   a[href]:not(.tap-exempt),
-  input:not([type='hidden']):not(.tap-exempt),
+  input:not([type='hidden']):not([type='checkbox']):not(.tap-exempt),
   textarea:not(.tap-exempt),
   select:not(.tap-exempt) {
     min-height: 44px;

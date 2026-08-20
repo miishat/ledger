@@ -1,11 +1,40 @@
 import { test, expect } from '@playwright/test'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
+const BUDGET_KEY = 'ledger-budget'
+
+// Same shape as e2e/a11y-mobile.spec.ts's SEED_TRANSACTIONS, so both suites
+// exercise the same populated card list instead of an empty state.
+const SEED_TRANSACTIONS: Record<string, unknown> = {
+  t1: { id: 't1', date: '2026-08-01', amount: 12.5, description: 'Coffee shop', type: 'expense', categoryId: 'groceries' },
+  t2: { id: 't2', date: '2026-08-02', amount: 45, description: 'Gas station', type: 'expense', tags: ['car'] },
+  t3: { id: 't3', date: '2026-08-03', amount: 2500, description: 'Paycheck', type: 'income' },
+  t4: { id: 't4', date: '2026-08-04', amount: 89.99, description: 'Electric bill', type: 'expense', categoryId: 'utilities', tags: ['home'] },
+  t5: { id: 't5', date: '2026-08-05', amount: 15, description: 'Streaming service', type: 'expense' },
+  t6: { id: 't6', date: '2026-08-06', amount: 60, description: 'Restaurant', type: 'expense', categoryId: 'dining', note: 'Dinner with friends' },
+}
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((key) => {
     window.localStorage.setItem(key, new Date().toISOString())
   }, DISCLAIMER_ACK_KEY)
+  await page.addInitScript(({ key, transactions }) => {
+    window.localStorage.setItem(key, JSON.stringify({
+      state: { transactions, categories: {}, categoryGroups: {} },
+      version: 3,
+    }))
+  }, { key: BUDGET_KEY, transactions: SEED_TRANSACTIONS })
+  await page.addInitScript(() => {
+    window.localStorage.setItem('accounts-storage', JSON.stringify({
+      state: {
+        accounts: [
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+        ],
+        history: [],
+      },
+    }))
+  })
 })
 
 const ROUTES = [
@@ -59,7 +88,13 @@ for (const [name, hash] of ROUTES) {
           if (el.closest('.sr-only')) return false
           const cs = getComputedStyle(el)
           if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') return false
-          const r = el.getBoundingClientRect()
+          // The shared Checkbox component keeps a deliberately small (20px)
+          // visible box inside a dedicated 44x44 hit-area wrapper <span>, so
+          // a checkbox's own tap target is that wrapper, not the input.
+          const target = (el as HTMLInputElement).type === 'checkbox' && el.parentElement
+            ? el.parentElement
+            : el
+          const r = target.getBoundingClientRect()
           if (r.width === 0 || r.height === 0) return false
           // The skip link is visually hidden until focused.
           if (r.width <= 1 && r.height <= 1) return false
@@ -87,7 +122,13 @@ test('the transaction card list has no tap target under 44px', async ({ page }) 
         if (el.classList.contains('tap-exempt')) return false
         const cs = getComputedStyle(el)
         if (cs.visibility === 'hidden' || cs.display === 'none') return false
-        const r = el.getBoundingClientRect()
+        // The shared Checkbox component keeps a deliberately small (20px)
+        // visible box inside a dedicated 44x44 hit-area wrapper <span>, so a
+        // checkbox's own tap target is that wrapper, not the input itself.
+        const target = (el as HTMLInputElement).type === 'checkbox' && el.parentElement
+          ? el.parentElement
+          : el
+        const r = target.getBoundingClientRect()
         if (r.width <= 1 || r.height <= 1) return false
         return r.height < 44 || r.width < 44
       })
