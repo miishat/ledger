@@ -126,7 +126,11 @@ export const Layout: React.FC = () => {
     { name: 'Budgeting', path: '/budget', icon: Wallet },
     { name: 'Investments', path: '/investments', icon: TrendingUp },
     { name: 'Planner', path: '/planner', icon: Calculator },
-    { name: 'Compensation', path: '/compensation', icon: Briefcase },
+    // "Compensation" is the full name everywhere except the mobile tab bar:
+    // at 320px five equal-width tabs give it 64px, and even with ellipsis
+    // that clipped the word. shortName keeps the tab bar readable without
+    // shortening the desktop sidebar label or the route name.
+    { name: 'Compensation', shortName: 'Pay', path: '/compensation', icon: Briefcase },
   ]
 
   return (
@@ -299,7 +303,7 @@ export const Layout: React.FC = () => {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="max-w-full truncate px-0.5 tracking-tight">{item.name}</span>
+              <span className="max-w-full truncate px-0.5 tracking-tight">{item.shortName ?? item.name}</span>
             </Link>
           )
         })}

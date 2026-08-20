@@ -1,8 +1,6 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
-
-test.use({ ...devices['iPhone 12'] })
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((key) => {
@@ -150,4 +148,51 @@ test('a chart reveals its values on tap', async ({ page }) => {
   const box = (await chart.boundingBox())!
   await page.touchscreen.tap(box.x + box.width * 0.6, box.y + box.height * 0.5)
   await expect(page.locator('.recharts-tooltip-wrapper')).toBeVisible({ timeout: 2000 })
+})
+
+// The whole app cleared this at 375px and 320px when the audit ran, and
+// exactly one screen did not: the Compensation toggle row. This keeps the
+// zero at both widths and in landscape.
+for (const [name, hash] of ROUTES) {
+  test(`${name} never scrolls sideways`, async ({ page }) => {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const { scrollW, clientW, past } = await page.evaluate(() => {
+      const de = document.documentElement
+      const past = [...document.querySelectorAll('*')]
+        .filter((el) => {
+          const cs = getComputedStyle(el)
+          if (cs.visibility === 'hidden' || cs.display === 'none') return false
+          const r = el.getBoundingClientRect()
+          return r.width > 0 && r.height > 0 && r.right > de.clientWidth + 1
+        })
+        .map((el) => `${(el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30)} right=${Math.round(el.getBoundingClientRect().right)}`)
+      return { scrollW: de.scrollWidth, clientW: de.clientWidth, past: past.slice(0, 10) }
+    })
+    expect(past).toEqual([])
+    expect(scrollW).toBe(clientW)
+  })
+}
+
+// The blocker this plan opened with: at 844x390 the sidebar appeared, the
+// tab bar vanished, and Settings sat at y=410 in a 390px viewport with
+// nothing to scroll. Settings must be tappable at every phone size.
+test('settings is reachable and inside the viewport', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const settings = page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]')
+  await expect(settings).toBeVisible()
+  const box = (await settings.boundingBox())!
+  const viewport = page.viewportSize()!
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
+  await settings.click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+})
+
+test('search is reachable without a keyboard', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
+  await expect(page.getByPlaceholder('Jump to a page or tool…')).toBeVisible()
 })
