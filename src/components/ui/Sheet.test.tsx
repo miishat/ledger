@@ -148,6 +148,21 @@ describe('Sheet', () => {
     document.body.removeChild(anchor)
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth })
   })
+
+  it('caps the mobile sheet against the visual viewport, not just dvh', () => {
+    setMatchMedia(false) // mobile
+    render(<Sheet open onClose={() => {}} ariaLabel="Test sheet"><p>body</p></Sheet>)
+    const panel = screen.getByTestId('sheet-panel')
+    expect(panel.style.maxHeight).toContain('--app-viewport-height')
+  })
+
+  it('gives the close button a 44px hit area', () => {
+    setMatchMedia(false)
+    render(<Sheet open onClose={() => {}} ariaLabel="Test sheet"><p>body</p></Sheet>)
+    const close = screen.getByRole('button', { name: 'Close' })
+    expect(close.className).toMatch(/min-h-\[44px\]/)
+    expect(close.className).toMatch(/min-w-\[44px\]/)
+  })
 })
 
 describe('Sheet mobile header ownership', () => {

@@ -21,12 +21,15 @@ import { isAutoSyncEnabled, autoSyncAction } from '../utils/autoSync'
 import { previewPush, previewPull, performPush, performPull } from '../utils/syncService'
 import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
+import { useViewportHeight } from '../hooks/useViewportHeight'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
   const location = useLocation()
   const demoActive = useSyncExternalStore(subscribeDemoActive, isDemoActive, () => false)
   const swUpdate = useSWUpdate()
+  useViewportHeight()
+
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)

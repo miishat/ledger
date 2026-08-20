@@ -245,8 +245,15 @@ export const Sheet: React.FC<SheetProps> = ({
           {scrim}
           <motion.div
             {...commonPanelProps}
-            className="relative z-50 w-full max-h-[90dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            className="relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
+            style={{
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              // dvh does not shrink for the software keyboard, so a tall
+              // sheet would put its lower fields behind it. The visual
+              // viewport does shrink; dvh is the fallback where it is not
+              // supported. See useViewportHeight.
+              maxHeight: 'calc(0.9 * var(--app-viewport-height, 100dvh))',
+            }}
             initial={reduced ? { opacity: 0 } : { y: '100%' }}
             animate={reduced ? { opacity: 1 } : { y: 0 }}
             exit={reduced ? { opacity: 0 } : { y: '100%' }}
@@ -266,7 +273,7 @@ export const Sheet: React.FC<SheetProps> = ({
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="ml-auto p-1 text-text-secondary hover:text-text-primary"
+                  className="ml-auto flex items-center justify-center min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 desktop:p-1 text-text-secondary hover:text-text-primary rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
                 >
                   <X className="w-5 h-5" />
                 </button>
