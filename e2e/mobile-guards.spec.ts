@@ -101,3 +101,34 @@ test('the transaction card list has no tap target under 44px', async ({ page }) 
   }, TAP_SELECTOR)
   expect(offenders).toEqual([])
 })
+
+// Truncated account names were the single most visible mobile complaint:
+// nine text nodes were cut at 320px on the dashboard alone.
+test('no dashboard text is clipped by its own container', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('accounts-storage', JSON.stringify({
+      state: {
+        accounts: [
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+        ],
+        history: [],
+      },
+    }))
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const clipped = await page.evaluate(() =>
+    [...document.querySelectorAll('*')]
+      .filter((el) => {
+        if (el.children.length > 0) return false
+        if (el.closest('.sr-only')) return false
+        const cs = getComputedStyle(el)
+        if (cs.overflow === 'visible' && cs.overflowX === 'visible') return false
+        const r = el.getBoundingClientRect()
+        return r.width > 0 && r.height > 0 && el.scrollWidth > el.clientWidth + 1
+      })
+      .map((el) => `${(el.textContent || '').trim().slice(0, 30)} needs ${el.scrollWidth} has ${el.clientWidth}`),
+  )
+  expect(clipped).toEqual([])
+})

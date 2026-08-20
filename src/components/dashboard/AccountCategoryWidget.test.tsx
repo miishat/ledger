@@ -29,13 +29,32 @@ describe('AccountCategoryWidget mobile tap targets', () => {
     }
   })
 
-  it('truncates long account names so the row cannot break', () => {
+  it('truncates long account names on desktop, where the row is a single line', () => {
     useAccountsStore.setState({
       accounts: [{ id: 'a1', name: 'Joint Savings for the Big 2026 Vacation Fund', value: 1200, type: 'bank' }],
     })
     render(<AccountCategoryWidget title="Bank" type="bank" />)
     const name = screen.getByText(/Joint Savings/)
-    expect(name.className.split(/\s+/)).toContain('truncate')
+    const classes = name.className.split(/\s+/)
+    // Desktop keeps the one-line row; mobile stacks and wraps instead,
+    // because the mobile name column is only about 115px wide.
+    expect(classes).toContain('desktop:truncate')
+    expect(classes).not.toContain('truncate')
+  })
+})
+
+describe('AccountCategoryWidget mobile name layout', () => {
+  it('stacks a long account name above its value on mobile so it does not truncate', () => {
+    // The name column measured 111px while "Mortgage - 12 Maplewood Crescent"
+    // needs 220px, so the name was cut mid-word on every phone.
+    useAccountsStore.setState({
+      accounts: [{ id: 'a1', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' }],
+    })
+    const { container } = render(<AccountCategoryWidget title="Debts & Liabilities" type="debt" />)
+    const row = container.querySelector('[data-testid="account-row-a1"]')!
+    expect(row).not.toBeNull()
+    expect(row.className).toMatch(/flex-col/)
+    expect(row.className).toMatch(/desktop:flex-row/)
   })
 })
 

@@ -73,10 +73,23 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                 action={{ label: 'Add account', onClick: handleAdd }}
               />
             ) : (
+              // On a phone the name column collapsed to about 115px while
+              // real account names need 140px to 220px, so every name was
+              // cut mid-word. Stacking name over value on mobile gives the
+              // name the full card width; desktop keeps the single row.
               accounts.map((acc) => (
-                <div key={acc.id} className="flex justify-between items-center gap-2 group">
-                  <span className="text-sm text-text-secondary truncate min-w-0">{acc.name}</span>
-                  <div className="flex items-center gap-1 shrink-0">
+                <div
+                  key={acc.id}
+                  data-testid={`account-row-${acc.id}`}
+                  className="flex flex-col items-start gap-0.5 desktop:flex-row desktop:justify-between desktop:items-center desktop:gap-2 group"
+                >
+                  <span
+                    data-testid={`account-name-${acc.id}`}
+                    className="text-sm text-text-secondary min-w-0 break-words desktop:truncate"
+                  >
+                    {acc.name}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0 self-stretch justify-between desktop:self-auto desktop:justify-normal">
                     <span className="text-sm font-medium text-text-primary">
                       ${acc.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
