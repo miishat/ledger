@@ -26,4 +26,13 @@ describe('ToolInfoButton', () => {
     fireEvent.click(getByTestId('sheet-scrim'))
     await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
+
+  it('gives the info button a mobile hit area', () => {
+    render(<ToolInfoButton tool={getTool('mortgage')!} />)
+    // Measured 24x24 in the audit, on a control that opens the only
+    // explanation of what the tool does.
+    const button = screen.getByRole('button', { name: 'About this tool' })
+    expect(button.className).toMatch(/min-h-\[44px\]/)
+    expect(button.className).toMatch(/min-w-\[44px\]/)
+  })
 })

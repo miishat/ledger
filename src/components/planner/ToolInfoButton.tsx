@@ -13,7 +13,7 @@ export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
         type="button"
         aria-label="About this tool"
         onClick={() => setOpen((v) => !v)}
-        className="p-1 rounded-full text-text-secondary hover:text-accent transition-colors"
+        className="p-1 rounded-full text-text-secondary hover:text-accent transition-colors min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
       >
         <Info className="w-4 h-4" />
       </button>

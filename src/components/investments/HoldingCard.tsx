@@ -51,7 +51,7 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         <div>
           <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
           <span className="block text-[11px] text-text-secondary">
-            <span className="inline-block align-middle">
+            <span className="inline-flex align-middle items-center">
               <ThemedSelect
                 value={holding.currency ?? ''}
                 onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}

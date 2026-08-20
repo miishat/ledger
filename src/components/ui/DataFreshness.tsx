@@ -34,7 +34,7 @@ export const DataFreshness: React.FC<DataFreshnessProps> = ({ source, asOf, stal
           type="button"
           onClick={onRefresh}
           aria-label={`Refresh ${label}`}
-          className="p-1 rounded hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          className="p-1 rounded hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
         >
           <RefreshCw size={11} />
         </button>

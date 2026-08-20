@@ -48,7 +48,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
       <td className="py-2 pr-3">
         <span data-testid="holding-ticker" className="text-text-primary font-medium">{holding.ticker}</span>
         <span className="block text-[11px] text-text-secondary">
-          <span className="inline-block align-middle">
+          <span className="inline-flex align-middle items-center">
             <ThemedSelect
               value={holding.currency ?? ''}
               onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}
