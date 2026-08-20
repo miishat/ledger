@@ -174,7 +174,11 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h3>
-        <div className="flex items-center gap-3">
+        {/* Three segmented groups totalling 430px. Without flex-wrap the
+            Gross/After-Tax group starts past the right edge of a 375px
+            screen and is clipped by main's overflow-x-hidden, which made
+            the after-tax view unreachable on a phone. */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Time Mode Toggle */}
           <div className="flex bg-[var(--color-bg-primary)] rounded-md border border-[var(--color-border)] p-1">
             <button

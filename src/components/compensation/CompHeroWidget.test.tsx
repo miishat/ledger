@@ -107,3 +107,29 @@ describe('CompHeroWidget after-tax toggle', () => {
     })
   })
 })
+
+describe('CompHeroWidget mobile layout', () => {
+  beforeEach(() => {
+    usePlannerStore.setState({ inputs: {} })
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100_000, pastSalaryChanges: [], rsuGrants: [] },
+    })
+  })
+
+  it('lets the toggle groups wrap so none is pushed off a narrow screen', () => {
+    // The three segmented groups share one row that measures 430px. Without
+    // wrapping, the Gross/After-Tax group starts at x=348 on a 375px screen
+    // and is clipped by main's overflow-x-hidden, so after-tax comp cannot
+    // be turned on at all on a phone.
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+    const group = screen.getByText('After-Tax').closest('div')!.parentElement!
+    expect(group.className).toMatch(/flex-wrap/)
+  })
+})
