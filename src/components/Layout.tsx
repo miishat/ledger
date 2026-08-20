@@ -130,7 +130,7 @@ export const Layout: React.FC = () => {
     // at 320px five equal-width tabs give it 64px, and even with ellipsis
     // that clipped the word. shortName keeps the tab bar readable without
     // shortening the desktop sidebar label or the route name.
-    { name: 'Compensation', shortName: 'Pay', path: '/compensation', icon: Briefcase },
+    { name: 'Compensation', shortName: 'Comp', path: '/compensation', icon: Briefcase },
   ]
 
   return (
