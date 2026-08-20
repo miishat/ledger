@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -73,12 +73,32 @@ export const MortgageCalculator: React.FC = () => {
   const emphasizeBaseline = frequency === 'monthly' && extras.length === 0
 
   // Recharts' Tooltip trigger="click" listens for a native click event, but a
-  // touchstart on a phone does not reliably synthesize one on the SVG surface.
-  // Forward the touch point as a click so tapping the chart reveals its
-  // tooltip on touch devices, not just under a mouse.
+  // tap on a phone does not reliably synthesize one on the SVG surface. This
+  // bridges touch to click on touchend (when a tap is known to have
+  // completed, not touchstart, which fires before it's known whether the
+  // gesture is a tap or the start of a scroll), and calls preventDefault to
+  // suppress the browser's own trailing synthetic click, so a single tap
+  // fires exactly one click rather than two (ours plus the browser's ghost
+  // click), which would otherwise open then immediately re-toggle the
+  // tooltip on every tap.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const TAP_MOVE_THRESHOLD_PX = 10
+
   const handleChartTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     const touch = e.touches[0]
     if (!touch) return
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  const handleChartTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    const touch = e.changedTouches[0]
+    if (!start || !touch) return
+    const movedX = Math.abs(touch.clientX - start.x)
+    const movedY = Math.abs(touch.clientY - start.y)
+    if (movedX > TAP_MOVE_THRESHOLD_PX || movedY > TAP_MOVE_THRESHOLD_PX) return
+    e.preventDefault()
     const target = document.elementFromPoint(touch.clientX, touch.clientY)
     target?.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
@@ -192,6 +212,7 @@ export const MortgageCalculator: React.FC = () => {
           <div
             className="themed-card rounded-lg p-4 h-[240px] sm:h-[300px]"
             onTouchStart={handleChartTouchStart}
+            onTouchEnd={handleChartTouchEnd}
           >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
