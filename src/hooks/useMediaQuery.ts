@@ -21,4 +21,8 @@ export function useMediaQuery(query: string): boolean {
   return matches
 }
 
-export const useIsDesktop = (): boolean => useMediaQuery('(min-width: 768px)')
+/** Must stay identical to the `desktop` custom variant in src/index.css.
+ *  Height matters because the sidebar cannot scroll into a short viewport. */
+export const DESKTOP_QUERY = '(min-width: 768px) and (min-height: 500px)'
+
+export const useIsDesktop = (): boolean => useMediaQuery(DESKTOP_QUERY)

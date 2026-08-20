@@ -37,7 +37,7 @@ describe('Layout desktop sidebar', () => {
   // It is now a gradient that fades in from the top.
   it('draws the divider as a gradient that fades in from the top', () => {
     const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
-    const sidebar = container.querySelector('nav.md\\:flex')!
+    const sidebar = container.querySelector('nav.desktop\\:flex')!
     expect(sidebar.className).not.toMatch(/border-r border-border/)
 
     const divider = screen.getByTestId('sidebar-divider')
@@ -109,5 +109,27 @@ describe('Layout demo banner', () => {
 
     await act(async () => { setDemoActive(false) })
     expect(screen.queryByText(/Demo data is loaded/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('Layout landscape chrome', () => {
+  it('gates the sidebar on the desktop variant, not on width alone', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const sidebar = container.querySelector('nav.desktop\\:flex')
+    expect(sidebar).not.toBeNull()
+    // The width-only gate must be gone, or a landscape phone loses Settings.
+    expect(container.querySelector('nav.md\\:flex')).toBeNull()
+  })
+
+  it('lets the sidebar scroll so its settings dock is reachable in a short window', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const sidebar = container.querySelector('nav.desktop\\:flex')!
+    expect(sidebar.className).toMatch(/overflow-y-auto/)
+  })
+
+  it('gates the bottom tab bar on the desktop variant', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    expect(container.querySelector('nav.desktop\\:hidden')).not.toBeNull()
+    expect(container.querySelector('nav.md\\:hidden')).toBeNull()
   })
 })

@@ -29,6 +29,14 @@
   --shadow-card: var(--card-shadow);
 }
 
+/* Desktop chrome needs width for the 256px sidebar and height for its
+   nav list plus settings dock, which together need 462px. A phone in
+   landscape clears the width test and fails the height test, so it keeps
+   the mobile top bar and bottom tab bar instead of losing Settings off
+   the bottom of a sidebar that cannot scroll into view. Kept in sync by
+   hand with useIsDesktop in src/hooks/useMediaQuery.ts. */
+@custom-variant desktop (@media (min-width: 768px) and (min-height: 500px));
+
 :root {
   /* Default/Fallback values matching Geometric Light */
   --bg-primary: #ffffff;

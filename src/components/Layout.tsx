@@ -139,7 +139,7 @@ export const Layout: React.FC = () => {
       <ThemeBackground theme={theme} />
 
       {/* Sidebar Navigation */}
-      <nav className="hidden md:flex w-64 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between transition-all duration-300 z-10">
+      <nav className="hidden desktop:flex w-64 shrink-0 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between overflow-y-auto transition-all duration-300 z-10">
         {/* The divider fades in from the top rather than starting at a hard
             edge with nothing meeting it. Its lower end is already anchored by
             the settings dock's border-t. Absolutely positioned, so it stays
@@ -226,7 +226,7 @@ export const Layout: React.FC = () => {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] md:pb-8"
+          className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
           <ErrorBoundary key={location.pathname}>
             <Suspense
@@ -250,7 +250,7 @@ export const Layout: React.FC = () => {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border flex"
+        className="desktop:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border flex"
         style={{ backgroundColor: 'var(--dropdown-bg)', paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
