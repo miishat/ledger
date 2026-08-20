@@ -6,6 +6,24 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.4-beta] - 2026-08-20
+
+### Changed
+- Mobile navigation: Search and Settings now live in a new top bar on phones, so the bottom bar can give all five sections (Dashboard, Budgeting, Investments, Planner, Compensation) full-width tabs instead of squeezing in a sixth. Compensation no longer gets cut off
+- Every button, checkbox, and form field on a phone now meets a comfortable minimum touch size, in place of several controls (checkboxes, the currency selector, refresh and info buttons) that used to be too small to tap reliably
+- Typing into any field on a phone no longer causes Safari to zoom the page in and stay zoomed
+- Long account names on the Dashboard now wrap onto a second line on narrow phones instead of being cut off mid-word
+- Charts take up noticeably less vertical space on phones, so a single chart no longer dominates the screen
+- The Mortgage tool's payment chart now reveals its values with a tap on a touchscreen, not just a mouse hover
+- The app's browser chrome (the colour behind the status bar on an installed app) now matches whichever theme is active, instead of always being black
+
+### Fixed
+- Settings was unreachable when a phone was held sideways: the sidebar used to take over in landscape and push Settings off the bottom of the screen with nothing to scroll. The app now keeps its phone layout through the height of the screen, not just its width
+- The Compensation page's Gross/After-Tax toggle was clipped off the right edge of the screen on a phone and could not be tapped
+- Bottom sheets (Settings, transaction entry, and others) could be partly hidden behind the on-screen keyboard on a tall form; they now stay above it
+- The undo and update-available notifications could sit partly behind the bottom navigation bar on a phone with a home indicator; they now clear it
+- The Mortgage chart's tooltip stopped responding to mouse hover on desktop after enabling tap support on phones; hover is restored on desktop while tap still works on phones
+
 ## [0.9.3-beta] - 2026-08-18
 
 ### Added
