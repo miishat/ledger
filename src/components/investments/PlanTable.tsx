@@ -4,7 +4,7 @@ import { planRow } from '../../utils/investments/planMetrics'
 import { formatMoney } from '../planner/format'
 import { NumberInput } from '../ui/NumberInput'
 
-const th = 'px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-text-secondary'
+const th = 'px-3 py-2 text-right text-meta font-semibold uppercase tracking-wide text-text-secondary'
 const td = 'px-3 py-2 text-right text-[13px] text-text-primary tabular-nums'
 
 interface PlanTableProps {

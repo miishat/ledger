@@ -13,7 +13,7 @@ const Rung: React.FC<{ slice: MarginalSlice; hot?: boolean }> = ({ slice, hot = 
     </span>
     <span className="flex-1 min-w-0">
       <span className="block text-[13px] text-text-primary">{formatMoney(slice.amount)}</span>
-      <span className="block text-[11px] text-text-secondary">
+      <span className="block text-meta text-text-secondary">
         {/* The top rung is open-ended from the reader's point of view: it is the
             band their last dollar lands in, so name the floor, not the ceiling. */}
         {hot ? `above ${formatMoney(slice.from)}` : `${formatMoney(slice.from)} to ${formatMoney(slice.to)}`}
@@ -68,7 +68,7 @@ export const RrspEfficiencyCard: React.FC<{
       </div>
 
       <div className="flex flex-col gap-1 mt-1">
-        <span className="text-[11px] uppercase tracking-wide text-text-secondary">Income by saving rate</span>
+        <span className="text-meta uppercase tracking-wide text-text-secondary">Income by saving rate</span>
         {shown.map((s, i) => (
           <Rung key={s.from} slice={s} hot={i === 0} />
         ))}

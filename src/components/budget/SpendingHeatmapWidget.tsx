@@ -21,7 +21,7 @@ export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }
     const max = Math.max(0, ...byMonth.values())
     return (
       <WidgetWrapper title="Spending by Month">
-        <div className="grid grid-cols-4 gap-1 mt-2 text-[11px]">
+        <div className="grid grid-cols-4 gap-1 mt-2 text-meta">
           {monthKeys.map((k) => {
             const spend = byMonth.get(k) ?? 0
             const opacity = max > 0 ? 0.15 + 0.85 * (spend / max) : 0
@@ -33,7 +33,7 @@ export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }
                 style={{ backgroundColor: spend > 0 ? `color-mix(in srgb, var(--accent) ${Math.round(opacity * 100)}%, transparent)` : 'transparent' }}
               >
                 <span>{k}</span>
-                <span className="text-[10px] text-text-secondary">{formatMoney(spend)}</span>
+                <span className="text-micro text-text-secondary">{formatMoney(spend)}</span>
               </div>
             )
           })}
@@ -70,7 +70,7 @@ export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }
 
   return (
     <WidgetWrapper title="Spending Calendar">
-      <div className="grid grid-cols-7 gap-1 mt-2 text-[11px]">
+      <div className="grid grid-cols-7 gap-1 mt-2 text-meta">
         {WEEKDAYS.map((d) => (
           <div key={d} className="text-center text-text-secondary">{d}</div>
         ))}
@@ -97,7 +97,7 @@ export const SpendingHeatmapWidget: React.FC<{ range: MonthRange }> = ({ range }
           )
         })}
       </div>
-      <div data-testid="heatmap-legend" className="flex items-center gap-1.5 mt-2 text-[11px] text-text-secondary">
+      <div data-testid="heatmap-legend" className="flex items-center gap-1.5 mt-2 text-meta text-text-secondary">
         <span>$0</span>
         {[0.15, 0.36, 0.57, 0.78, 1].map((op) => (
           <span

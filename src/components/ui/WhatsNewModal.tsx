@@ -153,7 +153,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose, o
 
       <button
         onClick={() => { onClose(); onOpenDisclaimer() }}
-        className="mt-1 text-[10px] text-text-secondary/80 hover:text-accent transition-colors self-center"
+        className="mt-1 text-micro text-text-secondary/80 hover:text-accent transition-colors self-center"
       >
         Estimates Only · Not Financial Advice
       </button>

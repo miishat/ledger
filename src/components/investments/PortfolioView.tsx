@@ -117,7 +117,7 @@ export const PortfolioView: React.FC = () => {
                 {formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}
               </p>
               {totals.excludedCount > 0 && (
-                <p className="text-[11px] text-error mt-1">
+                <p className="text-meta text-error mt-1">
                   {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} excluded, no FX rate
                 </p>
               )}
@@ -126,7 +126,7 @@ export const PortfolioView: React.FC = () => {
               <div className="themed-card rounded-lg p-4">
                 <p className="text-[12px] uppercase text-text-secondary">Account Value ({nav.baseCurrency})</p>
                 <p className="text-[22px] font-semibold text-text-primary">{formatMoney(nav.nav)}</p>
-                <p className="text-[11px] text-text-secondary mt-1">
+                <p className="text-meta text-text-secondary mt-1">
                   {nav.cash !== null ? `Cash ${formatMoney(nav.cash)} · ` : ''}per report{report?.period ? `, ${report.period}` : ''}
                 </p>
               </div>

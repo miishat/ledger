@@ -49,14 +49,14 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
               <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
                    title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
                 <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
-                <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-[11px] font-medium text-text-primary">
+                <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-meta font-medium text-text-primary">
                   {(s.rate * 100).toFixed(1)}%
                 </span>
               </div>
-              <span className="hidden text-[10px] text-text-secondary text-center whitespace-nowrap @min-[88px]:block @min-[120px]:hidden">
+              <span className="hidden text-micro text-text-secondary text-center whitespace-nowrap @min-[88px]:block @min-[120px]:hidden">
                 {formatMoneyCompact(s.start)}{s.end < cap ? ` to ${formatMoneyCompact(s.end)}` : '+'}
               </span>
-              <span className="hidden text-[10px] text-text-secondary text-center whitespace-nowrap @min-[120px]:block">
+              <span className="hidden text-micro text-text-secondary text-center whitespace-nowrap @min-[120px]:block">
                 {formatMoney(s.start)}{s.end < cap ? ` to ${formatMoney(s.end)}` : '+'}
               </span>
             </div>

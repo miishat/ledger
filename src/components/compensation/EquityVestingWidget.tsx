@@ -242,7 +242,7 @@ export function EquityVestingWidget() {
           </ResponsiveContainer>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[var(--color-text-secondary)]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-meta text-[var(--color-text-secondary)]">
           {primaryPackage.rsuGrants.map((grant, index) => (
             <span key={grant.id} className="inline-flex items-center gap-1.5">
               <span

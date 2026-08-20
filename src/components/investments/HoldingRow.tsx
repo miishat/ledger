@@ -47,13 +47,13 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
     <tr className="border-b border-border last:border-b-0">
       <td className="py-2 pr-3">
         <span data-testid="holding-ticker" className="text-text-primary font-medium">{holding.ticker}</span>
-        <span className="block text-[11px] text-text-secondary">
+        <span className="block text-meta text-text-secondary">
           <span className="inline-flex align-middle items-center">
             <ThemedSelect
               value={holding.currency ?? ''}
               onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}
               ariaLabel={`Currency for ${holding.ticker}`}
-              className="!w-auto !px-1.5 !py-0 !text-[11px] !rounded"
+              className="!w-auto !px-1.5 !py-0 !text-meta !rounded"
               options={[
                 { value: '', label: 'Set currency' },
                 ...CURRENCIES.map((c) => ({ value: c, label: c })),

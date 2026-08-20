@@ -35,7 +35,7 @@ const AutoField: React.FC<{
       <span className="text-[13px] font-medium text-text-secondary">{label}</span>
       <button
         onClick={() => onToggle(!auto)}
-        className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+        className={`text-meta px-2 py-0.5 rounded border transition-colors ${
           auto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
         }`}
       >
@@ -163,7 +163,7 @@ export const ForecasterTool: React.FC = () => {
             {settings.compTaxEnabled && !settings.compTaxAuto ? (
               <CalculatorField label="Manual Rate" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
             ) : null}
-            <p className="text-[11px] text-text-secondary">
+            <p className="text-meta text-text-secondary">
               Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
             </p>
           </Sheet>

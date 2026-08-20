@@ -179,7 +179,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           type="button"
                           aria-label={`Set ${group.name} class to ${cls}`}
                           onClick={() => updateCategoryGroup(group.id, { budgetClass: cls })}
-                          className={`px-2 py-0.5 rounded-full text-[11px] border transition-colors capitalize ${
+                          className={`px-2 py-0.5 rounded-full text-meta border transition-colors capitalize ${
                             group.budgetClass === cls
                               ? 'border-accent text-accent bg-accent/10'
                               : 'border-border text-text-secondary hover:text-text-primary'
@@ -219,7 +219,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                         <ThemedSelect
                           value={cat.groupId}
                           onChange={(v) => updateCategory(cat.id, { groupId: v })}
-                          className="!bg-transparent !border-0 !px-0 !py-0 text-[11px] text-text-secondary hover:text-text-primary"
+                          className="!bg-transparent !border-0 !px-0 !py-0 text-meta text-text-secondary hover:text-text-primary"
                           options={groups.map(g => ({ value: g.id, label: g.name }))}
                         />
                       </div>
@@ -271,13 +271,13 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                   <button
                                     type="button"
                                     onClick={() => setCoverTarget({ id: cat.id, overage: stats.perCategory[cat.id].overspend })}
-                                    className="px-2 py-0.5 rounded text-[11px] font-medium border border-error/60 text-error hover:bg-error/10 transition-colors"
+                                    className="px-2 py-0.5 rounded text-meta font-medium border border-error/60 text-error hover:bg-error/10 transition-colors"
                                   >
                                     Cover
                                   </button>
                                 )}
                                 {paradigm === 'Target-Based' && (stats.perCategory[cat.id]?.overspend ?? 0) > 0 && (
-                                  <span className="text-[11px] text-orange-500">absorbed by buffer</span>
+                                  <span className="text-meta text-orange-500">absorbed by buffer</span>
                                 )}
                                 {effectiveTarget > 0 && (
                                   <div className="w-full h-1 bg-bg-secondary border border-border/50 rounded-full overflow-hidden mt-1">
@@ -300,7 +300,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                       aria-label={`Budget ${cat.name} ${c === 'monthly' ? 'monthly' : 'annually'}`}
                                       aria-pressed={cadenceOf(cat) === c}
                                       onClick={() => updateCategory(cat.id, { cadence: c })}
-                                      className={`px-1.5 py-0.5 text-[11px] transition-colors ${
+                                      className={`px-1.5 py-0.5 text-meta transition-colors ${
                                         cadenceOf(cat) === c
                                           ? 'bg-accent/15 text-accent'
                                           : 'text-text-secondary hover:text-text-primary'

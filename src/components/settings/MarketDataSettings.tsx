@@ -6,11 +6,11 @@ import { useMarketDataStore } from '../../store/useMarketDataStore'
 export const MarketDataStatusBadge: React.FC = () => {
   const apiKey = useMarketDataStore((s) => s.apiKey)
   return apiKey ? (
-    <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap">
+    <span className="text-meta px-2 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap">
       Key active …{apiKey.slice(-3)}
     </span>
   ) : (
-    <span className="text-[11px] px-2 py-0.5 rounded-full bg-bg-primary/50 text-text-secondary whitespace-nowrap">
+    <span className="text-meta px-2 py-0.5 rounded-full bg-bg-primary/50 text-text-secondary whitespace-nowrap">
       No key
     </span>
   )

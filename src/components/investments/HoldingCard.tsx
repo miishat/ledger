@@ -50,13 +50,13 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
       <div className="flex items-center justify-between">
         <div>
           <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
-          <span className="block text-[11px] text-text-secondary">
+          <span className="block text-meta text-text-secondary">
             <span className="inline-flex align-middle items-center">
               <ThemedSelect
                 value={holding.currency ?? ''}
                 onChange={(v) => setHoldingCurrency(holding.id, v ? (v as Currency) : null)}
                 ariaLabel={`Currency for ${holding.ticker}`}
-                className="!w-auto !px-1.5 !py-0 !text-[11px] !rounded"
+                className="!w-auto !px-1.5 !py-0 !text-meta !rounded"
                 options={[
                   { value: '', label: 'Set currency' },
                   ...CURRENCIES.map((c) => ({ value: c, label: c })),

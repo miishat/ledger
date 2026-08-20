@@ -210,7 +210,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               className={inputClass}
             />
             {(priceSource === 'live' || priceSource === 'cache') && (
-              <p className="text-[11px] text-[var(--color-text-secondary)]">
+              <p className="text-meta text-[var(--color-text-secondary)]">
                 Pre-filled from the live {companyTicker.trim().toUpperCase() || 'ticker'} price — edit to override.
               </p>
             )}

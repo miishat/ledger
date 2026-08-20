@@ -225,7 +225,7 @@ export const DriveSyncControls: React.FC = () => {
       </label>
 
       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
-        <p className="text-[11px] text-text-secondary/80">
+        <p className="text-meta text-text-secondary/80">
           {lastSyncedAt
             ? `Last synced ${whenText(lastSyncedAt)} · revision ${lastSyncedRevision}`
             : 'Never synced on this device.'}
@@ -233,12 +233,12 @@ export const DriveSyncControls: React.FC = () => {
         <button
           onClick={handleDisconnect}
           disabled={busy}
-          className="text-[11px] text-text-secondary hover:text-accent underline underline-offset-2 decoration-text-secondary/40 hover:decoration-accent transition-colors disabled:opacity-50"
+          className="text-meta text-text-secondary hover:text-accent underline underline-offset-2 decoration-text-secondary/40 hover:decoration-accent transition-colors disabled:opacity-50"
         >
           Disconnect
         </button>
       </div>
-      <p className="text-[11px] text-text-secondary">
+      <p className="text-meta text-text-secondary">
         Forgets the Drive link only. Nothing is deleted.
       </p>
 

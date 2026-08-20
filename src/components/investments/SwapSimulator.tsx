@@ -56,7 +56,7 @@ const SwapRow: React.FC<{
     <div className="themed-card border border-border rounded-lg p-3 flex flex-col gap-2">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-end">
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-text-secondary">Swap Out</span>
+          <span className="text-meta text-text-secondary">Swap Out</span>
           <ThemedSelect
             value={swap.outPositionId}
             onChange={(v) => updateSwap(analysis.id, swap.id, { outPositionId: v })}
@@ -64,7 +64,7 @@ const SwapRow: React.FC<{
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-text-secondary">Swap In Ticker</span>
+          <span className="text-meta text-text-secondary">Swap In Ticker</span>
           <input
             className={inputCls}
             value={swap.inTicker}
@@ -73,7 +73,7 @@ const SwapRow: React.FC<{
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] text-text-secondary">
+          <span className="text-meta text-text-secondary">
             Swap In Start Price {swap.inStartPriceSource === 'manual' ? '(manual)' : fetchedStartPrice !== undefined ? '(auto)' : hist.status === 'loading' ? '(fetching…)' : ''}
           </span>
           <div className="flex gap-1 items-center">
@@ -88,7 +88,7 @@ const SwapRow: React.FC<{
               <button
                 type="button"
                 onClick={() => updateSwap(analysis.id, swap.id, { inStartPriceSource: 'auto' })}
-                className="text-[11px] text-text-secondary hover:text-accent whitespace-nowrap"
+                className="text-meta text-text-secondary hover:text-accent whitespace-nowrap"
               >
                 Use fetched
               </button>

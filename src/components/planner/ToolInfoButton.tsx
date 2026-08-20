@@ -28,7 +28,7 @@ export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
         <h3 className="text-[15px] font-semibold text-text-primary">{tool.name}</h3>
         <p className="text-[13px] text-text-secondary">{tool.info.howTo}</p>
         <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">Parameters</span>
+          <span className="text-meta font-semibold uppercase tracking-wide text-text-secondary">Parameters</span>
           {tool.info.params.map((p) => (
             <div key={p.name} className="text-[13px]">
               <span className="font-medium text-text-primary">{p.name}</span>

@@ -11,8 +11,9 @@
     "preview": "vite preview",
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:eager": "node scripts/check-eager-graph.mjs",
+    "check:type-scale": "node scripts/check-type-scale.mjs",
     "e2e": "playwright test",
-    "verify": "npm run lint && npm test -- --run && npm run build && npm run check:bundle && npm run check:eager && npm run e2e"
+    "verify": "npm run lint && npm test -- --run && npm run build && npm run check:bundle && npm run check:eager && npm run check:type-scale && npm run e2e"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",

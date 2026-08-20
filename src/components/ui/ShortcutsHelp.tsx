@@ -32,7 +32,7 @@ export const ShortcutsHelp: React.FC<ShortcutsHelpProps> = ({ open, onClose }) =
         <div key={s.keys} className="flex items-center justify-between gap-4">
           <dd className="text-[13px] text-text-secondary order-2">{s.description}</dd>
           <dt className="order-1">
-            <kbd className="text-[11px] px-1.5 py-0.5 rounded border border-border text-text-secondary">{s.keys}</kbd>
+            <kbd className="text-meta px-1.5 py-0.5 rounded border border-border text-text-secondary">{s.keys}</kbd>
           </dt>
         </div>
       ))}

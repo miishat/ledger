@@ -146,7 +146,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
                       style={{ width: `${Math.min(100, (spent / annual) * 100)}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-text-secondary">
+                  <p className="text-meta text-text-secondary">
                     {formatMoney(spent)} spent · {formatMoney(Math.max(0, annual - spent))} left this year
                   </p>
                 </div>

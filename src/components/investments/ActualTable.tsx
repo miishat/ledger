@@ -3,7 +3,7 @@ import type { InvestmentAnalysis, Position } from '../../store/useAnalysisStore'
 import { avgCostBasis, currentValue, plDollars, plPct, sharesFromLots, totalInvested } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
 
-const th = 'px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-text-secondary'
+const th = 'px-3 py-2 text-right text-meta font-semibold uppercase tracking-wide text-text-secondary'
 const td = 'px-3 py-2 text-right text-[13px] text-text-primary tabular-nums'
 
 interface ActualRow {

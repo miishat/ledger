@@ -320,6 +320,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
+   step up one pixel on phones, where the audit found the smallest tier
+   carrying real data (dates, category names, pacing hints) and not just
+   decoration, and step back down on desktop where the original sizes were
+   deliberate. Enforced by scripts/check-type-scale.mjs.
+
+   The inner query matches the `desktop` custom variant exactly (width AND
+   height), not a plain min-width, so a landscape phone keeps the larger
+   mobile size instead of falling back to the tighter desktop tier the
+   moment its width alone crosses 768px. */
+@utility text-micro {
+  font-size: 11px;
+  @media (min-width: 768px) and (min-height: 500px) {
+    font-size: 10px;
+  }
+}
+
+@utility text-meta {
+  font-size: 12px;
+  @media (min-width: 768px) and (min-height: 500px) {
+    font-size: 11px;
+  }
+}
+
 /* Animations for specialized backgrounds */
 @keyframes float-slow-1 {
   0% { transform: translate(0px, 0px) scale(1); }

@@ -56,7 +56,7 @@ export const PortfolioRollupWidget: React.FC = () => {
         </span>
         <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
         {t.excludedCount > 0 && (
-          <span className="text-[11px] text-error">
+          <span className="text-meta text-error">
             {t.excludedCount} excluded, no FX rate
           </span>
         )}
@@ -67,7 +67,7 @@ export const PortfolioRollupWidget: React.FC = () => {
             stale={isStale(newestFetchedAt)}
           />
         ) : importedAt ? (
-          <span className="text-[11px] text-text-secondary">Imported {timeAgo(importedAt)}</span>
+          <span className="text-meta text-text-secondary">Imported {timeAgo(importedAt)}</span>
         ) : null}
       </div>
     </WidgetWrapper>

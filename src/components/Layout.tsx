@@ -167,7 +167,7 @@ export const Layout: React.FC = () => {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Search className="w-4 h-4" /> Search
-              <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+              <kbd className="ml-auto text-micro px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
             </button>
           </div>
 
@@ -206,7 +206,7 @@ export const Layout: React.FC = () => {
             onClick={() => setWhatsNewOpen(true)}
             title="What's New"
             aria-label={`Version ${__APP_VERSION__}. Open What's New`}
-            className="text-[11px] text-text-secondary hover:text-accent transition-colors pr-2"
+            className="text-meta text-text-secondary hover:text-accent transition-colors pr-2"
           >
             v{__APP_VERSION__}
           </button>
@@ -294,7 +294,7 @@ export const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-micro font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
                 isActive ? 'text-accent' : 'text-text-secondary'
               }`}
             >

@@ -49,7 +49,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           onKeyDown={onKeyDown}
           aria-label="Search commands"
         />
-        <kbd className="text-[11px] text-text-secondary border border-border rounded px-1.5 py-0.5">esc</kbd>
+        <kbd className="text-meta text-text-secondary border border-border rounded px-1.5 py-0.5">esc</kbd>
       </div>
       <ul ref={listRef} className="max-h-[40vh] overflow-y-auto py-1" role="listbox">
         {results.length === 0 && <li className="px-4 py-3 text-[13px] text-text-secondary">No matches.</li>}

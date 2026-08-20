@@ -27,7 +27,7 @@ export const DataFreshness: React.FC<DataFreshnessProps> = ({ source, asOf, stal
   const text = [SOURCE_LABEL[source], age, stale ? 'stale' : ''].filter(Boolean).join(' · ')
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] ${stale ? 'text-error' : 'text-text-secondary'}`}>
+    <span className={`inline-flex items-center gap-1 text-meta ${stale ? 'text-error' : 'text-text-secondary'}`}>
       <span>{text}</span>
       {onRefresh && (
         <button

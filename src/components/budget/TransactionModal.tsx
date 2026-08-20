@@ -231,7 +231,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                       </button>
                     ))}
                   </div>
-                  <p className="text-[11px] text-[var(--color-text-secondary)]">
+                  <p className="text-meta text-[var(--color-text-secondary)]">
                     Amount above is your share; the rest ({formatMoney(Math.max(0, totalPaid - amount))}) is owed to you.
                   </p>
                   <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Shared with</label>
@@ -330,7 +330,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                 >
                   Add a slice
                 </button>
-                <p className="text-[11px] text-[var(--color-text-secondary)]">
+                <p className="text-meta text-[var(--color-text-secondary)]">
                   {remaining > 0
                     ? `${formatMoney(remaining)} left to allocate, which stays on the category above.`
                     : remaining < 0

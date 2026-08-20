@@ -49,7 +49,7 @@ export const WheelTickerCard: React.FC<WheelTickerCardProps> = ({ data, onViewDe
       <div className="flex items-center justify-between mb-2">
         <span className="text-[16px] font-semibold text-text-primary">{data.ticker}</span>
         {price.data?.source && (
-          <span className="text-[10px] uppercase text-text-secondary">{price.data.source}{price.data.stale ? ', stale' : ''}</span>
+          <span className="text-micro uppercase text-text-secondary">{price.data.source}{price.data.stale ? ', stale' : ''}</span>
         )}
       </div>
 

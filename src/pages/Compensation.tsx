@@ -70,7 +70,7 @@ export const Compensation: React.FC = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-[13px] text-[var(--color-text-secondary)]">
               Stock price (USD): <span className="font-medium text-[var(--color-text-primary)]">${rawPrice.toFixed(2)}</span>
-              {priceSource && <span className="ml-1 text-[11px] uppercase text-[var(--color-text-secondary)]">({priceSource}{priceStale ? ', stale' : ''})</span>}
+              {priceSource && <span className="ml-1 text-meta uppercase text-[var(--color-text-secondary)]">({priceSource}{priceStale ? ', stale' : ''})</span>}
             </span>
             <button
               type="button"

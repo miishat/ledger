@@ -57,7 +57,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
 
   return (
     <div className="themed-card rounded-lg p-4 h-[380px] flex flex-col">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-[11px] text-text-secondary">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-meta text-text-secondary">
         {view === 'line' ? (
           <>
             <span className="flex items-center gap-1.5">

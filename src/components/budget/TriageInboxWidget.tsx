@@ -73,7 +73,7 @@ export const TriageInboxWidget: React.FC = () => {
                 <p className="text-[12px] text-[var(--color-text-secondary)]">
                   {tx.date}
                   {tx.duplicate && (
-                    <span className="ml-2 px-2 py-0.5 rounded-md text-[11px] bg-error/10 text-error">
+                    <span className="ml-2 px-2 py-0.5 rounded-md text-meta bg-error/10 text-error">
                       {tx.duplicate === 'exact' ? 'already imported' : 'possible duplicate'}
                     </span>
                   )}

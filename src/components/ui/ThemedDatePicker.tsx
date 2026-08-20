@@ -61,7 +61,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, ariaLabe
       </div>
       <div role="grid" className="grid grid-cols-7 gap-0.5 text-center">
         {DOW.map((d) => (
-          <span key={d} className="text-[11px] text-text-secondary py-1">{d}</span>
+          <span key={d} className="text-meta text-text-secondary py-1">{d}</span>
         ))}
         {Array.from({ length: firstDow }, (_, i) => <span key={`pad-${i}`} />)}
         {Array.from({ length: daysInMonth }, (_, i) => {

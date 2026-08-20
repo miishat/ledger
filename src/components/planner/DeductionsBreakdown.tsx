@@ -53,7 +53,7 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
           style={{ width: `${pct(t.net)}%`, background: NET_COLOR }}
           title={`Net Pay ${formatMoney(t.net)}`}
         >
-          <span className="text-[11px] font-medium text-text-primary truncate px-2">
+          <span className="text-meta font-medium text-text-primary truncate px-2">
             Net {formatMoney(t.net)}
           </span>
         </div>
