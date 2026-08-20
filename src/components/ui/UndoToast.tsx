@@ -14,7 +14,7 @@ export const UndoToast: React.FC = () => {
   return (
     <div
       role="status"
-      className="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-bg-secondary shadow-xl max-w-[calc(100vw-2rem)]"
+      className="fixed left-1/2 -translate-x-1/2 bottom-[calc(76px+env(safe-area-inset-bottom))] desktop:bottom-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-bg-secondary shadow-xl max-w-[calc(100vw-2rem)]"
     >
       <span className="text-[13px] text-text-primary truncate">{pending.label}</span>
       <button

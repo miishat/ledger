@@ -1,6 +1,6 @@
 import { lazy, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useThemeStore } from './store/useThemeStore'
+import { useThemeStore, THEME_BACKGROUNDS } from './store/useThemeStore'
 import { useAccountsStore } from './store/useAccountsStore'
 import { Layout } from './components/Layout'
 
@@ -27,6 +27,27 @@ function App() {
       root.classList.remove('dark')
     } else {
       root.classList.add('dark')
+    }
+
+    // The manifest can only carry one theme_color, and it was hardcoded
+    // black while the app ships a light theme, so an installed light-theme
+    // app got black system bars. The meta tag wins over the manifest at
+    // runtime, so keep it in step with whichever theme is active.
+    //
+    // jsdom's getComputedStyle does not resolve custom properties set by a
+    // stylesheet (it always returns ''), so reading --bg-primary directly
+    // would silently no-op under test. Read from the THEME_BACKGROUNDS
+    // record instead, which mirrors src/index.css and works identically in
+    // both jsdom and a real browser.
+    const bg = THEME_BACKGROUNDS[theme]
+    if (bg) {
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null
+      if (!meta) {
+        meta = document.createElement('meta')
+        meta.name = 'theme-color'
+        document.head.appendChild(meta)
+      }
+      meta.content = bg
     }
   }, [theme])
 

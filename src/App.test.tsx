@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import { vi } from 'vitest'
+import { useThemeStore } from './store/useThemeStore'
 
 vi.mock('./hooks/useSWUpdate', () => ({
   useSWUpdate: () => ({
@@ -33,5 +34,18 @@ describe('App routing', () => {
       await screen.findByRole('heading', { name: 'Budgeting' }, { timeout: 5000 }),
     ).toBeInTheDocument()
     window.location.hash = ''
+  })
+
+  it('keeps the browser chrome colour in step with the active theme', async () => {
+    useThemeStore.getState().setTheme('geometric')
+    render(<App />)
+    const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement
+    expect(meta).not.toBeNull()
+    // Geometric is the light theme; a hardcoded black bar over a white app
+    // is exactly what the manifest was doing.
+    expect(meta.content).toBe('#ffffff')
+
+    await act(async () => { useThemeStore.getState().setTheme('luxury') })
+    expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#000000')
   })
 })

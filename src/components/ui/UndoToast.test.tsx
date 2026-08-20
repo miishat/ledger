@@ -32,4 +32,14 @@ describe('UndoToast', () => {
     expect(restored).toBe(false)
     expect(useUndoStore.getState().pending).toBeNull()
   })
+
+  it('sits above the tab bar including the home indicator', () => {
+    useUndoStore.getState().offerUndo('Deleted account', () => {})
+    const { container } = render(<UndoToast />)
+    const toast = container.querySelector('[role="status"]')!
+    // The bar is 52px plus env(safe-area-inset-bottom), which is 34px on a
+    // home-indicator iPhone. A fixed 96px cleared it by only 10px, and the
+    // update toast's fixed 64px did not clear it at all.
+    expect(toast.className).toMatch(/safe-area-inset-bottom/)
+  })
 })

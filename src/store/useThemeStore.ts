@@ -12,6 +12,19 @@ interface ThemeState {
 
 const THEME_CYCLE: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass']
 
+// Mirrors each theme's --bg-primary in src/index.css. jsdom's
+// getComputedStyle does not resolve CSS custom properties from stylesheets,
+// so the theme-color meta sync in App.tsx reads this record instead of the
+// computed style, keeping the test environment and the real browser in
+// agreement without depending on jsdom's CSS support.
+export const THEME_BACKGROUNDS: Record<AppTheme, string> = {
+  geometric: '#ffffff',
+  tactical: '#0a0a0a',
+  luxury: '#000000',
+  aurora: '#090d16',
+  glass: '#0b0910',
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({

@@ -258,7 +258,7 @@ export const Layout: React.FC = () => {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 min-w-0 overflow-auto overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
+          className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
           <ErrorBoundary key={location.pathname}>
             <Suspense

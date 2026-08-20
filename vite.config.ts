@@ -34,6 +34,8 @@ export default defineConfig({
         name: 'Ledger',
         short_name: 'Ledger',
         description: 'A highly scalable, cross-platform financial dashboard',
+        // Only the install-time default. The runtime value is kept in step
+        // with the active theme by the theme effect in src/App.tsx.
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',

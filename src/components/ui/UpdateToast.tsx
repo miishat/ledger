@@ -9,7 +9,7 @@ export const UpdateToast: React.FC<{ needRefresh: boolean; onRefresh: () => void
   return (
     <div
       role="status"
-      className="fixed bottom-16 md:bottom-6 right-4 z-50 flex items-center gap-3 rounded-lg border border-border px-4 py-3 shadow-xl"
+      className="fixed bottom-[calc(68px+env(safe-area-inset-bottom))] desktop:bottom-6 right-4 z-50 flex items-center gap-3 rounded-lg border border-border px-4 py-3 shadow-xl"
       style={{ backgroundColor: 'var(--dropdown-bg, var(--bg-secondary))' }}
     >
       <span className="text-[14px] text-text-primary">New version available</span>
