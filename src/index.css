@@ -266,6 +266,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+/* iOS Safari zooms the page whenever a focused field computes below 16px,
+   and it never zooms back out, so the user is left panning a magnified
+   layout. Every input in this app was 12px to 15px. The floor is mobile
+   only: the desktop sizes are deliberate and unaffected. Checkboxes and
+   radios are excluded because their font-size does not drive the control
+   size and they are handled by the Checkbox component instead.
+
+   The query is `(max-width: 767px), (max-height: 499px)`, not a plain
+   max-width, because it must be the exact negation of the `desktop`
+   custom variant in this file (min-width: 768px AND min-height: 500px).
+   A landscape phone (e.g. 844x390) fails the height half of `desktop` and
+   so renders the mobile top/bottom bar, but a plain `max-width: 767px`
+   query would miss it entirely and leave its inputs at their unfloored
+   size. Keep this in sync with the tap-target floor below and with the
+   `desktop` variant; all three must partition the viewport the same way. */
+@media (max-width: 767px), (max-height: 499px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Animations for specialized backgrounds */
 @keyframes float-slow-1 {
   0% { transform: translate(0px, 0px) scale(1); }
