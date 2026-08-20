@@ -19,6 +19,7 @@
 - **Baseline at plan start:** 1143 tests / 177 files passing, eslint 0, tsc 0, e2e green. Version 0.9.3-beta. The sidebar sync chip removal (deleting `SyncStatusChip` and `syncStatus`) is already applied in the working tree.
 - Tailwind 4 is configured entirely in `src/index.css` via `@theme`. There is no `tailwind.config.js`. New variants and utilities go in that file with `@custom-variant` and `@utility`.
 - The mobile breakpoint everywhere in this codebase is `md` = 768px. Do not introduce a second, different mobile breakpoint.
+- **Every plain CSS media query this plan adds must be written as the exact negation, or exact match, of the `desktop` custom variant** (`(min-width: 768px) and (min-height: 500px)`), never a bare `min-width`/`max-width`. The mobile-side floors (Task 4, Task 6) use `@media (max-width: 767px), (max-height: 499px)`; the desktop-side step-downs (Task 12) use `@media (min-width: 768px) and (min-height: 500px)`. This exists because a landscape phone (e.g. 844x390) is wide enough to pass a bare `min-width: 768px` check while still showing the mobile top/bottom bar under the `desktop` variant's height clause, and a query that disagreed with `desktop` would silently un-fix whatever Task 4, 6, or 12 fixed, only for landscape.
 - **Responsive prefix convention for this plan.** Existing touch-target code uses `sm:` to undo a mobile floor (`min-h-[44px] sm:min-h-0`, see `AccountCategoryWidget.tsx:85`). All code written by this plan uses `desktop:` instead, because Task 6's CSS floor is a `@media (max-width: 767px)` rule and `sm:` is 640px, which would leave a 640 to 767px band where the utility says one thing and the floor says another. Do not retrofit the two existing `sm:` sites; they are harmless (the CSS floor wins on specificity in that band, which is the behaviour we want anyway) and changing them is churn. Just do not add new ones.
 
 ## Research Findings This Plan Is Built On
@@ -533,8 +534,17 @@ In `src/index.css`, after the `input[type="date"]::-webkit-calendar-picker-indic
    layout. Every input in this app was 12px to 15px. The floor is mobile
    only: the desktop sizes are deliberate and unaffected. Checkboxes and
    radios are excluded because their font-size does not drive the control
-   size and they are handled by the Checkbox component instead. */
-@media (max-width: 767px) {
+   size and they are handled by the Checkbox component instead.
+
+   The query is `(max-width: 767px), (max-height: 499px)`, not a plain
+   max-width, because it must be the exact negation of the `desktop`
+   custom variant in this file (min-width: 768px AND min-height: 500px).
+   A landscape phone (e.g. 844x390) fails the height half of `desktop` and
+   so renders the mobile top/bottom bar, but a plain `max-width: 767px`
+   query would miss it entirely and leave its inputs at their unfloored
+   size. Keep this in sync with the tap-target floor below and with the
+   `desktop` variant; all three must partition the viewport the same way. */
+@media (max-width: 767px), (max-height: 499px) {
   input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
   textarea,
   select {
@@ -835,8 +845,13 @@ In `src/index.css`, directly after the input rule added in Task 4, add:
 
    min-width is deliberately not applied to <a>, because a link inside a
    sentence must stay inline and would otherwise stretch the line box.
-   Anything that genuinely must stay smaller opts out with .tap-exempt. */
-@media (max-width: 767px) {
+   Anything that genuinely must stay smaller opts out with .tap-exempt.
+
+   Same compound query as the input floor above, for the same reason: it
+   must be the exact negation of `desktop`, or a landscape phone (wide
+   enough to fail a plain max-width check, short enough to still show the
+   mobile bars) keeps its sub-44px controls. */
+@media (max-width: 767px), (max-height: 499px) {
   button:not(.tap-exempt),
   [role='button']:not(.tap-exempt),
   summary:not(.tap-exempt) {
@@ -1548,17 +1563,22 @@ In `src/index.css`, after the tap-target rule from Task 6, add:
    step up one pixel on phones, where the audit found the smallest tier
    carrying real data (dates, category names, pacing hints) and not just
    decoration, and step back down on desktop where the original sizes were
-   deliberate. Enforced by scripts/check-type-scale.mjs. */
+   deliberate. Enforced by scripts/check-type-scale.mjs.
+
+   The inner query matches the `desktop` custom variant exactly (width AND
+   height), not a plain min-width, so a landscape phone keeps the larger
+   mobile size instead of falling back to the tighter desktop tier the
+   moment its width alone crosses 768px. */
 @utility text-micro {
   font-size: 11px;
-  @media (min-width: 768px) {
+  @media (min-width: 768px) and (min-height: 500px) {
     font-size: 10px;
   }
 }
 
 @utility text-meta {
   font-size: 12px;
-  @media (min-width: 768px) {
+  @media (min-width: 768px) and (min-height: 500px) {
     font-size: 11px;
   }
 }
