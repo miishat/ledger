@@ -8,6 +8,7 @@ import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { Checkbox } from '../ui/Checkbox';
 import { inRange, type MonthRange } from '../../utils/budget/period';
 import { useUndoStore } from '../../store/useUndoStore';
 
@@ -275,12 +276,10 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               <thead>
                 <tr className="border-b border-border text-[12px] text-text-secondary">
                   <th className="pb-2 font-medium w-8">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all transactions"
+                    <Checkbox
+                      ariaLabel="Select all transactions"
                       checked={allVisibleSelected}
                       onChange={toggleAll}
-                      className="accent-[var(--color-accent)]"
                     />
                   </th>
                   <th className="pb-2 font-medium">Date</th>
@@ -304,12 +303,10 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                     onClick={() => setEditingTransaction(tx)}
                   >
                     <td className="py-3 w-8" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label="Select transaction"
+                      <Checkbox
+                        ariaLabel="Select transaction"
                         checked={selectedSet.has(tx.id)}
                         onChange={() => toggleRow(tx.id)}
-                        className="accent-[var(--color-accent)]"
                       />
                     </td>
                     <td className="py-3 text-[14px] whitespace-nowrap">{tx.date}</td>
@@ -396,14 +393,13 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                 className="themed-card rounded-lg p-3 flex flex-col gap-2"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <input
-                    type="checkbox"
-                    aria-label="Select transaction"
-                    checked={selectedSet.has(tx.id)}
-                    onChange={() => toggleRow(tx.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-1 shrink-0 accent-[var(--color-accent)]"
-                  />
+                  <span onClick={(e) => e.stopPropagation()} className="mt-1 shrink-0">
+                    <Checkbox
+                      ariaLabel="Select transaction"
+                      checked={selectedSet.has(tx.id)}
+                      onChange={() => toggleRow(tx.id)}
+                    />
+                  </span>
                   <button
                     type="button"
                     aria-label={`Edit ${tx.description}`}

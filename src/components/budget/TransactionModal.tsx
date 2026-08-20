@@ -5,6 +5,7 @@ import { ThemedSelect } from '../ui/ThemedSelect';
 import { ThemedDatePicker } from '../ui/ThemedDatePicker';
 import { NumberInput } from '../ui/NumberInput';
 import { Sheet } from '../ui/Sheet';
+import { Checkbox } from '../ui/Checkbox';
 import { formatMoney } from '../planner/format';
 import { sharedPeople } from '../../utils/budget/sharedExpenses';
 import { splitRemainder, round2 } from '../../utils/budget/splits';
@@ -206,12 +207,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           {type === 'expense' && (
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
-                <input
-                  type="checkbox"
-                  checked={isShared}
-                  onChange={(e) => setIsShared(e.target.checked)}
-                  className="accent-[var(--color-accent)]"
-                />
+                <Checkbox checked={isShared} onChange={setIsShared} ariaLabel="Shared bill" />
                 Shared bill (I paid for others too)
               </label>
               {isShared && (
@@ -254,12 +250,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           {type === 'income' && (
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
-                <input
-                  type="checkbox"
-                  checked={isReimbursement}
-                  onChange={(e) => setIsReimbursement(e.target.checked)}
-                  className="accent-[var(--color-accent)]"
-                />
+                <Checkbox checked={isReimbursement} onChange={setIsReimbursement} ariaLabel="Reimbursement for a shared bill" />
                 Reimbursement for a shared bill (not income)
               </label>
               {isReimbursement && (
@@ -294,13 +285,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
-              <input
-                type="checkbox"
-                aria-label="Split across categories"
-                checked={isSplit}
-                onChange={(e) => setIsSplit(e.target.checked)}
-                className="accent-[var(--color-accent)]"
-              />
+              <Checkbox checked={isSplit} onChange={setIsSplit} ariaLabel="Split across categories" />
               Split across categories
             </label>
             {isSplit && (

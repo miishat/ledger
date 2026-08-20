@@ -5,6 +5,7 @@ import { requestAccessToken, getCachedToken, clearCachedToken } from '../../util
 import { previewPush, previewPull, performPush, performPull } from '../../utils/syncService'
 import type { SnapshotMeta } from '../../utils/syncDecision'
 import { isAutoSyncEnabled, setAutoSyncEnabled } from '../../utils/autoSync'
+import { Checkbox } from '../ui/Checkbox'
 
 type Pending =
   | {
@@ -200,14 +201,13 @@ export const DriveSyncControls: React.FC = () => {
       </div>
 
       <label className="flex items-center gap-2 text-[12px] text-text-secondary">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={autoSync}
-          onChange={(e) => {
-            setAutoSyncEnabled(e.target.checked)
-            setAutoSync(e.target.checked)
+          ariaLabel="Sync automatically"
+          onChange={(next) => {
+            setAutoSyncEnabled(next)
+            setAutoSync(next)
           }}
-          className="shrink-0"
         />
         Sync automatically here when there is nothing to resolve. Conflicts still wait for you in this panel.
         Automatic sync resumes after your next manual push or pull in this session, it does not stay primed across a reload.

@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
 import { useDashboardLayoutStore } from '../../store/useDashboardLayoutStore'
 import { DASHBOARD_WIDGET_LABELS } from '../../pages/dashboardWidgets'
+import { Checkbox } from '../ui/Checkbox'
 
 interface CustomizeDashboardProps {
   open: boolean
@@ -35,12 +36,10 @@ export const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ open, on
         const label = DASHBOARD_WIDGET_LABELS[id] ?? id
         return (
           <div key={id} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-bg-secondary">
-            <input
-              type="checkbox"
-              aria-label={`Show ${label}`}
+            <Checkbox
+              ariaLabel={`Show ${label}`}
               checked={!hidden.includes(id)}
               onChange={() => toggleHidden(id)}
-              className="accent-[var(--color-accent)]"
             />
             <span className="flex-1 text-[14px] text-text-primary truncate">{label}</span>
             <button

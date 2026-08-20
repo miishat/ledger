@@ -6,6 +6,7 @@ import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
 import { DriveSyncControls } from './DriveSyncControls'
 import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSupport } from '../../utils/reminders'
+import { Checkbox } from '../ui/Checkbox'
 
 interface SettingsSheetProps {
   open: boolean
@@ -65,12 +66,12 @@ const ReminderSettings: React.FC = () => {
   if (support === 'granted') {
     return (
       <label className="flex items-center gap-2 text-[13px] text-text-primary">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={enabled}
-          onChange={(e) => {
-            setRemindersEnabled(e.target.checked)
-            setEnabled(e.target.checked)
+          ariaLabel="Remind me before upcoming recurring bills"
+          onChange={(next) => {
+            setRemindersEnabled(next)
+            setEnabled(next)
           }}
         />
         Remind me before upcoming recurring bills
