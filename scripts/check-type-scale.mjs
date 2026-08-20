@@ -26,7 +26,7 @@ const offenders = []
 
 for (const file of files) {
   readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-    if (/text-\[1[01]px\]/.test(line)) {
+    if (/text-\[1[01]px\](?!\d)/.test(line)) {
       const rel = relative(cwd, file).split('\\').join('/')
       offenders.push(`${rel}:${i + 1}: ${line.trim().slice(0, 90)}`)
     }
