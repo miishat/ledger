@@ -5,7 +5,7 @@
 **Viewports:** 375x812 (iPhone standard), 320x700 (smallest common), 844x390 and 812x375 (phone landscape).
 **Supersedes:** `MOBILE_AUDIT.md` (v0.7.4-beta, 2026-07-22), removed by this rescore. It stays in git history.
 
-> **Tooling caveat, unchanged from the original audit:** the browser pane used for the live spot-check still cannot composite frames, so no screenshots and no running animations. The authoritative numbers below come from the Playwright guard suite running under real Chromium; the live-browser pass was used to cross-check and was consistent with it everywhere except one artifact (see the Method note under Section 3), which does not reproduce under Playwright and is treated as a tooling quirk, not a defect.
+> **Tooling caveat, unchanged from the original audit:** the browser pane used for the live spot-check still cannot composite frames, so no screenshots and no running animations. The authoritative numbers below come from the Playwright guard suite running under real Chromium; the live-browser pass was used to cross-check and was consistent with it everywhere except one measurement (see the Method note under Section 3), which the live pass correctly flagged and this branch's final whole-branch review confirmed and fixed before merge, not a tooling quirk after all.
 
 ---
 
@@ -44,15 +44,15 @@ The `e2e/mobile-guards.spec.ts` suite encodes exactly this: `input below 16px`, 
 
 ## Blocking findings, all resolved
 
-### B1. Settings unreachable in landscape — fixed (Task 1)
+### B1. Settings unreachable in landscape: fixed (Task 1)
 
 The sidebar is no longer gated on width alone. Navigation now uses a `desktop:` breakpoint variant (paired with `useIsDesktop`) that accounts for height as well as width, and a dedicated mobile top bar (`data-testid="mobile-topbar"`, [Layout.tsx:229](src/components/Layout.tsx#L229)) carries Settings and Search on every viewport under the desktop breakpoint, landscape included. Measured at 844x390: the Settings button renders at `x:784, y:1.7, 44x44`, fully inside the 390px-tall viewport, and `e2e/mobile-guards.spec.ts`'s `settings is reachable and inside the viewport` test asserts this on every run.
 
-### B2. Gross/After-Tax toggle off-screen on Compensation — fixed (Task 3)
+### B2. Gross/After-Tax toggle off-screen on Compensation: fixed (Task 3)
 
 [CompHeroWidget.tsx:181](src/components/compensation/CompHeroWidget.tsx#L181) now wraps the inner toggle group in `flex flex-wrap items-center gap-2 sm:gap-3`, with a comment recording the 430px total that forced the original overflow. Measured at 375px and 320px: the Compensation route has zero elements past the right edge in the guard suite's `never scrolls sideways` test, and the toggle is visible and tappable in the live re-measurement.
 
-### B3. No mobile search entry point — fixed (Task 3)
+### B3. No mobile search entry point: fixed (Task 3)
 
 The mobile top bar's Search button ([Layout.tsx:235](src/components/Layout.tsx#L235)) opens the command palette without a keyboard. `e2e/mobile-guards.spec.ts`'s `search is reachable without a keyboard` test clicks it and asserts the palette's placeholder text appears.
 
@@ -74,7 +74,7 @@ The mobile top bar's Search button ([Layout.tsx:235](src/components/Layout.tsx#L
 
 **Fixed:** Task 5 introduced a shared `Checkbox` component ([Checkbox.tsx](src/components/ui/Checkbox.tsx)) whose visible box stays 20x20 (unchanged density) but whose hit area is `min-h-[44px] min-w-[44px]` on mobile, `desktop:min-h-0 desktop:min-w-0` on desktop, replacing all nine bare `<input type="checkbox">` call sites that used to render at the 13x13 browser default. Task 6 set a 44px floor on remaining small controls (widget move up/down, "About this tool", the Sheet close button, currency selectors). Task 7 gave icon buttons a padded 44px hit area without growing the visual glyph. Task 8's guard test (`the transaction card list has no tap target under 44px`, plus the per-route `no tap target under 44px` tests) passed on both the 320px and landscape Playwright projects: 46/46, zero offenders.
 
-**Method note:** the live browser-pane spot-check at 375px and 320px measured the transaction-list checkbox `<input>` itself (not its wrapping hit-area span) at 20x44 rather than the expected 20x20, an artifact consistent with the pane's documented inability to composite frames. This does not reproduce in the Playwright guard suite, which runs in real headless Chromium and asserts zero offenders on this exact scenario across two mobile projects. The guard suite is treated as authoritative.
+**Method note:** the rescore's live browser-pane spot-check measured the transaction-list checkbox `<input>` at 20x44 rather than the expected 20x20, and was initially logged as a probable tooling artifact of the pane's documented inability to composite frames. It was not: this branch's final whole-branch review independently re-measured the same checkbox in real headless Chromium and confirmed the deformation was genuine (`{"w":20,"h":44}`), caused by the mobile tap-target floor's `input` selector also catching `type="checkbox"` and stretching the `Checkbox` component's deliberately-20px-wide input to the floor's 44px minimum height. This is exactly the kind of defect a per-task review cannot see: the `Checkbox` component (Task 5) and the tap-target floor (Task 6) were each individually correct, and their combination was not. Fixed by excluding `type="checkbox"` from the floor's selector in `src/index.css`, since `Checkbox`'s own 44x44 wrapper `<span>` already supplies the intended hit area. Re-measured after the fix: `{"w":20,"h":20,"wrapperW":44,"wrapperH":44}`. The guard suite itself was also gap-fixed at the same time: it previously visited every route with no seeded data, so no checkbox ever rendered for it to check; `e2e/mobile-guards.spec.ts` now seeds two accounts and six transactions in its `beforeEach`, and the transaction-card-list test is the direct regression test for this defect going forward.
 
 ## 4. Forms and data entry: 10/10
 
@@ -84,9 +84,9 @@ The mobile top bar's Search button ([Layout.tsx:235](src/components/Layout.tsx#L
 
 ## 5. Modals, sheets and overlays: 10/10
 
-**Good:** [Sheet.tsx](src/components/ui/Sheet.tsx) still gives every modal a bottom sheet with `max-h-[90dvh]`, internal scrolling, safe-area padding, swipe-to-dismiss, scrim-tap and Escape dismissal, a focus trap and restore, body scroll lock, and `useReducedMotion` support.
+**Good:** [Sheet.tsx](src/components/ui/Sheet.tsx) still gives every modal a bottom sheet with internal scrolling, safe-area padding, swipe-to-dismiss, scrim-tap and Escape dismissal, a focus trap and restore, body scroll lock, and `useReducedMotion` support.
 
-**Fixed:** Task 9 grew the Close button to a 44px hit area (kept its compact visual footprint) and resolved the keyboard-overlap question, so nothing here is deferred as "unverified" any longer.
+**Fixed:** Task 9 replaced the fixed `max-h-[90dvh]` with a height capped against the visual viewport (falling back to the equivalent of 90dvh where `visualViewport` is unsupported), because `dvh` does not shrink for the iOS software keyboard and used to leave a focused field in a tall sheet sitting behind it. It also grew the Close button to a 44px hit area (kept its compact visual footprint). Nothing here is deferred as "unverified" any longer.
 
 ## 6. Dense data: lists, tables, portfolio: 10/10
 
@@ -98,7 +98,7 @@ The mobile top bar's Search button ([Layout.tsx:235](src/components/Layout.tsx#L
 
 **Good:** all Recharts containers are responsive and stay inside the viewport at both 375px and 320px. Axis ticks stay legible. Charts are lazy-loaded and off the eager entry graph.
 
-**Fixed:** Task 11 resolved the touch-tooltip question the original audit could not verify (the browser pane's tooling caveat made it inconclusive). `a chart reveals its values on tap` in the guard suite uses Playwright's real touch path (`page.touchscreen.tap` under the `hasTouch` iPhone fixture) against the mortgage chart and asserts the tooltip becomes visible, confirmed passing on both mobile projects. Chart heights remain fixed per the plan's accepted scope; nothing in this plan targeted that as a defect, since a chart claiming a large but bounded share of a tall page is a design choice, not an overflow or a touch-target failure.
+**Fixed:** eight chart and scrollable-list heights (`CompHeroWidget`, `MortgageCalculator`, `MonteCarloSection`, `CashFlowWidget`, `TriageInboxWidget`, `CategorizationRulesWidget`, `ReportContributors`, `TransactionListWidget`) now use a shorter mobile height with the `desktop:` variant restoring the original size, instead of a single fixed height that used to claim up to 49% of a phone viewport. Task 11 also resolved the touch-tooltip question the original audit could not verify (the browser pane's tooling caveat made it inconclusive): `a chart reveals its values on tap` in the guard suite uses Playwright's real touch path (`page.touchscreen.tap` under the `hasTouch` iPhone fixture) against the mortgage chart, whose `Tooltip` now runs `trigger="click"` on mobile and `trigger="hover"` on desktop (a naive unconditional `trigger="click"` was caught by the branch's final review as a desktop hover regression before merge). This fix landed on the mortgage chart specifically, the one route the plan scoped it to; the app's other Recharts surfaces (cash flow, compensation vesting, forecaster Monte Carlo, portfolio allocation) remain hover-only and their series values are not readable by touch. That gap is out of this plan's scope, not closed by it.
 
 ## 8. Typography and readability: 10/10
 
