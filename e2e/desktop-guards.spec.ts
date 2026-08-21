@@ -151,3 +151,25 @@ for (const theme of THEMES) {
     expect(failures).toEqual([])
   })
 }
+
+test('tab strips are real tabs and survive a reload', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+
+  const strip = page.getByRole('tablist', { name: 'Budgeting sections' })
+  await expect(strip).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+
+  await page.getByRole('tab', { name: 'Transactions' }).click()
+  await expect(page).toHaveURL(/tab=transactions/)
+
+  await page.reload()
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('tab', { name: 'Transactions' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('Investments opens on Portfolio when that is the only tab with data', async ({ page }) => {
+  await page.goto('/#/investments')
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('tab', { name: 'Portfolio' })).toHaveAttribute('aria-selected', 'true')
+})

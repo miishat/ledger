@@ -30,7 +30,7 @@ test('renders a long transaction list without mounting every row', async ({ page
   )
 
   await page.goto('/#/budget')
-  await page.getByRole('button', { name: 'Transactions' }).click()
+  await page.getByRole('tab', { name: 'Transactions' }).click()
 
   // Sanity check: confirm the store actually loaded all 1200 seeded rows
   // (not a silently-empty fallback caused by a persisted-shape mismatch)
@@ -76,7 +76,7 @@ test('renders a long transaction list on mobile without mounting every card', as
 
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/#/budget')
-  await page.getByRole('button', { name: 'Transactions' }).click()
+  await page.getByRole('tab', { name: 'Transactions' }).click()
 
   const cards = page.locator('[data-testid="transactions-cards"] [data-testid^="transaction-card-"]')
   await expect(cards.first()).toBeVisible()

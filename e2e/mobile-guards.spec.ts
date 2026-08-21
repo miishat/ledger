@@ -115,7 +115,7 @@ for (const [name, hash] of ROUTES) {
 test('the transaction card list has no tap target under 44px', async ({ page }) => {
   await page.goto('/#/budget')
   await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'Transactions' }).click()
+  await page.getByRole('tab', { name: 'Transactions' }).click()
   const offenders = await page.evaluate((selector) => {
     return [...document.querySelectorAll(selector)]
       .filter((el) => {

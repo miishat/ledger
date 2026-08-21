@@ -53,7 +53,7 @@ for (const [name, hash] of routes) {
     await page.goto(`/${hash}`)
     await page.waitForLoadState('networkidle')
     if (name === 'budgeting') {
-      await page.getByRole('button', { name: 'Transactions' }).click()
+      await page.getByRole('tab', { name: 'Transactions' }).click()
     }
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

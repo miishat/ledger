@@ -34,7 +34,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
               onClick={() => setBy(m.by)}
               aria-pressed={by === m.by}
               className={`px-2 py-1 rounded-md text-[12px] border transition-colors ${
-                by === m.by ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+                by === m.by ? 'border-accent text-accent bg-accent/10' : 'control-border text-text-secondary hover:text-text-primary'
               }`}
             >
               {m.label}

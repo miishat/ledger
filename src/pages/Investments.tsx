@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, NotebookText } from 'lucide-react'
 import { AnalysisCard } from '../components/investments/AnalysisCard'
 import { AnalysisModal } from '../components/investments/AnalysisModal'
@@ -7,13 +8,26 @@ import { TradesView } from '../components/investments/TradesView'
 import { WheelView } from '../components/investments/wheel/WheelView'
 import { useAnalysisStore } from '../store/useAnalysisStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
+import { usePortfolioStore } from '../store/usePortfolioStore'
 import { quoteKey } from '../services/marketData'
 import { currentValue, totalInvested } from '../utils/investments/analysisMetrics'
 import { formatMoney } from '../components/planner/format'
 import { Stat } from '../components/ui/Stat'
 import { EmptyState } from '../components/ui/EmptyState'
+import { Tabs, type TabItem } from '../components/ui/Tabs'
 
-const TAB_LABELS: Record<string, string> = { journal: 'Plan vs Actual', portfolio: 'Portfolio', trades: 'Trades', wheel: 'Options' }
+type InvestTab = 'journal' | 'portfolio' | 'trades' | 'wheel'
+
+const INVEST_TABS: readonly TabItem<InvestTab>[] = [
+  { id: 'journal', label: 'Plan vs Actual' },
+  { id: 'portfolio', label: 'Portfolio' },
+  { id: 'trades', label: 'Trades' },
+  { id: 'wheel', label: 'Options' },
+]
+
+const isInvestTab = (v: string | null): v is InvestTab =>
+  v === 'journal' || v === 'portfolio' || v === 'trades' || v === 'wheel'
+
 const TAB_BLURBS: Record<string, string> = {
   journal: 'Your decision journal: what you analyzed, what you actually did, and how both performed.',
   portfolio: 'Your portfolio with live prices and allocations.',
@@ -26,7 +40,19 @@ export const Investments: React.FC = () => {
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [tab, setTab] = useState<'journal' | 'portfolio' | 'trades' | 'wheel'>('journal')
+  const holdings = usePortfolioStore((s) => s.holdings)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  // Landing on an empty "Plan vs Actual" while the Portfolio tab holds data
+  // made the page look broken to anyone who imports holdings but keeps no
+  // decision journal. Default to the first tab that actually has something.
+  const defaultTab: InvestTab = analyses.length === 0 && holdings.length > 0 ? 'portfolio' : 'journal'
+  const tab: InvestTab = isInvestTab(tabParam) ? tabParam : defaultTab
+  const setTab = (next: InvestTab) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('tab', next)
+    setSearchParams(params)
+  }
 
   // Header totals use override > cached > start price (cards fetch live).
   const priceFor = (ticker: string, exchange: string | undefined, fallback: number) =>
@@ -57,22 +83,10 @@ export const Investments: React.FC = () => {
         )}
       </header>
 
-      <div className="flex gap-2">
-        {(['journal', 'portfolio', 'trades', 'wheel'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-              tab === t ? 'border-accent text-accent bg-accent/10' : 'control-border text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {TAB_LABELS[t]}
-          </button>
-        ))}
-      </div>
+      <Tabs items={INVEST_TABS} value={tab} onChange={setTab} ariaLabel="Investments sections" />
 
-      {tab === 'journal' ? (
-        <>
+      {tab === 'journal' && (
+        <div role="tabpanel" id="panel-journal" aria-labelledby="tab-journal" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4">
               <Stat label="Total Planned" value={formatMoney(plannedAll)} />
@@ -103,13 +117,25 @@ export const Investments: React.FC = () => {
           )}
 
           <AnalysisModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-        </>
-      ) : tab === 'portfolio' ? (
-        <PortfolioView />
-      ) : tab === 'trades' ? (
-        <TradesView />
-      ) : (
-        <WheelView />
+        </div>
+      )}
+
+      {tab === 'portfolio' && (
+        <div role="tabpanel" id="panel-portfolio" aria-labelledby="tab-portfolio" tabIndex={0} className="focus-visible:outline-none">
+          <PortfolioView />
+        </div>
+      )}
+
+      {tab === 'trades' && (
+        <div role="tabpanel" id="panel-trades" aria-labelledby="tab-trades" tabIndex={0} className="focus-visible:outline-none">
+          <TradesView />
+        </div>
+      )}
+
+      {tab === 'wheel' && (
+        <div role="tabpanel" id="panel-wheel" aria-labelledby="tab-wheel" tabIndex={0} className="focus-visible:outline-none">
+          <WheelView />
+        </div>
       )}
     </div>
   )
