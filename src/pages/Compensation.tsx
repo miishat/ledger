@@ -82,7 +82,11 @@ export const Compensation: React.FC = () => {
               Refresh Price
             </button>
             <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
+              <label htmlFor="comp-manual-price" className="sr-only">
+                Set stock price manually, in USD
+              </label>
               <NumberInput
+                id="comp-manual-price"
                 value={manualPriceDraft}
                 onCommit={setManualPriceDraft}
                 placeholder="Manual price"
@@ -152,12 +156,13 @@ export const Compensation: React.FC = () => {
           {isPopulated ? (
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">
+                <label htmlFor="comp-stock-price" className="text-[14px] text-[var(--color-text-secondary)]">
                   Current Stock Price {useCadConversion ? '(CAD)' : '(USD)'}
-                </span>
+                </label>
                 <div className="flex items-center gap-1">
                   <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
                   <NumberInput
+                    id="comp-stock-price"
                     value={pkg.companyCurrentPrice ?? 0}
                     onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
                     maxDecimals={3}

@@ -193,10 +193,11 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+            <label htmlFor="tx-amount" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Amount
             </label>
             <NumberInput
+              id="tx-amount"
               value={amount}
               onCommit={setAmount}
               className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
@@ -381,10 +382,11 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+            <label htmlFor="tx-description" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Description (Optional)
             </label>
             <input
+              id="tx-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

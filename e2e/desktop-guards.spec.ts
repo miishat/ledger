@@ -13,3 +13,30 @@ test('no account name is squeezed below its own text width', async ({ page }) =>
   )
   expect(squeezed).toEqual([])
 })
+
+test('every visible form control has a programmatic label', async ({ page }) => {
+  const unlabelled = async () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('input, select, textarea')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect()
+          return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'
+        })
+        .filter((el) => {
+          if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return false
+          if (el.closest('label')) return false
+          return !(el.id && document.querySelector(`label[for="${el.id}"]`))
+        })
+        .map((el) => ({ tag: el.tagName, type: (el as HTMLInputElement).type, cls: (el.className + '').slice(0, 60) })),
+    )
+
+  await page.goto('/#/compensation')
+  await page.waitForLoadState('networkidle')
+  expect(await unlabelled()).toEqual([])
+
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  await page.waitForTimeout(400)
+  expect(await unlabelled()).toEqual([])
+})
