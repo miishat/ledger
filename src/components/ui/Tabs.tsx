@@ -21,16 +21,22 @@ interface TabsProps<T extends string> {
 export function Tabs<T extends string>({ items, value, onChange, ariaLabel, className = '' }: TabsProps<T>) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
 
+  const selectedIndex = items.findIndex((t) => t.id === value)
+  // If value matches no item, aria-selected is false on every tab, but the
+  // strip still needs exactly one tab in the page tab order or a keyboard
+  // user can never enter it. Tab 0 gets the roving tabindex by default.
+  const rovingIndex = selectedIndex >= 0 ? selectedIndex : 0
+
   const focusAndSelect = (id: T) => {
     onChange(id)
-    // The newly selected tab is the only one in the tab order, so move focus
-    // with it or the next Tab press would leave the strip from a stale node.
-    requestAnimationFrame(() => refs.current[id]?.focus())
+    // Every tab button is always mounted (no tab is ever conditionally
+    // rendered), so the node already exists and .focus() works synchronously
+    // even though its tabIndex has not been re-rendered yet.
+    refs.current[id]?.focus()
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    const index = items.findIndex((t) => t.id === value)
-    if (index < 0) return
+    const index = rovingIndex
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault()
       focusAndSelect(items[(index + 1) % items.length].id)
@@ -48,7 +54,7 @@ export function Tabs<T extends string>({ items, value, onChange, ariaLabel, clas
 
   return (
     <div role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown} className={`flex flex-wrap gap-2 ${className}`}>
-      {items.map((item) => {
+      {items.map((item, i) => {
         const active = item.id === value
         return (
           <button
@@ -59,7 +65,7 @@ export function Tabs<T extends string>({ items, value, onChange, ariaLabel, clas
             role="tab"
             aria-selected={active}
             aria-controls={`panel-${item.id}`}
-            tabIndex={active ? 0 : -1}
+            tabIndex={i === rovingIndex ? 0 : -1}
             onClick={() => onChange(item.id)}
             className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active
