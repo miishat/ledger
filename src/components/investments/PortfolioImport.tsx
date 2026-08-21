@@ -149,7 +149,7 @@ export const PortfolioImport: React.FC = () => {
             >
               Import with mapping
             </button>
-            <button onClick={() => setPending(null)} className="px-4 py-2 border border-border rounded-md text-[14px] text-text-secondary hover:text-text-primary">
+            <button onClick={() => setPending(null)} className="px-4 py-2 border control-border rounded-md text-[14px] text-text-secondary hover:text-text-primary">
               Cancel
             </button>
           </div>

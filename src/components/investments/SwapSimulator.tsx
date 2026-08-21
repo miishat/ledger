@@ -120,7 +120,7 @@ const SwapRow: React.FC<{
               placeholder="Manual current price"
               className="w-32 bg-bg-primary/50 border border-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
             />
-            <button type="submit" className="px-2 py-1 bg-bg-primary/50 border border-border rounded text-[12px] text-text-primary hover:text-accent transition-colors">
+            <button type="submit" className="px-2 py-1 bg-bg-primary/50 border control-border rounded text-[12px] text-text-primary hover:text-accent transition-colors">
               Set
             </button>
           </form>

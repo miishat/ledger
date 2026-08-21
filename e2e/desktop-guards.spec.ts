@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
 import { seedApp } from './seed'
+import { installContrastHelpers } from './contrast'
 
-test.beforeEach(async ({ page }) => { await seedApp(page) })
+test.beforeEach(async ({ page }) => {
+  await seedApp(page)
+  await installContrastHelpers(page)
+})
 
 test('no account name is squeezed below its own text width', async ({ page }) => {
   await page.goto('/')
@@ -83,3 +87,23 @@ test('a sheet never renders its header twice', async ({ page }) => {
   })
   expect(visibleHeadings).toEqual(['Settings'])
 })
+
+const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass'] as const
+
+for (const theme of THEMES) {
+  test(`interactive borders reach 3:1 in the ${theme} theme`, async ({ page }) => {
+    await page.addInitScript((t) => {
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+    }, theme)
+    await page.goto('/#/budget')
+    await page.waitForLoadState('networkidle')
+    const failures = await page.evaluate(() => {
+      const c = (window as unknown as { __contrast: { borderRatio(el: Element): number | null } }).__contrast
+      return [...document.querySelectorAll('.control-border')]
+        .filter((el) => el.getBoundingClientRect().width > 0)
+        .map((el) => ({ txt: (el.textContent || '').trim().slice(0, 24), ratio: c.borderRatio(el) }))
+        .filter((r) => r.ratio !== null && r.ratio < 3)
+    })
+    expect(failures).toEqual([])
+  })
+}

@@ -100,7 +100,7 @@ export const Dashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setCustomizeOpen(true)}
-          className="px-3 py-2 rounded-md text-[13px] font-medium border border-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+          className="px-3 py-2 rounded-md text-[13px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
         >
           Customize
         </button>

@@ -168,7 +168,7 @@ export const Layout: React.FC = () => {
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border control-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Search className="w-4 h-4" /> Search
               <kbd className="ml-auto text-micro px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>

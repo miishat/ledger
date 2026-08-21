@@ -95,7 +95,7 @@ export const ThemedDatePicker: React.FC<ThemedDatePickerProps> = ({ id, ariaLabe
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`w-full flex items-center justify-between gap-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent transition-colors ${className}`}
+        className={`w-full flex items-center justify-between gap-2 bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent transition-colors ${className}`}
       >
         <span>{value || 'Select Date'}</span>
         <Calendar className="w-4 h-4 shrink-0 text-text-secondary" />

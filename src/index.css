@@ -13,6 +13,7 @@
      once: var(--accent) resolves against whichever [data-theme] is active. */
   --unvested: color-mix(in srgb, var(--accent) 62%, var(--text-secondary));
   --color-border: var(--border-color);
+  --color-border-strong: var(--border-strong);
   --color-error: var(--error);
 
   --font-sans: 'Inter', sans-serif;
@@ -51,6 +52,7 @@
   --text-secondary: #4b5563;
   --accent: #2563eb;
   --border-color: #e5e7eb;
+  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;
   --chart-1: #2563eb;
   --chart-2: #8b5cf6;
@@ -79,6 +81,7 @@
   --text-secondary: #4b5563;
   --accent: #2563eb;
   --border-color: #e5e7eb;
+  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;
   --chart-1: #2563eb;
   --chart-2: #8b5cf6;
@@ -107,6 +110,7 @@
   --text-secondary: #94a3b8;
   --accent: #10b981;
   --border-color: #27272a;
+  --border-strong: #71717a;   /* 4.10:1 on #0a0a0a, 3.91:1 on #111111 */
   --error: #ff3b30;
   --chart-1: #10b981;
   --chart-2: #8b5cf6;
@@ -135,6 +139,7 @@
   --text-secondary: #a1a1a6;
   --accent: #d4a853;
   --border-color: #1a1a1a;
+  --border-strong: #6b6b6b;   /* 3.94:1 on #000000, 3.72:1 on #0a0a0a */
   --error: #e5484d;
   --chart-1: #d4a853;
   --chart-2: #8b5cf6;
@@ -163,6 +168,7 @@
   --text-secondary: #94a3b8;
   --accent: #34d399;
   --border-color: #1e293b;
+  --border-strong: #64748b;   /* 4.08:1 on #090d16, 3.84:1 on the card */
   --error: #f87171;
   --chart-1: #34d399;
   --chart-2: #a78bfa;
@@ -191,6 +197,7 @@
   --text-secondary: #cbd5e1;
   --accent: #22d3ee;
   --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.40);  /* 3.77:1 on #0b0910, 3.83:1 on the card */
   --error: #fb7185;
   --chart-1: #22d3ee;
   --chart-2: #a78bfa;
@@ -324,6 +331,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   select:not(.tap-exempt) {
     min-height: 44px;
   }
+}
+
+/* `--border-color` is a decorative divider: it separates card edges and list
+   rows, which WCAG does not require to reach 3:1. A control whose boundary is
+   the only thing marking it as a control does have to, under 1.4.11, and the
+   decorative token measured 1.18:1 to 1.24:1 across all five themes. Anything
+   the user is meant to click gets `.control-border` instead. */
+.control-border {
+  border-color: var(--border-strong);
 }
 
 /* Row actions used to be revealed by hover alone, gated on width. That hid
