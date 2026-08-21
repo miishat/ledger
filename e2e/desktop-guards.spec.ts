@@ -188,3 +188,18 @@ test('each route names itself in the title and to a screen reader', async ({ pag
   )
   expect(announced).toContain('Budgeting')
 })
+
+test('no chart text escapes the viewport', async ({ page }) => {
+  await page.goto('/#/compensation')
+  await page.waitForLoadState('networkidle')
+  // The pie animates in; measure only once it has settled.
+  await page.waitForTimeout(1500)
+  const escaped = await page.evaluate(() => {
+    const w = document.documentElement.clientWidth
+    return [...document.querySelectorAll('svg text')]
+      .map((t) => ({ txt: t.textContent, r: t.getBoundingClientRect() }))
+      .filter(({ r }) => r.width > 0 && (r.left < -1 || r.right > w + 1))
+      .map(({ txt, r }) => ({ txt, left: Math.round(r.left), right: Math.round(r.right), viewport: w }))
+  })
+  expect(escaped).toEqual([])
+})
