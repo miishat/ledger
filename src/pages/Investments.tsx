@@ -63,7 +63,7 @@ export const Investments: React.FC = () => {
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-              tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+              tab === t ? 'border-accent text-accent bg-accent/10' : 'control-border text-text-secondary hover:text-text-primary'
             }`}
           >
             {TAB_LABELS[t]}

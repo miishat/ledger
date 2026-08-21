@@ -47,6 +47,16 @@ export async function installContrastHelpers(page: Page): Promise<void> {
         const eff = { r: bc.r * bc.a + bg.r * (1 - bc.a), g: bc.g * bc.a + bg.g * (1 - bc.a), b: bc.b * bc.a + bg.b * (1 - bc.a), a: 1 }
         return ratio(eff, bg)
       },
+      /** Ratio of an element's own composited background (its fill, as
+       *  actually rendered) against the surface behind its parent. Used to
+       *  decide whether a control identifies itself by fill rather than by
+       *  border, e.g. a filled accent button, so a weak border on it is not
+       *  a defect. */
+      backgroundRatio(el: Element): number {
+        const own = composite(el)
+        const behind = composite(el.parentElement || document.body)
+        return ratio(own, behind)
+      },
     }
   })
 }

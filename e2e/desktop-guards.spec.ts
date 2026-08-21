@@ -90,20 +90,64 @@ test('a sheet never renders its header twice', async ({ page }) => {
 
 const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass'] as const
 
+// The routes a control might live on. Task 9's original guard only ever
+// visited /#/budget, so the Customize button on / and the two investments
+// controls were fixed by inspection and never actually measured.
+const ROUTES = ['/', '/#/budget', '/#/investments'] as const
+
 for (const theme of THEMES) {
   test(`interactive borders reach 3:1 in the ${theme} theme`, async ({ page }) => {
     await page.addInitScript((t) => {
       window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
     }, theme)
-    await page.goto('/#/budget')
-    await page.waitForLoadState('networkidle')
-    const failures = await page.evaluate(() => {
-      const c = (window as unknown as { __contrast: { borderRatio(el: Element): number | null } }).__contrast
-      return [...document.querySelectorAll('.control-border')]
-        .filter((el) => el.getBoundingClientRect().width > 0)
-        .map((el) => ({ txt: (el.textContent || '').trim().slice(0, 24), ratio: c.borderRatio(el) }))
-        .filter((r) => r.ratio !== null && r.ratio < 3)
-    })
+
+    const failures: { label: string; tag: string; ratio: number; route: string; theme: string }[] = []
+
+    for (const route of ROUTES) {
+      await page.goto(route)
+      await page.waitForLoadState('networkidle')
+      const routeFailures: { label: string; tag: string; ratio: number; route: string }[] = await page.evaluate((r) => {
+        const c = (window as unknown as {
+          __contrast: { borderRatio(el: Element): number | null; backgroundRatio(el: Element): number }
+        }).__contrast
+
+        const isVisible = (el: Element) => {
+          const rect = el.getBoundingClientRect()
+          return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden'
+        }
+        const labelFor = (el: Element) =>
+          (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30) || el.tagName
+
+        const out: { label: string; tag: string; ratio: number; route: string }[] = []
+
+        // Half one: every element that already carries the strong-border
+        // utility must actually measure 3:1. This is task 9's original
+        // assertion, now run over every route instead of just one.
+        for (const el of document.querySelectorAll('.control-border')) {
+          if (!isVisible(el)) continue
+          const ratio = c.borderRatio(el)
+          if (ratio !== null && ratio < 3) out.push({ label: labelFor(el), tag: el.tagName, ratio, route: r })
+        }
+
+        // Half two: no visible interactive control may rely on a sub-3:1
+        // border to be identifiable, whether or not it was ever given the
+        // utility class. A control with no real top border has nothing to
+        // measure (skip). A control whose own fill already reaches 3:1
+        // against the surface behind it identifies itself by that fill, not
+        // by its edge, so a weak border on it is not a defect (skip).
+        for (const el of document.querySelectorAll('button, input, select, textarea')) {
+          if (!isVisible(el)) continue
+          const ratio = c.borderRatio(el)
+          if (ratio === null) continue
+          if (c.backgroundRatio(el) >= 3) continue
+          if (ratio < 3) out.push({ label: labelFor(el), tag: el.tagName, ratio, route: r })
+        }
+
+        return out
+      }, route)
+      failures.push(...routeFailures.map((f) => ({ ...f, theme })))
+    }
+
     expect(failures).toEqual([])
   })
 }

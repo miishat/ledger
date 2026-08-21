@@ -76,7 +76,7 @@ export const Compensation: React.FC = () => {
               type="button"
               onClick={() => refreshPrice(true)}
               aria-label="Refresh price"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
             >
               <RefreshCw size={14} className={priceStatus === 'loading' ? 'animate-spin' : ''} />
               Refresh Price
@@ -90,11 +90,11 @@ export const Compensation: React.FC = () => {
                 value={manualPriceDraft}
                 onCommit={setManualPriceDraft}
                 placeholder="Manual price"
-                className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                className="w-28 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
               />
               <button
                 type="submit"
-                className="px-2 py-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+                className="px-2 py-1 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
               >
                 Set
               </button>
@@ -109,7 +109,7 @@ export const Compensation: React.FC = () => {
               className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
                 useCadConversion
                   ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
-                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:text-[var(--color-text-primary)]'
+                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] control-border hover:text-[var(--color-text-primary)]'
               }`}
             >
               {useCadConversion
@@ -129,7 +129,7 @@ export const Compensation: React.FC = () => {
                     value={fxOverride ?? 0}
                     placeholder={fxAvailable ? fxRate.toFixed(4) : '1.3700'}
                     onCommit={(v) => { if (v > 0) setOverride(fxOverrideKey, v) }}
-                    className="w-24 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
+                    className="w-24 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
                   />
                 </label>
                 {fxOverride !== undefined && (
@@ -167,7 +167,7 @@ export const Compensation: React.FC = () => {
                     onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
                     maxDecimals={3}
                     disabled={useCadConversion}
-                    className="w-28 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60"
+                    className="w-28 bg-[var(--color-bg-primary)] border control-border rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60"
                   />
                 </div>
               </div>

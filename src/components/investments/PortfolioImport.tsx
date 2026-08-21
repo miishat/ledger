@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { holdingsFromReport } from './holdingsFromReport'
 
 const selectCls =
-  'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
+  'bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
 
 const MODE_LABELS: Record<ImportMode, string> = {
   replace: 'Replace this account',
