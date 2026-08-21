@@ -19,10 +19,10 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ isOpen, requir
       dismissible={!requireAck}
       ariaLabel="Disclaimer"
       title={<><Info className="w-5 h-5 text-accent" aria-hidden="true" /> A Quick Note</>}
-      panelClassName="themed-menu md:rounded-lg w-full max-w-md md:p-6"
+      panelClassName="themed-menu desktop:rounded-lg w-full max-w-md desktop:p-6"
       contentClassName="flex flex-col gap-4"
     >
-      <div className="hidden md:flex items-center justify-between">
+      <div className="hidden desktop:flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[17px] font-semibold text-text-primary">
           <Info className="w-5 h-5 text-accent" /> A Quick Note
         </h2>

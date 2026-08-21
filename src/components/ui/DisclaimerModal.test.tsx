@@ -28,9 +28,9 @@ describe('DisclaimerModal mobile header (no double close)', () => {
     render(<DisclaimerModal isOpen requireAck={false} onClose={() => {}} />)
     // The modal's own header row is desktop-only. Sheet renders via createPortal
     // to document.body, so query there rather than RTL's pre-portal `container`.
-    const ownHeader = document.body.querySelector('.hidden.md\\:flex')
+    const ownHeader = document.body.querySelector('.hidden.desktop\\:flex')
     expect(ownHeader?.className).toMatch(/\bhidden\b/)
-    expect(ownHeader?.className).toMatch(/md:flex/)
+    expect(ownHeader?.className).toMatch(/desktop:flex/)
     // jsdom fallback: no stylesheet is loaded in tests, so Tailwind's `hidden`
     // class has no visibility effect here and both close-icon buttons render
     // in the DOM. We already assert the gating class above, so scope the

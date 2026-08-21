@@ -146,12 +146,12 @@ export const CSVUploader: React.FC = () => {
         desktop="modal"
         ariaLabel="Map CSV Columns"
         title="Map CSV Columns"
-        panelClassName="bg-[var(--color-bg-primary)] md:p-6 md:rounded-lg w-full md:w-[400px] border border-[var(--color-border)] shadow-xl"
+        panelClassName="bg-[var(--color-bg-primary)] desktop:p-6 desktop:rounded-lg w-full desktop:w-[400px] border border-[var(--color-border)] shadow-xl"
         contentClassName="flex flex-col gap-4"
       >
         {mappingData && (
           <>
-            <div className="hidden md:flex justify-between items-center">
+            <div className="hidden desktop:flex justify-between items-center">
               <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Map CSV Columns</h2>
               <button onClick={() => setMappingData(null)} aria-label="Close" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"><X size={20} /></button>
             </div>

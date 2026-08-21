@@ -176,9 +176,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
       desktop="modal"
       ariaLabel="Edit Compensation Package"
       title="Edit Compensation Package"
-      panelClassName="w-full max-w-2xl bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)] md:overflow-hidden flex flex-col"
+      panelClassName="w-full max-w-2xl bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)] desktop:overflow-hidden flex flex-col"
     >
-        <div className="hidden md:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+        <div className="hidden desktop:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Edit Compensation Package</h2>
           <button
             onClick={onClose}

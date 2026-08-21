@@ -68,3 +68,18 @@ test('no focusable control is invisible while focused', async ({ page }) => {
   }
   expect(invisible).toEqual([])
 })
+
+test('a sheet never renders its header twice', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Settings' }).first().click()
+  await page.waitForTimeout(500)
+  const visibleHeadings = await page.evaluate(() => {
+    const panel = document.querySelector('[data-testid=sheet-panel]')
+    if (!panel) return []
+    return [...panel.querySelectorAll('h2')]
+      .filter((h) => h.getBoundingClientRect().width > 0)
+      .map((h) => (h.textContent || '').trim())
+  })
+  expect(visibleHeadings).toEqual(['Settings'])
+})

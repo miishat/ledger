@@ -29,10 +29,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     desktop="modal"
     ariaLabel={title}
     title={title}
-    panelClassName="themed-menu md:rounded-lg w-full max-w-sm md:p-5"
+    panelClassName="themed-menu desktop:rounded-lg w-full max-w-sm desktop:p-5"
     contentClassName="flex flex-col gap-3"
   >
-    <h2 className="hidden md:block text-[16px] font-semibold text-text-primary">{title}</h2>
+    <h2 className="hidden desktop:block text-[16px] font-semibold text-text-primary">{title}</h2>
     <div className="text-[13px] text-text-secondary">{message}</div>
     <div className="flex justify-end gap-2 mt-1">
       <button

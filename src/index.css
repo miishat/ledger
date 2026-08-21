@@ -34,7 +34,13 @@
    landscape clears the width test and fails the height test, so it keeps
    the mobile top bar and bottom tab bar instead of losing Settings off
    the bottom of a sidebar that cannot scroll into view. Kept in sync by
-   hand with useIsDesktop in src/hooks/useMediaQuery.ts. */
+   hand with useIsDesktop in src/hooks/useMediaQuery.ts.
+
+   Anything whose visibility must agree with which branch `Sheet` renders
+   must use `desktop:`, never `md:`. `md:` is width only, so between 768px
+   wide and 500px tall (a landscape Pro Max phone, a short desktop window, or
+   a desktop browser zoomed past 175%) `md:` matches while `desktop:` does
+   not, and both a sheet header and a modal header render at once. */
 @custom-variant desktop (@media (min-width: 768px) and (min-height: 500px));
 
 :root {

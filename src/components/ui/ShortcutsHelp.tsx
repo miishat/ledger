@@ -21,10 +21,10 @@ export const ShortcutsHelp: React.FC<ShortcutsHelpProps> = ({ open, onClose }) =
     desktop="modal"
     ariaLabel="Keyboard shortcuts"
     title={<><Keyboard className="w-5 h-5 text-accent" aria-hidden="true" /> Keyboard shortcuts</>}
-    panelClassName="themed-menu md:rounded-lg w-full max-w-sm md:p-5"
+    panelClassName="themed-menu desktop:rounded-lg w-full max-w-sm desktop:p-5"
     contentClassName="flex flex-col gap-3"
   >
-    <h2 className="hidden md:flex items-center gap-2 text-[17px] font-semibold text-text-primary">
+    <h2 className="hidden desktop:flex items-center gap-2 text-[17px] font-semibold text-text-primary">
       <Keyboard className="w-5 h-5 text-accent" aria-hidden="true" /> Keyboard shortcuts
     </h2>
     <dl className="flex flex-col gap-2">
