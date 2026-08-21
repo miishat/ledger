@@ -22,6 +22,7 @@ import { previewPush, previewPull, performPush, performPull } from '../utils/syn
 import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
 import { useViewportHeight } from '../hooks/useViewportHeight'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -29,6 +30,7 @@ export const Layout: React.FC = () => {
   const demoActive = useSyncExternalStore(subscribeDemoActive, isDemoActive, () => false)
   const swUpdate = useSWUpdate()
   useViewportHeight()
+  const routeName = useDocumentTitle()
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -264,6 +266,9 @@ export const Layout: React.FC = () => {
           tabIndex={-1}
           className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
+          {/* Polite, not assertive: a route change should be announced after
+              whatever the user was already hearing, not interrupt it. */}
+          <p aria-live="polite" className="sr-only">{routeName}</p>
           <ErrorBoundary key={location.pathname}>
             <Suspense
               fallback={

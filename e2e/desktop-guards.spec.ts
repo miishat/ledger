@@ -173,3 +173,18 @@ test('Investments opens on Portfolio when that is the only tab with data', async
   await page.waitForLoadState('networkidle')
   await expect(page.getByRole('tab', { name: 'Portfolio' })).toHaveAttribute('aria-selected', 'true')
 })
+
+test('each route names itself in the title and to a screen reader', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  expect(await page.title()).toBe('Dashboard - Ledger')
+
+  await page.getByRole('link', { name: 'Budgeting' }).first().click()
+  await page.waitForTimeout(500)
+  expect(await page.title()).toBe('Budgeting - Ledger')
+
+  const announced = await page.evaluate(() =>
+    [...document.querySelectorAll('[aria-live="polite"]')].map((el) => (el.textContent || '').trim()),
+  )
+  expect(announced).toContain('Budgeting')
+})
