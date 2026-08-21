@@ -29,17 +29,36 @@ describe('AccountCategoryWidget mobile tap targets', () => {
     }
   })
 
-  it('truncates long account names on desktop, where the row is a single line', () => {
+  it('lets a long account name wrap rather than truncate, at every width', () => {
+    // Truncation was safe only while the row had room. On a 2-column tablet
+    // grid the name column measured 11px, so `truncate` cut every name to one
+    // or two characters.
     useAccountsStore.setState({
       accounts: [{ id: 'a1', name: 'Joint Savings for the Big 2026 Vacation Fund', value: 1200, type: 'bank' }],
     })
     render(<AccountCategoryWidget title="Bank" type="bank" />)
     const name = screen.getByText(/Joint Savings/)
     const classes = name.className.split(/\s+/)
-    // Desktop keeps the one-line row; mobile stacks and wraps instead,
-    // because the mobile name column is only about 115px wide.
-    expect(classes).toContain('desktop:truncate')
+    expect(classes).toContain('break-words')
+    expect(classes).toContain('flex-1')
+    expect(classes).toContain('min-w-0')
     expect(classes).not.toContain('truncate')
+    expect(classes).not.toContain('desktop:truncate')
+  })
+
+  it('gives the name a width floor so the row can fall back to a stacked layout on a narrow desktop card', () => {
+    // On the narrowest single-column tablet card the value block (amount plus
+    // two icon buttons) is nearly the whole row width by itself. Without a
+    // floor, flex-1/min-w-0 alone still let the name get squeezed to 0
+    // instead of wrapping the row to a second line.
+    useAccountsStore.setState({
+      accounts: [{ id: 'a1', name: 'Mortgage - 12 Maplewood Crescent', value: 412500, type: 'debt' }],
+    })
+    const { container } = render(<AccountCategoryWidget title="Debts & Liabilities" type="debt" />)
+    const row = container.querySelector('[data-testid="account-row-a1"]')!
+    const name = container.querySelector('[data-testid="account-name-a1"]')!
+    expect(row.className).toMatch(/desktop:flex-wrap/)
+    expect(name.className).toMatch(/desktop:min-w-\[70px\]/)
   })
 })
 

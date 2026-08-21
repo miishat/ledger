@@ -81,11 +81,30 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                 <div
                   key={acc.id}
                   data-testid={`account-row-${acc.id}`}
-                  className="flex flex-col items-start gap-0.5 desktop:flex-row desktop:justify-between desktop:items-center desktop:gap-2 group"
+                  // desktop:flex-wrap: the value block is shrink-0 and, on the
+                  // narrowest single-column tablet card (a widget with only
+                  // one long-named, high-value row, e.g. the mortgage), its
+                  // own content alone is nearly as wide as the whole row.
+                  // flex-1 plus min-w-0 on the name would then get squeezed to
+                  // 0 no matter how the name itself wraps. Allowing the row to
+                  // wrap lets the value block drop to its own line instead,
+                  // the same stacked look mobile already uses, only reached
+                  // here by the content not fitting rather than by viewport.
+                  className="flex flex-col items-start gap-0.5 desktop:flex-row desktop:flex-wrap desktop:justify-between desktop:items-baseline desktop:gap-2 group"
                 >
                   <span
                     data-testid={`account-name-${acc.id}`}
-                    className="text-sm text-text-secondary min-w-0 break-words desktop:truncate"
+                    // The value block and its two icon buttons are shrink-0, so
+                    // on a 2-column tablet grid the name column collapsed to
+                    // 11px while real names need 79px to 220px. Letting the
+                    // name wrap instead of truncate keeps it readable at every
+                    // width the single-line row is used at. desktop:min-w-[70px]
+                    // gives the name a floor so the flex algorithm reports the
+                    // line as too narrow to fit both children when the value
+                    // block alone is nearly the full row width, which is what
+                    // makes desktop:flex-wrap actually trigger instead of
+                    // silently shrinking the name to 0.
+                    className="text-sm text-text-secondary min-w-0 desktop:min-w-[70px] flex-1 break-words"
                   >
                     {acc.name}
                   </span>
