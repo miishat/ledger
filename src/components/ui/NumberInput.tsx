@@ -15,6 +15,8 @@ interface NumberInputProps {
   disabled?: boolean
   'aria-label'?: string
   ariaLabel?: string
+  'aria-invalid'?: 'true' | 'false'
+  'aria-describedby'?: string
 }
 
 const NUMERIC = /^-?\d*\.?\d*$/

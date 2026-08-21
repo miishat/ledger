@@ -40,3 +40,13 @@ test('every visible form control has a programmatic label', async ({ page }) => 
   await page.waitForTimeout(400)
   expect(await unlabelled()).toEqual([])
 })
+
+test('submitting Add Transaction empty explains itself', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  await page.waitForTimeout(400)
+  await page.locator('[data-testid=sheet-panel] button[type=submit]').click()
+  await expect(page.getByRole('alert')).toHaveText('Enter an amount greater than zero.')
+  await expect(page.locator('#tx-amount')).toHaveAttribute('aria-invalid', 'true')
+})

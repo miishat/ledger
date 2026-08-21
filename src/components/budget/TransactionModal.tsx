@@ -43,6 +43,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   });
 
   const [amount, setAmount] = useState<number>(initialTransaction?.amount ?? 0);
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(
     initialTransaction?.categoryId ?? categoryList[0]?.id ?? '',
   );
@@ -82,7 +83,12 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      setAmountError('Enter an amount greater than zero.');
+      document.getElementById('tx-amount')?.focus();
+      return;
+    }
+    setAmountError(null);
 
     const sharedField =
       type === 'expense' && isShared && totalPaid > amount && sharedWith.trim()
@@ -199,10 +205,21 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             <NumberInput
               id="tx-amount"
               value={amount}
-              onCommit={setAmount}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              onCommit={(v) => { setAmount(v); if (v > 0) setAmountError(null); }}
+              aria-invalid={amountError ? 'true' : 'false'}
+              aria-describedby={amountError ? 'tx-amount-error' : undefined}
+              className={`w-full bg-[var(--color-bg-secondary)] border rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:outline-none transition-colors ${
+                amountError
+                  ? 'border-[var(--color-error)] focus:border-[var(--color-error)]'
+                  : 'border-[var(--color-border)] focus:border-[var(--color-accent)]'
+              }`}
               placeholder="0.00"
             />
+            {amountError && (
+              <p id="tx-amount-error" role="alert" className="text-[12px] text-error">
+                {amountError}
+              </p>
+            )}
           </div>
 
           {type === 'expense' && (
