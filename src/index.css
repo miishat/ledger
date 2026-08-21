@@ -320,6 +320,38 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Row actions used to be revealed by hover alone, gated on width. That hid
+   them from two groups at once: a keyboard user tabbing into an opacity-0
+   button saw no focus indicator at all (WCAG 2.4.7), and a touch tablet at
+   768px never produces hover, so the controls were permanently invisible
+   there. Gate the hiding on real hover capability, and always reveal on
+   focus. */
+@media (hover: hover) and (pointer: fine) {
+  .reveal-on-hover {
+    opacity: 0;
+  }
+  .group:hover .reveal-on-hover,
+  .group:focus-within .reveal-on-hover,
+  .reveal-on-hover:focus-visible {
+    opacity: 1;
+  }
+  /* These buttons also carry transition-all/transition-opacity for the
+     hover fade, which is fine for a mouse but means a keyboard user
+     tabbing in would sit through the same 150ms fade with no visible
+     control the instant focus lands, failing WCAG 2.4.7 for that first
+     frame. A row's actions share one .group, so tabbing to the first one
+     (say Edit) opens both it and its sibling Delete together, before
+     Delete itself is ever :focus-visible, meaning a duration override
+     scoped only to :focus-visible arrives too late for the sibling. Zero
+     the duration for the whole group the moment any descendant is
+     focused, so every action in the row reveals instantly, and keep the
+     animated fade for plain mouse hover, where nothing is focused. */
+  .group:focus-within .reveal-on-hover,
+  .reveal-on-hover:focus-visible {
+    transition-duration: 0s;
+  }
+}
+
 /* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
    step up one pixel on phones, where the audit found the smallest tier
    carrying real data (dates, category names, pacing hints) and not just

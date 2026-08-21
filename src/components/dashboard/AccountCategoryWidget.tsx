@@ -114,7 +114,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                     </span>
                     <button
                       onClick={() => handleEdit(acc)}
-                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-accent sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
+                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-accent reveal-on-hover transition-all rounded-md"
                       aria-label="Edit account"
                     >
                       <Edit2 size={16} />
@@ -129,7 +129,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                           addAccount({ name: acc.name, value: acc.value, type: acc.type }),
                         );
                       }}
-                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-all rounded-md"
+                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-error reveal-on-hover transition-all rounded-md"
                       aria-label={`Delete ${acc.name}`}
                     >
                       <Trash2 size={16} />

@@ -24,8 +24,8 @@ describe('AccountCategoryWidget mobile tap targets', () => {
       expect(classes).toContain('sm:min-h-0')
       expect(classes).toContain('sm:min-w-0')
       expect(classes).not.toContain('opacity-0') // bare opacity-0 would hide it on touch
-      expect(classes).toContain('sm:opacity-0')
-      expect(classes).toContain('sm:group-hover:opacity-100')
+      expect(classes).not.toContain('sm:opacity-0') // width is the wrong gate, hover capability is the right one
+      expect(classes).toContain('reveal-on-hover')
     }
   })
 

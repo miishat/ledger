@@ -36,8 +36,7 @@ describe('TransactionListWidget mobile layout', () => {
     const del = within(table).getByLabelText('Delete transaction')
     const classes = del.className.split(/\s+/)
     expect(classes).not.toContain('opacity-0') // bare opacity-0 would hide it on touch
-    expect(classes).toContain('sm:opacity-0')
-    expect(classes).toContain('sm:group-hover:opacity-100')
+    expect(classes).toContain('reveal-on-hover')
   })
 
   it('renders a mobile card list alongside the desktop table with matching values and reachable actions', () => {

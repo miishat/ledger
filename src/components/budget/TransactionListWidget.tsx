@@ -357,7 +357,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                           deleteWithUndo([tx]);
                         }}
                         aria-label="Delete transaction"
-                        className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                        className="p-2 text-text-secondary hover:text-error reveal-on-hover transition-opacity rounded-md hover:bg-bg-primary"
                       >
                         <Trash2 size={16} />
                       </button>

@@ -50,3 +50,21 @@ test('submitting Add Transaction empty explains itself', async ({ page }) => {
   await expect(page.getByRole('alert')).toHaveText('Enter an amount greater than zero.')
   await expect(page.locator('#tx-amount')).toHaveAttribute('aria-invalid', 'true')
 })
+
+test('no focusable control is invisible while focused', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const invisible: Array<{ label: string | null; opacity: string }> = []
+  for (let i = 0; i < 40; i++) {
+    await page.keyboard.press('Tab')
+    const hit = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null
+      if (!el || el === document.body) return null
+      const s = getComputedStyle(el)
+      if (parseFloat(s.opacity) > 0.01 && s.visibility !== 'hidden') return null
+      return { label: el.getAttribute('aria-label'), opacity: s.opacity }
+    })
+    if (hit) invisible.push(hit)
+  }
+  expect(invisible).toEqual([])
+})

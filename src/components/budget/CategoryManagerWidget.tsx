@@ -237,7 +237,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 <button
                                   onClick={() => handleDeleteCategory(cat.id)}
                                   aria-label={`Delete category ${cat.name}`}
-                                  className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="p-1 text-text-secondary hover:text-error reveal-on-hover transition-opacity"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -314,7 +314,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                               <button
                                 onClick={() => handleDeleteCategory(cat.id)}
                                 aria-label={`Delete category ${cat.name}`}
-                                className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="p-1 text-text-secondary hover:text-error reveal-on-hover transition-opacity"
                               >
                                 <Trash2 size={14} />
                               </button>
