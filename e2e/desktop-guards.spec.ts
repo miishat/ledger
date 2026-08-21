@@ -196,13 +196,16 @@ test('no chart text escapes its chart container', async ({ page }) => {
   await page.waitForTimeout(1500)
   const escaped = await page.evaluate(() => {
     // The document viewport is the wrong frame to measure against: main has
-    // overflow-x-hidden (see Layout.tsx), which clips a label's paint long
-    // before the label's own un-clipped getBoundingClientRect() reaches the
-    // document edge. A label can be visibly cut off inside its card while
-    // this measurement still says it fits. The chart's own ChartFigure
-    // wrapper (role="img") is the frame that actually clips it, so measure
-    // against that instead, falling back to the nearest ancestor whose
-    // overflow-x is not visible for any chart not wrapped in ChartFigure.
+    // overflow-x-hidden (see Layout.tsx), which is the boundary that actually
+    // clips a label's paint, well before the label's own un-clipped
+    // getBoundingClientRect() would reach the document edge. A label can be
+    // visibly cut off inside its card while this measurement still says it
+    // fits. ChartFigure's role="img" wrapper sets no overflow itself, so it
+    // clips nothing, but it is still the right frame to measure against: it
+    // is the chart's own card, and staying inside your own card is the
+    // property this check wants. Fall back to the nearest ancestor whose
+    // overflow-x is not visible for any chart not wrapped in ChartFigure
+    // (main, ultimately, which is where actual clipping happens).
     const findFrame = (el: Element): Element | null => {
       const figure = el.closest('[role="img"]')
       if (figure) return figure
@@ -215,11 +218,24 @@ test('no chart text escapes its chart container', async ({ page }) => {
     }
     const out: { txt: string | null; left: number; right: number; frameLeft: number; frameRight: number }[] = []
     for (const t of document.querySelectorAll('svg text')) {
-      const frame = findFrame(t)
-      if (!frame) continue
       const r = t.getBoundingClientRect()
-      const f = frame.getBoundingClientRect()
       if (r.width === 0) continue
+      const frame = findFrame(t)
+      if (!frame) {
+        // No role="img" ancestor and no ancestor that clips overflow-x: this
+        // text has nothing to be measured against. That is itself a defect
+        // (a chart rendered somewhere, e.g. a portal, this check cannot see),
+        // not a reason to skip it, so it fails loud instead of being dropped.
+        out.push({
+          txt: t.textContent,
+          left: Math.round(r.left),
+          right: Math.round(r.right),
+          frameLeft: NaN,
+          frameRight: NaN,
+        })
+        continue
+      }
+      const f = frame.getBoundingClientRect()
       if (r.left < f.left - 1 || r.right > f.right + 1) {
         out.push({
           txt: t.textContent,
@@ -233,4 +249,36 @@ test('no chart text escapes its chart container', async ({ page }) => {
     return out
   })
   expect(escaped).toEqual([])
+})
+
+test('money axes are formatted, not raw digits', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(1200)
+  // Recharts renders tick labels in a separate z-index layer, not nested
+  // under .recharts-yAxis (that group holds only the axis line and tick
+  // marks), so the label text has to be found via its own tick-labels group.
+  const ticks = await page.evaluate(() =>
+    [...document.querySelectorAll('.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value')]
+      .map((t) => (t.textContent || '').trim())
+      .filter(Boolean),
+  )
+  expect(ticks.length).toBeGreaterThan(1)
+  // "600000" is the defect. Every money tick should carry a currency symbol.
+  expect(ticks.every((t) => t.startsWith('$'))).toBe(true)
+})
+
+test('every chart has an accessible name', async ({ page }) => {
+  for (const hash of ['#/planner/mortgage', '#/compensation', '']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000)
+    const unnamed = await page.evaluate(() =>
+      [...document.querySelectorAll('.recharts-wrapper')]
+        .filter((w) => w.getBoundingClientRect().width > 0)
+        .filter((w) => !w.closest('[role="img"][aria-label]'))
+        .length,
+    )
+    expect(unnamed).toBe(0)
+  }
 })

@@ -8,6 +8,7 @@ import { chartTooltipStyles } from '../../utils/chartTheme'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 import { inRange, type MonthRange } from '../../utils/budget/period'
 import { splitParts } from '../../utils/budget/splits'
+import { ChartFigure } from '../ui/ChartFigure'
 
 type NodeKind = 'income' | 'pool' | 'expense' | 'savings'
 
@@ -127,7 +128,10 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
 
   return (
     <WidgetWrapper title="Cash Flow">
-      <div className="h-[240px] desktop:h-[300px] mt-2">
+      <ChartFigure
+        label={`Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources into ${formatMoney(totalExpense)} of expenses across ${expenseNames.length} groups, leaving ${formatMoney(savings)} saved`}
+        className="h-[240px] desktop:h-[300px] mt-2"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             data={{ nodes, links }}
@@ -139,7 +143,7 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
             <Tooltip formatter={(value) => formatMoney(Number(value))} {...chartTooltipStyles} />
           </Sankey>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
     </WidgetWrapper>
   )
 }

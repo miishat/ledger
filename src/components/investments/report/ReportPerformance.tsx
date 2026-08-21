@@ -5,6 +5,7 @@ import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { formatReportMonth, growthSeries } from './reportMetrics'
 import { Section } from './Section'
 import { pct } from './format'
+import { ChartFigure } from '../../ui/ChartFigure'
 
 const chartColors = ['var(--accent)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-5)']
 
@@ -13,7 +14,10 @@ export const ReportPerformance: React.FC<{ report: PAReport }> = ({ report }) =>
   if (data.length <= 1) return null
   return (
     <Section title="Benchmark Comparison (growth of 100)" defaultOpen>
-      <div className="h-[260px]">
+      <ChartFigure
+        label={`Growth of 100 over ${data.length} months, compared across ${names.join(', ')}`}
+        className="h-[260px]"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={11} tickFormatter={formatReportMonth} minTickGap={20} />
@@ -25,7 +29,7 @@ export const ReportPerformance: React.FC<{ report: PAReport }> = ({ report }) =>
             ))}
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
       {report.benchmarkSummary.length > 0 && (
         <div className="overflow-x-auto mt-3">
           <table className="w-full text-[12px] min-w-[560px]">

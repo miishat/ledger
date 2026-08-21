@@ -12,8 +12,9 @@ import {
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { ThemedSelect } from '../ui/ThemedSelect'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import { ChartFigure } from '../ui/ChartFigure'
 
 const TOOL_ID = 'mortgage'
 const DEFAULTS = {
@@ -216,26 +217,47 @@ export const MortgageCalculator: React.FC = () => {
             onTouchStart={handleChartTouchStart}
             onTouchEnd={handleChartTouchEnd}
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
-                <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-                <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
-                <Tooltip
-                  trigger={isDesktop ? 'hover' : 'click'}
-                  formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-                  {...chartTooltipStyles}
-                />
-                <Area type="monotone" dataKey="baseline" stroke={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'}
-                  fill={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'} fillOpacity={emphasizeBaseline ? 0.25 : 0.12} />
-                {frequency === 'monthly' && extras.length > 0 && (
-                  <Area type="monotone" dataKey="withExtras" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
-                )}
-                {frequency === 'biweekly' && (
-                  <Area type="monotone" dataKey="biweekly" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
+            <ChartFigure
+              label={`Mortgage balance from year 1 to year ${chartData.length}, starting at ${formatMoneyCompact(chartData[0]?.baseline ?? 0)} and ending at ${formatMoneyCompact(chartData[chartData.length - 1]?.baseline ?? 0)}`}
+              className="w-full h-full"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                  <XAxis
+                    dataKey="year"
+                    stroke="var(--text-secondary)"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    // 25 ticks crammed the axis at every width. Keep the ends
+                    // and let Recharts drop what will not fit between them.
+                    interval="preserveStartEnd"
+                    minTickGap={24}
+                    label={{ value: 'Year', position: 'insideBottom', offset: -12, fill: 'var(--text-secondary)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    stroke="var(--text-secondary)"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    width={72}
+                    // Raw "600000" was the only unformatted axis in the app.
+                    tickFormatter={(v) => formatMoneyCompact(Number(v))}
+                    label={{ value: 'Balance', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)', fontSize: 12 }}
+                  />
+                  <Tooltip
+                    trigger={isDesktop ? 'hover' : 'click'}
+                    formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
+                    {...chartTooltipStyles}
+                  />
+                  <Area type="monotone" dataKey="baseline" stroke={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'}
+                    fill={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'} fillOpacity={emphasizeBaseline ? 0.25 : 0.12} />
+                  {frequency === 'monthly' && extras.length > 0 && (
+                    <Area type="monotone" dataKey="withExtras" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
+                  )}
+                  {frequency === 'biweekly' && (
+                    <Area type="monotone" dataKey="biweekly" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartFigure>
           </div>
         </>
       ) : (

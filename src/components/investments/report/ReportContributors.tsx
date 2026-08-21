@@ -6,6 +6,7 @@ import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { contributors } from './reportMetrics'
 import { Section } from './Section'
 import { pct } from './format'
+import { ChartFigure } from '../../ui/ChartFigure'
 
 export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) => {
   const [showAll, setShowAll] = useState(false)
@@ -18,7 +19,10 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
 
   return (
     <Section title="Contributors & Detractors" defaultOpen>
-      <div className="h-[280px]">
+      <ChartFigure
+        label={`Contributors and detractors by return: ${chartData.map((d) => `${d.symbol} ${pct(d.contribution)}`).join(', ')}`}
+        className="h-[280px]"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} layout="vertical" margin={{ left: 12, right: 12 }}>
             <XAxis type="number" stroke="var(--text-secondary)" fontSize={11} tickFormatter={(v: number) => `${v}%`} />
@@ -31,7 +35,7 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
 
       <div className="flex flex-col gap-1 text-[12px] mt-2">
         {chartData.map((d) => (

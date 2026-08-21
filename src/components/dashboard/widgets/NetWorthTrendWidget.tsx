@@ -6,6 +6,7 @@ import { formatMoney, formatMoneyCompact } from '../../planner/format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { trendDomain } from './trendDomain'
 import { NetWorthHistorySheet } from './NetWorthHistorySheet'
+import { ChartFigure } from '../../ui/ChartFigure'
 
 export const NetWorthTrendWidget: React.FC = () => {
   const history = useAccountsStore((s) => s.history)
@@ -34,7 +35,10 @@ export const NetWorthTrendWidget: React.FC = () => {
   const domain = trendDomain(history.map((h) => h.value))
   return (
     <WidgetWrapper title="Net Worth Over Time" className="md:col-span-2" action={editHistoryAction}>
-      <div className="h-[220px] mt-2">
+      <ChartFigure
+        label={`Net worth over time from ${history[0]?.date ?? ''} to ${history[history.length - 1]?.date ?? ''}, from ${formatMoneyCompact(history[0]?.value ?? 0)} to ${formatMoneyCompact(history[history.length - 1]?.value ?? 0)}`}
+        className="h-[220px] mt-2"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={history}>
             {/* The axes meet at the corner, so a full-precision y label like
@@ -50,7 +54,7 @@ export const NetWorthTrendWidget: React.FC = () => {
             <Area type="monotone" dataKey="value" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.2} strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
       <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </WidgetWrapper>
   )

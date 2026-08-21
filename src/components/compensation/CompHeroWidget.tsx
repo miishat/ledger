@@ -289,7 +289,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           </ul>
         </div>
       ) : (
-        <div className="relative w-full h-[280px] desktop:h-[400px]">
+        <ChartFigure
+          label={`Monthly compensation breakdown for ${monthlyData.length} months from ${monthlyData[0]?.month ?? ''} to ${monthlyData[monthlyData.length - 1]?.month ?? ''}, split into base salary, bonus, ESPP, RRSP and RSU`}
+          className="relative w-full h-[280px] desktop:h-[400px]"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
@@ -306,7 +309,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </ChartFigure>
       )}
 
       {view === 'monthly' && showAfterTax && (
