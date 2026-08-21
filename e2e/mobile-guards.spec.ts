@@ -191,6 +191,48 @@ test('a chart reveals its values on tap', async ({ page }) => {
   await expect(page.locator('.recharts-tooltip-wrapper')).toBeVisible({ timeout: 2000 })
 })
 
+// Task 10's desktop guard for this same defect measured a chart label
+// against the document viewport, but main's overflow-x-hidden clips a
+// label's paint before its un-clipped getBoundingClientRect() ever reaches
+// the document edge at desktop widths, so that guard could pass even while
+// a label had escaped the app. The escape is real; it just needs a phone
+// width to reach the true document edge, and mobile-narrow (320px) and
+// mobile-landscape both land in that range.
+test('no chart text escapes the document viewport', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('ledger-compensation', JSON.stringify({
+      state: {
+        primaryPackage: {
+          id: 'p1', name: 'Current Offer', companyTicker: 'MSFT', companyCurrentPrice: 428.5,
+          baseSalary: 165000, pastSalaryChanges: [], cashBonusPercent: 12, cashBonusMonth: 2,
+          esppContributionPercent: 10, esppDiscountPercent: 15, esppLockedInPrice: 0,
+          rrspMatchPercent: 5, rrspMatchCap: 12000,
+          rsuGrants: [{
+            id: 'g1', grantName: '2024 Refresh', grantShares: 1200, grantPrice: 310,
+            grantStartDate: '2024-03-01',
+            vestingSchedule: { preset: '4yr-1yr-cliff', totalVestMonths: 48, cliffMonths: 12, frequency: 'quarterly' },
+          }],
+        },
+        comparePackage: null, compareMode: false, timeMode: 'current-year',
+        useCadConversion: false, showAfterTax: false,
+      },
+      version: 0,
+    }))
+  })
+  await page.goto('/#/compensation')
+  await page.waitForLoadState('networkidle')
+  // The pie animates in; measure only once it has settled.
+  await page.waitForTimeout(1500)
+  const escaped = await page.evaluate(() => {
+    const w = document.documentElement.clientWidth
+    return [...document.querySelectorAll('svg text')]
+      .map((t) => ({ txt: t.textContent, r: t.getBoundingClientRect() }))
+      .filter(({ r }) => r.width > 0 && (r.left < -1 || r.right > w + 1))
+      .map(({ txt, r }) => ({ txt, left: Math.round(r.left), right: Math.round(r.right), viewport: w }))
+  })
+  expect(escaped).toEqual([])
+})
+
 // The whole app cleared this at 375px and 320px when the audit ran, and
 // exactly one screen did not: the Compensation toggle row. This keeps the
 // zero at both widths and in landscape.

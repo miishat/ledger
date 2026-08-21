@@ -189,17 +189,48 @@ test('each route names itself in the title and to a screen reader', async ({ pag
   expect(announced).toContain('Budgeting')
 })
 
-test('no chart text escapes the viewport', async ({ page }) => {
+test('no chart text escapes its chart container', async ({ page }) => {
   await page.goto('/#/compensation')
   await page.waitForLoadState('networkidle')
   // The pie animates in; measure only once it has settled.
   await page.waitForTimeout(1500)
   const escaped = await page.evaluate(() => {
-    const w = document.documentElement.clientWidth
-    return [...document.querySelectorAll('svg text')]
-      .map((t) => ({ txt: t.textContent, r: t.getBoundingClientRect() }))
-      .filter(({ r }) => r.width > 0 && (r.left < -1 || r.right > w + 1))
-      .map(({ txt, r }) => ({ txt, left: Math.round(r.left), right: Math.round(r.right), viewport: w }))
+    // The document viewport is the wrong frame to measure against: main has
+    // overflow-x-hidden (see Layout.tsx), which clips a label's paint long
+    // before the label's own un-clipped getBoundingClientRect() reaches the
+    // document edge. A label can be visibly cut off inside its card while
+    // this measurement still says it fits. The chart's own ChartFigure
+    // wrapper (role="img") is the frame that actually clips it, so measure
+    // against that instead, falling back to the nearest ancestor whose
+    // overflow-x is not visible for any chart not wrapped in ChartFigure.
+    const findFrame = (el: Element): Element | null => {
+      const figure = el.closest('[role="img"]')
+      if (figure) return figure
+      let cur = el.parentElement
+      while (cur) {
+        if (getComputedStyle(cur).overflowX !== 'visible') return cur
+        cur = cur.parentElement
+      }
+      return null
+    }
+    const out: { txt: string | null; left: number; right: number; frameLeft: number; frameRight: number }[] = []
+    for (const t of document.querySelectorAll('svg text')) {
+      const frame = findFrame(t)
+      if (!frame) continue
+      const r = t.getBoundingClientRect()
+      const f = frame.getBoundingClientRect()
+      if (r.width === 0) continue
+      if (r.left < f.left - 1 || r.right > f.right + 1) {
+        out.push({
+          txt: t.textContent,
+          left: Math.round(r.left),
+          right: Math.round(r.right),
+          frameLeft: Math.round(f.left),
+          frameRight: Math.round(f.right),
+        })
+      }
+    }
+    return out
   })
   expect(escaped).toEqual([])
 })
