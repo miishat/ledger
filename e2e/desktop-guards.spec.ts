@@ -106,6 +106,32 @@ for (const theme of THEMES) {
     for (const route of ROUTES) {
       await page.goto(route)
       await page.waitForLoadState('networkidle')
+      // Controls carrying `transition-colors` are mid-fade for a few frames
+      // after they mount, and getComputedStyle happily reports the
+      // in-between border colour. Measuring then is not a measurement of the
+      // design, it is a measurement of an animation frame, which made this
+      // guard fail roughly one run in seven on the glass theme while the
+      // settled value sat at 3.77:1. Wait for every running transition and
+      // animation to finish before reading any colour.
+      await page.evaluate(async () => {
+        // Only finite animations. The aurora and glass themes run looping
+        // gradient animations whose `finished` promise never resolves, so
+        // awaiting those hangs until the test times out. The cap is a
+        // safety net: a transition this guard cares about lasts a few
+        // hundred milliseconds, and nothing here should block on paint.
+        const settled = document
+          .getAnimations()
+          .filter((a) => {
+            if (a.playState !== 'running') return false
+            const iterations = a.effect?.getTiming().iterations
+            return iterations !== Infinity
+          })
+          .map((a) => a.finished.catch(() => undefined))
+        await Promise.race([
+          Promise.all(settled),
+          new Promise((resolve) => setTimeout(resolve, 1500)),
+        ])
+      })
       const routeFailures: { label: string; tag: string; ratio: number; route: string }[] = await page.evaluate((r) => {
         const c = (window as unknown as {
           __contrast: { borderRatio(el: Element): number | null; backgroundRatio(el: Element): number }
