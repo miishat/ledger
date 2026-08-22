@@ -37,6 +37,71 @@ The mobile score is lower than the previous audit's 100 because this audit measu
 
 ---
 
+## Rescore 2026-08-22
+
+Re-measured on branch `feat/v0.9.5-beta` after the 18-task remediation plan in
+`docs/superpowers/plans/2026-08-20-desktop-ui-100.md`. Same method as the original pass:
+production build driven by Playwright, five viewport profiles, all five themes, axe-core at
+wcag2a / wcag2aa / wcag21a / wcag21aa. The raw numbers are in
+`.superpowers/sdd/d100-rescore-measurements.md`.
+
+| # | Area | Was (desktop) | Now | What closed it |
+|---|---|---|---|---|
+| 1 | Layout and viewport fit | 5 | **10** | B1, B4, the Planner grid, the portfolio import move |
+| 2 | Information architecture and navigation | 7 | **10** | M2, M6, the Setup disclosure |
+| 3 | Visual hierarchy and density | 6 | **8** | D1, D9, D13. Card dead space is only partly reclaimed |
+| 4 | Consistency and design system | 5 | **9** | M3, D1, D3, D5, the breakpoint reconciliation, one focus ring |
+| 5 | Forms and data entry | 4 | **8** | B2 both halves. Input number formatting is still open |
+| 6 | Feedback, errors and empty states | 5 | **10** | B2, D1, D2, the FX retry control |
+| 7 | Charts and data visualisation | 6 | **10** | M1, D4's axis half, D5, chart accessible names |
+| 8 | Accessibility (WCAG 2.1 AA) | 6 | **10** | B2, B3, M3, M5, M6, and 0 axe violations across 16 scans |
+| 9 | Keyboard and pointer support | 5 | **10** | B3, M2's arrow keys, scroll regions, sortable headers |
+| 10 | Theming and visual polish | 9 | **10** | `--border-strong` across all five themes |
+| | **Total (desktop and tablet)** | **58** | **95** | |
+
+### Measured, after
+
+| Measurement | Before | After |
+|---|---|---|
+| Horizontal overflow (5 viewports x 8 routes) | present | 0 of 40 |
+| Genuinely clipped text | 7 of 7 account names at 768px | 0 (every hit is `sr-only`) |
+| Form controls with no programmatic label | 3, plus 2 more found during the work | 0 across 10 locations, both modals opened |
+| Focus stops invisible while focused | 12 of the first 30 | 0 of 40, at both viewports |
+| Control borders below 3:1 | every theme, 1.18 to 1.24 | 0 in all five themes |
+| Text contrast failures | 0 | 0 |
+| SVG text escaping its chart frame | 5 of 5 donut labels at 390px | 0 reproducible |
+| axe violations | 1 critical, 1 serious | 0 across 16 scans |
+| Distinct document titles | 1 for all routes | 8 of 8 distinct |
+| Table headers missing `scope` | 22 | 0, captions present, `aria-sort` working |
+
+Every guard behind these numbers runs on `npm run verify`, which is green: 1192 unit tests
+across 185 files, and 134 e2e tests across five Playwright projects (`chromium`,
+`mobile-narrow`, `mobile-landscape`, `tablet`, `short-wide`).
+
+### Why this is 95 and not 100
+
+Three things the plan did not fully close. Naming them is more useful than rounding up.
+
+1. **Numeric inputs still render raw digits** (area 5). `NumberInput` renders `String(value)`,
+   so Gross Annual Income shows `100000` and Home Price shows `600000` while every displayed
+   figure alongside them is formatted. D4's axis half is fixed and its input half is not:
+   Task 11's scope was the mortgage chart's axes.
+2. **Card dead space is only partly reclaimed** (area 3). The dashboard empty states no longer
+   reserve chart height, and the portfolio import no longer occupies the top of its tab, but
+   Income, Receivables, Monthly Summary and Package Details still leave 100 to 300px voids at
+   desktop width. D6's desktop half is partly open.
+3. **One money-display inconsistency survives** (area 4). A manual price override is wrapped in
+   a synthetic quote hardcoded to USD, so for a non-USD holding carrying an override the
+   dashboard rollup and the Investments tab can still disagree. This is pre-existing, was found
+   during Task 12, and is a narrower trigger than the reported finding, which is closed.
+
+### Still out of scope
+
+The mobile-only findings (D6's mobile half, D10, D11) were excluded from this plan by design
+and are unchanged. The mobile column of the original scorecard is not rescored here.
+
+---
+
 ## Blocking findings
 
 ### B1. Account names collapse to one or two characters at 768px
