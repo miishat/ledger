@@ -30,10 +30,14 @@ describe('ForecasterTool comp tax controls', () => {
     expect(screen.getByText(/Comp events taxed at your marginal rate/i)).toBeTruthy()
   })
 
-  it('keeps the two primary pills in the row', () => {
+  it('keeps the two primary pills in the row, labelled by action with state on aria-pressed', () => {
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
-    expect(screen.getByText(/Comp Events (On|Off)/)).toBeTruthy()
-    expect(screen.getByText(/Debt Drag (Off|On|\$)/)).toBeTruthy()
+    const compEvents = screen.getByRole('button', { name: /^Comp Events/ })
+    const debtDrag = screen.getByRole('button', { name: /^Debt Drag/ })
+    expect(compEvents).toHaveAttribute('aria-pressed')
+    expect(debtDrag).toHaveAttribute('aria-pressed')
+    expect(compEvents.textContent).not.toMatch(/\b(On|Off)$/)
+    expect(debtDrag.textContent).not.toMatch(/\b(On|Off)$/)
   })
 })
 

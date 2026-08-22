@@ -35,9 +35,9 @@ test('renders a long transaction list without mounting every row', async ({ page
   // Sanity check: confirm the store actually loaded all 1200 seeded rows
   // (not a silently-empty fallback caused by a persisted-shape mismatch)
   // before trusting the row-count assertions below.
-  await expect(page.getByText('All Transactions')).toBeVisible()
-  const clearAllButton = page.getByRole('button', { name: 'Clear All' })
-  await expect(clearAllButton).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'All Transactions' })).toBeVisible()
+  const deleteAllButton = page.getByRole('button', { name: 'Delete all transactions' })
+  await expect(deleteAllButton).toBeVisible()
 
   const rows = page.locator('table tbody tr:not([aria-hidden="true"])')
   await expect(rows.first()).toBeVisible()

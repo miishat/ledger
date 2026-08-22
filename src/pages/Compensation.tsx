@@ -112,13 +112,16 @@ export const Compensation: React.FC = () => {
                   : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] control-border hover:text-[var(--color-text-primary)]'
               }`}
             >
-              {useCadConversion
-                ? fxAvailable
-                  ? `Convert to CAD: ON (1 USD = ${fxRate.toFixed(4)} CAD${
-                      fxSource === 'override' ? ', manual' : fxStale && fxDate ? `, as of ${fxDate}` : ''
-                    }${fxStatus === 'loading' ? ', updating…' : ''})`
-                  : 'Convert to CAD: ON (rate unavailable, set a manual rate)'
-                : 'Convert to CAD: OFF'}
+              Convert to CAD
+              {useCadConversion && (
+                <span className="ml-1 font-normal">
+                  {fxAvailable
+                    ? `(1 USD = ${fxRate.toFixed(4)} CAD${
+                        fxSource === 'override' ? ', manual' : fxStale && fxDate ? `, as of ${fxDate}` : ''
+                      }${fxStatus === 'loading' ? ', updating' : ''})`
+                    : '(rate unavailable, set a manual rate)'}
+                </span>
+              )}
             </button>
 
             {useCadConversion && (

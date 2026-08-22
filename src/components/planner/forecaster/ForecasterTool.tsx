@@ -109,19 +109,23 @@ export const ForecasterTool: React.FC = () => {
           <div className="flex gap-2 items-stretch">
             <button
               onClick={() => setSetting('autoComp', !settings.autoComp)}
+              aria-pressed={settings.autoComp}
               className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
                 settings.autoComp ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
-              {settings.autoComp ? `${autoFeed.compLumps.length} Comp Events On` : 'Comp Events Off'}
+              Comp Events
+              {settings.autoComp && <span className="ml-1 font-normal">({autoFeed.compLumps.length})</span>}
             </button>
             <button
               onClick={() => setSetting('includeDebtDrag', !settings.includeDebtDrag)}
+              aria-pressed={settings.includeDebtDrag}
               className={`flex-1 text-[12px] px-2 py-2 rounded-lg border transition-colors ${
                 settings.includeDebtDrag ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
-              {autoFeed.debtDrag ? `Debt Drag ${formatMoney(autoFeed.debtDrag.amount)}/mo` : 'Debt Drag Off'}
+              Debt Drag
+              {autoFeed.debtDrag && <span className="ml-1 font-normal">({formatMoney(autoFeed.debtDrag.amount)}/mo)</span>}
             </button>
             <button
               ref={gearRef}

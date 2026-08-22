@@ -212,15 +212,6 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               ...Object.values(categories).map(c => ({ value: c.id, label: c.name })),
             ]}
           />
-          {txList.length > 0 && (
-            <button
-              onClick={() => setConfirmClearOpen(true)}
-              className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/30 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
-              title="Clear All Transactions"
-            >
-              <Trash2 size={14} /> Clear All
-            </button>
-          )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1.5 text-text-secondary hover:text-text-primary transition-colors bg-bg-primary rounded border border-border shadow-sm ml-2"
@@ -228,6 +219,14 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           >
             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
+          {txList.length > 0 && (
+            <button
+              onClick={() => setConfirmClearOpen(true)}
+              className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/50 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
+            >
+              <Trash2 size={14} aria-hidden="true" /> Delete all transactions
+            </button>
+          )}
         </div>
       </div>
       {selected.length > 0 && (
@@ -517,7 +516,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         open={confirmClearOpen}
         title="Clear all transactions?"
         message={`Every transaction (${Object.keys(transactions).length}) will be deleted, including any hidden by the current search or filter. You can undo this straight afterwards.`}
-        confirmLabel="Clear All"
+        confirmLabel="Delete all"
         tone="danger"
         onConfirm={() => {
           const all = Object.values(transactions);

@@ -112,23 +112,22 @@ describe('TransactionListWidget search', () => {
     expect(screen.getByText('No matching transactions')).toBeInTheDocument()
   })
 
-  it('states the full transaction count in the Clear All confirmation, not the filtered count', () => {
+  it('states the full transaction count in the Delete all confirmation, not the filtered count', () => {
     seedThree()
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'netfl' } })
-    fireEvent.click(screen.getByTitle('Clear All Transactions'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all transactions' }))
     expect(screen.getByText(/Every transaction \(3\) will be deleted/)).toBeInTheDocument()
     expect(screen.getByText(/hidden by the current search or filter/)).toBeInTheDocument()
   })
 
-  it('replaces the row-delete undo offer with the Clear All undo offer', () => {
+  it('replaces the row-delete undo offer with the Delete all undo offer', () => {
     seedThree()
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     fireEvent.click(screen.getAllByLabelText('Delete transaction')[0])
     expect(useUndoStore.getState().pending?.label).toMatch(/^Deleted "/)
-    fireEvent.click(screen.getByTitle('Clear All Transactions'))
-    const confirmButtons = screen.getAllByRole('button', { name: 'Clear All' })
-    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all transactions' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all' }))
     expect(useUndoStore.getState().pending?.label).toMatch(/^Cleared /)
   })
 })
@@ -356,7 +355,7 @@ describe('undo via the global store', () => {
     expect(useBudgetStore.getState().transactions.tx1.description).toBe('Coffee')
   })
 
-  it('offers an undo after Clear All that restores every transaction', () => {
+  it('offers an undo after Delete all that restores every transaction', () => {
     useBudgetStore.setState({
       categories: {},
       transactions: {
@@ -365,9 +364,8 @@ describe('undo via the global store', () => {
       },
     })
     render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
-    fireEvent.click(screen.getByTitle('Clear All Transactions'))
-    const confirmButtons = screen.getAllByRole('button', { name: 'Clear All' })
-    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all transactions' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete all' }))
 
     expect(useBudgetStore.getState().transactions).toEqual({})
     expect(useUndoStore.getState().pending?.label).toBe('Cleared 2 transactions')

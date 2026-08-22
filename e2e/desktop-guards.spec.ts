@@ -432,3 +432,26 @@ test('every scrollable region is reachable from the keyboard', async ({ page }) 
     expect(unreachable).toEqual([])
   }
 })
+
+test('state toggles announce their state instead of spelling it in the label', async ({ page }) => {
+  await page.goto('/#/compensation')
+  await page.waitForLoadState('networkidle')
+  const labelled = await page.evaluate(() =>
+    [...document.querySelectorAll('button')]
+      .map((b) => (b.getAttribute('aria-label') || b.textContent || '').trim())
+      .filter((t) => /:\s*(ON|OFF)\b/i.test(t) || /\b(On|Off)$/.test(t)),
+  )
+  expect(labelled).toEqual([])
+
+  const cad = page.getByRole('button', { name: /convert to cad/i })
+  await expect(cad).toHaveAttribute('aria-pressed', 'false')
+  await cad.click()
+  await expect(cad).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('the destructive transaction action says what it destroys', async ({ page }) => {
+  await page.goto('/#/budget?tab=transactions')
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('button', { name: 'Delete all transactions' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Clear All' })).toHaveCount(0)
+})
