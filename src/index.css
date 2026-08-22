@@ -374,6 +374,39 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Focus rings were split between a 2px accent ring on some controls and the
+   browser's default grey outline (2px or 3px) on others, depending on
+   whether the component happened to style focus-visible itself. The audit
+   found 198 button/link call sites with no focus style of their own; rather
+   than tag each one, set the accent outline as the default here, at the
+   element level, for every natively focusable element and anything made
+   focusable with tabindex (the scroll-region containers fixed earlier in
+   this file among them).
+
+   outline-style reads --tw-outline-style instead of a literal `solid`
+   because that is the custom property Tailwind's own ring/outline-none
+   utilities write to, for example the focus-visible:outline-none
+   focus-visible:ring-2 pairing on ExpenseWidget's scroll container. A
+   component that already suppresses the outline in favour of its own ring
+   sets that variable to `none` on itself; reading it back here means that
+   suppression keeps winning instead of being overridden. A literal `solid`
+   would ignore that signal, since this rule is unlayered and would
+   otherwise always beat the utility regardless of source order, causing
+   the ring and this outline to render at once. */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline-style: var(--tw-outline-style, solid);
+  outline-color: var(--accent);
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
 /* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
    step up one pixel on phones, where the audit found the smallest tier
    carrying real data (dates, category names, pacing hints) and not just
@@ -436,19 +469,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: var(--color-text-secondary);
 }
 
-/* Focus rings: never on mouse click, themed accent ring for keyboard nav.
-   Components with their own focus affordance (focus:border-accent) keep it. */
+/* Focus rings: never on mouse click. The accent outline for interactive
+   elements lives with the other unlayered rules above (search "Focus rings
+   were split"). Components with their own focus affordance
+   (focus:border-accent) keep it. */
 :focus:not(:focus-visible) {
   outline: none;
-}
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Controls were split between a 2px accent ring and the browser's default
-   grey outline, at 2px or 3px depending on the element. One treatment. */
-.focus-ring:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
