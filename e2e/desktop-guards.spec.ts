@@ -385,3 +385,24 @@ test('the transaction table can be sorted from the keyboard', async ({ page }) =
   await expect(page.locator('th[aria-sort]')).toHaveCount(1)
   await expect(page.locator('th[aria-sort]')).toHaveAttribute('aria-sort', /ascending|descending/)
 })
+
+test('every scrollable region is reachable from the keyboard', async ({ page }) => {
+  for (const hash of ['', '#/budget', '#/investments']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(500)
+    const unreachable = await page.evaluate(() =>
+      [...document.querySelectorAll('*')]
+        .filter((el) => {
+          const s = getComputedStyle(el)
+          if (!['auto', 'scroll'].includes(s.overflowY)) return false
+          if (el.scrollHeight <= el.clientHeight + 4) return false
+          if (el.hasAttribute('tabindex')) return false
+          // A region containing its own focusable content is already reachable.
+          return !el.querySelector('a[href], button, input, select, textarea, [tabindex]')
+        })
+        .map((el) => (el.className + '').slice(0, 60)),
+    )
+    expect(unreachable).toEqual([])
+  }
+})

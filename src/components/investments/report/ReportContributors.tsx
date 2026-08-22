@@ -54,7 +54,12 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
       </button>
 
       {showAll && (
-        <div className="overflow-x-auto max-h-[280px] desktop:max-h-[400px] overflow-y-auto mt-3">
+        <div
+          role="group"
+          aria-label="Top contributors"
+          tabIndex={0}
+          className="overflow-x-auto max-h-[280px] desktop:max-h-[400px] overflow-y-auto mt-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+        >
           <table className="w-full text-[12px] min-w-[720px]">
             <thead><tr className="text-left text-text-secondary border-b border-border sticky top-0 bg-[var(--card-bg)]">
               {['Symbol', 'Sector', 'Avg Weight', 'Return', 'Contribution', 'Unrealized P/L', 'Realized P/L', 'Open'].map((h) => (

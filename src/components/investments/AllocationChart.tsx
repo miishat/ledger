@@ -57,7 +57,12 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
             </PieChart>
           </ResponsiveContainer>
         </ChartFigure>
-        <div className="flex flex-col gap-1 text-[13px] max-h-[260px] md:max-h-[320px] overflow-y-auto">
+        <div
+          role="group"
+          aria-label="Allocation breakdown"
+          tabIndex={0}
+          className="flex flex-col gap-1 text-[13px] max-h-[260px] md:max-h-[320px] overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+        >
           {slices.map((s, i) => (
             <div key={s.name} className="flex justify-between items-center gap-2">
               <span className="flex items-center gap-2 text-text-primary truncate">
