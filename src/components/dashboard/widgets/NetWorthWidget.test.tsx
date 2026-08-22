@@ -52,4 +52,11 @@ describe('NetWorthWidget trend formatting', () => {
     render(<NetWorthWidget />)
     expect(screen.getByText('+10.00%')).toBeInTheDocument()
   })
+
+  it('does not claim a change when there is no prior month to compare to', () => {
+    useAccountsStore.setState({ accounts: [], history: [] })
+    render(<NetWorthWidget />)
+    expect(screen.getByText('No comparison for last month yet')).toBeInTheDocument()
+    expect(screen.queryByText('+0.00%')).not.toBeInTheDocument()
+  })
 })

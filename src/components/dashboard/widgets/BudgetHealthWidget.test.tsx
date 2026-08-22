@@ -19,7 +19,7 @@ const renderWidget = () =>
 describe('BudgetHealthWidget', () => {
   it('points a user with no transactions at the Budgeting page', () => {
     renderWidget()
-    expect(screen.getByRole('link', { name: 'Add transactions in Budgeting' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Add transactions' })).toHaveAttribute(
       'href',
       '/budget',
     )
