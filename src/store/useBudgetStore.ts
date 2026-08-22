@@ -110,6 +110,23 @@ interface BudgetState {
   seedDefaults: () => void;
 }
 
+export const BUDGET_PERSIST_VERSION = 4;
+
+/** The composition the persist config actually runs. Extracted and exported so
+ *  a test can pin the wiring, not just the individual steps: the defect this
+ *  chain was written to fix was a version guard that skipped a step entirely,
+ *  which every per-step unit test passed straight through. */
+export function migrateBudgetPersisted(persistedState: unknown, version: number): unknown {
+  const persisted = persistedState as Partial<BudgetState>;
+  const withDefaults = {
+    ...persisted,
+    budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? false,
+  };
+  const v2 = migrateBudgetState(withDefaults, version);
+  const v3 = version >= 3 ? v2 : migrateBudgetStateV3(v2);
+  return version >= 4 ? v3 : migrateBudgetStateV4(v3);
+}
+
 export const useBudgetStore = create<BudgetState>()(
   persist(
     (set) => ({
@@ -245,17 +262,8 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: STORAGE_KEYS.budget,
-      version: 4,
-      migrate: (persistedState, version) => {
-        const persisted = persistedState as Partial<BudgetState>;
-        const withDefaults = {
-          ...persisted,
-          budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? false,
-        };
-        const v2 = migrateBudgetState(withDefaults, version);
-        const v3 = version >= 3 ? v2 : migrateBudgetStateV3(v2);
-        return (version >= 4 ? v3 : migrateBudgetStateV4(v3)) as Partial<BudgetState>;
-      },
+      version: BUDGET_PERSIST_VERSION,
+      migrate: migrateBudgetPersisted,
     }
   )
 );
