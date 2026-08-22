@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { seedApp } from './seed'
 import { installContrastHelpers } from './contrast'
 
@@ -268,17 +268,95 @@ test('money axes are formatted, not raw digits', async ({ page }) => {
   expect(ticks.every((t) => t.startsWith('$'))).toBe(true)
 })
 
+// Task 11's grep sweep wrapped every ResponsiveContainer in the app (16
+// files) in ChartFigure. This guard reaches every one of those files that
+// the app's own navigation can put on screen with seeded data alone, so a
+// later change that strips ChartFigure off any of them gets caught here
+// instead of by a screen reader user. Each route below is commented with
+// which of the 16 files it exercises.
+//
+// Left out on purpose: ReportAllocations, ReportContributors, and
+// ReportPerformance (src/components/investments/report/). All three render
+// only inside PortfolioReport, which itself renders nothing until a
+// PortfolioAnalyst CSV has been uploaded and the report section has been
+// expanded by click. That is exactly the kind of "needs an existing
+// analysis, a generated report" state this guard is not supposed to
+// contort itself to reach. They stay uncovered here.
+const CHART_ROUTES: { path: string; afterNav?: (page: Page) => Promise<void> }[] = [
+  // MortgageCalculator (AreaChart)
+  { path: '#/planner/mortgage' },
+  // CompHeroWidget's annualized Pie (its default view)
+  { path: '#/compensation' },
+  // CompHeroWidget's monthly Bar (the other half of its view toggle) and
+  // EquityVestingWidget's ComposedChart, both on the same route.
+  {
+    path: '#/compensation',
+    afterNav: async (page) => {
+      await page.getByRole('button', { name: 'Monthly Cash Flow View' }).click()
+    },
+  },
+  // NetWorthTrendWidget (AreaChart). The seeded account history is
+  // deliberately empty (see e2e/seed.ts) so every other guard starts from
+  // its empty state; this widget needs 2+ points to render a chart at all,
+  // so this test overrides just its own page with two points before the
+  // loop below, the same way e2e/offline.spec.ts already does for the same
+  // reason.
+  { path: '' },
+  // CashFlowWidget (Sankey) and SavingsRateWidget (Area trend + Bar split),
+  // both on the Budgeting Overview tab, which is the default with no
+  // ?tab= param.
+  { path: '#/budget' },
+  // CategoryTrendsWidget (one sparkline LineChart per category), behind the
+  // Budgeting Insights tab.
+  {
+    path: '#/budget',
+    afterNav: async (page) => {
+      await page.getByRole('tab', { name: 'Insights' }).click()
+    },
+  },
+  // AllocationChart (Pie), behind the Investments Portfolio tab.
+  {
+    path: '#/investments',
+    afterNav: async (page) => {
+      await page.getByRole('tab', { name: 'Portfolio' }).click()
+    },
+  },
+  // CompoundInterestCalculator (Area)
+  { path: '#/planner/compound-interest' },
+  // DebtPayoffCalculator (Line)
+  { path: '#/planner/debt-payoff' },
+  // RentVsBuyCalculator (Line)
+  { path: '#/planner/rent-vs-buy' },
+  // ForecastChart and MonteCarloSection (both ComposedChart), both render
+  // unconditionally on the Forecaster tool with no input required.
+  { path: '#/planner/forecaster' },
+]
+
 test('every chart has an accessible name', async ({ page }) => {
-  for (const hash of ['#/planner/mortgage', '#/compensation', '']) {
-    await page.goto(`/${hash}`)
+  await page.addInitScript(() => {
+    const raw = window.localStorage.getItem('accounts-storage')
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    parsed.state.history = [
+      { date: '2026-06-01', value: 550000 },
+      { date: '2026-08-01', value: 572000 },
+    ]
+    window.localStorage.setItem('accounts-storage', JSON.stringify(parsed))
+  })
+
+  const unnamed: { route: string; count: number }[] = []
+  for (const route of CHART_ROUTES) {
+    await page.goto(`/${route.path}`)
     await page.waitForLoadState('networkidle')
+    if (route.afterNav) await route.afterNav(page)
     await page.waitForTimeout(1000)
-    const unnamed = await page.evaluate(() =>
+    const count = await page.evaluate(() =>
       [...document.querySelectorAll('.recharts-wrapper')]
         .filter((w) => w.getBoundingClientRect().width > 0)
         .filter((w) => !w.closest('[role="img"][aria-label]'))
         .length,
     )
-    expect(unnamed).toBe(0)
+    if (count > 0) unnamed.push({ route: route.path || '/', count })
   }
+  expect(unnamed).toEqual([])
 })
