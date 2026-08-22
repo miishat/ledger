@@ -3,7 +3,7 @@ import { Trash2, Landmark } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
 import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
-import { holdingPlDollars, marketValue, portfolioTotals, toCad } from '../../utils/investments/portfolioMetrics'
+import { holdingPlDollars, marketValue, portfolioTotals, safeHoldingPrice, toCad } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { AllocationChart } from './AllocationChart'
 import { HoldingRow } from './HoldingRow'
@@ -28,13 +28,14 @@ export const PortfolioView: React.FC = () => {
   // uploaded, reports the broker's own ending NAV, which does include both.
   const nav = accountValue(report)
 
+  // Each row reports its raw native price and that price's own currency
+  // (not a converted or fallback price), so priceFor below is the one place
+  // that decides whether a price is safe to use.
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
-  const [unconvertibleIds, setUnconvertibleIds] = useState<Record<string, boolean>>({})
-  const onPrice = useCallback((id: string, price: number, currency: Currency | null, unconvertible: boolean) => {
+  const onPrice = useCallback((id: string, price: number, currency: Currency | null) => {
     setPrices((prev) => (prev[id] === price ? prev : { ...prev, [id]: price }))
     setQuoteCurrencies((prev) => (prev[id] === currency ? prev : { ...prev, [id]: currency }))
-    setUnconvertibleIds((prev) => (prev[id] === unconvertible ? prev : { ...prev, [id]: unconvertible }))
   }, [])
 
   const currencies = useMemo(
@@ -49,13 +50,13 @@ export const PortfolioView: React.FC = () => {
   // total at cost rather than being dropped. Dropping it made this page
   // disagree with the dashboard rollup, which has always used the cost-basis
   // fallback: the same 8 holdings read $36,705 here and $114,937 there.
-  // When unconvertible, `prices[h.id]` (if set at all) holds the live
-  // quote's raw number in a currency that does not match the holding's own
-  // currency, so it cannot be treated as a ready-to-convert price; avgCost is
-  // used instead of feeding that mismatched number into the total.
-  // `excludedCount` now means only what its name says: the holding's own
-  // currency has no FX rate, so no CAD figure exists for it at all.
-  const priceFor = (h: Holding) => (unconvertibleIds[h.id] ? h.avgCost : (prices[h.id] ?? h.avgCost))
+  // safeHoldingPrice is the shared rule: a live price in a currency that
+  // does not match the holding's own currency, with no rate to bridge them,
+  // cannot be treated as a ready-to-use price, so avgCost is used instead of
+  // feeding that mismatched number into the total. `excludedCount` now
+  // means only what its name says: the holding's own currency has no FX
+  // rate, so no CAD figure exists for it at all.
+  const priceFor = (h: Holding) => safeHoldingPrice(h, prices[h.id], quoteCurrencies[h.id], rates)
   const rows = holdings.map((h) => ({ holding: h, price: priceFor(h) }))
   const totals = portfolioTotals(rows, rates)
 

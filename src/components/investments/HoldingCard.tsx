@@ -3,7 +3,7 @@ import { useCurrentPrice } from '../../services/marketData'
 import { CURRENCIES, type Currency } from '../../services/marketData/types'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
+  bookValue, convertedPrice, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
@@ -16,7 +16,7 @@ interface HoldingCardProps {
   holding: Holding
   rates: FxRates
   totalValueCad: number
-  onPrice: (id: string, price: number, currency: Currency | null, unconvertible: boolean) => void
+  onPrice: (id: string, price: number, currency: Currency | null) => void
 }
 
 export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
@@ -27,16 +27,17 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
 
   // The quote's currency is authoritative for the price; convert it into the
   // holding's currency so value and P/L compare against the cost basis.
-  const converted =
-    quoteCurrency === holding.currency
-      ? nativePrice
-      : convertAmount(nativePrice, quoteCurrency, holding.currency, rates)
+  const converted = convertedPrice(holding, nativePrice, quoteCurrency, rates)
   const priceUnconvertible = converted === null
   const price = converted ?? nativePrice
 
   useEffect(() => {
-    onPrice(holding.id, price, quoteCurrency, priceUnconvertible) // parent keeps last-reported price; guarded upstream
-  }, [holding.id, price, quoteCurrency, priceUnconvertible, onPrice])
+    // Report the raw native price and its currency, not the converted (or
+    // unconvertible-fallback) price above: the parent recomputes safety
+    // itself via safeHoldingPrice, the same rule the dashboard rollup uses,
+    // so the two surfaces cannot silently disagree about it.
+    onPrice(holding.id, nativePrice, quoteCurrency)
+  }, [holding.id, nativePrice, quoteCurrency, onPrice])
 
   // price is only meaningful in the holding's own currency once the cross
   // rate resolves; when it does not, value, P/L and allocation are unknown,

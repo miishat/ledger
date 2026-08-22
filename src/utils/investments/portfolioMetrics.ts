@@ -87,6 +87,36 @@ export function portfolioTotals(
   }
 }
 
+/** A quote price converted into the holding's own currency, or null when the
+ *  quote's currency does not match and no rate bridges them. Same currency
+ *  passes the price through unchanged, including when both are null (an
+ *  unset holding currency and no known quote currency). */
+export function convertedPrice(
+  holding: Holding,
+  price: number,
+  currency: Currency | null,
+  rates: FxRates,
+): number | null {
+  return currency === holding.currency ? price : convertAmount(price, currency, holding.currency, rates)
+}
+
+/** The price to value a holding at for totals: the live or cached price
+ *  when one is known and converts into the holding's own currency, and the
+ *  holding's cost basis otherwise, be that no quote at all or a quote whose
+ *  currency cannot be bridged into the holding's currency. This is the one
+ *  place that decides whether a price is safe to use for a holding's total,
+ *  so PortfolioView and PortfolioRollupWidget call it instead of each
+ *  reimplementing the rule and risking disagreement. */
+export function safeHoldingPrice(
+  holding: Holding,
+  price: number | undefined,
+  currency: Currency | null | undefined,
+  rates: FxRates,
+): number {
+  if (price === undefined) return holding.avgCost
+  return convertedPrice(holding, price, currency ?? null, rates) ?? holding.avgCost
+}
+
 export type AllocationBy = 'holding' | 'account' | 'currency'
 
 export interface AllocationSlice {
