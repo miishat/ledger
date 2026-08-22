@@ -35,7 +35,7 @@ describe('HoldingCard', () => {
       <HoldingCard holding={buildHolding()} rates={{ USD: 1 }} totalValueCad={1000} onPrice={() => {}} />,
     )
 
-    // avgCost (100.00) must not appear as the rendered "current price" — it still
+    // avgCost (100.00) must not appear as the rendered "current price": it still
     // appears once for the Avg Cost field itself, so assert on skeleton presence.
     const skeletons = container.querySelectorAll('[aria-hidden="true"].animate-pulse')
     expect(skeletons.length).toBeGreaterThan(0)

@@ -24,10 +24,19 @@ describe('ForecasterTool comp tax controls', () => {
   it('hides tax controls behind the gear popover', () => {
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
     // tax controls not in the main row anymore
-    expect(screen.queryByText('After-Tax Comp Events')).toBeNull()
+    expect(screen.queryByText('Tax Comp Events')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
-    expect(screen.getByText('After-Tax Comp Events')).toBeTruthy()
+    expect(screen.getByText('Tax Comp Events')).toBeTruthy()
     expect(screen.getByText(/Comp events taxed at your marginal rate/i)).toBeTruthy()
+  })
+
+  it('labels the tax toggle by action, with state on aria-pressed instead of baked into the label', () => {
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
+    const taxToggle = screen.getByRole('button', { name: 'Tax Comp Events' })
+    expect(taxToggle).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(taxToggle)
+    expect(taxToggle).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('keeps the two primary pills in the row, labelled by action with state on aria-pressed', () => {

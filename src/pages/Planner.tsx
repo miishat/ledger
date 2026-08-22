@@ -13,12 +13,13 @@ export const Planner: React.FC = () => (
     {PLANNER_GROUPS.map((group) => {
       const tools = PLANNER_TOOLS.filter((t) => t.group === group)
       if (tools.length === 0) return null
-      const gridCols =
-        tools.length === 1
-          ? 'grid-cols-1'
-          : tools.length === 2
-            ? 'grid-cols-1 md:grid-cols-2'
-            : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+      // One expression for every section, so all sections always agree with
+      // each other. They used to pick 2 or 3 columns from how many tools they
+      // held, so card widths changed halfway down a page of otherwise
+      // identical cards. The count still steps with the viewport: forcing 3
+      // columns from md up puts 133px cards on a 768px tablet and wraps the
+      // longer tool names onto four lines.
+      const gridCols = 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
       return (
         <section key={group} className="flex flex-col gap-3">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">{group}</h2>

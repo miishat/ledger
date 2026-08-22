@@ -108,7 +108,7 @@ export const useBudgetStore = create<BudgetState>()(
       categories: {},
       categoryGroups: {},
       reallocations: {},
-      budgetSetupCollapsed: true,
+      budgetSetupCollapsed: false,
 
       setParadigm: (paradigm) => set({ paradigm }),
       toggleBudgetSetup: () => set((state) => ({ budgetSetupCollapsed: !state.budgetSetupCollapsed })),
@@ -240,7 +240,7 @@ export const useBudgetStore = create<BudgetState>()(
         const persisted = persistedState as Partial<BudgetState>;
         const withDefaults = {
           ...persisted,
-          budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
+          budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? false,
         };
         const v2 = migrateBudgetState(withDefaults, version);
         return (version >= 3 ? v2 : migrateBudgetStateV3(v2)) as Partial<BudgetState>;

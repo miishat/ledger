@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Trash2, Landmark } from 'lucide-react'
+import { Trash2, Landmark, Upload } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
 import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -14,6 +14,7 @@ import { accountValue } from './report/reportMetrics'
 import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { EmptyState } from '../ui/EmptyState'
 import { DataFreshness } from '../ui/DataFreshness'
+import { Sheet } from '../ui/Sheet'
 
 export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
@@ -22,6 +23,7 @@ export const PortfolioView: React.FC = () => {
   const currencyReviewPending = usePortfolioStore((s) => s.currencyReviewPending)
   const dismissCurrencyReview = usePortfolioStore((s) => s.dismissCurrencyReview)
   const report = usePortfolioReportStore((s) => s.report)
+  const [importOpen, setImportOpen] = useState(false)
 
   // The imported holdings carry no cash and no margin loan, so their sum is
   // only ever the holdings value. A PortfolioAnalyst report, when one has been
@@ -85,7 +87,26 @@ export const PortfolioView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PortfolioImport />
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium control-border text-text-primary hover:bg-bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
+        </button>
+      </div>
+
+      <Sheet
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        desktop="modal"
+        ariaLabel="Import holdings"
+        title="Import holdings"
+        panelClassName="themed-menu desktop:rounded-lg w-full max-w-lg desktop:p-6"
+      >
+        <PortfolioImport />
+      </Sheet>
 
       {holdings.length === 0 ? (
         <div className="themed-card rounded-lg p-10">

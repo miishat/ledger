@@ -38,6 +38,14 @@ test('every visible form control has a programmatic label', async ({ page }) => 
   await page.waitForLoadState('networkidle')
   expect(await unlabelled()).toEqual([])
 
+  // The compensation edit modal is its own form, opened only by this button,
+  // and earlier passes of this guard never opened it. It ships plenty of
+  // sibling <label> elements with no htmlFor of its own.
+  await page.getByRole('button', { name: 'Edit Package' }).click()
+  await page.waitForTimeout(400)
+  expect(await unlabelled()).toEqual([])
+  await page.keyboard.press('Escape')
+
   await page.goto('/#/budget')
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Add Transaction' }).first().click()
@@ -454,4 +462,36 @@ test('the destructive transaction action says what it destroys', async ({ page }
   await page.waitForLoadState('networkidle')
   await expect(page.getByRole('button', { name: 'Delete all transactions' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Clear All' })).toHaveCount(0)
+})
+
+test('the Setup tab shows its content without a hunt', async ({ page }) => {
+  await page.goto('/#/budget?tab=setup')
+  await page.waitForLoadState('networkidle')
+  // The budget paradigm picker is the point of this tab. It must be on screen,
+  // not behind a chevron with no affordance.
+  await expect(page.getByRole('button', { name: /budget setup/i })).toHaveAttribute('aria-expanded', 'true')
+})
+
+test('the Planner grid keeps one column count down the page', async ({ page }) => {
+  await page.goto('/#/planner')
+  await page.waitForLoadState('networkidle')
+  // Every full row must use the same column count, so every card that is not
+  // alone on a short final row must have the same width. Before the fix, the
+  // two-tool sections rendered 2 columns and the three-tool sections rendered
+  // 3, so card widths differed by roughly 200px halfway down the page.
+  const widths = await page.evaluate(() =>
+    [...document.querySelectorAll('section > div.grid')].map((g) => ({
+      cols: getComputedStyle(g).gridTemplateColumns.split(' ').length,
+      cardWidths: [...g.querySelectorAll(':scope > a')].map((a) => Math.round(a.getBoundingClientRect().width)),
+    })),
+  )
+  expect(widths.length).toBeGreaterThan(2)
+  // Every section must agree with every other section at whatever width the
+  // page is being viewed at. The count itself is allowed to step with the
+  // viewport, so this pins agreement rather than a specific number: pinning 3
+  // would force 133px cards onto a 768px tablet.
+  const colCounts = new Set(widths.map((w) => w.cols))
+  expect(colCounts.size).toBe(1)
+  const allCardWidths = new Set(widths.flatMap((w) => w.cardWidths))
+  expect(allCardWidths.size).toBe(1)
 })

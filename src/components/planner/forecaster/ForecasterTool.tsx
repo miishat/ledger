@@ -148,11 +148,12 @@ export const ForecasterTool: React.FC = () => {
           >
             <button
               onClick={() => setSetting('compTaxEnabled', !settings.compTaxEnabled)}
+              aria-pressed={settings.compTaxEnabled}
               className={`text-[12px] px-2 py-2 rounded-lg border transition-colors ${
                 settings.compTaxEnabled ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
               }`}
             >
-              {settings.compTaxEnabled ? 'After-Tax Comp Events' : 'Gross Comp Events'}
+              Tax Comp Events
             </button>
             {settings.compTaxEnabled ? (
               <button

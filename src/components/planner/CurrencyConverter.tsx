@@ -83,7 +83,7 @@ export const CurrencyConverter: React.FC = () => {
 
       {!historicalSupported && (inputs.date as string) && (
         <p className="text-[12px] text-text-secondary">
-          Historical rates are unavailable for BDT — showing the latest rate instead.
+          Historical rates are unavailable for BDT, showing the latest rate instead.
         </p>
       )}
 

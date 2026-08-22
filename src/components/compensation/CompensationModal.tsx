@@ -202,8 +202,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Company Current Stock Price (USD)</label>
+            <label className={labelClass} htmlFor="company-price-input">Company Current Stock Price (USD)</label>
             <NumberInput
+              id="company-price-input"
               value={companyCurrentPrice}
               onCommit={setCompanyCurrentPrice}
               maxDecimals={3}
@@ -211,7 +212,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             />
             {(priceSource === 'live' || priceSource === 'cache') && (
               <p className="text-meta text-[var(--color-text-secondary)]">
-                Pre-filled from the live {companyTicker.trim().toUpperCase() || 'ticker'} price — edit to override.
+                Pre-filled from the live {companyTicker.trim().toUpperCase() || 'ticker'} price, edit to override.
               </p>
             )}
           </div>
@@ -248,8 +249,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             <div className="flex flex-col gap-4">
 
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>Current Base Salary ($)</label>
+                <label className={labelClass} htmlFor="base-salary-input">Current Base Salary ($)</label>
                 <NumberInput
+                  id="base-salary-input"
                   value={baseSalary}
                   onCommit={setBaseSalary}
                   className={inputClass}
@@ -258,7 +260,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center">
-                  <label className={labelClass}>Past Salary Changes</label>
+                  <span className={labelClass}>Past Salary Changes</span>
                   <button
                     type="button"
                     onClick={addPastSalaryChange}
@@ -270,8 +272,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 {pastSalaryChanges.map((change) => (
                   <div key={change.id} className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end bg-[var(--color-bg-secondary)] p-3 rounded-lg border border-[var(--color-border)]">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Previous Salary ($)</label>
+                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]" htmlFor={`past-salary-amount-${change.id}`}>Previous Salary ($)</label>
                       <NumberInput
+                        id={`past-salary-amount-${change.id}`}
                         value={change.salary}
                         onCommit={(n) => handlePastSalaryChange(change.id, 'salary', n)}
                         placeholder="Optional"
@@ -279,8 +282,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                       />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Change Month</label>
+                      <label className="text-[12px] font-medium text-[var(--color-text-secondary)]" htmlFor={`past-salary-month-${change.id}`}>Change Month</label>
                       <ThemedSelect
+                        id={`past-salary-month-${change.id}`}
                         value={String(change.changeMonth ?? '')}
                         onChange={(v) => handlePastSalaryChange(change.id, 'changeMonth', Number(v) || 0)}
                         options={[{ value: '', label: 'None' }, ...MONTH_OPTIONS]}
@@ -298,16 +302,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
 
               <div className="flex flex-col gap-2 pt-2 border-t border-[var(--color-border)]">
-                <label className={labelClass}>Cash Bonus (%)</label>
+                <label className={labelClass} htmlFor="cash-bonus-percent-input">Cash Bonus (%)</label>
                 <NumberInput
+                  id="cash-bonus-percent-input"
                   value={cashBonusPercent}
                   onCommit={setCashBonusPercent}
                   className={inputClass}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>Bonus Payout Month</label>
+                <label className={labelClass} htmlFor="cash-bonus-month-select">Bonus Payout Month</label>
                 <ThemedSelect
+                  id="cash-bonus-month-select"
                   value={cashBonusMonth}
                   onChange={(v) => setCashBonusMonth(v)}
                   options={MONTH_OPTIONS}
@@ -319,8 +325,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
           {activeTab === 'equity' && (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>RSU Grant Name</label>
+                <label className={labelClass} htmlFor="rsu-grant-name-input">RSU Grant Name</label>
                 <input
+                  id="rsu-grant-name-input"
                   type="text"
                   value={rsuGrantName}
                   onChange={(e) => setRsuGrantName(e.target.value)}
@@ -328,8 +335,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>Number of Shares</label>
+                <label className={labelClass} htmlFor="rsu-grant-shares-input">Number of Shares</label>
                 <NumberInput
+                  id="rsu-grant-shares-input"
                   value={rsuGrantShares}
                   onCommit={setRsuGrantShares}
                   className={inputClass}
@@ -337,8 +345,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Grant Price (USD)</label>
+                  <label className={labelClass} htmlFor="rsu-grant-price-input">Grant Price (USD)</label>
                   <NumberInput
+                    id="rsu-grant-price-input"
                     value={rsuGrantPrice}
                     onCommit={setRsuGrantPrice}
                     maxDecimals={3}
@@ -346,21 +355,23 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Grant Start Date</label>
+                  <label className={labelClass} htmlFor="rsu-grant-start-date">Grant Start Date</label>
                   <ThemedDatePicker
+                    id="rsu-grant-start-date"
                     value={rsuStartDate}
                     onChange={setRsuStartDate}
                     className={inputClass}
                   />
                 </div>
               </div>
-              
+
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex justify-between items-center">
-                  <label className={labelClass}>Vesting Schedule</label>
+                  <span className={labelClass}>Vesting Schedule</span>
                   <div className="flex items-center gap-2">
-                    <label className={labelClass}>Frequency:</label>
+                    <label className={labelClass} htmlFor="rsu-frequency-select">Frequency:</label>
                     <ThemedSelect
+                      id="rsu-frequency-select"
                       value={rsuFrequency}
                       onChange={(v) => setRsuFrequency(v as VestingFrequency)}
                       className="text-[12px]"
@@ -399,16 +410,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               {rsuPreset === 'custom' && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className={labelClass}>Total Vest (months)</label>
+                    <label className={labelClass} htmlFor="rsu-total-months-input">Total Vest (months)</label>
                     <NumberInput
+                      id="rsu-total-months-input"
                       value={rsuTotalMonths}
                       onCommit={setRsuTotalMonths}
                       className={inputClass}
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={labelClass}>Cliff (months)</label>
+                    <label className={labelClass} htmlFor="rsu-cliff-months-input">Cliff (months)</label>
                     <NumberInput
+                      id="rsu-cliff-months-input"
                       value={rsuCliffMonths}
                       onCommit={setRsuCliffMonths}
                       className={inputClass}
@@ -438,7 +451,7 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
 
               {primaryPackage.rsuGrants.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2">
-                  <label className={labelClass}>Current Grants</label>
+                  <span className={labelClass}>Current Grants</span>
                   <div className="flex flex-col gap-2">
                     {primaryPackage.rsuGrants.map(g => {
                       const shares = g.grantShares || 0;
@@ -474,16 +487,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>ESPP Contribution (%)</label>
+                  <label className={labelClass} htmlFor="espp-contribution-input">ESPP Contribution (%)</label>
                   <NumberInput
+                    id="espp-contribution-input"
                     value={esppContributionPercent}
                     onCommit={setEsppContributionPercent}
                     className={inputClass}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>ESPP Discount (%)</label>
+                  <label className={labelClass} htmlFor="espp-discount-input">ESPP Discount (%)</label>
                   <NumberInput
+                    id="espp-discount-input"
                     value={esppDiscountPercent}
                     onCommit={setEsppDiscountPercent}
                     className={inputClass}
@@ -492,8 +507,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>ESPP Lock-In Price (USD)</label>
+                  <label className={labelClass} htmlFor="espp-lockin-price-input">ESPP Lock-In Price (USD)</label>
                   <NumberInput
+                    id="espp-lockin-price-input"
                     value={esppLockedInPrice}
                     onCommit={setEsppLockedInPrice}
                     maxDecimals={3}
@@ -501,8 +517,9 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Lock-In End Date (Optional)</label>
+                  <label className={labelClass} htmlFor="espp-lockin-end-date">Lock-In End Date (Optional)</label>
                   <ThemedDatePicker
+                    id="espp-lockin-end-date"
                     value={esppLockInEndDate}
                     onChange={setEsppLockInEndDate}
                     className={inputClass}
@@ -510,16 +527,18 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>RRSP Match (%)</label>
+                <label className={labelClass} htmlFor="rrsp-match-percent-input">RRSP Match (%)</label>
                 <NumberInput
+                  id="rrsp-match-percent-input"
                   value={rrspMatchPercent}
                   onCommit={setRrspMatchPercent}
                   className={inputClass}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className={labelClass}>RRSP Match Cap ($)</label>
+                <label className={labelClass} htmlFor="rrsp-match-cap-input">RRSP Match Cap ($)</label>
                 <NumberInput
+                  id="rrsp-match-cap-input"
                   value={rrspMatchCap}
                   onCommit={setRrspMatchCap}
                   className={inputClass}

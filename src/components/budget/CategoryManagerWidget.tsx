@@ -111,23 +111,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           type="button"
           onClick={toggleBudgetSetup}
           aria-expanded={!budgetSetupCollapsed}
-          className="flex items-center gap-2 text-left"
+          aria-controls="budget-setup-panel"
+          className="flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         >
           {budgetSetupCollapsed ? (
-            <ChevronRight size={18} className="text-text-secondary" />
+            <ChevronRight size={18} className="text-text-secondary shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronDown size={18} className="text-text-secondary" />
+            <ChevronDown size={18} className="text-text-secondary shrink-0" aria-hidden="true" />
           )}
-          <div>
-            <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
-            <p className="text-[14px] text-text-secondary mt-1">Configure your budgeting style and monthly targets.</p>
-            <p className="text-[13px] text-text-secondary mt-1">
-              Total monthly budget:{' '}
-              <span className="font-semibold text-text-primary">
-                {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
-              </span>
-            </p>
-          </div>
+          <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
         </button>
 
         {!budgetSetupCollapsed && (
@@ -153,7 +145,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         )}
       </div>
 
-      {!budgetSetupCollapsed && (
+      <div id="budget-setup-panel" hidden={budgetSetupCollapsed}>
+      <p className="text-[14px] text-text-secondary -mt-3 mb-1">Configure your budgeting style and monthly targets.</p>
+      <p className="text-[13px] text-text-secondary mb-6">
+        Total monthly budget:{' '}
+        <span className="font-semibold text-text-primary">
+          {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
+        </span>
+      </p>
+
       <div className="columns-1 md:columns-2 gap-6">
         {groups.map(group => {
           const isIncomeGroup = group.kind === 'income';
@@ -330,9 +330,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           );
         })}
       </div>
-      )}
 
-      {!budgetSetupCollapsed && (
       <div className="mt-6 border-t border-border pt-4">
         <button 
           onClick={() => setIsAddOpen(!isAddOpen)}
@@ -406,7 +404,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
-      )}
+      </div>
 
       {coverTarget && (
         <ReallocationModal
