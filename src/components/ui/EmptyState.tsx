@@ -12,7 +12,7 @@ interface EmptyStateProps {
 }
 
 const ACTION_CLASS =
-  'mt-1 inline-block px-3 py-1.5 rounded-md text-[13px] font-medium border border-accent text-accent bg-accent/10 hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+  'mt-1 inline-block px-3 py-1.5 rounded-md text-[13px] font-medium border border-accent text-accent bg-accent/10 hover:opacity-90 transition-opacity'
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ icon: Icon, message, hint, action }) => (
   <div className="flex flex-col items-center gap-2 py-8 text-center">
