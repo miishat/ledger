@@ -53,7 +53,7 @@ describe('PortfolioRollupWidget FX handling', () => {
     // no route and must show up as excluded rather than vanish from the total
     // or be silently folded in at a wrong rate.
     expect(await screen.findByText('$1,000')).toBeInTheDocument()
-    expect(await screen.findByText(/1 excluded, no FX rate/)).toBeInTheDocument()
+    expect(await screen.findByText(/1 holding left out of these totals: no exchange rate for its currency/)).toBeInTheDocument()
   })
 
   it('shows no excluded note when every holding currency has a rate', async () => {
@@ -72,7 +72,7 @@ describe('PortfolioRollupWidget FX handling', () => {
     renderWidget()
 
     expect(await screen.findByText('$1,000')).toBeInTheDocument()
-    expect(screen.queryByText(/excluded, no FX rate/)).toBeNull()
+    expect(screen.queryByText(/left out of these totals/)).toBeNull()
   })
 
   it('tells you how old the prices behind the rollup are', () => {

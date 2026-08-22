@@ -56,8 +56,8 @@ export const PortfolioRollupWidget: React.FC = () => {
         </span>
         <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
         {t.excludedCount > 0 && (
-          <span className="text-meta text-error">
-            {t.excludedCount} excluded, no FX rate
+          <span className="text-[13px] text-error">
+            {t.excludedCount} holding{t.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {t.excludedCount === 1 ? 'its' : 'their'} currency.
           </span>
         )}
         {newestFetchedAt ? (

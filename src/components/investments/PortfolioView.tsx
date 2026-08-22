@@ -44,16 +44,20 @@ export const PortfolioView: React.FC = () => {
   const fx = useFxRates(currencies)
   const rates = fx.rates
 
-  // A holding whose live quote could not be converted into its own currency
-  // has no usable price in that currency, so it is left out of portfolioTotals
-  // entirely rather than feeding it a wrong-currency price. It is folded into
-  // the same excluded count as a holding that lacks an FX rate outright.
-  const rows = holdings
-    .filter((h) => !unconvertibleIds[h.id])
-    .map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
-  const rawTotals = portfolioTotals(rows, rates)
-  const unconvertibleCount = holdings.filter((h) => unconvertibleIds[h.id]).length
-  const totals = { ...rawTotals, excludedCount: rawTotals.excludedCount + unconvertibleCount }
+  // A holding whose live quote could not be converted still has a known
+  // quantity and a known cost basis in a known currency, so it belongs in the
+  // total at cost rather than being dropped. Dropping it made this page
+  // disagree with the dashboard rollup, which has always used the cost-basis
+  // fallback: the same 8 holdings read $36,705 here and $114,937 there.
+  // When unconvertible, `prices[h.id]` (if set at all) holds the live
+  // quote's raw number in a currency that does not match the holding's own
+  // currency, so it cannot be treated as a ready-to-convert price; avgCost is
+  // used instead of feeding that mismatched number into the total.
+  // `excludedCount` now means only what its name says: the holding's own
+  // currency has no FX rate, so no CAD figure exists for it at all.
+  const priceFor = (h: Holding) => (unconvertibleIds[h.id] ? h.avgCost : (prices[h.id] ?? h.avgCost))
+  const rows = holdings.map((h) => ({ holding: h, price: priceFor(h) }))
+  const totals = portfolioTotals(rows, rates)
 
   type SortKey = 'ticker' | 'value' | 'pl' | 'alloc'
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'value', desc: true })
@@ -61,19 +65,13 @@ export const PortfolioView: React.FC = () => {
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }))
 
-  // An unconvertible holding (its live quote came back in a currency with no
-  // rate) must be explicitly excluded here via unconvertibleIds, the same
-  // flag HoldingRow uses to decide whether to show a dash. The `?? 0` alone
-  // does NOT catch this case: toCad(value, h.currency, rates) only returns
-  // null when h.currency itself lacks a rate, and rateToCad('CAD', ...) is
-  // hardcoded to 1, so a CAD holding whose USD quote has no USD rate would
-  // still resolve to a non-null (wrong) CAD figure computed from the raw,
-  // unconverted USD price. Explicitly zeroing it here keeps the subtotal
-  // consistent with portfolioTotals, which drops such holdings entirely.
-  const valueCadOf = (h: Holding) =>
-    unconvertibleIds[h.id] ? 0 : (toCad(marketValue(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
-  const plCadOf = (h: Holding) =>
-    unconvertibleIds[h.id] ? 0 : (toCad(holdingPlDollars(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
+  // Account subtotals must price each holding exactly the way the totals
+  // above do (at cost when the live quote could not be converted, at the
+  // live/cached price otherwise) so the subtotals always sum to the total.
+  // The `?? 0` here guards the one remaining exclusion: a holding whose own
+  // currency has no FX rate, the same condition portfolioTotals excludes on.
+  const valueCadOf = (h: Holding) => toCad(marketValue(h, priceFor(h)), h.currency, rates) ?? 0
+  const plCadOf = (h: Holding) => toCad(holdingPlDollars(h, priceFor(h)), h.currency, rates) ?? 0
 
   const sortRows = (list: Holding[]) => {
     const dir = sort.desc ? -1 : 1
@@ -117,8 +115,15 @@ export const PortfolioView: React.FC = () => {
                 {formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}
               </p>
               {totals.excludedCount > 0 && (
-                <p className="text-meta text-error mt-1">
-                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} excluded, no FX rate
+                <p className="text-[13px] text-error mt-1">
+                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {totals.excludedCount === 1 ? 'its' : 'their'} currency.{' '}
+                  <button
+                    type="button"
+                    onClick={() => fx.refresh()}
+                    className="border control-border rounded px-1.5 py-0.5 text-[12px] hover:text-error/80 hover:border-error/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Retry exchange rates
+                  </button>
                 </p>
               )}
             </div>

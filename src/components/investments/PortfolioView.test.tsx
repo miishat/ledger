@@ -101,7 +101,7 @@ describe('multi-currency totals', () => {
       importedAt: '2026-07-21T00:00:00.000Z',
     })
     render(<PortfolioView />)
-    expect(await screen.findByText(/1 holding excluded, no FX rate/)).toBeInTheDocument()
+    expect(await screen.findByText(/1 holding left out of these totals: no exchange rate for its currency/)).toBeInTheDocument()
   })
 
   it('says nothing about exclusions when every currency resolves', async () => {
@@ -113,7 +113,7 @@ describe('multi-currency totals', () => {
     })
     render(<PortfolioView />)
     expect(await screen.findByText('Total Invested (CAD)')).toBeInTheDocument()
-    expect(screen.queryByText(/excluded, no FX rate/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/left out of these totals/)).not.toBeInTheDocument()
   })
 })
 
@@ -247,12 +247,15 @@ describe('account subtotal correctness', () => {
     mockQuotes.clear()
   })
 
-  it('excludes an unconvertible holding from the account subtotal instead of reading its raw quote currency as CAD', async () => {
+  it('prices an unconvertible holding at cost in the account subtotal instead of reading its raw quote currency as CAD', async () => {
     usePortfolioStore.setState({
       holdings: [
         { id: '1', ticker: 'ENB', quantity: 10, avgCost: 10, currency: 'CAD', account: 'RRSP' },
         // TRAP's own currency is CAD, but its live quote resolves in USD and
-        // there is no USD rate, so its CAD value is unknown, not 2000.
+        // there is no USD rate, so its raw 200 cannot be read as a CAD
+        // price. It still has a known quantity and cost basis in CAD, so it
+        // counts toward the subtotal at cost (10 * $50 = $500), not at the
+        // raw USD price misread as CAD (2000), and not dropped to zero.
         { id: '2', ticker: 'TRAP', quantity: 10, avgCost: 50, currency: 'CAD', account: 'RRSP' },
       ],
       importedAt: '2026-07-21T00:00:00.000Z',
@@ -261,16 +264,17 @@ describe('account subtotal correctness', () => {
     render(<PortfolioView />)
     await screen.findByText(/RRSP/)
 
-    // TRAP's own row (table and mobile card) must still show a dash.
+    // TRAP's own row (table and mobile card) must still show a dash: its
+    // live price could not be converted, so its per-row value is unknown.
     const valueCells = await screen.findAllByTestId('value-cell')
     expect(valueCells.filter((c) => c.textContent === '-')).toHaveLength(2)
     expect(valueCells.filter((c) => c.textContent === '$100')).toHaveLength(2)
 
-    // The subtotal must reflect only ENB's $100, not ENB plus TRAP's raw
-    // USD price of 200 misread as 2000 CAD dollars ($100 + $1,500 P/L would
-    // appear if the bug were present).
+    // The subtotal reflects ENB's $100 plus TRAP at its $500 cost basis
+    // ($600 total, $0 P/L since cost basis has no gain), not TRAP's raw USD
+    // price of 200 misread as $2,000 CAD, and not TRAP dropped to zero.
     const subtotal = screen.getByTestId('account-subtotal-RRSP')
-    expect(subtotal).toHaveTextContent('$100')
+    expect(subtotal.textContent).toBe('$600 +$0')
     expect(subtotal).not.toHaveTextContent('$2,100')
     expect(subtotal).not.toHaveTextContent('$1,500')
   })
