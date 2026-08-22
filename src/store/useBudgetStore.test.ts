@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { migrateBudgetState, migrateBudgetStateV3 } from './useBudgetStore'
+import { migrateBudgetState, migrateBudgetStateV3, migrateBudgetStateV4 } from './useBudgetStore'
 
 describe('budget store migration v1 -> v2', () => {
   it('assigns kind=income to income-named groups, expense otherwise', () => {
@@ -44,6 +44,22 @@ describe('budget store migration v2 -> v3', () => {
     expect(out.categoryGroups.x.budgetClass).toBeUndefined()
     expect(out.categoryGroups.i.budgetClass).toBeUndefined()
     expect(out.categoryGroups.pre.budgetClass).toBe('want') // never overwrites an explicit class
+  })
+})
+
+describe('budget store migration v3 -> v4', () => {
+  it('opens the Setup disclosure for an existing user, leaving the rest of the payload untouched', () => {
+    const v3 = {
+      paradigm: 'Zero-Based',
+      budgetSetupCollapsed: true,
+      categoryGroups: { h: { id: 'h', name: 'Housing', kind: 'expense', budgetClass: 'need' } },
+      categories: { c1: { id: 'c1', groupId: 'h', name: 'Rent', targetAmount: 1000 } },
+    }
+    const out = migrateBudgetStateV4(v3) as typeof v3
+    expect(out.budgetSetupCollapsed).toBe(false)
+    expect(out.paradigm).toBe('Zero-Based')
+    expect(out.categoryGroups).toEqual(v3.categoryGroups)
+    expect(out.categories).toEqual(v3.categories)
   })
 })
 

@@ -121,7 +121,7 @@ export const PortfolioImport: React.FC = () => {
           <p className="text-[13px] text-text-primary font-medium">
             Unrecognized format. Map your columns ({pending.rows.length} rows):
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 desktop:grid-cols-4 gap-3">
             {([
               ['ticker', 'Ticker column'],
               ['quantity', 'Quantity column'],

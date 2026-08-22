@@ -112,7 +112,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           onClick={toggleBudgetSetup}
           aria-expanded={!budgetSetupCollapsed}
           aria-controls="budget-setup-panel"
-          className="flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+          className="flex items-center gap-2 text-left rounded"
         >
           {budgetSetupCollapsed ? (
             <ChevronRight size={18} className="text-text-secondary shrink-0" aria-hidden="true" />

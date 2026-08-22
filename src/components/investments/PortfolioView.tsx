@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Trash2, Landmark, Upload } from 'lucide-react'
+import { Trash2, Landmark, Upload, X } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
 import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -91,7 +91,7 @@ export const PortfolioView: React.FC = () => {
         <button
           type="button"
           onClick={() => setImportOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium control-border text-text-primary hover:bg-bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium control-border text-text-primary hover:bg-bg-secondary transition-colors"
         >
           <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
         </button>
@@ -103,9 +103,21 @@ export const PortfolioView: React.FC = () => {
         desktop="modal"
         ariaLabel="Import holdings"
         title="Import holdings"
-        panelClassName="themed-menu desktop:rounded-lg w-full max-w-lg desktop:p-6"
+        panelClassName="themed-menu desktop:rounded-lg desktop:overflow-hidden w-full max-w-lg"
       >
-        <PortfolioImport />
+        <div className="hidden desktop:flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-text-primary">Import holdings</h2>
+          <button
+            onClick={() => setImportOpen(false)}
+            aria-label="Close"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-4">
+          <PortfolioImport />
+        </div>
       </Sheet>
 
       {holdings.length === 0 ? (
