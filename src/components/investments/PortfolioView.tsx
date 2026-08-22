@@ -170,10 +170,18 @@ export const PortfolioView: React.FC = () => {
                 </div>
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-[13px] min-w-[720px]">
+                    <caption className="sr-only">
+                      Holdings in {account}, sortable by ticker, value, profit and loss, or allocation.
+                    </caption>
                     <thead>
                       <tr className="text-left text-text-secondary border-b border-border">
                         {headers.map((h) => (
-                          <th key={h.label} className={`py-2 pr-3 font-medium ${h.align}`}>
+                          <th
+                            key={h.label}
+                            scope="col"
+                            aria-sort={h.key && sort.key === h.key ? (sort.desc ? 'descending' : 'ascending') : undefined}
+                            className={`py-2 pr-3 font-medium ${h.align}`}
+                          >
                             {h.key ? (
                               <button
                                 onClick={() => toggleSort(h.key as SortKey)}

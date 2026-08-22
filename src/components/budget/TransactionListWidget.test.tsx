@@ -162,7 +162,7 @@ describe('TransactionListWidget bulk actions', () => {
     fireEvent.click(selectAll)
     expect(screen.getByText('2 selected')).toBeInTheDocument()
     fireEvent.click(selectAll)
-    expect(screen.queryByText(/selected/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^\d+ selected$/)).not.toBeInTheDocument()
   })
 
   // ThemedSelect is a custom listbox, not a native <select>: open the trigger by

@@ -206,7 +206,7 @@ describe('holdings table polish', () => {
 
   it('shows a subtotal in the account header', async () => {
     render(<PortfolioView />)
-    expect(await screen.findByText(/RRSP/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /RRSP/ })).toBeInTheDocument()
     expect(screen.getByTestId('account-subtotal-RRSP')).toHaveTextContent('$400')
   })
 
@@ -262,7 +262,7 @@ describe('account subtotal correctness', () => {
       currencyReviewPending: false,
     })
     render(<PortfolioView />)
-    await screen.findByText(/RRSP/)
+    await screen.findByRole('heading', { name: /RRSP/ })
 
     // TRAP's own row (table and mobile card) must still show a dash: its
     // live price could not be converted, so its per-row value is unknown.

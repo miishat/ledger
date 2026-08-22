@@ -360,3 +360,28 @@ test('every chart has an accessible name', async ({ page }) => {
   }
   expect(unnamed).toEqual([])
 })
+
+test('data tables carry header semantics', async ({ page }) => {
+  for (const [hash, tabName] of [['#/budget', 'Transactions'], ['#/investments', 'Portfolio']] as const) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('tab', { name: tabName }).click()
+    await page.waitForTimeout(600)
+    const problems = await page.evaluate(() =>
+      [...document.querySelectorAll('table')].map((t) => ({
+        caption: !!t.querySelector('caption'),
+        headersWithoutScope: [...t.querySelectorAll('thead th')].filter((th) => !th.getAttribute('scope')).length,
+      })).filter((r) => !r.caption || r.headersWithoutScope > 0),
+    )
+    expect(problems).toEqual([])
+  }
+})
+
+test('the transaction table can be sorted from the keyboard', async ({ page }) => {
+  await page.goto('/#/budget?tab=transactions')
+  await page.waitForLoadState('networkidle')
+  const amount = page.getByRole('button', { name: /sort by amount/i })
+  await amount.click()
+  await expect(page.locator('th[aria-sort]')).toHaveCount(1)
+  await expect(page.locator('th[aria-sort]')).toHaveAttribute('aria-sort', /ascending|descending/)
+})
