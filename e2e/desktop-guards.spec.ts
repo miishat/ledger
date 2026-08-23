@@ -142,7 +142,11 @@ for (const theme of THEMES) {
       })
       const routeFailures: { label: string; tag: string; ratio: number; route: string }[] = await page.evaluate((r) => {
         const c = (window as unknown as {
-          __contrast: { borderRatio(el: Element): number | null; backgroundRatio(el: Element): number }
+          __contrast: {
+            borderRatio(el: Element): number | null
+            controlBorderRatio(el: Element): number
+            backgroundRatio(el: Element): number
+          }
         }).__contrast
 
         const isVisible = (el: Element) => {
@@ -157,10 +161,15 @@ for (const theme of THEMES) {
         // Half one: every element that already carries the strong-border
         // utility must actually measure 3:1. This is task 9's original
         // assertion, now run over every route instead of just one.
+        // controlBorderRatio (unlike borderRatio below) never skips: a
+        // `.control-border` element with no visible border at all, e.g. one
+        // missing the `border` utility that gives the colour a width to
+        // paint, is exactly the defect this half exists to catch, so it
+        // measures 0 and fails rather than being silently dropped.
         for (const el of document.querySelectorAll('.control-border')) {
           if (!isVisible(el)) continue
-          const ratio = c.borderRatio(el)
-          if (ratio !== null && ratio < 3) out.push({ label: labelFor(el), tag: el.tagName, ratio, route: r })
+          const ratio = c.controlBorderRatio(el)
+          if (ratio < 3) out.push({ label: labelFor(el), tag: el.tagName, ratio, route: r })
         }
 
         // Half two: no visible interactive control may rely on a sub-3:1
@@ -206,6 +215,57 @@ test('Investments opens on Portfolio when that is the only tab with data', async
   await page.goto('/#/investments')
   await page.waitForLoadState('networkidle')
   await expect(page.getByRole('tab', { name: 'Portfolio' })).toHaveAttribute('aria-selected', 'true')
+})
+
+// Pins the composition that let 8 tab panels ship keyboard-focusable with no
+// focus indicator: each panel carries tabIndex={0} (so tabbing off the strip
+// lands somewhere), and used to also carry focus-visible:outline-none with
+// no replacement ring. That suppression was inert under the old universal
+// :focus-visible rule (an unlayered selector always won regardless), so
+// nobody noticed until the focus-ring unification scoped that rule to read a
+// component's own suppression, at which point the panels resolved to
+// outline-style: none and became a real WCAG 2.4.7 failure. A future
+// Tailwind upgrade, or a new outline-none slipped onto a panel, would
+// reintroduce exactly this without this guard.
+const TAB_PANEL_CASES: { route: string; tabName: string; panelId: string }[] = [
+  { route: '/#/budget', tabName: 'Overview', panelId: 'panel-overview' },
+  { route: '/#/budget', tabName: 'Insights', panelId: 'panel-insights' },
+  { route: '/#/budget', tabName: 'Transactions', panelId: 'panel-transactions' },
+  { route: '/#/budget', tabName: 'Setup', panelId: 'panel-setup' },
+  { route: '/#/investments', tabName: 'Plan vs Actual', panelId: 'panel-journal' },
+  { route: '/#/investments', tabName: 'Portfolio', panelId: 'panel-portfolio' },
+  { route: '/#/investments', tabName: 'Trades', panelId: 'panel-trades' },
+  { route: '/#/investments', tabName: 'Options', panelId: 'panel-wheel' },
+]
+
+test('a tab panel that suppresses the default outline still shows a focus indicator', async ({ page }) => {
+  const bad: { panelId: string; outlineStyle: string; outlineWidth: string; boxShadow: string }[] = []
+  for (const { route, tabName, panelId } of TAB_PANEL_CASES) {
+    await page.goto(route)
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('tab', { name: tabName }).click()
+    await page.waitForTimeout(200)
+
+    // Tab forward from the tab strip, via the real keyboard, until the
+    // panel itself is focused. Real Tab presses (rather than a scripted
+    // .focus() call) are what actually drive :focus-visible.
+    let reached = false
+    for (let i = 0; i < 20 && !reached; i++) {
+      await page.keyboard.press('Tab')
+      reached = await page.evaluate((id) => document.activeElement?.id === id, panelId)
+    }
+    expect(reached).toBe(true)
+
+    const style = await page.evaluate((id) => {
+      const el = document.getElementById(id)!
+      const s = getComputedStyle(el)
+      return { outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth, boxShadow: s.boxShadow }
+    }, panelId)
+    const suppressed = style.outlineStyle === 'none' || parseFloat(style.outlineWidth) === 0
+    const hasReplacement = style.boxShadow !== 'none'
+    if (suppressed && !hasReplacement) bad.push({ panelId, ...style })
+  }
+  expect(bad).toEqual([])
 })
 
 test('each route names itself in the title and to a screen reader', async ({ page }) => {
@@ -379,20 +439,71 @@ test('every chart has an accessible name', async ({ page }) => {
   })
 
   const unnamed: { route: string; count: number }[] = []
+  // Counts every rendered chart regardless of naming, so a route that
+  // renders zero charts at all (a selector typo, a seed regression, a route
+  // that stopped rendering its chart) fails loud here instead of quietly
+  // matching "zero unnamed" the same way a fully-named route would.
+  const wrapped: { route: string; count: number }[] = []
   for (const route of CHART_ROUTES) {
     await page.goto(`/${route.path}`)
     await page.waitForLoadState('networkidle')
     if (route.afterNav) await route.afterNav(page)
     await page.waitForTimeout(1000)
-    const count = await page.evaluate(() =>
-      [...document.querySelectorAll('.recharts-wrapper')]
-        .filter((w) => w.getBoundingClientRect().width > 0)
-        .filter((w) => !w.closest('[role="img"][aria-label]'))
-        .length,
-    )
-    if (count > 0) unnamed.push({ route: route.path || '/', count })
+    const counts = await page.evaluate(() => {
+      const visible = [...document.querySelectorAll('.recharts-wrapper')].filter(
+        (w) => w.getBoundingClientRect().width > 0,
+      )
+      return {
+        total: visible.length,
+        unnamed: visible.filter((w) => !w.closest('[role="img"][aria-label]')).length,
+      }
+    })
+    if (counts.unnamed > 0) unnamed.push({ route: route.path || '/', count: counts.unnamed })
+    wrapped.push({ route: route.path || '/', count: counts.total })
   }
   expect(unnamed).toEqual([])
+  expect(wrapped.filter((w) => w.count === 0)).toEqual([])
+})
+
+test('no element inside a chart figure is focusable', async ({ page }) => {
+  await page.addInitScript(() => {
+    const raw = window.localStorage.getItem('accounts-storage')
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    parsed.state.history = [
+      { date: '2026-06-01', value: 550000 },
+      { date: '2026-08-01', value: 572000 },
+    ]
+    window.localStorage.setItem('accounts-storage', JSON.stringify(parsed))
+  })
+
+  // ChartFigure sets role="img", which prunes the subtree from the
+  // accessibility tree: `label` on the wrapper is the only thing a screen
+  // reader is meant to see. Recharts 3 defaults accessibilityLayer to true,
+  // which renders the chart's own <svg> (and, for Pie, its sector group)
+  // with tabIndex={0}: a keyboard user tabs onto something a screen reader
+  // never announces. No element inside a role="img" chart wrapper may be
+  // focusable, full stop.
+  const found: { route: string; tag: string; role: string | null }[] = []
+  for (const route of CHART_ROUTES) {
+    await page.goto(`/${route.path}`)
+    await page.waitForLoadState('networkidle')
+    if (route.afterNav) await route.afterNav(page)
+    await page.waitForTimeout(1000)
+    const focusable = await page.evaluate(() =>
+      [...document.querySelectorAll('[role="img"]')].flatMap((figure) =>
+        [...figure.querySelectorAll('*')]
+          .filter((el) => el.getBoundingClientRect().width > 0)
+          .filter((el) => {
+            if (el.hasAttribute('tabindex') && el.getAttribute('tabindex') !== '-1') return true
+            return ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)
+          })
+          .map((el) => ({ tag: el.tagName, role: el.getAttribute('role') })),
+      ),
+    )
+    for (const f of focusable) found.push({ route: route.path || '/', ...f })
+  }
+  expect(found).toEqual([])
 })
 
 test('data tables carry header semantics', async ({ page }) => {
