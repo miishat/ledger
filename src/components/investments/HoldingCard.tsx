@@ -39,11 +39,17 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
     onPrice(holding.id, nativePrice, quoteCurrency)
   }, [holding.id, nativePrice, quoteCurrency, onPrice])
 
-  // price is only meaningful in the holding's own currency once the cross
-  // rate resolves; when it does not, value, P/L and allocation are unknown,
-  // not wrong-but-confident numbers computed from a mismatched price.
-  const valueCad = priceUnconvertible ? null : toCad(marketValue(holding, price), holding.currency, rates)
-  const plDollars = holdingPlDollars(holding, price)
+  // A price that cannot be converted into the holding's own currency is not
+  // usable for value/P&L/allocation, but the holding does not vanish from
+  // the account: the parent (safeHoldingPrice) already values it at cost
+  // basis in the subtotal and header totals. Mirror that here with
+  // effectivePrice so this card's own numbers sum to the subtotal above it
+  // instead of showing a dash the totals silently disagree with. The
+  // "unconverted" marker above still tells the user the live price itself
+  // could not be used.
+  const effectivePrice = priceUnconvertible ? holding.avgCost : price
+  const valueCad = toCad(marketValue(holding, effectivePrice), holding.currency, rates)
+  const plDollars = holdingPlDollars(holding, effectivePrice)
   const isLoadingPrice = live.status === 'loading' && !live.data
 
   return (
@@ -85,11 +91,9 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         </div>
         {isLoadingPrice ? (
           <Skeleton className="h-4 w-20 inline-block" />
-        ) : priceUnconvertible ? (
-          <span data-testid="pl-cell" className="text-[14px] font-semibold tabular-nums text-text-secondary">-</span>
         ) : (
           <span data-testid="pl-cell" className={`text-[14px] font-semibold tabular-nums ${plDollars >= 0 ? 'text-accent' : 'text-error'}`}>
-            {formatMoney(plDollars)} ({pct(holdingPlPct(holding, price))})
+            {formatMoney(plDollars)} ({pct(holdingPlPct(holding, effectivePrice))})
           </span>
         )}
       </div>
@@ -123,7 +127,7 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
         <span data-testid="value-cell" className="text-right tabular-nums">
           {isLoadingPrice
             ? <Skeleton className="h-4 w-16 inline-block" />
-            : priceUnconvertible ? '-' : formatMoney(marketValue(holding, price))}
+            : formatMoney(marketValue(holding, effectivePrice))}
         </span>
       </div>
     </div>

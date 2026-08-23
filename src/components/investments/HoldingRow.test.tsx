@@ -4,6 +4,9 @@ import { HoldingRow } from './HoldingRow'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __resetMinInterval } from '../../services/marketData/throttle'
+import { formatMoney } from '../planner/format'
+import { pct } from './holdingMetrics'
+import { allocationPct } from '../../utils/investments/analysisMetrics'
 
 beforeEach(() => {
   useMarketDataStore.setState({ quotes: {}, historical: {}, fx: {}, overrides: {} })
@@ -79,7 +82,7 @@ describe('quote currency', () => {
     expect(screen.getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
   })
 
-  it('shows no value, P/L, or allocation when the holding currency has a rate but the quote currency does not', async () => {
+  it('values a holding at cost, with zero P/L, when the holding currency has a rate but the quote currency does not', async () => {
     __setProviders({
       fetchQuote: async () => ({
         ticker: 'ASML', price: 100, currency: 'USD', asOf: '2026-07-21T00:00:00.000Z',
@@ -93,15 +96,20 @@ describe('quote currency', () => {
       <table><tbody>
         {/* EUR has a rate; USD (the quote's currency) does not, so the
             cross rate is unavailable even though the holding's own
-            currency converts fine. */}
+            currency converts fine. The product decision is that this
+            holding still counts at cost basis, matching the account
+            subtotal and header totals above it, with the "unconverted"
+            marker as the only signal that the live price was unusable. */}
         <HoldingRow holding={holding} rates={{ EUR: 1.47 }} totalValueCad={1000} onPrice={() => {}} />
       </tbody></table>,
     )
     await screen.findByTitle(/quoted in USD/)
-    expect(screen.getByTestId('value-cell')).toHaveTextContent('-')
-    expect(screen.getByTestId('pl-cell')).toHaveTextContent('-')
-    expect(screen.getByTestId('allocation-cell')).toHaveTextContent('-')
-    expect(screen.getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
+    // Cost basis: 1 share at a 50 EUR avg cost, so value equals book value
+    // and P/L is exactly zero.
+    expect(screen.getByTestId('value-cell')).toHaveTextContent(formatMoney(50))
+    expect(screen.getByTestId('pl-cell')).toHaveTextContent(`${formatMoney(0)} (${pct(0)})`)
+    // 50 EUR at 1.47 into CAD, against a 1000 CAD total.
+    expect(screen.getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(50 * 1.47, 1000)))
   })
 
   it('says how old the price is and offers a refresh', async () => {

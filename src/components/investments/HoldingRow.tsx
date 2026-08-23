@@ -39,10 +39,16 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
     onPrice(holding.id, nativePrice, quoteCurrency)
   }, [holding.id, nativePrice, quoteCurrency, onPrice])
 
-  // price is only meaningful in the holding's own currency once the cross
-  // rate resolves; when it does not, value, P/L and allocation are unknown,
-  // not wrong-but-confident numbers computed from a mismatched price.
-  const valueCad = priceUnconvertible ? null : toCad(marketValue(holding, price), holding.currency, rates)
+  // A price that cannot be converted into the holding's own currency is not
+  // usable for value/P&L/allocation, but the holding does not vanish from
+  // the account: the parent (safeHoldingPrice) already values it at cost
+  // basis in the subtotal and header totals. Mirror that here with
+  // effectivePrice so this row's own numbers sum to the subtotal above it
+  // instead of showing a dash the totals silently disagree with. The
+  // "unconverted" marker above still tells the user the live price itself
+  // could not be used.
+  const effectivePrice = priceUnconvertible ? holding.avgCost : price
+  const valueCad = toCad(marketValue(holding, effectivePrice), holding.currency, rates)
 
   return (
     <tr className="border-b border-border last:border-b-0">
@@ -87,15 +93,15 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
       </td>
       <td className="py-2 pr-3 text-right text-text-primary">{formatMoney(bookValue(holding))}</td>
       <td data-testid="value-cell" className="py-2 pr-3 text-right text-text-primary">
-        {priceUnconvertible ? '-' : formatMoney(marketValue(holding, price))}
+        {formatMoney(marketValue(holding, effectivePrice))}
       </td>
       <td
         data-testid="pl-cell"
         className={`py-2 pr-3 text-right ${
-          priceUnconvertible ? 'text-text-secondary' : holdingPlDollars(holding, price) >= 0 ? 'text-accent' : 'text-error'
+          holdingPlDollars(holding, effectivePrice) >= 0 ? 'text-accent' : 'text-error'
         }`}
       >
-        {priceUnconvertible ? '-' : `${formatMoney(holdingPlDollars(holding, price))} (${pct(holdingPlPct(holding, price))})`}
+        {formatMoney(holdingPlDollars(holding, effectivePrice))} ({pct(holdingPlPct(holding, effectivePrice))})
       </td>
       <td data-testid="allocation-cell" className="py-2 text-right text-text-secondary">
         {valueCad === null ? (

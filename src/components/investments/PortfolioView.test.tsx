@@ -247,7 +247,7 @@ describe('account subtotal correctness', () => {
     mockQuotes.clear()
   })
 
-  it('prices an unconvertible holding at cost in the account subtotal instead of reading its raw quote currency as CAD', async () => {
+  it('prices an unconvertible holding at cost in both its own row and the account subtotal instead of reading its raw quote currency as CAD', async () => {
     usePortfolioStore.setState({
       holdings: [
         { id: '1', ticker: 'ENB', quantity: 10, avgCost: 10, currency: 'CAD', account: 'RRSP' },
@@ -264,11 +264,14 @@ describe('account subtotal correctness', () => {
     render(<PortfolioView />)
     await screen.findByRole('heading', { name: /RRSP/ })
 
-    // TRAP's own row (table and mobile card) must still show a dash: its
-    // live price could not be converted, so its per-row value is unknown.
+    // TRAP's own row (table and mobile card) must show its cost basis
+    // ($500), the same number the subtotal counts it at, not a dash: the
+    // rows must sum to the subtotal above them, not merely agree that a
+    // number exists.
     const valueCells = await screen.findAllByTestId('value-cell')
-    expect(valueCells.filter((c) => c.textContent === '-')).toHaveLength(2)
+    expect(valueCells.filter((c) => c.textContent === '-')).toHaveLength(0)
     expect(valueCells.filter((c) => c.textContent === '$100')).toHaveLength(2)
+    expect(valueCells.filter((c) => c.textContent === '$500')).toHaveLength(2)
 
     // The subtotal reflects ENB's $100 plus TRAP at its $500 cost basis
     // ($600 total, $0 P/L since cost basis has no gain), not TRAP's raw USD
@@ -277,5 +280,13 @@ describe('account subtotal correctness', () => {
     expect(subtotal.textContent).toBe('$600 +$0')
     expect(subtotal).not.toHaveTextContent('$2,100')
     expect(subtotal).not.toHaveTextContent('$1,500')
+
+    // The visible per-row values must literally sum to the subtotal shown
+    // above them: this is the property that broke when rows dashed out a
+    // holding the subtotal already counted at cost.
+    const rowValues = (await screen.findAllByTestId('value-cell'))
+      .slice(0, 2) // table row values only; the mobile cards duplicate the same two numbers
+      .map((c) => Number((c.textContent ?? '').replace(/[$,]/g, '')))
+    expect(rowValues.reduce((a, b) => a + b, 0)).toBe(600)
   })
 })
