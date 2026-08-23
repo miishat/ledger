@@ -60,7 +60,7 @@ export const RentVsBuyCalculator: React.FC = () => {
           className="h-[288px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <LineChart data={chartData} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
               <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />

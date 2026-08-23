@@ -92,7 +92,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         className="flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data}>
+        <ComposedChart data={data} accessibilityLayer={false}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"

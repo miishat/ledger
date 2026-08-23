@@ -45,7 +45,7 @@ export const NetWorthTrendWidget: React.FC = () => {
         className="h-[220px] mt-2"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={history}>
+          <AreaChart data={history} accessibilityLayer={false}>
             {/* The axes meet at the corner, so a full-precision y label like
                 $316,621 sits directly against the first date and the two read as
                 one string. Compact labels keep the corner legible, and match the

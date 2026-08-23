@@ -222,7 +222,7 @@ export const MortgageCalculator: React.FC = () => {
               className="w-full h-full"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }}>
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }} accessibilityLayer={false}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
                   <XAxis
                     dataKey="year"

@@ -58,7 +58,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           className="h-[240px] desktop:h-[300px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data}>
+            <ComposedChart data={data} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
               <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />

@@ -184,7 +184,7 @@ export function EquityVestingWidget() {
           className="w-full h-[280px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }} accessibilityLayer={false}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
               <XAxis 
                 dataKey="monthLabel"

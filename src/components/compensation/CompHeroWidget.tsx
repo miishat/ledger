@@ -245,7 +245,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                 every width under about 1000px. The legend below carries
                 the same information at every width. */}
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart accessibilityLayer={false}>
                 <Pie
                   data={pieData}
                   cx="50%"
@@ -254,6 +254,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                   outerRadius="80%"
                   paddingAngle={3}
                   dataKey="value"
+                  rootTabIndex={-1}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
@@ -294,7 +295,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           className="relative w-full h-[280px] desktop:h-[400px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} accessibilityLayer={false}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />

@@ -49,8 +49,8 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
           className="h-[260px] md:h-[320px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false}>
+            <PieChart accessibilityLayer={false}>
+              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false} rootTabIndex={-1}>
                 {slices.map((s, i) => <Cell key={s.name} fill={sliceColor(i)} />)}
               </Pie>
               <Tooltip {...chartTooltipStyles} formatter={(value) => formatMoney(Number(value))} />

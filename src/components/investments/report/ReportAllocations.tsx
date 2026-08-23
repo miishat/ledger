@@ -23,8 +23,8 @@ const Donut: React.FC<{ title: string; rows: PAAllocationRow[] }> = ({ title, ro
         className="h-[160px]"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={rows} dataKey="endingNav" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} isAnimationActive={false}>
+          <PieChart accessibilityLayer={false}>
+            <Pie data={rows} dataKey="endingNav" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} isAnimationActive={false} rootTabIndex={-1}>
               {rows.map((r, i) => <Cell key={r.name} fill={sliceColor(i)} />)}
             </Pie>
             <Tooltip {...chartTooltipStyles} formatter={(value) => formatMoney(Number(value))} />

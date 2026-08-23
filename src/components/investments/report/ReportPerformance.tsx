@@ -19,7 +19,7 @@ export const ReportPerformance: React.FC<{ report: PAReport }> = ({ report }) =>
         className="h-[260px]"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={data} accessibilityLayer={false}>
             <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={11} tickFormatter={formatReportMonth} minTickGap={20} />
             <YAxis stroke="var(--text-secondary)" fontSize={11} domain={['auto', 'auto']} />
             <Tooltip {...chartTooltipStyles} labelFormatter={(label) => formatReportMonth(String(label))} />

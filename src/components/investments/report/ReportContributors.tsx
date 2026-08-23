@@ -24,7 +24,7 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
         className="h-[280px]"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ left: 12, right: 12 }}>
+          <BarChart data={chartData} layout="vertical" margin={{ left: 12, right: 12 }} accessibilityLayer={false}>
             <XAxis type="number" stroke="var(--text-secondary)" fontSize={11} tickFormatter={(v: number) => `${v}%`} />
             <YAxis type="category" dataKey="symbol" stroke="var(--text-secondary)" fontSize={11} width={64} />
             <Tooltip {...chartTooltipStyles} formatter={(v) => pct(Number(v))} />

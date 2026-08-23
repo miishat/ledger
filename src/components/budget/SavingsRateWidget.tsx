@@ -106,7 +106,7 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
             className="h-[220px] mt-2"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+              <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis
@@ -132,7 +132,7 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
             className="h-[220px] mt-2"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+              <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis
