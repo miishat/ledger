@@ -75,8 +75,17 @@ wcag2a / wcag2aa / wcag21a / wcag21aa. The raw numbers are in
 | Table headers missing `scope` | 22 | 0, captions present, `aria-sort` working |
 
 Every guard behind these numbers runs on `npm run verify`, which is green: 1192 unit tests
-across 185 files, and 134 e2e tests across five Playwright projects (`chromium`,
+across 185 files, and 140 e2e tests across five Playwright projects (`chromium`,
 `mobile-narrow`, `mobile-landscape`, `tablet`, `short-wide`).
+
+A whole-branch review after the rescore found four further defects, each a composition of
+two individually correct changes that no per-task gate could see: eight tab panels that the
+new focus-outline default left focusable with no indicator, an Import button whose
+`control-border` painted nothing because it carried no border width (and a contrast guard
+that skipped it for exactly that reason), holding rows still showing a dash for figures the
+subtotal above them counted at cost, and sixteen charts whose Recharts surface stayed
+focusable inside a presentational wrapper. All four are fixed, with guards, and the guards
+in turn surfaced a real zero-width sparkline at 768px.
 
 ### Why this is 95 and not 100
 
