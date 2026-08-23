@@ -91,7 +91,7 @@ export const PortfolioView: React.FC = () => {
         <button
           type="button"
           onClick={() => setImportOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium control-border text-text-primary hover:bg-bg-secondary transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium border control-border text-text-primary hover:bg-bg-secondary transition-colors"
         >
           <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
         </button>

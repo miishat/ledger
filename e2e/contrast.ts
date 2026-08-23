@@ -38,11 +38,30 @@ export async function installContrastHelpers(page: Page): Promise<void> {
       return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
     }
     ;(window as unknown as Record<string, unknown>).__contrast = {
-      /** Ratio of an element's top border against the surface behind it. */
+      /** Ratio of an element's top border against the surface behind it.
+       *  null means "nothing to measure" (no border at all), which is a
+       *  legitimate skip for a control that identifies itself some other
+       *  way. Used by the general interactive-control scan, which visits
+       *  every button/input/select/textarea whether or not it opted into
+       *  a strong border. */
       borderRatio(el: Element): number | null {
         const s = getComputedStyle(el)
         const bc = parse(s.borderTopColor)
         if (!bc || bc.a === 0 || parseFloat(s.borderTopWidth) === 0) return null
+        const bg = composite(el.parentElement || document.body)
+        const eff = { r: bc.r * bc.a + bg.r * (1 - bc.a), g: bc.g * bc.a + bg.g * (1 - bc.a), b: bc.b * bc.a + bg.b * (1 - bc.a), a: 1 }
+        return ratio(eff, bg)
+      },
+      /** Same measurement, for an element that specifically opted into
+       *  `.control-border`. That class exists to promise a 3:1 border, so an
+       *  element carrying it with no visible border at all (width 0, or a
+       *  transparent colour, typically from a missing `border` utility
+       *  alongside it) is the defect this exists to catch, not a reason to
+       *  skip: it returns 0 instead of null. */
+      controlBorderRatio(el: Element): number {
+        const s = getComputedStyle(el)
+        const bc = parse(s.borderTopColor)
+        if (!bc || bc.a === 0 || parseFloat(s.borderTopWidth) === 0) return 0
         const bg = composite(el.parentElement || document.body)
         const eff = { r: bc.r * bc.a + bg.r * (1 - bc.a), g: bc.g * bc.a + bg.g * (1 - bc.a), b: bc.b * bc.a + bg.b * (1 - bc.a), a: 1 }
         return ratio(eff, bg)
