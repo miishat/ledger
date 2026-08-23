@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { holdingsFromReport } from './holdingsFromReport'
 
 const selectCls =
-  'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
+  'bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
 
 const MODE_LABELS: Record<ImportMode, string> = {
   replace: 'Replace this account',
@@ -121,7 +121,7 @@ export const PortfolioImport: React.FC = () => {
           <p className="text-[13px] text-text-primary font-medium">
             Unrecognized format. Map your columns ({pending.rows.length} rows):
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 desktop:grid-cols-4 gap-3">
             {([
               ['ticker', 'Ticker column'],
               ['quantity', 'Quantity column'],
@@ -149,7 +149,7 @@ export const PortfolioImport: React.FC = () => {
             >
               Import with mapping
             </button>
-            <button onClick={() => setPending(null)} className="px-4 py-2 border border-border rounded-md text-[14px] text-text-secondary hover:text-text-primary">
+            <button onClick={() => setPending(null)} className="px-4 py-2 border control-border rounded-md text-[14px] text-text-secondary hover:text-text-primary">
               Cancel
             </button>
           </div>

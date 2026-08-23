@@ -59,7 +59,7 @@ export const Sheet: React.FC<SheetProps> = ({
   useScrollLock(open)
 
   // Register/unregister this instance on the shared stacking-order stack
-  // whenever it opens or closes (regardless of dismissibility — a
+  // whenever it opens or closes (regardless of dismissibility: a
   // non-dismissible Sheet still occupies the top layer and should still
   // block Escape from reaching sheets stacked below it).
   useEffect(() => {

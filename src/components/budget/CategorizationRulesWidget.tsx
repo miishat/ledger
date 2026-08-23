@@ -29,14 +29,18 @@ export const CategorizationRulesWidget: React.FC = () => {
     <WidgetWrapper title={`Categorization Rules (${rulesEntries.length})`}>
       <div className="flex flex-col gap-4 mt-2">
         <div className="flex flex-wrap gap-2">
+          <label htmlFor="rule-desc-input" className="sr-only">Description match</label>
           <input
+            id="rule-desc-input"
             type="text"
             placeholder="Description Match (e.g. UBER)"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             className="flex-1 min-w-[140px] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]"
           />
+          <label htmlFor="rule-category-select" className="sr-only">Category</label>
           <ThemedSelect
+            id="rule-category-select"
             value={newCatId}
             onChange={setNewCatId}
             className="w-full sm:w-48"
@@ -45,9 +49,10 @@ export const CategorizationRulesWidget: React.FC = () => {
               ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),
             ]}
           />
-          <button 
+          <button
             onClick={handleAdd}
             disabled={!newDesc.trim() || !newCatId}
+            aria-label="Add rule"
             className="px-3 py-1.5 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center"
           >
             <Plus size={16} />

@@ -47,7 +47,7 @@ export const TriageInboxWidget: React.FC = () => {
           onClick={() => setConfirmClearOpen(true)}
           className="text-[13px] font-medium text-error hover:opacity-80 transition-opacity flex items-center gap-1 bg-error/10 px-2 py-1 rounded-md"
         >
-          <Trash2 size={14} /> Clear All
+          <Trash2 size={14} aria-hidden="true" /> Discard All
         </button>
         {duplicates.length > 0 && (
           <button
@@ -117,7 +117,7 @@ export const TriageInboxWidget: React.FC = () => {
         open={confirmClearOpen}
         title="Clear triage inbox?"
         message={`Discard ${txList.length} pending transaction${txList.length === 1 ? '' : 's'}? Nothing will be added to your budget. You can undo this straight afterwards.`}
-        confirmLabel="Clear All"
+        confirmLabel="Discard All"
         tone="danger"
         onConfirm={() => {
           const cleared = txList;

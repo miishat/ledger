@@ -22,6 +22,7 @@ import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
 import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { ChartFigure } from '../ui/ChartFigure'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -229,21 +230,31 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
         </div>
       </div>
 
-      <div className="relative w-full h-[280px] desktop:h-[400px]">
-        {view === 'annualized' ? (
-          <>
+      {view === 'annualized' ? (
+        <div className="flex flex-col desktop:flex-row desktop:items-center gap-4">
+          <ChartFigure
+            label={`Total annual compensation ${cad(totalComp)}, split as ${pieData
+              .map((d) => `${d.name} ${cad(d.value)}`)
+              .join(', ')}`}
+            className="relative w-full desktop:w-1/2 h-[240px] desktop:h-[320px]"
+          >
+            {/* Percentage radii, not the old fixed 110/135: a fixed ring
+                is wider than a 320px phone's chart surface, so it was
+                clipped. Outside labels are gone for the same reason, they
+                were positioned beyond the surface and ran off-screen at
+                every width under about 1000px. The legend below carries
+                the same information at every width. */}
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
+              <PieChart accessibilityLayer={false}>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={110}
-                  outerRadius={135}
+                  innerRadius="62%"
+                  outerRadius="80%"
                   paddingAngle={3}
                   dataKey="value"
-                  label={({ name, percent }) => (percent || 0) > 0 ? `${name} ${((percent || 0) * 100).toFixed(0)}%` : ''}
-                  labelLine={true}
+                  rootTabIndex={-1}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
@@ -263,14 +274,32 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                 {showAfterTax ? 'Est. After-Tax Compensation' : 'Total Annual Compensation'}
               </span>
             </div>
-          </>
-        ) : (
+          </ChartFigure>
+
+          <ul className="flex flex-col gap-1.5 text-[13px] desktop:w-1/2">
+            {pieData.map((entry) => (
+              <li key={entry.name} className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} aria-hidden="true" />
+                <span className="text-text-secondary min-w-0 flex-1 break-words">{entry.name}</span>
+                <span className="text-text-primary font-medium tabular-nums">{cad(entry.value)}</span>
+                <span className="text-text-secondary tabular-nums w-12 text-right">
+                  {totalComp > 0 ? `${Math.round((entry.value / totalComp) * 100)}%` : '0%'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <ChartFigure
+          label={`Monthly compensation breakdown for ${monthlyData.length} months from ${monthlyData[0]?.month ?? ''} to ${monthlyData[monthlyData.length - 1]?.month ?? ''}, split into base salary, bonus, ESPP, RRSP and RSU`}
+          className="relative w-full h-[280px] desktop:h-[400px]"
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} accessibilityLayer={false}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
               <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-              <Tooltip 
+              <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ fill: 'var(--color-border)' }}
               />
@@ -281,8 +310,8 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        )}
-      </div>
+        </ChartFigure>
+      )}
 
       {view === 'monthly' && showAfterTax && (
         <p className="mt-2 text-[12px] text-[var(--color-text-secondary)]">

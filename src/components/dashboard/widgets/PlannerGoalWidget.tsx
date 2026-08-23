@@ -1,9 +1,10 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Target } from 'lucide-react'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { usePlannerStore } from '../../../store/usePlannerStore'
 import { useAccountsStore } from '../../../store/useAccountsStore'
 import { formatMoney } from '../../planner/format'
+import { EmptyState } from '../../ui/EmptyState'
 
 interface Goal { id: string; label: string; amount: number }
 
@@ -21,10 +22,12 @@ export const PlannerGoalWidget: React.FC = () => {
   if (!top) {
     return (
       <WidgetWrapper title="Top Goal">
-        <p className="text-[13px] text-text-secondary mt-2">
-          {/* Exempt from the mobile tap-target floor: this is an inline link within a sentence, and WCAG 2.5.8 excludes such inline targets from the minimum size since 44px here would break the sentence's flow. */}
-          <Link to="/planner/forecaster" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded tap-exempt">Add a goal in the Forecaster</Link> to track it here.
-        </p>
+        <EmptyState
+          icon={Target}
+          message="No goal set"
+          hint="Set a savings target in the Forecaster and its progress shows here."
+          action={{ label: 'Add a goal', to: '/planner/forecaster' }}
+        />
       </WidgetWrapper>
     )
   }

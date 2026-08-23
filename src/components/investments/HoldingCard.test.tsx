@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { HoldingCard } from './HoldingCard'
 import type { Holding } from '../../store/usePortfolioStore'
+import { formatMoney } from '../planner/format'
+import { pct } from './holdingMetrics'
+import { allocationPct } from '../../utils/investments/analysisMetrics'
 
 const { useCurrentPriceMock } = vi.hoisted(() => ({ useCurrentPriceMock: vi.fn() }))
 
@@ -35,7 +38,7 @@ describe('HoldingCard', () => {
       <HoldingCard holding={buildHolding()} rates={{ USD: 1 }} totalValueCad={1000} onPrice={() => {}} />,
     )
 
-    // avgCost (100.00) must not appear as the rendered "current price" — it still
+    // avgCost (100.00) must not appear as the rendered "current price": it still
     // appears once for the Avg Cost field itself, so assert on skeleton presence.
     const skeletons = container.querySelectorAll('[aria-hidden="true"].animate-pulse')
     expect(skeletons.length).toBeGreaterThan(0)
@@ -82,7 +85,7 @@ describe('HoldingCard', () => {
     expect(getByText('Set currency')).toBeInTheDocument()
   })
 
-  it('shows no value, P/L, or allocation when the holding currency has a rate but the quote currency does not', () => {
+  it('values a holding at cost, with zero P/L, when the holding currency has a rate but the quote currency does not', () => {
     useCurrentPriceMock.mockReturnValue({
       data: { value: { price: 100, currency: 'USD' }, source: 'live', stale: false },
       status: 'success',
@@ -92,19 +95,25 @@ describe('HoldingCard', () => {
     })
 
     // EUR has a rate; USD (the quote's currency) does not, so the cross
-    // rate is unavailable even though the holding's own currency converts fine.
+    // rate is unavailable even though the holding's own currency converts
+    // fine. The product decision is that this holding still counts at cost
+    // basis, matching the account subtotal and header totals above it, with
+    // the "unconverted" marker as the only signal the live price was unusable.
+    const holding = buildHolding({ currency: 'EUR' })
     const { getByTestId } = render(
       <HoldingCard
-        holding={buildHolding({ currency: 'EUR' })}
+        holding={holding}
         rates={{ EUR: 1.47 }}
         totalValueCad={1000}
         onPrice={() => {}}
       />,
     )
 
-    expect(getByTestId('value-cell')).toHaveTextContent('-')
-    expect(getByTestId('pl-cell')).toHaveTextContent('-')
-    expect(getByTestId('allocation-cell')).toHaveTextContent('-')
-    expect(getByTestId('allocation-cell')).not.toHaveTextContent('0.0%')
+    // Cost basis: 10 shares at a 100 EUR avg cost, so value equals book
+    // value and P/L is exactly zero.
+    expect(getByTestId('value-cell')).toHaveTextContent(formatMoney(1000))
+    expect(getByTestId('pl-cell')).toHaveTextContent(`${formatMoney(0)} (${pct(0)})`)
+    // 1000 EUR at 1.47 into CAD, against a 1000 CAD total.
+    expect(getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(1000 * 1.47, 1000)))
   })
 })

@@ -8,6 +8,7 @@ import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import { ChartFigure } from '../ui/ChartFigure'
 
 const TOOL_ID = 'rent-vs-buy'
 const DEFAULTS = {
@@ -54,9 +55,12 @@ export const RentVsBuyCalculator: React.FC = () => {
       </div>
 
       <div className="themed-card rounded-lg p-4 flex flex-col">
-        <div className="h-[288px]">
+        <ChartFigure
+          label={`Cumulative renting versus buying cost by year ${last?.year ?? 0}: ${formatMoney(last?.rentCost ?? 0)} renting, ${formatMoney(last?.buyCost ?? 0)} buying`}
+          className="h-[288px]"
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <LineChart data={chartData} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
               <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
@@ -69,7 +73,7 @@ export const RentVsBuyCalculator: React.FC = () => {
               <Line type="monotone" dataKey="Buying" stroke="var(--accent)" dot={false} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </ChartFigure>
         <p className="text-[12px] text-text-secondary mt-2">
           Cumulative unrecoverable costs only: rent vs interest, taxes, maintenance and the return your down payment could have earned.
         </p>

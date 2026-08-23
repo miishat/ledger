@@ -6,6 +6,7 @@ import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { contributors } from './reportMetrics'
 import { Section } from './Section'
 import { pct } from './format'
+import { ChartFigure } from '../../ui/ChartFigure'
 
 export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) => {
   const [showAll, setShowAll] = useState(false)
@@ -18,9 +19,12 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
 
   return (
     <Section title="Contributors & Detractors" defaultOpen>
-      <div className="h-[280px]">
+      <ChartFigure
+        label={`Contributors and detractors by return: ${chartData.map((d) => `${d.symbol} ${pct(d.contribution)}`).join(', ')}`}
+        className="h-[280px]"
+      >
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ left: 12, right: 12 }}>
+          <BarChart data={chartData} layout="vertical" margin={{ left: 12, right: 12 }} accessibilityLayer={false}>
             <XAxis type="number" stroke="var(--text-secondary)" fontSize={11} tickFormatter={(v: number) => `${v}%`} />
             <YAxis type="category" dataKey="symbol" stroke="var(--text-secondary)" fontSize={11} width={64} />
             <Tooltip {...chartTooltipStyles} formatter={(v) => pct(Number(v))} />
@@ -31,7 +35,7 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
 
       <div className="flex flex-col gap-1 text-[12px] mt-2">
         {chartData.map((d) => (
@@ -50,7 +54,12 @@ export const ReportContributors: React.FC<{ report: PAReport }> = ({ report }) =
       </button>
 
       {showAll && (
-        <div className="overflow-x-auto max-h-[280px] desktop:max-h-[400px] overflow-y-auto mt-3">
+        <div
+          role="group"
+          aria-label="Top contributors"
+          tabIndex={0}
+          className="overflow-x-auto max-h-[280px] desktop:max-h-[400px] overflow-y-auto mt-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+        >
           <table className="w-full text-[12px] min-w-[720px]">
             <thead><tr className="text-left text-text-secondary border-b border-border sticky top-0 bg-[var(--card-bg)]">
               {['Symbol', 'Sector', 'Avg Weight', 'Return', 'Contribution', 'Unrealized P/L', 'Realized P/L', 'Open'].map((h) => (

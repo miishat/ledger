@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { migrateBudgetState, migrateBudgetStateV3 } from './useBudgetStore'
+import { migrateBudgetState, migrateBudgetStateV3, migrateBudgetStateV4, migrateBudgetPersisted, BUDGET_PERSIST_VERSION } from './useBudgetStore'
 
 describe('budget store migration v1 -> v2', () => {
   it('assigns kind=income to income-named groups, expense otherwise', () => {
@@ -44,6 +44,22 @@ describe('budget store migration v2 -> v3', () => {
     expect(out.categoryGroups.x.budgetClass).toBeUndefined()
     expect(out.categoryGroups.i.budgetClass).toBeUndefined()
     expect(out.categoryGroups.pre.budgetClass).toBe('want') // never overwrites an explicit class
+  })
+})
+
+describe('budget store migration v3 -> v4', () => {
+  it('opens the Setup disclosure for an existing user, leaving the rest of the payload untouched', () => {
+    const v3 = {
+      paradigm: 'Zero-Based',
+      budgetSetupCollapsed: true,
+      categoryGroups: { h: { id: 'h', name: 'Housing', kind: 'expense', budgetClass: 'need' } },
+      categories: { c1: { id: 'c1', groupId: 'h', name: 'Rent', targetAmount: 1000 } },
+    }
+    const out = migrateBudgetStateV4(v3) as typeof v3
+    expect(out.budgetSetupCollapsed).toBe(false)
+    expect(out.paradigm).toBe('Zero-Based')
+    expect(out.categoryGroups).toEqual(v3.categoryGroups)
+    expect(out.categories).toEqual(v3.categories)
   })
 })
 
@@ -267,5 +283,41 @@ describe('getMonthlyBudgetStats with split transactions', () => {
     const stats = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 7)
     expect(stats.fiftyThirtyTwenty.needsSpent).toBe(120)
     expect(stats.fiftyThirtyTwenty.wantsSpent).toBe(60)
+  })
+})
+
+describe('budget persist migration wiring', () => {
+  it('opens Budget Setup for a user whose v3 state has it collapsed', () => {
+    // The defect this pins: changing the store's default only ever reached
+    // fresh installs, because an existing user already has the field
+    // persisted, and the old step substituted a default only when the field
+    // was undefined. Testing migrateBudgetStateV4 alone passed straight
+    // through that, because the bug was in which steps the version guard ran.
+    const v3 = {
+      transactions: { t1: { id: 't1', date: '2026-08-01', amount: 12, description: 'Coffee', type: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Everyday', targetAmount: 100 } },
+      categoryGroups: { g1: { id: 'g1', name: 'Everyday', kind: 'expense' } },
+      budgetSetupCollapsed: true,
+    }
+
+    const out = migrateBudgetPersisted(v3, 3) as Record<string, unknown>
+
+    expect(out.budgetSetupCollapsed).toBe(false)
+    expect(out.transactions).toEqual(v3.transactions)
+    expect(out.categories).toEqual(v3.categories)
+    expect(out.categoryGroups).toEqual(v3.categoryGroups)
+  })
+
+  it('leaves a payload already at the current version alone', () => {
+    const current = { budgetSetupCollapsed: true, transactions: {}, categories: {}, categoryGroups: {} }
+    const out = migrateBudgetPersisted(current, BUDGET_PERSIST_VERSION) as Record<string, unknown>
+    expect(out.budgetSetupCollapsed).toBe(true)
+  })
+
+  it('is idempotent, so a repeated migration cannot drift', () => {
+    const v3 = { budgetSetupCollapsed: true, transactions: {}, categories: {}, categoryGroups: {} }
+    const once = migrateBudgetPersisted(v3, 3)
+    const twice = migrateBudgetPersisted(once, 3)
+    expect(twice).toEqual(once)
   })
 })

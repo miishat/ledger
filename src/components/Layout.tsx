@@ -22,6 +22,7 @@ import { previewPush, previewPull, performPush, performPull } from '../utils/syn
 import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
 import { useViewportHeight } from '../hooks/useViewportHeight'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -29,6 +30,7 @@ export const Layout: React.FC = () => {
   const demoActive = useSyncExternalStore(subscribeDemoActive, isDemoActive, () => false)
   const swUpdate = useSWUpdate()
   useViewportHeight()
+  const routeName = useDocumentTitle()
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -168,7 +170,7 @@ export const Layout: React.FC = () => {
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border control-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Search className="w-4 h-4" /> Search
               <kbd className="ml-auto text-micro px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
@@ -264,6 +266,9 @@ export const Layout: React.FC = () => {
           tabIndex={-1}
           className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
+          {/* Polite, not assertive: a route change should be announced after
+              whatever the user was already hearing, not interrupt it. */}
+          <p aria-live="polite" className="sr-only">{routeName}</p>
           <ErrorBoundary key={location.pathname}>
             <Suspense
               fallback={

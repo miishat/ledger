@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { LineChart } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { useAccountsStore } from '../../../store/useAccountsStore'
@@ -6,6 +7,8 @@ import { formatMoney, formatMoneyCompact } from '../../planner/format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { trendDomain } from './trendDomain'
 import { NetWorthHistorySheet } from './NetWorthHistorySheet'
+import { ChartFigure } from '../../ui/ChartFigure'
+import { EmptyState } from '../../ui/EmptyState'
 
 export const NetWorthTrendWidget: React.FC = () => {
   const history = useAccountsStore((s) => s.history)
@@ -23,20 +26,26 @@ export const NetWorthTrendWidget: React.FC = () => {
 
   if (history.length < 2) {
     return (
-      <WidgetWrapper title="Net Worth Over Time" className="md:col-span-2" action={editHistoryAction}>
-        <p className="text-[13px] text-text-secondary mt-2">
-          Add a few dated figures with Edit history, or update your accounts, and the trend appears here.
-        </p>
+      <WidgetWrapper title="Net Worth Over Time" className="desktop:col-span-2" action={editHistoryAction}>
+        <EmptyState
+          icon={LineChart}
+          message="Not enough history yet"
+          hint="Add a couple of dated figures, or update your accounts over time, and the trend draws itself."
+          action={{ label: 'Add history', onClick: () => setHistoryOpen(true) }}
+        />
         <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
       </WidgetWrapper>
     )
   }
   const domain = trendDomain(history.map((h) => h.value))
   return (
-    <WidgetWrapper title="Net Worth Over Time" className="md:col-span-2" action={editHistoryAction}>
-      <div className="h-[220px] mt-2">
+    <WidgetWrapper title="Net Worth Over Time" className="desktop:col-span-2" action={editHistoryAction}>
+      <ChartFigure
+        label={`Net worth over time from ${history[0]?.date ?? ''} to ${history[history.length - 1]?.date ?? ''}, from ${formatMoneyCompact(history[0]?.value ?? 0)} to ${formatMoneyCompact(history[history.length - 1]?.value ?? 0)}`}
+        className="h-[220px] mt-2"
+      >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={history}>
+          <AreaChart data={history} accessibilityLayer={false}>
             {/* The axes meet at the corner, so a full-precision y label like
                 $316,621 sits directly against the first date and the two read as
                 one string. Compact labels keep the corner legible, and match the
@@ -50,7 +59,7 @@ export const NetWorthTrendWidget: React.FC = () => {
             <Area type="monotone" dataKey="value" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.2} strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
       <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </WidgetWrapper>
   )

@@ -108,6 +108,42 @@ describe('CompHeroWidget after-tax toggle', () => {
   })
 })
 
+describe('CompHeroWidget annualized legend', () => {
+  beforeEach(() => {
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: {
+        ...defaultPrimaryPackage,
+        companyCurrentPrice: 428.5,
+        baseSalary: 165_000,
+        pastSalaryChanges: [],
+        cashBonusPercent: 12,
+        cashBonusMonth: 2,
+        rsuGrants: [{
+          id: 'g1', grantName: '2024 Refresh', grantShares: 1200, grantPrice: 310,
+          grantStartDate: '2024-03-01',
+          vestingSchedule: { preset: '4yr-1yr-cliff', totalVestMonths: 48, cliffMonths: 12, frequency: 'quarterly' },
+        }],
+      },
+    })
+  })
+
+  it('names every compensation component in a legend rather than in chart labels', () => {
+    // Outside labels only fitted at 1440px. Below that they were positioned
+    // past the chart surface and clipped or ran off-screen entirely.
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+    for (const name of ['Base Salary', 'Bonus', 'Equity (RSU)']) {
+      expect(screen.getByText(name)).toBeInTheDocument()
+    }
+  })
+})
+
 describe('CompHeroWidget mobile layout', () => {
   beforeEach(() => {
     usePlannerStore.setState({ inputs: {} })

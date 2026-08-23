@@ -76,8 +76,8 @@ describe('TriageInboxWidget', () => {
       },
     })
     render(<TriageInboxWidget />)
-    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Clear All' })[1])
+    fireEvent.click(screen.getByRole('button', { name: 'Discard All' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Discard All' })[1])
 
     expect(useTriageStore.getState().pendingTransactions).toEqual({})
     useUndoStore.getState().runUndo()

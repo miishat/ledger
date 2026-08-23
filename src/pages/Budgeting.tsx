@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { monthKeyOf, rangeOf, shiftMonthKey, type Period, type PeriodPreset } from '../utils/budget/period';
+import { Tabs, type TabItem } from '../components/ui/Tabs';
+import { TabPanel } from '../components/ui/TabPanel';
 import { ThemedSelect } from '../components/ui/ThemedSelect';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
@@ -23,12 +26,34 @@ import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
 import { SavingsRateWidget } from '../components/budget/SavingsRateWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 
+type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
+
+const BUDGET_TABS: readonly TabItem<BudgetTab>[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'insights', label: 'Insights' },
+  { id: 'transactions', label: 'Transactions' },
+  { id: 'setup', label: 'Setup' },
+];
+
+const isBudgetTab = (v: string | null): v is BudgetTab =>
+  v === 'overview' || v === 'insights' || v === 'transactions' || v === 'setup';
+
 export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
 
-  const [tab, setTab] = useState<'overview' | 'insights' | 'transactions' | 'setup'>('overview');
+  // The tab lives in the URL so a tab is bookmarkable, Back undoes a tab
+  // switch, and a reload does not throw the user back to Overview.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab: BudgetTab = isBudgetTab(tabParam) ? tabParam : 'overview';
+  const setTab = (next: BudgetTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'overview') params.delete('tab');
+    else params.set('tab', next);
+    setSearchParams(params);
+  };
 
   const currentMonth = monthKeyOf(new Date());
   const [period, setPeriod] = useState<Period>({ kind: 'month', month: currentMonth });
@@ -119,24 +144,12 @@ export const Budgeting: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex flex-wrap gap-2">
-        {(['overview', 'insights', 'transactions', 'setup'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-              tab === t ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {t === 'overview' ? 'Overview' : t === 'insights' ? 'Insights' : t === 'transactions' ? 'Transactions' : 'Setup'}
-          </button>
-        ))}
-      </div>
+      <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
 
       <ParadigmBanner selectedMonth={range.to} />
 
       {tab === 'overview' && (
-        <>
+        <TabPanel id="overview" className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <IncomeWidget range={range} />
             <ExpenseWidget range={range} />
@@ -151,11 +164,11 @@ export const Budgeting: React.FC = () => {
           <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
-        </>
+        </TabPanel>
       )}
 
       {tab === 'insights' && (
-        <>
+        <TabPanel id="insights" className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SubscriptionsWidget />
             <AnomalyAlertsWidget range={range} />
@@ -165,25 +178,25 @@ export const Budgeting: React.FC = () => {
             <SpendingHeatmapWidget range={range} />
             <CategoryTrendsWidget range={range} />
           </div>
-        </>
+        </TabPanel>
       )}
 
       {tab === 'transactions' && (
-        <>
+        <TabPanel id="transactions" className="flex flex-col gap-6">
           <TriageInboxWidget />
 
           <TransactionListWidget range={range} />
-        </>
+        </TabPanel>
       )}
 
       {tab === 'setup' && (
-        <>
+        <TabPanel id="setup" className="flex flex-col gap-6">
           <CategoryManagerWidget selectedMonth={range.to} />
 
           <ReallocationHistory selectedMonth={range.to} />
 
           <CategorizationRulesWidget />
-        </>
+        </TabPanel>
       )}
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

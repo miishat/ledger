@@ -4,6 +4,7 @@ import type { Holding } from '../../store/usePortfolioStore'
 import { allocationBreakdown, type AllocationBy, type FxRates } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { chartTooltipStyles, sliceColor } from '../../utils/chartTheme'
+import { ChartFigure } from '../ui/ChartFigure'
 
 const MODES: { by: AllocationBy; label: string }[] = [
   { by: 'holding', label: 'By holding' },
@@ -34,7 +35,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
               onClick={() => setBy(m.by)}
               aria-pressed={by === m.by}
               className={`px-2 py-1 rounded-md text-[12px] border transition-colors ${
-                by === m.by ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+                by === m.by ? 'border-accent text-accent bg-accent/10' : 'control-border text-text-secondary hover:text-text-primary'
               }`}
             >
               {m.label}
@@ -43,17 +44,25 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ rows, rates })
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <div className="h-[260px] md:h-[320px]">
+        <ChartFigure
+          label={`Allocation ${MODES.find((m) => m.by === by)?.label.toLowerCase() ?? ''}, ${slices.length} slices: ${slices.map((s) => `${s.name} ${s.pct.toFixed(1)}%`).join(', ')}`}
+          className="h-[260px] md:h-[320px]"
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false}>
+            <PieChart accessibilityLayer={false}>
+              <Pie data={slices} dataKey="valueCad" nameKey="name" cx="50%" cy="50%" innerRadius={72} outerRadius={115} paddingAngle={2} isAnimationActive={false} rootTabIndex={-1}>
                 {slices.map((s, i) => <Cell key={s.name} fill={sliceColor(i)} />)}
               </Pie>
               <Tooltip {...chartTooltipStyles} formatter={(value) => formatMoney(Number(value))} />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-        <div className="flex flex-col gap-1 text-[13px] max-h-[260px] md:max-h-[320px] overflow-y-auto">
+        </ChartFigure>
+        <div
+          role="group"
+          aria-label="Allocation breakdown"
+          tabIndex={0}
+          className="flex flex-col gap-1 text-[13px] max-h-[260px] md:max-h-[320px] overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+        >
           {slices.map((s, i) => (
             <div key={s.name} className="flex justify-between items-center gap-2">
               <span className="flex items-center gap-2 text-text-primary truncate">

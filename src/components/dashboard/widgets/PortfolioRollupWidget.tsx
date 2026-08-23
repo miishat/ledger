@@ -5,7 +5,7 @@ import { accountNames, usePortfolioStore } from '../../../store/usePortfolioStor
 import { useMarketDataStore } from '../../../store/useMarketDataStore'
 import { quoteKey } from '../../../services/marketData'
 import { useFxRates } from '../../../hooks/useFxRates'
-import { portfolioTotals } from '../../../utils/investments/portfolioMetrics'
+import { portfolioTotals, safeHoldingPrice } from '../../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../../planner/format'
 import { DataFreshness } from '../../ui/DataFreshness'
 import { timeAgo } from '../../../utils/timeAgo'
@@ -16,7 +16,17 @@ export const PortfolioRollupWidget: React.FC = () => {
   const importedAt = usePortfolioStore((s) => s.importedAt)
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
-  const currencies = useMemo(() => holdings.map((h) => h.currency), [holdings])
+  // Rates are needed for both a holding's own currency and, when different,
+  // its cached quote's currency, so a genuinely convertible mismatch (a
+  // rate does exist) is not mistaken for an unconvertible one just because
+  // nobody asked for that rate.
+  const currencies = useMemo(
+    () => [
+      ...holdings.map((h) => h.currency),
+      ...holdings.map((h) => quotes[quoteKey(h.ticker, h.exchange)]?.value.currency ?? null),
+    ],
+    [holdings, quotes],
+  )
   const fx = useFxRates(currencies)
 
   if (holdings.length === 0) {
@@ -30,11 +40,21 @@ export const PortfolioRollupWidget: React.FC = () => {
     )
   }
 
-  // Rollup uses override > cached > avgCost prices (the Investments page fetches live).
-  const rows = holdings.map((h) => ({
-    holding: h,
-    price: overrides[quoteKey(h.ticker, h.exchange)] ?? quotes[quoteKey(h.ticker, h.exchange)]?.value.price ?? h.avgCost,
-  }))
+  // Rollup uses override > cached > avgCost prices (the Investments page
+  // fetches live). A manual override is entered by the user in the
+  // holding's own currency, so it is trusted directly with no conversion.
+  // A cached quote carries its own currency, which does not always match
+  // the holding's recorded currency; when it does not and no rate bridges
+  // them, safeHoldingPrice falls back to cost basis instead of feeding a
+  // wrong-currency number into the total (the same rule PortfolioView
+  // applies to its rows).
+  const rows = holdings.map((h) => {
+    const key = quoteKey(h.ticker, h.exchange)
+    const override = overrides[key]
+    if (override !== undefined) return { holding: h, price: override }
+    const cached = quotes[key]?.value
+    return { holding: h, price: safeHoldingPrice(h, cached?.price, cached?.currency, fx.rates) }
+  })
   const t = portfolioTotals(rows, fx.rates)
 
   // The rollup reads whatever quotes happen to be cached rather than calling
@@ -56,8 +76,8 @@ export const PortfolioRollupWidget: React.FC = () => {
         </span>
         <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
         {t.excludedCount > 0 && (
-          <span className="text-meta text-error">
-            {t.excludedCount} excluded, no FX rate
+          <span className="text-[13px] text-error">
+            {t.excludedCount} holding{t.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {t.excludedCount === 1 ? 'its' : 'their'} currency.
           </span>
         )}
         {newestFetchedAt ? (

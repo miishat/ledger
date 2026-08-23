@@ -38,7 +38,12 @@ export const IncomeWidget: React.FC<IncomeWidgetProps> = ({ range }) => {
         </div>
 
         {sortedSources.length > 0 && (
-          <div className="flex flex-col gap-2 mt-2 overflow-y-auto max-h-[200px] pr-2">
+          <div
+            role="group"
+            aria-label="Income sources"
+            tabIndex={0}
+            className="flex flex-col gap-2 mt-2 overflow-y-auto max-h-[200px] pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+          >
             {sortedSources.map(([source, amount]) => (
               <div key={source} className="flex justify-between items-center p-2 bg-bg-secondary rounded border border-border">
                 <span className="text-[14px] text-text-primary">{source}</span>

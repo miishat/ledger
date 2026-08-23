@@ -9,7 +9,7 @@ interface ErApiResponse {
   rates: Record<string, number>
 }
 
-/** Free fallback FX source (no key). Latest rates only — no historical dates. */
+/** Free fallback FX source (no key). Latest rates only, no historical dates. */
 export async function fetchErApiFxRate(from: Currency, to: Currency): Promise<FxRate> {
   const now = new Date().toISOString()
   if (from === to) {

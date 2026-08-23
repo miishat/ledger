@@ -111,23 +111,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           type="button"
           onClick={toggleBudgetSetup}
           aria-expanded={!budgetSetupCollapsed}
-          className="flex items-center gap-2 text-left"
+          aria-controls="budget-setup-panel"
+          className="flex items-center gap-2 text-left rounded"
         >
           {budgetSetupCollapsed ? (
-            <ChevronRight size={18} className="text-text-secondary" />
+            <ChevronRight size={18} className="text-text-secondary shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronDown size={18} className="text-text-secondary" />
+            <ChevronDown size={18} className="text-text-secondary shrink-0" aria-hidden="true" />
           )}
-          <div>
-            <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
-            <p className="text-[14px] text-text-secondary mt-1">Configure your budgeting style and monthly targets.</p>
-            <p className="text-[13px] text-text-secondary mt-1">
-              Total monthly budget:{' '}
-              <span className="font-semibold text-text-primary">
-                {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
-              </span>
-            </p>
-          </div>
+          <h2 className="text-[18px] font-semibold text-text-primary">Budget Setup</h2>
         </button>
 
         {!budgetSetupCollapsed && (
@@ -153,7 +145,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
         )}
       </div>
 
-      {!budgetSetupCollapsed && (
+      <div id="budget-setup-panel" hidden={budgetSetupCollapsed}>
+      <p className="text-[14px] text-text-secondary -mt-3 mb-1">Configure your budgeting style and monthly targets.</p>
+      <p className="text-[13px] text-text-secondary mb-6">
+        Total monthly budget:{' '}
+        <span className="font-semibold text-text-primary">
+          {formatMoney(totalMonthlyBudget(categories, categoryGroups))}
+        </span>
+      </p>
+
       <div className="columns-1 md:columns-2 gap-6">
         {groups.map(group => {
           const isIncomeGroup = group.kind === 'income';
@@ -213,7 +213,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           type="text" 
                           value={cat.name} 
                           onChange={(e) => updateCategory(cat.id, { name: e.target.value })}
-                          className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none truncate w-full"
+                          className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent truncate w-full"
                           placeholder="Category Name"
                         />
                         <ThemedSelect
@@ -237,7 +237,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                 <button
                                   onClick={() => handleDeleteCategory(cat.id)}
                                   aria-label={`Delete category ${cat.name}`}
-                                  className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="p-1 text-text-secondary hover:text-error reveal-on-hover transition-opacity"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -289,7 +289,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                               <NumberInput
                                 value={cat.targetAmount}
                                 onCommit={(n) => updateCategory(cat.id, { targetAmount: n })}
-                                className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
+                                className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:border-accent"
                               />
                               {!isIncomeGroup && (
                                 <div className="flex rounded border border-border overflow-hidden ml-1">
@@ -314,7 +314,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                               <button
                                 onClick={() => handleDeleteCategory(cat.id)}
                                 aria-label={`Delete category ${cat.name}`}
-                                className="p-1 text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="p-1 text-text-secondary hover:text-error reveal-on-hover transition-opacity"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -330,9 +330,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           );
         })}
       </div>
-      )}
 
-      {!budgetSetupCollapsed && (
       <div className="mt-6 border-t border-border pt-4">
         <button 
           onClick={() => setIsAddOpen(!isAddOpen)}
@@ -352,7 +350,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="e.g. Dining Out"
-                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:border-accent"
                 />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
@@ -382,7 +380,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="e.g. Discretionary"
-                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:border-accent"
                 />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
@@ -406,7 +404,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
           </div>
         )}
       </div>
-      )}
+      </div>
 
       {coverTarget && (
         <ReallocationModal

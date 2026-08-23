@@ -9,7 +9,12 @@ export const ReportFees: React.FC<{ report: PAReport }> = ({ report }) => {
 
   return (
     <Section title={`Fees (${formatMoney(feeTotal(report.fees))} net)`}>
-      <div className="max-h-[240px] overflow-y-auto text-[13px]">
+      <div
+        role="group"
+        aria-label="Fees"
+        tabIndex={0}
+        className="max-h-[240px] overflow-y-auto text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+      >
         {report.fees.map((f, i) => (
           <div key={i} className="flex justify-between py-0.5">
             <span className="text-text-secondary">{f.date} <span className="text-text-primary">{f.description}</span></span>

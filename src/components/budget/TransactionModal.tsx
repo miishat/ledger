@@ -43,6 +43,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   });
 
   const [amount, setAmount] = useState<number>(initialTransaction?.amount ?? 0);
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(
     initialTransaction?.categoryId ?? categoryList[0]?.id ?? '',
   );
@@ -82,7 +83,12 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      setAmountError('Enter an amount greater than zero.');
+      document.getElementById('tx-amount')?.focus();
+      return;
+    }
+    setAmountError(null);
 
     const sharedField =
       type === 'expense' && isShared && totalPaid > amount && sharedWith.trim()
@@ -152,7 +158,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   return (
     <>
-        <div className="hidden md:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+        <div className="hidden desktop:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">
             {initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
           </h2>
@@ -193,15 +199,27 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+            <label htmlFor="tx-amount" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Amount
             </label>
             <NumberInput
+              id="tx-amount"
               value={amount}
-              onCommit={setAmount}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              onCommit={(v) => { setAmount(v); if (v > 0) setAmountError(null); }}
+              aria-invalid={amountError ? 'true' : 'false'}
+              aria-describedby={amountError ? 'tx-amount-error' : undefined}
+              className={`w-full bg-[var(--color-bg-secondary)] border rounded-md p-2 text-[14px] text-[var(--color-text-primary)] transition-colors ${
+                amountError
+                  ? 'border-[var(--color-error)] focus:border-[var(--color-error)]'
+                  : 'border-[var(--color-border)] focus:border-[var(--color-accent)]'
+              }`}
               placeholder="0.00"
             />
+            {amountError && (
+              <p id="tx-amount-error" role="alert" className="text-[12px] text-error">
+                {amountError}
+              </p>
+            )}
           </div>
 
           {type === 'expense' && (
@@ -216,7 +234,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   <NumberInput
                     value={totalPaid}
                     onCommit={setTotalPaid}
-                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
                     placeholder="0.00"
                   />
                   <div className="flex gap-2">
@@ -240,7 +258,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                     list="shared-people"
                     value={sharedWith}
                     onChange={(e) => setSharedWith(e.target.value)}
-                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                    className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
                     placeholder="e.g. Alex, roommates"
                   />
                 </div>
@@ -259,7 +277,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   list="shared-people"
                   value={reimbursementFrom}
                   onChange={(e) => setReimbursementFrom(e.target.value)}
-                  className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                  className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
                   placeholder="Who paid you back?"
                 />
               )}
@@ -310,7 +328,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                         setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, amount: v } : s)))
                       }
                       ariaLabel="Slice amount"
-                      className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
+                      className="w-28 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)]"
                       placeholder="0.00"
                     />
                     <button
@@ -350,7 +368,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               type="text"
               value={tagsText}
               onChange={(e) => setTagsText(e.target.value)}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
               placeholder="Comma separated, e.g. trip, reimbursable"
             />
           </div>
@@ -364,7 +382,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
               placeholder="Anything you want to remember about this one"
             />
           </div>
@@ -381,14 +399,15 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
+            <label htmlFor="tx-description" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               Description (Optional)
             </label>
             <input
+              id="tx-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
               placeholder="e.g. Groceries at Trader Joe's"
             />
           </div>
@@ -423,7 +442,7 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       desktop="modal"
       ariaLabel={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
       title={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
-      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)] md:overflow-hidden"
+      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)] desktop:overflow-hidden"
     >
       <TransactionForm key={initialTransaction?.id ?? 'new'} onClose={onClose} initialTransaction={initialTransaction} />
     </Sheet>

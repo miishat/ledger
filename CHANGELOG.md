@@ -6,6 +6,44 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.5-beta] - 2026-08-22
+
+A desktop and tablet pass. The previous release fixed the phone experience; an audit of the
+same app on a laptop, a desktop monitor and an iPad found a separate set of problems, and
+this release closes them.
+
+### Added
+- Transactions and holdings can now be sorted by clicking a column heading, on date, description, category, amount, ticker, value or allocation. Sorting works from the keyboard and is announced to a screen reader
+- The section you are looking at on Budgeting and Investments is now part of the address, so you can bookmark the Transactions tab or the Portfolio tab, share a link to it, and use the browser's Back button to undo a tab switch. A reload keeps you where you were instead of returning you to the first tab
+- Investments now opens on Portfolio when you have imported holdings but written no analyses, instead of always opening on an empty Plan vs Actual
+- The Compensation chart now lists each component beside it with its amount and share of the total, so you can read the breakdown without hovering
+- The exchange-rate notice on the Investments page now has a Retry control, rather than only telling you rates were unavailable
+
+### Changed
+- The browser tab, your history and your bookmarks now show which page you are on. Every page used to be called just "Ledger"
+- Tab strips are now real tabs: arrow keys move between them, and a screen reader says which one is selected
+- Buttons and fields now share one visible outline when you reach them with the keyboard, in place of a mix of gold rings, grey browser outlines and, in several places, nothing at all
+- Outlined buttons and inputs now have a border you can actually see. The old one sat at roughly a fifth of the contrast that guidance asks for, in every theme
+- Scrollable panels, such as the expense list and the allocation breakdown, can now be scrolled with the keyboard
+- Budget Setup on the Budgeting page now opens by default and has a clear control for collapsing it, instead of hiding the paradigm picker and monthly targets behind an unlabelled chevron
+- Importing holdings now opens in a dialog, giving the top of the Investments page back to your actual portfolio
+- Toggles now name what clicking them does and leave the on or off state to their appearance, in place of labels like "Convert to CAD: OFF" that never made clear whether they described the current state or the action
+- The button that deletes every transaction now says "Delete all transactions" and sits away from the filters, rather than reading "Clear All" next to the category filter where it looked like it cleared the filters
+- The Mortgage chart's vertical axis now reads in dollars, not bare digits like 600000, and both axes are labelled
+- Empty cards on the Dashboard now show what to do next with a real button, rather than a sentence with a small inline link
+- Planner tool cards now keep the same column count down the whole page
+
+### Fixed
+- Account names on the Dashboard were cut to one or two characters on an iPad held upright, showing as "M..", "E..." and "Q..". They now wrap instead
+- Submitting the Add Transaction form with no amount did nothing at all, with no message. It now explains what is missing and takes you to the field
+- The amount and description fields in Add Transaction, and the stock price fields on Compensation, had no label a screen reader could read
+- Moving through the Dashboard with the keyboard passed through a dozen stops that showed nothing on screen, because the edit and delete buttons for each row were invisible until hovered. Those buttons were also permanently invisible on a touchscreen tablet, where hovering is not possible
+- Settings and the opening disclaimer showed their heading and close button twice on a phone held sideways, on a short desktop window, and at high browser zoom
+- The Compensation breakdown chart's labels ran off the side of the screen on a phone and were cut off on a tablet, leaving a coloured ring with nothing identifying its segments
+- The Dashboard and the Investments page could report different totals for the same portfolio when live prices were unavailable. Both now fall back to what you paid, and a holding whose live price arrives in an unexpected currency is no longer converted as though it were in your own
+- Charts had no description for screen readers and were announced as an unnamed application
+- Table headings were not linked to their columns, so a screen reader could not tell you which column a figure belonged to
+
 ## [0.9.4-beta] - 2026-08-20
 
 ### Changed
@@ -255,7 +293,7 @@ pre-1.0 beta.
 ## [0.6.0-beta] - 2026-07-16
 
 ### Added
-- Options tab in Investments: wheel strategy tracker ported from the standalone tool — upload IBKR activity statement CSVs to see per-ticker premium collected, true breakeven, and live-price Net P/L (PDF export not carried over)
+- Options tab in Investments: wheel strategy tracker ported from the standalone tool: upload IBKR activity statement CSVs to see per-ticker premium collected, true breakeven, and live-price Net P/L (PDF export not carried over)
 - Currency converter now supports USD, CAD, EUR, GBP, AUD, JPY, KRW, INR and BDT with From/To selectors (BDT via a fallback rate source, latest rates only)
 - Settings hub: theme picker, market data key, backup and about consolidated into one sheet (gear in the sidebar dock / a new Settings tab on mobile)
 

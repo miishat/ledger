@@ -13,6 +13,7 @@
      once: var(--accent) resolves against whichever [data-theme] is active. */
   --unvested: color-mix(in srgb, var(--accent) 62%, var(--text-secondary));
   --color-border: var(--border-color);
+  --color-border-strong: var(--border-strong);
   --color-error: var(--error);
 
   --font-sans: 'Inter', sans-serif;
@@ -34,7 +35,13 @@
    landscape clears the width test and fails the height test, so it keeps
    the mobile top bar and bottom tab bar instead of losing Settings off
    the bottom of a sidebar that cannot scroll into view. Kept in sync by
-   hand with useIsDesktop in src/hooks/useMediaQuery.ts. */
+   hand with useIsDesktop in src/hooks/useMediaQuery.ts.
+
+   Anything whose visibility must agree with which branch `Sheet` renders
+   must use `desktop:`, never `md:`. `md:` is width only, so between 768px
+   wide and 500px tall (a landscape Pro Max phone, a short desktop window, or
+   a desktop browser zoomed past 175%) `md:` matches while `desktop:` does
+   not, and both a sheet header and a modal header render at once. */
 @custom-variant desktop (@media (min-width: 768px) and (min-height: 500px));
 
 :root {
@@ -45,6 +52,7 @@
   --text-secondary: #4b5563;
   --accent: #2563eb;
   --border-color: #e5e7eb;
+  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;
   --chart-1: #2563eb;
   --chart-2: #8b5cf6;
@@ -73,6 +81,7 @@
   --text-secondary: #4b5563;
   --accent: #2563eb;
   --border-color: #e5e7eb;
+  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;
   --chart-1: #2563eb;
   --chart-2: #8b5cf6;
@@ -101,6 +110,7 @@
   --text-secondary: #94a3b8;
   --accent: #10b981;
   --border-color: #27272a;
+  --border-strong: #71717a;   /* 4.10:1 on #0a0a0a, 3.91:1 on #111111 */
   --error: #ff3b30;
   --chart-1: #10b981;
   --chart-2: #8b5cf6;
@@ -129,6 +139,7 @@
   --text-secondary: #a1a1a6;
   --accent: #d4a853;
   --border-color: #1a1a1a;
+  --border-strong: #6b6b6b;   /* 3.94:1 on #000000, 3.72:1 on #0a0a0a */
   --error: #e5484d;
   --chart-1: #d4a853;
   --chart-2: #8b5cf6;
@@ -157,6 +168,7 @@
   --text-secondary: #94a3b8;
   --accent: #34d399;
   --border-color: #1e293b;
+  --border-strong: #64748b;   /* 4.08:1 on #090d16, 3.84:1 on the card */
   --error: #f87171;
   --chart-1: #34d399;
   --chart-2: #a78bfa;
@@ -185,6 +197,7 @@
   --text-secondary: #cbd5e1;
   --accent: #22d3ee;
   --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.40);  /* 3.77:1 on #0b0910, 3.83:1 on the card */
   --error: #fb7185;
   --chart-1: #22d3ee;
   --chart-2: #a78bfa;
@@ -320,6 +333,80 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* `--border-color` is a decorative divider: it separates card edges and list
+   rows, which WCAG does not require to reach 3:1. A control whose boundary is
+   the only thing marking it as a control does have to, under 1.4.11, and the
+   decorative token measured 1.18:1 to 1.24:1 across all five themes. Anything
+   the user is meant to click gets `.control-border` instead. */
+.control-border {
+  border-color: var(--border-strong);
+}
+
+/* Row actions used to be revealed by hover alone, gated on width. That hid
+   them from two groups at once: a keyboard user tabbing into an opacity-0
+   button saw no focus indicator at all (WCAG 2.4.7), and a touch tablet at
+   768px never produces hover, so the controls were permanently invisible
+   there. Gate the hiding on real hover capability, and always reveal on
+   focus. */
+@media (hover: hover) and (pointer: fine) {
+  .reveal-on-hover {
+    opacity: 0;
+  }
+  .group:hover .reveal-on-hover,
+  .group:focus-within .reveal-on-hover,
+  .reveal-on-hover:focus-visible {
+    opacity: 1;
+  }
+  /* These buttons also carry transition-all/transition-opacity for the
+     hover fade, which is fine for a mouse but means a keyboard user
+     tabbing in would sit through the same 150ms fade with no visible
+     control the instant focus lands, failing WCAG 2.4.7 for that first
+     frame. A row's actions share one .group, so tabbing to the first one
+     (say Edit) opens both it and its sibling Delete together, before
+     Delete itself is ever :focus-visible, meaning a duration override
+     scoped only to :focus-visible arrives too late for the sibling. Zero
+     the duration for the whole group the moment any descendant is
+     focused, so every action in the row reveals instantly, and keep the
+     animated fade for plain mouse hover, where nothing is focused. */
+  .group:focus-within .reveal-on-hover,
+  .reveal-on-hover:focus-visible {
+    transition-duration: 0s;
+  }
+}
+
+/* Focus rings were split between a 2px accent ring on some controls and the
+   browser's default grey outline (2px or 3px) on others, depending on
+   whether the component happened to style focus-visible itself. The audit
+   found 198 button/link call sites with no focus style of their own; rather
+   than tag each one, set the accent outline as the default here, at the
+   element level, for every natively focusable element and anything made
+   focusable with tabindex (the scroll-region containers fixed earlier in
+   this file among them).
+
+   outline-style reads --tw-outline-style instead of a literal `solid`
+   because that is the custom property Tailwind's own ring/outline-none
+   utilities write to, for example the focus-visible:outline-none
+   focus-visible:ring-2 pairing on ExpenseWidget's scroll container. A
+   component that already suppresses the outline in favour of its own ring
+   sets that variable to `none` on itself; reading it back here means that
+   suppression keeps winning instead of being overridden. A literal `solid`
+   would ignore that signal, since this rule is unlayered and would
+   otherwise always beat the utility regardless of source order, causing
+   the ring and this outline to render at once. */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline-style: var(--tw-outline-style, solid);
+  outline-color: var(--accent);
+  outline-width: 2px;
+  outline-offset: 2px;
+}
+
 /* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
    step up one pixel on phones, where the audit found the smallest tier
    carrying real data (dates, category names, pacing hints) and not just
@@ -382,12 +469,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: var(--color-text-secondary);
 }
 
-/* Focus rings: never on mouse click, themed accent ring for keyboard nav.
-   Components with their own focus affordance (focus:border-accent) keep it. */
+/* Focus rings: never on mouse click. The accent outline for interactive
+   elements lives with the other unlayered rules above (search "Focus rings
+   were split"). Components with their own focus affordance
+   (focus:border-accent) keep it. */
 :focus:not(:focus-visible) {
   outline: none;
-}
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }

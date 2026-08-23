@@ -20,10 +20,10 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
       desktop="modal"
       ariaLabel="Detailed ledger"
       title={<>{data?.ticker} Detailed Ledger</>}
-      panelClassName="themed-menu md:rounded-lg w-full max-w-3xl md:p-6 md:max-h-[85dvh]"
+      panelClassName="themed-menu desktop:rounded-lg w-full max-w-3xl desktop:p-6 desktop:max-h-[85dvh]"
       contentClassName="flex flex-col gap-3"
     >
-      <div className="hidden md:flex items-center justify-between">
+      <div className="hidden desktop:flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">{data?.ticker} Detailed Ledger</h2>
         <button
           onClick={onClose}

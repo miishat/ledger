@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { computeWindow } from '../../utils/virtualWindow';
 import { TransactionModal } from './TransactionModal';
-import type { Transaction } from '../../types/budget';
+import type { Category, Transaction } from '../../types/budget';
 import { Trash2, Maximize2, Minimize2, Receipt, Search } from 'lucide-react';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { formatMoney } from '../planner/format';
@@ -15,6 +15,13 @@ import { useUndoStore } from '../../store/useUndoStore';
 interface TransactionListWidgetProps {
   range: MonthRange;
 }
+
+// Shared by row rendering and category sorting so a sort by "Category" orders
+// by the same visible label the user reads, not by the opaque categoryId.
+const resolveCategoryLabel = (tx: Transaction, categories: Record<string, Category>) =>
+  tx.splits?.length
+    ? `Split · ${tx.splits.length}`
+    : tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized';
 
 export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
@@ -33,6 +40,11 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkCategoryId, setBulkCategoryId] = useState('');
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+
+  type TxSortKey = 'date' | 'description' | 'category' | 'amount';
+  const [txSort, setTxSort] = useState<{ key: TxSortKey; desc: boolean }>({ key: 'date', desc: true });
+  const toggleTxSort = (key: TxSortKey) =>
+    setTxSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key === 'date' || key === 'amount' }));
 
   const deleteWithUndo = (rows: Transaction[]) => {
     const label =
@@ -70,6 +82,16 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // The user's chosen sort applies on top of the already-filtered list, and
+  // never reorders the source data in the store.
+  const sortedTxList = [...txList].sort((a, b) => {
+    const dir = txSort.desc ? -1 : 1;
+    if (txSort.key === 'amount') return (a.amount - b.amount) * dir;
+    if (txSort.key === 'description') return a.description.localeCompare(b.description) * dir;
+    if (txSort.key === 'category') return resolveCategoryLabel(a, categories).localeCompare(resolveCategoryLabel(b, categories)) * dir;
+    return a.date.localeCompare(b.date) * dir;
+  });
+
   // Selection is scoped to what is currently visible: narrowing the search must
   // not leave invisible rows armed for deletion.
   const visibleIds = txList.map((tx) => tx.id);
@@ -105,7 +127,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     totalRows: txList.length,
     overscan: 8,
   });
-  const visibleRows = txList.slice(windowed.startIndex, windowed.endIndex);
+  const visibleRows = sortedTxList.slice(windowed.startIndex, windowed.endIndex);
 
   // Measure the scroll container once it mounts (and whenever the layout
   // toggles between expanded/collapsed) so the first paint already windows
@@ -150,9 +172,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
     amountPrefix: tx.type === 'income' ? '+' : '-',
-    categoryLabel: tx.splits?.length
-      ? `Split · ${tx.splits.length}`
-      : tx.categoryId ? categories[tx.categoryId]?.name || 'Unknown' : 'Uncategorized',
+    categoryLabel: resolveCategoryLabel(tx, categories),
     badge: tx.shared
       ? `shared · ${tx.shared.sharedWith}`
       : tx.reimbursement
@@ -192,15 +212,6 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               ...Object.values(categories).map(c => ({ value: c.id, label: c.name })),
             ]}
           />
-          {txList.length > 0 && (
-            <button
-              onClick={() => setConfirmClearOpen(true)}
-              className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/30 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
-              title="Clear All Transactions"
-            >
-              <Trash2 size={14} /> Clear All
-            </button>
-          )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1.5 text-text-secondary hover:text-text-primary transition-colors bg-bg-primary rounded border border-border shadow-sm ml-2"
@@ -208,6 +219,14 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
           >
             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
+          {txList.length > 0 && (
+            <button
+              onClick={() => setConfirmClearOpen(true)}
+              className="text-[13px] text-error hover:text-error/80 transition-colors border border-error/50 hover:bg-error/10 px-2 py-1.5 rounded-md flex items-center gap-1 shadow-sm"
+            >
+              <Trash2 size={14} aria-hidden="true" /> Delete all transactions
+            </button>
+          )}
         </div>
       </div>
       {selected.length > 0 && (
@@ -273,20 +292,44 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         >
           <div className="hidden md:block">
             <table className="w-full text-left border-collapse">
+              <caption className="sr-only">
+                Transactions for the selected period, sortable by date, description, category or amount.
+              </caption>
               <thead>
                 <tr className="border-b border-border text-[12px] text-text-secondary">
-                  <th className="pb-2 font-medium w-8">
+                  <th scope="col" className="pb-2 font-medium w-8">
                     <Checkbox
                       ariaLabel="Select all transactions"
                       checked={allVisibleSelected}
                       onChange={toggleAll}
                     />
                   </th>
-                  <th className="pb-2 font-medium">Date</th>
-                  <th className="pb-2 font-medium">Description</th>
-                  <th className="pb-2 font-medium">Category</th>
-                  <th className="pb-2 font-medium text-right">Amount</th>
-                  <th className="pb-2 font-medium w-10"></th>
+                  {([
+                    ['date', 'Date', ''],
+                    ['description', 'Description', ''],
+                    ['category', 'Category', ''],
+                    ['amount', 'Amount', 'text-right'],
+                  ] as const).map(([key, label, align]) => (
+                    <th
+                      key={key}
+                      scope="col"
+                      aria-sort={txSort.key === key ? (txSort.desc ? 'descending' : 'ascending') : undefined}
+                      className={`pb-2 font-medium ${align}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleTxSort(key)}
+                        aria-label={`Sort by ${label.toLowerCase()}`}
+                        className="inline-flex items-center gap-1 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+                      >
+                        {label}
+                        {txSort.key === key && <span aria-hidden="true">{txSort.desc ? '↓' : '↑'}</span>}
+                      </button>
+                    </th>
+                  ))}
+                  <th scope="col" className="pb-2 font-medium w-10">
+                    <span className="sr-only">Row actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -357,7 +400,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                           deleteWithUndo([tx]);
                         }}
                         aria-label="Delete transaction"
-                        className="p-2 text-text-secondary hover:text-error sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-md hover:bg-bg-primary"
+                        className="p-2 text-text-secondary hover:text-error reveal-on-hover transition-opacity rounded-md hover:bg-bg-primary"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -473,7 +516,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         open={confirmClearOpen}
         title="Clear all transactions?"
         message={`Every transaction (${Object.keys(transactions).length}) will be deleted, including any hidden by the current search or filter. You can undo this straight afterwards.`}
-        confirmLabel="Clear All"
+        confirmLabel="Delete all"
         tone="danger"
         onConfirm={() => {
           const all = Object.values(transactions);

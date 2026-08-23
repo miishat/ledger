@@ -10,6 +10,7 @@ import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
+import { ChartFigure } from '../ui/ChartFigure'
 
 const TOOL_ID = 'debt-payoff'
 const DEFAULT_DEBTS: Debt[] = [
@@ -190,9 +191,12 @@ export const DebtPayoffCalculator: React.FC = () => {
         />
       </div>
 
-      <div className="themed-card rounded-lg p-4 h-[320px]">
+      <ChartFigure
+        label={`Remaining debt balance by month comparing avalanche and snowball strategies, debt-free in ${formatMonths(chosen.months)} on the chosen (${strategy}) strategy`}
+        className="themed-card rounded-lg p-4 h-[320px]"
+      >
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
+          <LineChart data={chartData} accessibilityLayer={false}>
             <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
             <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
             <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
@@ -205,7 +209,7 @@ export const DebtPayoffCalculator: React.FC = () => {
             <Line type="monotone" dataKey="snowball" stroke="var(--text-secondary)" dot={false} strokeWidth={2} strokeDasharray="5 3" />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </ChartFigure>
     </div>
   )
 }

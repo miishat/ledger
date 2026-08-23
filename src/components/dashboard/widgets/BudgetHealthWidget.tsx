@@ -1,8 +1,9 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Wallet } from 'lucide-react'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { useBudgetStore, getMonthlyBudgetStats } from '../../../store/useBudgetStore'
 import { formatMoney } from '../../planner/format'
+import { EmptyState } from '../../ui/EmptyState'
 
 export const BudgetHealthWidget: React.FC = () => {
   const budgetState = useBudgetStore()
@@ -10,10 +11,12 @@ export const BudgetHealthWidget: React.FC = () => {
   if (Object.keys(budgetState.transactions).length === 0) {
     return (
       <WidgetWrapper title="This Month's Budget">
-        <p className="text-[13px] text-text-secondary mt-2">
-          {/* Exempt from the mobile tap-target floor: this link sits inline in a sentence, and WCAG 2.5.8 excludes inline text links from the minimum target size since forcing 44px would break the flow. */}
-          <Link to="/budget" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded tap-exempt">Add transactions in Budgeting</Link> to see your monthly health here.
-        </p>
+        <EmptyState
+          icon={Wallet}
+          message="No transactions yet"
+          hint="Import a CSV or add one by hand, and your monthly health appears here."
+          action={{ label: 'Add transactions', to: '/budget' }}
+        />
       </WidgetWrapper>
     )
   }

@@ -30,6 +30,23 @@ export default defineConfig({
       testMatch: /mobile-guards\.spec\.ts/,
       use: { ...devices['iPhone 12 landscape'] },
     },
+    // iPad portrait sits exactly on the `desktop` breakpoint, where the
+    // sidebar takes 256px and the card grid drops to 2 columns. That is the
+    // width at which the audit found account names rendering as one letter.
+    {
+      name: 'tablet',
+      testMatch: /desktop-guards\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 }, hasTouch: true },
+    },
+    // 932x430 is landscape on a Pro Max class phone and also any desktop
+    // window zoomed past the point where the CSS viewport drops under 500px
+    // tall. `md:` matches here and `desktop:` does not, which is what used to
+    // render sheet headers twice.
+    {
+      name: 'short-wide',
+      testMatch: /desktop-guards\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 932, height: 430 } },
+    },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173 --strictPort',

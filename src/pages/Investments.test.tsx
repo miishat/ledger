@@ -27,16 +27,16 @@ describe('Investments page', () => {
 
   it('describes each tab as it is selected', () => {
     renderPage()
-    fireEvent.click(screen.getByRole('button', { name: 'Portfolio' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Portfolio' }))
     expect(screen.getByText('Your portfolio with live prices and allocations.')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Options' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Options' }))
     expect(screen.getByText(/Wheel strategy/)).toBeInTheDocument()
   })
 
   it('hides the New Analysis button outside the journal tab', () => {
     renderPage()
-    fireEvent.click(screen.getByRole('button', { name: 'Portfolio' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Portfolio' }))
     expect(screen.queryByRole('button', { name: /New Analysis/ })).not.toBeInTheDocument()
   })
 
@@ -52,7 +52,7 @@ describe('Investments page', () => {
 
   it('opens the Trades tab', () => {
     renderPage()
-    fireEvent.click(screen.getByRole('button', { name: 'Trades' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Trades' }))
     expect(screen.getByText('Record a trade')).toBeInTheDocument()
   })
 })

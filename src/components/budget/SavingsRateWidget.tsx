@@ -6,6 +6,7 @@ import { incomeExpenseSeries, savingsRate } from '../../store/budgetSelectors'
 import { formatMoney } from '../planner/format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { monthsInRange, type MonthRange } from '../../utils/budget/period'
+import { ChartFigure } from '../ui/ChartFigure'
 
 type View = 'rate' | 'trend' | 'split'
 const VIEWS: { id: View; label: string }[] = [
@@ -100,9 +101,12 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
         <Gauge rate={rate} income={income} expense={expense} />
       ) : view === 'trend' ? (
         <>
-          <div className="h-[220px] mt-2">
+          <ChartFigure
+            label={`Net saved per month over ${data.length} months, from ${formatMoney(data[0]?.net ?? 0)} to ${formatMoney(data[data.length - 1]?.net ?? 0)}`}
+            className="h-[220px] mt-2"
+          >
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+              <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis
@@ -116,16 +120,19 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
                 <Area type="monotone" dataKey="net" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.15} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </ChartFigure>
           <div className="flex gap-4 mt-2 text-[12px] text-text-secondary">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--accent)' }} /> Net saved per month</span>
           </div>
         </>
       ) : (
         <>
-          <div className="h-[220px] mt-2">
+          <ChartFigure
+            label={`Saved versus spent per month over ${data.length} months: ${formatMoney(income)} income, ${formatMoney(expense)} spent`}
+            className="h-[220px] mt-2"
+          >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+              <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis
@@ -140,7 +147,7 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
                 <Bar dataKey="saved" name="saved" stackId="a" fill="var(--accent)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartFigure>
           <div className="flex gap-4 mt-2 text-[12px] text-text-secondary">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--accent)' }} /> Saved</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--error)' }} /> Spent</span>

@@ -14,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts'
+import { ChartFigure } from '../ui/ChartFigure'
 
 const cad = (v: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
@@ -178,9 +179,12 @@ export function EquityVestingWidget() {
   return (
     <WidgetWrapper title="Equity Vesting Schedule">
       <div className="flex flex-col gap-4">
-        <div className="w-full h-[280px]">
+        <ChartFigure
+          label={`Equity vesting schedule across ${primaryPackage.rsuGrants.length} grants, totalling ${cad(totalScheduleValue)}, with ${cad(Math.max(0, totalScheduleValue - cumulativeVested))} still unvested`}
+          className="w-full h-[280px]"
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }} accessibilityLayer={false}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
               <XAxis 
                 dataKey="monthLabel"
@@ -240,7 +244,7 @@ export function EquityVestingWidget() {
               ))}
             </ComposedChart>
           </ResponsiveContainer>
-        </div>
+        </ChartFigure>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-meta text-[var(--color-text-secondary)]">
           {primaryPackage.rsuGrants.map((grant, index) => (

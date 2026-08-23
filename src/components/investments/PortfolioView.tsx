@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Trash2, Landmark } from 'lucide-react'
+import { Trash2, Landmark, Upload, X } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
 import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
-import { holdingPlDollars, marketValue, portfolioTotals, toCad } from '../../utils/investments/portfolioMetrics'
+import { holdingPlDollars, marketValue, portfolioTotals, safeHoldingPrice, toCad } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
 import { AllocationChart } from './AllocationChart'
 import { HoldingRow } from './HoldingRow'
@@ -14,6 +14,7 @@ import { accountValue } from './report/reportMetrics'
 import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { EmptyState } from '../ui/EmptyState'
 import { DataFreshness } from '../ui/DataFreshness'
+import { Sheet } from '../ui/Sheet'
 
 export const PortfolioView: React.FC = () => {
   const holdings = usePortfolioStore((s) => s.holdings)
@@ -22,19 +23,21 @@ export const PortfolioView: React.FC = () => {
   const currencyReviewPending = usePortfolioStore((s) => s.currencyReviewPending)
   const dismissCurrencyReview = usePortfolioStore((s) => s.dismissCurrencyReview)
   const report = usePortfolioReportStore((s) => s.report)
+  const [importOpen, setImportOpen] = useState(false)
 
   // The imported holdings carry no cash and no margin loan, so their sum is
   // only ever the holdings value. A PortfolioAnalyst report, when one has been
   // uploaded, reports the broker's own ending NAV, which does include both.
   const nav = accountValue(report)
 
+  // Each row reports its raw native price and that price's own currency
+  // (not a converted or fallback price), so priceFor below is the one place
+  // that decides whether a price is safe to use.
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [quoteCurrencies, setQuoteCurrencies] = useState<Record<string, Currency | null>>({})
-  const [unconvertibleIds, setUnconvertibleIds] = useState<Record<string, boolean>>({})
-  const onPrice = useCallback((id: string, price: number, currency: Currency | null, unconvertible: boolean) => {
+  const onPrice = useCallback((id: string, price: number, currency: Currency | null) => {
     setPrices((prev) => (prev[id] === price ? prev : { ...prev, [id]: price }))
     setQuoteCurrencies((prev) => (prev[id] === currency ? prev : { ...prev, [id]: currency }))
-    setUnconvertibleIds((prev) => (prev[id] === unconvertible ? prev : { ...prev, [id]: unconvertible }))
   }, [])
 
   const currencies = useMemo(
@@ -44,16 +47,20 @@ export const PortfolioView: React.FC = () => {
   const fx = useFxRates(currencies)
   const rates = fx.rates
 
-  // A holding whose live quote could not be converted into its own currency
-  // has no usable price in that currency, so it is left out of portfolioTotals
-  // entirely rather than feeding it a wrong-currency price. It is folded into
-  // the same excluded count as a holding that lacks an FX rate outright.
-  const rows = holdings
-    .filter((h) => !unconvertibleIds[h.id])
-    .map((h) => ({ holding: h, price: prices[h.id] ?? h.avgCost }))
-  const rawTotals = portfolioTotals(rows, rates)
-  const unconvertibleCount = holdings.filter((h) => unconvertibleIds[h.id]).length
-  const totals = { ...rawTotals, excludedCount: rawTotals.excludedCount + unconvertibleCount }
+  // A holding whose live quote could not be converted still has a known
+  // quantity and a known cost basis in a known currency, so it belongs in the
+  // total at cost rather than being dropped. Dropping it made this page
+  // disagree with the dashboard rollup, which has always used the cost-basis
+  // fallback: the same 8 holdings read $36,705 here and $114,937 there.
+  // safeHoldingPrice is the shared rule: a live price in a currency that
+  // does not match the holding's own currency, with no rate to bridge them,
+  // cannot be treated as a ready-to-use price, so avgCost is used instead of
+  // feeding that mismatched number into the total. `excludedCount` now
+  // means only what its name says: the holding's own currency has no FX
+  // rate, so no CAD figure exists for it at all.
+  const priceFor = (h: Holding) => safeHoldingPrice(h, prices[h.id], quoteCurrencies[h.id], rates)
+  const rows = holdings.map((h) => ({ holding: h, price: priceFor(h) }))
+  const totals = portfolioTotals(rows, rates)
 
   type SortKey = 'ticker' | 'value' | 'pl' | 'alloc'
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'value', desc: true })
@@ -61,19 +68,13 @@ export const PortfolioView: React.FC = () => {
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: true }))
 
-  // An unconvertible holding (its live quote came back in a currency with no
-  // rate) must be explicitly excluded here via unconvertibleIds, the same
-  // flag HoldingRow uses to decide whether to show a dash. The `?? 0` alone
-  // does NOT catch this case: toCad(value, h.currency, rates) only returns
-  // null when h.currency itself lacks a rate, and rateToCad('CAD', ...) is
-  // hardcoded to 1, so a CAD holding whose USD quote has no USD rate would
-  // still resolve to a non-null (wrong) CAD figure computed from the raw,
-  // unconverted USD price. Explicitly zeroing it here keeps the subtotal
-  // consistent with portfolioTotals, which drops such holdings entirely.
-  const valueCadOf = (h: Holding) =>
-    unconvertibleIds[h.id] ? 0 : (toCad(marketValue(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
-  const plCadOf = (h: Holding) =>
-    unconvertibleIds[h.id] ? 0 : (toCad(holdingPlDollars(h, prices[h.id] ?? h.avgCost), h.currency, rates) ?? 0)
+  // Account subtotals must price each holding exactly the way the totals
+  // above do (at cost when the live quote could not be converted, at the
+  // live/cached price otherwise) so the subtotals always sum to the total.
+  // The `?? 0` here guards the one remaining exclusion: a holding whose own
+  // currency has no FX rate, the same condition portfolioTotals excludes on.
+  const valueCadOf = (h: Holding) => toCad(marketValue(h, priceFor(h)), h.currency, rates) ?? 0
+  const plCadOf = (h: Holding) => toCad(holdingPlDollars(h, priceFor(h)), h.currency, rates) ?? 0
 
   const sortRows = (list: Holding[]) => {
     const dir = sort.desc ? -1 : 1
@@ -86,7 +87,38 @@ export const PortfolioView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PortfolioImport />
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium border control-border text-text-primary hover:bg-bg-secondary transition-colors"
+        >
+          <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
+        </button>
+      </div>
+
+      <Sheet
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        desktop="modal"
+        ariaLabel="Import holdings"
+        title="Import holdings"
+        panelClassName="themed-menu desktop:rounded-lg desktop:overflow-hidden w-full max-w-lg"
+      >
+        <div className="hidden desktop:flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-text-primary">Import holdings</h2>
+          <button
+            onClick={() => setImportOpen(false)}
+            aria-label="Close"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-4">
+          <PortfolioImport />
+        </div>
+      </Sheet>
 
       {holdings.length === 0 ? (
         <div className="themed-card rounded-lg p-10">
@@ -117,8 +149,15 @@ export const PortfolioView: React.FC = () => {
                 {formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}
               </p>
               {totals.excludedCount > 0 && (
-                <p className="text-meta text-error mt-1">
-                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} excluded, no FX rate
+                <p className="text-[13px] text-error mt-1">
+                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {totals.excludedCount === 1 ? 'its' : 'their'} currency.{' '}
+                  <button
+                    type="button"
+                    onClick={() => fx.refresh()}
+                    className="border control-border rounded px-1.5 py-0.5 text-[12px] hover:text-error/80 hover:border-error/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Retry exchange rates
+                  </button>
                 </p>
               )}
             </div>
@@ -164,10 +203,18 @@ export const PortfolioView: React.FC = () => {
                 </div>
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-[13px] min-w-[720px]">
+                    <caption className="sr-only">
+                      Holdings in {account}, sortable by ticker, value, profit and loss, or allocation.
+                    </caption>
                     <thead>
                       <tr className="text-left text-text-secondary border-b border-border">
                         {headers.map((h) => (
-                          <th key={h.label} className={`py-2 pr-3 font-medium ${h.align}`}>
+                          <th
+                            key={h.label}
+                            scope="col"
+                            aria-sort={h.key && sort.key === h.key ? (sort.desc ? 'descending' : 'ascending') : undefined}
+                            className={`py-2 pr-3 font-medium ${h.align}`}
+                          >
                             {h.key ? (
                               <button
                                 onClick={() => toggleSort(h.key as SortKey)}

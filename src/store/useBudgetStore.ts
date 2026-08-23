@@ -68,6 +68,16 @@ export function migrateBudgetStateV3(persisted: unknown): unknown {
   return { ...state, paradigm, categoryGroups };
 }
 
+/** v3 -> v4: budgetSetupCollapsed's shipped default flips from collapsed to
+ *  open. Every user who ever loaded the Budget page before this change
+ *  already has `true` persisted, so `?? false` in the outer migrate never
+ *  substitutes for them. Force the flag open once, unconditionally, since
+ *  this is a one-time reset of a UI preference, not user data. */
+export function migrateBudgetStateV4(persisted: unknown): unknown {
+  const state = persisted as Partial<BudgetState>;
+  return { ...state, budgetSetupCollapsed: false };
+}
+
 interface BudgetState {
   paradigm: BudgetingParadigm;
   transactions: Record<string, Transaction>;
@@ -100,6 +110,23 @@ interface BudgetState {
   seedDefaults: () => void;
 }
 
+export const BUDGET_PERSIST_VERSION = 4;
+
+/** The composition the persist config actually runs. Extracted and exported so
+ *  a test can pin the wiring, not just the individual steps: the defect this
+ *  chain was written to fix was a version guard that skipped a step entirely,
+ *  which every per-step unit test passed straight through. */
+export function migrateBudgetPersisted(persistedState: unknown, version: number): unknown {
+  const persisted = persistedState as Partial<BudgetState>;
+  const withDefaults = {
+    ...persisted,
+    budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? false,
+  };
+  const v2 = migrateBudgetState(withDefaults, version);
+  const v3 = version >= 3 ? v2 : migrateBudgetStateV3(v2);
+  return version >= 4 ? v3 : migrateBudgetStateV4(v3);
+}
+
 export const useBudgetStore = create<BudgetState>()(
   persist(
     (set) => ({
@@ -108,7 +135,7 @@ export const useBudgetStore = create<BudgetState>()(
       categories: {},
       categoryGroups: {},
       reallocations: {},
-      budgetSetupCollapsed: true,
+      budgetSetupCollapsed: false,
 
       setParadigm: (paradigm) => set({ paradigm }),
       toggleBudgetSetup: () => set((state) => ({ budgetSetupCollapsed: !state.budgetSetupCollapsed })),
@@ -235,16 +262,8 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: STORAGE_KEYS.budget,
-      version: 3,
-      migrate: (persistedState, version) => {
-        const persisted = persistedState as Partial<BudgetState>;
-        const withDefaults = {
-          ...persisted,
-          budgetSetupCollapsed: persisted.budgetSetupCollapsed ?? true,
-        };
-        const v2 = migrateBudgetState(withDefaults, version);
-        return (version >= 3 ? v2 : migrateBudgetStateV3(v2)) as Partial<BudgetState>;
-      },
+      version: BUDGET_PERSIST_VERSION,
+      migrate: migrateBudgetPersisted,
     }
   )
 );

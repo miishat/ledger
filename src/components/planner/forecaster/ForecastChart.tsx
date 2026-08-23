@@ -6,6 +6,7 @@ import type { NetWorthSnapshot } from '../../../store/useAccountsStore'
 import type { ForecastPoint } from '../../../utils/finance/forecast'
 import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
+import { ChartFigure } from '../../ui/ChartFigure'
 
 interface GoalMarker {
   label: string
@@ -86,9 +87,12 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
           Actual
         </span>
       </div>
-      <div className="flex-1 min-h-0">
+      <ChartFigure
+        label={`Net worth forecast, ${projectedLabel.toLowerCase()} to reach ${formatMoneyCompact(future[future.length - 1]?.projected ?? 0)} by ${(future[future.length - 1]?.month ?? 0) / 12} years out`}
+        className="flex-1 min-h-0"
+      >
         <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data}>
+        <ComposedChart data={data} accessibilityLayer={false}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
@@ -139,7 +143,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             ))}
         </ComposedChart>
       </ResponsiveContainer>
-      </div>
+      </ChartFigure>
     </div>
   )
 }

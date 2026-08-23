@@ -26,7 +26,7 @@ export const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ open, on
       desktop="modal"
       ariaLabel="Customize dashboard"
       title="Customize dashboard"
-      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] md:rounded-xl shadow-lg border border-[var(--color-border)]"
+      panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)]"
       contentClassName="flex flex-col gap-1 p-4"
     >
       <p className="text-[13px] text-text-secondary mb-2">

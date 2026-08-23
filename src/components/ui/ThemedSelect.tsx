@@ -72,7 +72,7 @@ export const ThemedSelect: React.FC<ThemedSelectProps> = ({ id, value, options, 
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openListbox())}
         onKeyDown={onKeyDown}
-        className={`w-full flex items-center justify-between gap-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px] outline-none focus:border-accent transition-colors ${className}`}
+        className={`w-full flex items-center justify-between gap-2 bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[15px] focus:border-accent transition-colors ${className}`}
       >
         <span className="truncate">{selected?.label ?? ''}</span>
         <ChevronDown className={`w-4 h-4 shrink-0 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
