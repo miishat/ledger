@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { monthKeyOf, rangeOf, shiftMonthKey, type Period, type PeriodPreset } from '../utils/budget/period';
 import { Tabs, type TabItem } from '../components/ui/Tabs';
+import { TabPanel } from '../components/ui/TabPanel';
 import { ThemedSelect } from '../components/ui/ThemedSelect';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
 import { ExpenseWidget } from '../components/budget/ExpenseWidget';
@@ -148,7 +149,7 @@ export const Budgeting: React.FC = () => {
       <ParadigmBanner selectedMonth={range.to} />
 
       {tab === 'overview' && (
-        <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
+        <TabPanel id="overview" className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <IncomeWidget range={range} />
             <ExpenseWidget range={range} />
@@ -163,11 +164,11 @@ export const Budgeting: React.FC = () => {
           <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'insights' && (
-        <div role="tabpanel" id="panel-insights" aria-labelledby="tab-insights" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
+        <TabPanel id="insights" className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SubscriptionsWidget />
             <AnomalyAlertsWidget range={range} />
@@ -177,25 +178,25 @@ export const Budgeting: React.FC = () => {
             <SpendingHeatmapWidget range={range} />
             <CategoryTrendsWidget range={range} />
           </div>
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'transactions' && (
-        <div role="tabpanel" id="panel-transactions" aria-labelledby="tab-transactions" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
+        <TabPanel id="transactions" className="flex flex-col gap-6">
           <TriageInboxWidget />
 
           <TransactionListWidget range={range} />
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'setup' && (
-        <div role="tabpanel" id="panel-setup" aria-labelledby="tab-setup" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
+        <TabPanel id="setup" className="flex flex-col gap-6">
           <CategoryManagerWidget selectedMonth={range.to} />
 
           <ReallocationHistory selectedMonth={range.to} />
 
           <CategorizationRulesWidget />
-        </div>
+        </TabPanel>
       )}
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

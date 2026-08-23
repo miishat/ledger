@@ -15,6 +15,7 @@ import { formatMoney } from '../components/planner/format'
 import { Stat } from '../components/ui/Stat'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs, type TabItem } from '../components/ui/Tabs'
+import { TabPanel } from '../components/ui/TabPanel'
 
 type InvestTab = 'journal' | 'portfolio' | 'trades' | 'wheel'
 
@@ -86,7 +87,7 @@ export const Investments: React.FC = () => {
       <Tabs items={INVEST_TABS} value={tab} onChange={setTab} ariaLabel="Investments sections" />
 
       {tab === 'journal' && (
-        <div role="tabpanel" id="panel-journal" aria-labelledby="tab-journal" tabIndex={0} className="flex flex-col gap-6 focus-visible:outline-none">
+        <TabPanel id="journal" className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4">
               <Stat label="Total Planned" value={formatMoney(plannedAll)} />
@@ -117,25 +118,25 @@ export const Investments: React.FC = () => {
           )}
 
           <AnalysisModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'portfolio' && (
-        <div role="tabpanel" id="panel-portfolio" aria-labelledby="tab-portfolio" tabIndex={0} className="focus-visible:outline-none">
+        <TabPanel id="portfolio">
           <PortfolioView />
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'trades' && (
-        <div role="tabpanel" id="panel-trades" aria-labelledby="tab-trades" tabIndex={0} className="focus-visible:outline-none">
+        <TabPanel id="trades">
           <TradesView />
-        </div>
+        </TabPanel>
       )}
 
       {tab === 'wheel' && (
-        <div role="tabpanel" id="panel-wheel" aria-labelledby="tab-wheel" tabIndex={0} className="focus-visible:outline-none">
+        <TabPanel id="wheel">
           <WheelView />
-        </div>
+        </TabPanel>
       )}
     </div>
   )
