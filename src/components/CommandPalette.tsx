@@ -42,7 +42,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <Search className="w-4 h-4 text-text-secondary" />
         <input
-          className="flex-1 bg-transparent text-text-primary text-[15px] outline-none placeholder:text-text-secondary"
+          className="flex-1 bg-transparent text-text-primary text-[15px] placeholder:text-text-secondary"
           placeholder="Jump to a page or tool…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setSelected(0) }}

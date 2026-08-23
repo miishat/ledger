@@ -213,7 +213,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           type="text" 
                           value={cat.name} 
                           onChange={(e) => updateCategory(cat.id, { name: e.target.value })}
-                          className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent focus:outline-none truncate w-full"
+                          className="text-[14px] font-medium text-text-primary bg-transparent border-b border-transparent hover:border-border focus:border-accent truncate w-full"
                           placeholder="Category Name"
                         />
                         <ThemedSelect
@@ -289,7 +289,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                               <NumberInput
                                 value={cat.targetAmount}
                                 onCommit={(n) => updateCategory(cat.id, { targetAmount: n })}
-                                className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:outline-none focus:border-accent"
+                                className="w-16 bg-bg-secondary border border-border rounded px-2 py-0.5 text-[13px] text-right focus:border-accent"
                               />
                               {!isIncomeGroup && (
                                 <div className="flex rounded border border-border overflow-hidden ml-1">
@@ -350,7 +350,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="e.g. Dining Out"
-                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:border-accent"
                 />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
@@ -380,7 +380,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="e.g. Discretionary"
-                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:outline-none focus:border-accent"
+                  className="w-full bg-bg-primary border border-border rounded px-3 py-1.5 text-[14px] focus:border-accent"
                 />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-[140px]">

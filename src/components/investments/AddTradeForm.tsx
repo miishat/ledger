@@ -5,7 +5,7 @@ import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
 
 const inputCls =
-  'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent w-28'
+  'bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[14px] focus:border-accent w-28'
 
 /** "Add Trade" entry point for the Actual tab: pick a planned ticker,
  *  enter date / shares / price; saved as a buy lot on that position. */

@@ -33,7 +33,7 @@ export const CalculatorField: React.FC<CalculatorFieldProps> = ({
         {prefix && <span className="text-[13px] text-text-secondary whitespace-nowrap shrink-0">{prefix}</span>}
         <NumberInput
           id={inputId}
-          className="w-full bg-transparent text-text-primary text-[15px] outline-none"
+          className="w-full bg-transparent text-text-primary text-[15px]"
           value={value}
           min={min}
           max={max}

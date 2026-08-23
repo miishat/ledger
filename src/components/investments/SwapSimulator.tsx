@@ -17,7 +17,7 @@ interface SwapSimulatorProps {
 }
 
 const inputCls =
-  'bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[13px] outline-none focus:border-accent w-full'
+  'bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[13px] focus:border-accent w-full'
 
 const SwapRow: React.FC<{
   analysis: InvestmentAnalysis
@@ -118,7 +118,7 @@ const SwapRow: React.FC<{
               value={manualCurrentDraft}
               onCommit={setManualCurrentDraft}
               placeholder="Manual current price"
-              className="w-32 bg-bg-primary/50 border control-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent focus:outline-none transition-colors"
+              className="w-32 bg-bg-primary/50 border control-border rounded px-2 py-1 text-[12px] text-text-primary focus:border-accent transition-colors"
             />
             <button type="submit" className="px-2 py-1 bg-bg-primary/50 border control-border rounded text-[12px] text-text-primary hover:text-accent transition-colors">
               Set
