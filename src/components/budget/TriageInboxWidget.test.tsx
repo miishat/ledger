@@ -84,3 +84,59 @@ describe('TriageInboxWidget', () => {
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
   })
 })
+
+describe('TriageInboxWidget card payments', () => {
+  const seedFlagged = () =>
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-22', amount: 4.29, description: 'LIDL', type: 'expense' },
+        b: {
+          id: 'b', date: '2026-08-21', amount: 50, description: 'Payment Thank You-Mobile',
+          type: 'income', flag: 'card-payment',
+        },
+      },
+    })
+
+  it('badges a flagged row', () => {
+    seedFlagged()
+    render(<TriageInboxWidget />)
+    expect(screen.getByText('card payment, not income')).toBeInTheDocument()
+  })
+
+  it('excludes flagged rows from the accept all count', () => {
+    seedFlagged()
+    render(<TriageInboxWidget />)
+    expect(screen.getByRole('button', { name: /Accept All \(1\)/ })).toBeInTheDocument()
+  })
+
+  it('rejects only the flagged rows via the header button', () => {
+    seedFlagged()
+    render(<TriageInboxWidget />)
+    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 card payment' }))
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
+  })
+
+  it('offers no card payment button when nothing is flagged', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-22', amount: 4.29, description: 'LIDL', type: 'expense' },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.queryByRole('button', { name: /card payment/ })).not.toBeInTheDocument()
+  })
+
+  it('counts a row that is both duplicate and flagged only once', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        a: { id: 'a', date: '2026-08-22', amount: 4.29, description: 'LIDL', type: 'expense' },
+        b: {
+          id: 'b', date: '2026-08-21', amount: 50, description: 'Payment Thank You-Mobile',
+          type: 'income', flag: 'card-payment', duplicate: 'exact',
+        },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.getByRole('button', { name: /Accept All \(1\)/ })).toBeInTheDocument()
+  })
+})
