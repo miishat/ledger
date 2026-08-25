@@ -10,7 +10,7 @@ describe('TransactionModal error identification', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Transaction' }))
 
     const alert = screen.getByRole('alert')
-    expect(alert).toHaveTextContent('Enter an amount greater than zero.')
+    expect(alert).toHaveTextContent('Enter an amount. Use a negative amount for a refund.')
     expect(screen.getByLabelText('Amount')).toHaveAttribute('aria-invalid', 'true')
   })
 

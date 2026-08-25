@@ -83,15 +83,23 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount <= 0) {
-      setAmountError('Enter an amount greater than zero.');
+    // An expense may be negative: that is a refund, money returning to the
+    // category it left. Income may not, because a negative income has no
+    // meaning here and would corrupt income totals.
+    const amountInvalid = type === 'expense' ? amount === 0 : amount <= 0;
+    if (amountInvalid) {
+      setAmountError(
+        type === 'expense'
+          ? 'Enter an amount. Use a negative amount for a refund.'
+          : 'Enter an amount greater than zero.',
+      );
       document.getElementById('tx-amount')?.focus();
       return;
     }
     setAmountError(null);
 
     const sharedField =
-      type === 'expense' && isShared && totalPaid > amount && sharedWith.trim()
+      type === 'expense' && amount > 0 && isShared && totalPaid > amount && sharedWith.trim()
         ? { totalAmount: totalPaid, sharedWith: sharedWith.trim() }
         : undefined;
     const reimbursementField =

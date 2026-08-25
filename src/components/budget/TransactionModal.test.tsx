@@ -195,3 +195,46 @@ describe('TransactionModal splits, tags and note', () => {
     expect(saved.tags).toBeUndefined()
   })
 })
+
+describe('TransactionModal negative amounts', () => {
+  const setAmount = (value: string) => {
+    const input = screen.getAllByPlaceholderText('0.00')[0] as HTMLInputElement
+    fireEvent.change(input, { target: { value } })
+    fireEvent.blur(input)
+  }
+
+  const submit = () => fireEvent.click(screen.getByRole('button', { name: /add transaction|save/i }))
+
+  it('accepts a negative expense as a refund', () => {
+    seed()
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    setAmount('-39.99')
+    submit()
+
+    const saved = Object.values(useBudgetStore.getState().transactions)
+    expect(saved).toHaveLength(1)
+    expect(saved[0].amount).toBe(-39.99)
+    expect(saved[0].type).toBe('expense')
+  })
+
+  it('still rejects a negative income', () => {
+    seed()
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Income' }))
+    setAmount('-10')
+    submit()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero.')
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  })
+
+  it('still rejects an amount of exactly zero', () => {
+    seed()
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    setAmount('0')
+    submit()
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  })
+})
