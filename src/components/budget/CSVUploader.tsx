@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { parseCSV, type UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
+import { chaseCategoryId } from '../../utils/budget/chaseCategoryMap';
 import { classifyDuplicates } from '../../utils/budget/importDedupe';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
@@ -27,8 +28,11 @@ export const CSVUploader: React.FC = () => {
   const handleTransactions = (transactions: TriageTransaction[]) => {
     // Auto-categorize
     const categorized = transactions.map(tx => {
-      // NOTE: guessCategory will be updated to take categoryRules shortly.
-      const categoryId = guessCategory(tx.description, categories, categoryRules);
+      // The user's own learned rules are deliberate, so they win. Chase's own
+      // category column is consulted only where no rule matched.
+      const categoryId =
+        guessCategory(tx.description, categories, categoryRules) ??
+        chaseCategoryId(tx.originalRowData?.['Category'], categories);
       return {
         ...tx,
         categoryId
