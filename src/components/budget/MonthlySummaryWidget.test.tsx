@@ -17,33 +17,24 @@ describe('MonthlySummaryWidget', () => {
   })
 })
 
-describe('MonthlySummaryWidget forecast tooltip', () => {
-  it('lists a pending recurring expense with a single minus sign, not a double one', () => {
-    // detectRecurring only accepts a positive median amount (amtMed <= 0 is
-    // rejected), so a pending forecast row can never carry a negative
-    // amount in practice, and this test cannot go red against the old code:
-    // for a positive amount, formatMoney(-p.amount) and the old '-' +
-    // formatMoney(p.amount) render identically. It is a pure regression
-    // guard, confirming the tooltip line touched by this task still renders
-    // an ordinary recurring expense with one minus sign after the rewrite.
-    const today = new Date()
-    const isoDate = (d: Date) => d.toISOString().slice(0, 10)
-    const daysAgo = (n: number) => {
-      const d = new Date(today)
-      d.setDate(d.getDate() - n)
-      return isoDate(d)
-    }
+describe('MonthlySummaryWidget Money Out', () => {
+  it('does not render a double minus when refunds exceed spending for the month', () => {
+    // A Chase refund is stored as an expense-typed transaction with a
+    // negative amount. If a month's refunds outweigh its other spending,
+    // totalExpense (a plain sum over expense-typed transactions) goes
+    // negative, and "-{formatMoney(totalExpense)}" renders a double minus
+    // like "--$40" instead of a plain positive figure.
     useBudgetStore.setState({
       transactions: {
-        a: { id: 'a', date: daysAgo(20), amount: 39.99, description: 'AMAZON MKTPLACE PMTS', type: 'expense' },
-        b: { id: 'b', date: daysAgo(13), amount: 39.99, description: 'AMAZON MKTPLACE PMTS', type: 'expense' },
-        c: { id: 'c', date: daysAgo(6), amount: 39.99, description: 'AMAZON MKTPLACE PMTS', type: 'expense' },
+        a: { id: 'a', date: '2026-08-10', amount: 10, description: 'COFFEE SHOP', type: 'expense' },
+        b: { id: 'b', date: '2026-08-15', amount: -50, description: 'RETURN CHASE CREDIT', type: 'expense' },
       },
     })
-    const month = isoDate(today).slice(0, 7)
-    render(<MonthlySummaryWidget range={{ from: month, to: month }} />)
-    const tooltip = screen.getByText('Projected Net').closest('[title]')?.getAttribute('title') ?? ''
-    expect(tooltip).not.toContain('--')
-    expect(tooltip).toContain('-$40')
+    render(<MonthlySummaryWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    const moneyOutLabel = screen.getByText('Money Out')
+    const moneyOutRow = moneyOutLabel.closest('div.flex.justify-between')
+    const moneyOutText = moneyOutRow?.textContent ?? ''
+    expect(moneyOutText).not.toContain('--')
+    expect(moneyOutText).toContain('$40')
   })
 })

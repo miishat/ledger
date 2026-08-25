@@ -57,7 +57,7 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ rang
               <span className="text-text-secondary">Money Out</span>
             </div>
             <span className="font-medium text-text-primary">
-              -{formatMoney(totalExpense)}
+              {formatMoney(-totalExpense)}
             </span>
           </div>
 

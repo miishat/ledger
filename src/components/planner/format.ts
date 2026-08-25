@@ -1,7 +1,7 @@
 export function formatMoney(n: number): string {
-  const rounded = Math.round(n)
-  const abs = Math.abs(rounded).toLocaleString('en-CA')
-  return `${rounded < 0 ? '-' : ''}$${abs}`
+  const roundedAbs = Math.round(Math.abs(n))
+  const abs = roundedAbs.toLocaleString('en-CA')
+  return `${n < 0 && roundedAbs !== 0 ? '-' : ''}$${abs}`
 }
 
 /** Compact axis labels: $950, $12k, $500k, $1.2M, $12M. */

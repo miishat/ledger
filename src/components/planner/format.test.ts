@@ -27,3 +27,21 @@ describe('formatMoney (existing, unchanged)', () => {
     expect(formatMoney(1234567)).toBe('$1,234,567')
   })
 })
+
+describe('formatMoney (symmetric rounding)', () => {
+  it('rounds a positive half-dollar tie up in magnitude', () => {
+    expect(formatMoney(21.50)).toBe('$22')
+  })
+  it('rounds a negative half-dollar tie up in magnitude, not toward +Infinity', () => {
+    expect(formatMoney(-21.50)).toBe('-$22')
+  })
+  it('rounds a small positive half tie up in magnitude', () => {
+    expect(formatMoney(0.5)).toBe('$1')
+  })
+  it('rounds a small negative half tie up in magnitude', () => {
+    expect(formatMoney(-0.5)).toBe('-$1')
+  })
+  it('renders a value that rounds to zero as $0, never -$0', () => {
+    expect(formatMoney(-0.4)).toBe('$0')
+  })
+})
