@@ -106,9 +106,12 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
   }
 
   const incomeNames = [...incomeByCat.keys()]
-  const expenseNames = [...expenseByGroup.keys()]
+  // A group whose refunds outweigh its spending nets zero or less. A Sankey has
+  // no way to draw a negative flow, so the group is left out of the diagram
+  // rather than drawn as a node with no link into it.
+  const expenseNames = [...expenseByGroup.keys()].filter((name) => (expenseByGroup.get(name) ?? 0) > 0)
   const totalIncome = [...incomeByCat.values()].reduce((s, v) => s + v, 0)
-  const totalExpense = [...expenseByGroup.values()].reduce((s, v) => s + v, 0)
+  const totalExpense = expenseNames.reduce((s, name) => s + (expenseByGroup.get(name) ?? 0), 0)
   const savings = Math.max(0, totalIncome - totalExpense)
 
   const poolIdx = incomeNames.length
