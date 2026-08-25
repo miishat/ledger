@@ -97,7 +97,7 @@ export const TriageInboxWidget: React.FC = () => {
                 </p>
               </div>
               <span className={`text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
-                {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                {tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount)}
               </span>
             </div>
             

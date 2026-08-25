@@ -140,3 +140,36 @@ describe('TriageInboxWidget card payments', () => {
     expect(screen.getByRole('button', { name: /Accept All \(1\)/ })).toBeInTheDocument()
   })
 })
+
+describe('TriageInboxWidget negative expenses', () => {
+  it('renders a refund as a positive figure rather than a double minus', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        r: { id: 'r', date: '2026-08-15', amount: -39.99, description: 'AMAZON MKTPLACE PMTS', type: 'expense' },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.getByText('$40')).toBeInTheDocument()
+    expect(screen.queryByText('-$-40')).not.toBeInTheDocument()
+  })
+
+  it('still renders an ordinary expense with a minus sign', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        e: { id: 'e', date: '2026-08-15', amount: 21.31, description: 'TST FIG 19', type: 'expense' },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.getByText('-$21')).toBeInTheDocument()
+  })
+
+  it('still renders income with a plus sign', () => {
+    useTriageStore.setState({
+      pendingTransactions: {
+        i: { id: 'i', date: '2026-08-15', amount: 100, description: 'PAYROLL', type: 'income' },
+      },
+    })
+    render(<TriageInboxWidget />)
+    expect(screen.getByText('+$100')).toBeInTheDocument()
+  })
+})

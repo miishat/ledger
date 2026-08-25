@@ -171,7 +171,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
 
   const getTransactionDisplay = (tx: Transaction) => ({
     amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
-    amountPrefix: tx.type === 'income' ? '+' : '-',
+    amountText: tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount),
     categoryLabel: resolveCategoryLabel(tx, categories),
     badge: tx.shared
       ? `shared · ${tx.shared.sharedWith}`
@@ -337,7 +337,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   <tr aria-hidden="true"><td colSpan={6} style={{ height: windowed.padTop, padding: 0 }} /></tr>
                 )}
                 {visibleRows.map((tx, i) => {
-                  const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
+                  const { amountClass, amountText, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
                   return (
                   <tr
                     key={tx.id}
@@ -391,7 +391,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                       )}
                     </td>
                     <td className={`py-3 text-[14px] font-medium text-right ${amountClass}`}>
-                      {amountPrefix}{formatMoney(tx.amount)}
+                      {amountText}
                     </td>
                     <td className="py-3 text-right">
                       <button
@@ -428,7 +428,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               <div aria-hidden="true" style={{ height: cardWindow.padTop }} />
             )}
             {visibleCards.map(tx => {
-              const { amountClass, amountPrefix, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
+              const { amountClass, amountText, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
               return (
               <div
                 key={tx.id}
@@ -461,7 +461,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
                   >
                     <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
                     <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
-                      {amountPrefix}{formatMoney(tx.amount)}
+                      {amountText}
                     </span>
                   </button>
                   <button

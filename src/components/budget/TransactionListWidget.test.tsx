@@ -459,6 +459,23 @@ describe('TransactionListWidget selection at scale', () => {
   )
 })
 
+describe('TransactionListWidget negative expenses', () => {
+  it('renders a refund without a double minus', () => {
+    useBudgetStore.setState({
+      ...useBudgetStore.getState(),
+      transactions: {
+        r: {
+          id: 'r', date: '2026-08-15', amount: -39.99, description: 'AMAZON MKTPLACE PMTS',
+          type: 'expense', categoryId: '',
+        },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
+    expect(screen.queryByText('-$-40')).not.toBeInTheDocument()
+    expect(screen.getAllByText('$40').length).toBeGreaterThan(0)
+  })
+})
+
 describe('TransactionListWidget row-height measurement loop safety', () => {
   it('stops re-rendering once the measured row height stabilizes, instead of looping forever', async () => {
     // jsdom never lays out elements, so getBoundingClientRect on a real row
