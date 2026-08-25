@@ -59,7 +59,9 @@ test('submitting Add Transaction empty explains itself', async ({ page }) => {
   await page.getByRole('button', { name: 'Add Transaction' }).first().click()
   await page.waitForTimeout(400)
   await page.locator('[data-testid=sheet-panel] button[type=submit]').click()
-  await expect(page.getByRole('alert')).toHaveText('Enter an amount greater than zero.')
+  // The modal opens on Expense, where a negative amount is a valid refund, so the
+  // zero-amount message says so. Income still uses "greater than zero".
+  await expect(page.getByRole('alert')).toHaveText('Enter an amount. Use a negative amount for a refund.')
   await expect(page.locator('#tx-amount')).toHaveAttribute('aria-invalid', 'true')
 })
 
