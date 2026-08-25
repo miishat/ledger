@@ -142,3 +142,24 @@ describe('BudgetProgressWidget unbudgeted spending', () => {
     expect(screen.queryByText('Unbudgeted spending')).not.toBeInTheDocument()
   })
 })
+
+describe('BudgetProgressWidget negative spend', () => {
+  it('clamps the bar at zero width but still reports the negative figure', () => {
+    const month = new Date().toISOString().slice(0, 7)
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Shopping', kind: 'expense' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Personal', targetAmount: 100 } },
+      transactions: {
+        r1: {
+          id: 'r1', date: `${month}-03`, amount: -50, description: 'REFUND',
+          type: 'expense', categoryId: 'c1',
+        },
+      },
+      reallocations: {},
+    })
+    const { container } = render(<BudgetProgressWidget range={{ from: month, to: month }} />)
+    const widths = [...container.querySelectorAll<HTMLElement>('[style*="width"]')].map((el) => el.style.width)
+    expect(widths.length).toBeGreaterThan(0)
+    expect(widths.every((w) => !w.startsWith('-'))).toBe(true)
+  })
+})
