@@ -97,7 +97,17 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
     }
   }
 
-  if (incomeByCat.size === 0 && expenseByGroup.size === 0) {
+  const incomeNames = [...incomeByCat.keys()]
+  // A group whose refunds outweigh its spending nets zero or less. A Sankey has
+  // no way to draw a negative flow, so the group is left out of the diagram
+  // rather than drawn as a node with no link into it.
+  const expenseNames = [...expenseByGroup.keys()].filter((name) => (expenseByGroup.get(name) ?? 0) > 0)
+
+  // Check against what will actually be drawn, not against the raw maps: a
+  // group that nets to zero or less is filtered out of expenseNames above,
+  // so a month with no income and only such a group would otherwise reach
+  // the Sankey below with nothing left to render.
+  if (incomeNames.length === 0 && expenseNames.length === 0) {
     return (
       <WidgetWrapper title="Cash Flow">
         <p className="text-[13px] text-text-secondary mt-2">No transactions this month.</p>
@@ -105,11 +115,6 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
     )
   }
 
-  const incomeNames = [...incomeByCat.keys()]
-  // A group whose refunds outweigh its spending nets zero or less. A Sankey has
-  // no way to draw a negative flow, so the group is left out of the diagram
-  // rather than drawn as a node with no link into it.
-  const expenseNames = [...expenseByGroup.keys()].filter((name) => (expenseByGroup.get(name) ?? 0) > 0)
   const totalIncome = [...incomeByCat.values()].reduce((s, v) => s + v, 0)
   const totalExpense = expenseNames.reduce((s, name) => s + (expenseByGroup.get(name) ?? 0), 0)
   const savings = Math.max(0, totalIncome - totalExpense)
