@@ -238,3 +238,75 @@ describe('TransactionModal negative amounts', () => {
     expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
   })
 })
+
+describe('TransactionModal negative expense splitting is out of scope', () => {
+  const setAmount = (value: string) => {
+    const input = screen.getAllByPlaceholderText('0.00')[0] as HTMLInputElement
+    fireEvent.change(input, { target: { value } })
+    fireEvent.blur(input)
+  }
+
+  it('hides the split control once the amount goes negative', () => {
+    seed()
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    setAmount('50')
+    expect(screen.getByLabelText('Split across categories')).toBeInTheDocument()
+
+    setAmount('-50')
+    expect(screen.queryByLabelText('Split across categories')).not.toBeInTheDocument()
+  })
+
+  it('does not save splits on a negative expense, even if slices were entered before the amount went negative', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: {},
+    })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+
+    setAmount('180')
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
+    const sliceAmounts = screen.getAllByLabelText('Slice amount')
+    fireEvent.change(sliceAmounts[0], { target: { value: '120' } })
+    fireEvent.blur(sliceAmounts[0])
+
+    // Flip the amount negative after slices were entered: the split control
+    // disappears, but isSplit/splits still live in component state, so the
+    // save-time guard is what must close this path.
+    setAmount('-180')
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.amount).toBe(-180)
+    expect(saved.splits).toBeUndefined()
+  })
+
+  it('still saves an ordinary positive split exactly as before', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: {},
+    })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+
+    setAmount('180')
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
+    const sliceAmounts = screen.getAllByLabelText('Slice amount')
+    fireEvent.change(sliceAmounts[0], { target: { value: '120' } })
+    fireEvent.blur(sliceAmounts[0])
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.amount).toBe(180)
+    expect(saved.splits).toEqual([{ categoryId: 'groceries', amount: 120 }])
+  })
+})
