@@ -34,7 +34,8 @@ describe('MonthlySummaryWidget Money Out', () => {
     const moneyOutLabel = screen.getByText('Money Out')
     const moneyOutRow = moneyOutLabel.closest('div.flex.justify-between')
     const moneyOutText = moneyOutRow?.textContent ?? ''
-    expect(moneyOutText).not.toContain('--')
-    expect(moneyOutText).toContain('$40')
+    // Pinned to the exact string so a wrong-sign regression (e.g. "-$40")
+    // fails this test instead of slipping through a loose toContain check.
+    expect(moneyOutText).toBe('Money Out$40')
   })
 })
