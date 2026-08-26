@@ -251,7 +251,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           const effectiveTarget = monthlyEquivalent(cat) + reallocsIn - reallocsOut;
 
                           const isOverBudget = !isIncomeGroup && actualAmount > effectiveTarget && effectiveTarget > 0;
-                          const progressPercentage = effectiveTarget > 0 ? Math.min((actualAmount / effectiveTarget) * 100, 100) : 0;
+                          const progressPercentage = effectiveTarget > 0 ? Math.max(0, Math.min((actualAmount / effectiveTarget) * 100, 100)) : 0;
                           
                           let progressColor = 'bg-[var(--color-accent)]';
                           if (!isIncomeGroup) {
@@ -265,7 +265,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             <>
                               <div className="flex flex-col items-end min-w-[100px]">
                                 <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-error' : 'text-text-secondary'}`}>
-                                  ${actualAmount.toFixed(0)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `($${(actualAmount - effectiveTarget).toFixed(0)} over)`}
+                                  {formatMoney(actualAmount)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `(${formatMoney(actualAmount - effectiveTarget)} over)`}
                                 </span>
                                 {paradigm === 'Zero-Based' && (stats.perCategory[cat.id]?.overspend ?? 0) > 0 && (
                                   <button

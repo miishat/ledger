@@ -183,6 +183,40 @@ describe('split transaction attribution', () => {
   })
 })
 
+describe('refunds can make a category net negative', () => {
+  it('shows the truthful negative spent figure and does not render a dropped/negative-width progress bar', () => {
+    useBudgetStore.setState({
+      paradigm: 'Ledger Custom',
+      budgetSetupCollapsed: false,
+      transactions: {
+        // A $60 purchase followed by a $100 refund nets -$40 for the category.
+        t1: { id: 't1', date: '2026-07-05', amount: 60, categoryId: 'c1', description: 'Widget', type: 'expense' },
+        t2: { id: 't2', date: '2026-07-10', amount: -100, categoryId: 'c1', description: 'Refund', type: 'expense' },
+      },
+      reallocations: {},
+      categoryGroups: {
+        g1: { id: 'g1', name: 'Housing', kind: 'expense' },
+      },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 100 },
+      },
+    })
+    const { container } = render(<CategoryManagerWidget selectedMonth="2026-07" />)
+
+    // The displayed figure must stay truthful and negative.
+    expect(screen.getByText(/-\$40 spent/)).toBeInTheDocument()
+
+    // The progress bar must never render a negative or CSS-invalid width.
+    const bar = container.querySelector('.h-1.bg-bg-secondary .h-full') as HTMLElement
+    expect(bar).not.toBeNull()
+    const width = bar.style.width
+    expect(width).not.toMatch(/^-/)
+    const pct = parseFloat(width)
+    expect(pct).toBeGreaterThanOrEqual(0)
+    expect(pct).toBe(0)
+  })
+})
+
 describe('cadence toggle', () => {
   it('switches an expense category to annual and persists it', () => {
     useBudgetStore.setState({

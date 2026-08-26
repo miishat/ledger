@@ -13,7 +13,8 @@
 - Do not use em dashes in any code comment, commit message, changelog entry or UI copy.
 - Ships as **v0.9.6-beta**. Current version in `package.json` is `0.9.5-beta`.
 - Test runner is Vitest. Run a single file with `npx vitest run <path>`; a single test with `npx vitest run <path> -t "<test name>"`. `npm test` alone starts watch mode, so always pass `run`.
-- Every new guard must be shown failing before it is made to pass. A step that says "run the test to verify it fails" is not optional, and its stated expected failure must actually be observed. If a test passes on the first run, the guard is not testing what it claims and must be fixed before proceeding.
+- Every test covering **new** behavior must be shown failing before it is made to pass. A step that says "run the test to verify it fails" is not optional, and its stated expected failure must actually be observed. If a test of new behavior passes on the first run, the guard is not testing what it claims and must be fixed before proceeding.
+- Tests explicitly labelled as **regression guards for existing behavior** are expected to pass immediately. That is their purpose: they pin behavior a refactor in the same task must not break. Each task below names which of its tests are regression guards. Report them as such; do not delete or rewrite them to manufacture a failure.
 - Duplicate detection in `src/utils/budget/importDedupe.ts` is **out of scope**. Do not modify it or its tests.
 - Splits on negative transactions are **out of scope**. Do not add support for them.
 - Follow the surrounding file's existing conventions. `src/utils/budget/*.ts` files omit semicolons; `src/components/budget/*.tsx` files use them. Match whichever file you are editing.

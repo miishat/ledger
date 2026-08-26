@@ -83,15 +83,23 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount <= 0) {
-      setAmountError('Enter an amount greater than zero.');
+    // An expense may be negative: that is a refund, money returning to the
+    // category it left. Income may not, because a negative income has no
+    // meaning here and would corrupt income totals.
+    const amountInvalid = type === 'expense' ? amount === 0 : amount <= 0;
+    if (amountInvalid) {
+      setAmountError(
+        type === 'expense'
+          ? 'Enter an amount. Use a negative amount for a refund.'
+          : 'Enter an amount greater than zero.',
+      );
       document.getElementById('tx-amount')?.focus();
       return;
     }
     setAmountError(null);
 
     const sharedField =
-      type === 'expense' && isShared && totalPaid > amount && sharedWith.trim()
+      type === 'expense' && amount > 0 && isShared && totalPaid > amount && sharedWith.trim()
         ? { totalAmount: totalPaid, sharedWith: sharedWith.trim() }
         : undefined;
     const reimbursementField =
@@ -99,7 +107,12 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
         ? { from: reimbursementFrom.trim() }
         : undefined;
 
-    const cleanedSplits = isSplit
+    // Splitting a negative expense (a refund) is out of scope: the parts of a
+    // transaction must sum to its amount (see splits.ts), and a negative
+    // amount cannot be represented as a sum of positive slices. Refuse to
+    // save splits here even if slices were entered before the amount was
+    // made negative.
+    const cleanedSplits = isSplit && amount > 0
       ? splits
           .filter((s) => s.amount > 0)
           .map((s) => ({ categoryId: s.categoryId || undefined, amount: round2(s.amount) }))
@@ -301,6 +314,10 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             />
           </div>
 
+          {/* Splitting a negative expense (a refund) is out of scope: negative amounts
+              cannot be represented as a sum of positive slices (see splits.ts). Hide the
+              control entirely rather than let a refund reach the split UI. */}
+          {amount >= 0 && (
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
               <Checkbox checked={isSplit} onChange={setIsSplit} ariaLabel="Split across categories" />
@@ -358,6 +375,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               </div>
             )}
           </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <label htmlFor="tx-tags" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">

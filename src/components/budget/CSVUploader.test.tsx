@@ -65,3 +65,40 @@ it('flags an imported row that already exists in the budget', async () => {
   expect(pending.find((p) => p.description === 'Tim Hortons #123')?.duplicate).toBe('exact')
   expect(pending.find((p) => p.description === 'Coffee')?.duplicate).toBeUndefined()
 })
+
+describe('CSVUploader Chase category fallback', () => {
+  it('uses the Chase category only when no learned rule matches', async () => {
+    useBudgetStore.setState({
+      ...useBudgetStore.getState(),
+      categories: {
+        cg: { id: 'cg', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        cp: { id: 'cp', groupId: 'g1', name: 'Personal', targetAmount: 0 },
+      },
+    })
+    useTriageStore.setState({ pendingTransactions: {}, categoryRules: { lidl: 'cp' } })
+
+    vi.mocked(parseCSV).mockResolvedValueOnce([
+      {
+        id: 'r1', date: '2026-08-22', amount: 4.29, description: 'LIDL #1590', type: 'expense',
+        originalRowData: { Category: 'Groceries' },
+      },
+      {
+        id: 'r2', date: '2026-08-22', amount: 11.38, description: 'TARGET T-3284', type: 'expense',
+        originalRowData: { Category: 'Shopping' },
+      },
+    ])
+
+    render(<CSVUploader />)
+    const file = new File(['x'], 'chase.csv', { type: 'text/csv' })
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    await waitFor(() => {
+      const pending = useTriageStore.getState().pendingTransactions
+      // The learned "lidl" rule wins over Chase's own Groceries category.
+      expect(pending['r1'].categoryId).toBe('cp')
+      // No rule matches TARGET, so Chase's Shopping maps to Personal.
+      expect(pending['r2'].categoryId).toBe('cp')
+    })
+  })
+})

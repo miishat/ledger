@@ -108,3 +108,36 @@ describe('rejectDuplicates', () => {
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
   })
 })
+
+const seed = () =>
+  useTriageStore.setState({
+    pendingTransactions: {
+      a: { id: 'a', date: '2026-08-22', amount: 4.29, description: 'LIDL', type: 'expense' },
+      b: {
+        id: 'b', date: '2026-08-21', amount: 50, description: 'Payment Thank You-Mobile',
+        type: 'income', flag: 'card-payment',
+      },
+    },
+  })
+
+describe('triage store card payment flag', () => {
+  it('holds flagged rows back from approveAll', () => {
+    seed()
+    const approved = useTriageStore.getState().approveAll()
+    expect(approved).toEqual(['a'])
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['b'])
+    expect(useBudgetStore.getState().transactions['b']).toBeUndefined()
+  })
+
+  it('still approves a flagged row individually', () => {
+    seed()
+    useTriageStore.getState().approveTransaction('b')
+    expect(useBudgetStore.getState().transactions['b']).toBeDefined()
+  })
+
+  it('rejectCardPayments clears only the flagged rows', () => {
+    seed()
+    useTriageStore.getState().rejectCardPayments()
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
+  })
+})

@@ -10,6 +10,9 @@ export interface TriageTransaction {
    *  budget. 'exact' means same date, amount, direction and description;
    *  'possible' means same date, amount and direction only. */
   duplicate?: 'exact' | 'possible';
+  /** Set at import time for rows that are not real income or spending, such as
+   *  a credit card bill payment. Flagged rows are held back from bulk accept. */
+  flag?: 'card-payment';
 }
 
 export interface BankParserConfig {

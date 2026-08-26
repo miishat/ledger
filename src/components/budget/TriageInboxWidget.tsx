@@ -16,6 +16,7 @@ export const TriageInboxWidget: React.FC = () => {
   const addPending = useTriageStore((state) => state.addPending);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
   const rejectDuplicates = useTriageStore((state) => state.rejectDuplicates);
+  const rejectCardPayments = useTriageStore((state) => state.rejectCardPayments);
   const clearAll = useTriageStore((state) => state.clearAll);
   const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
   const offerUndo = useUndoStore((state) => state.offerUndo);
@@ -29,10 +30,13 @@ export const TriageInboxWidget: React.FC = () => {
   if (txList.length === 0) return null;
 
   const duplicates = txList.filter((tx) => tx.duplicate);
-  const acceptableCount = txList.length - duplicates.length;
+  const cardPayments = txList.filter((tx) => tx.flag === 'card-payment');
+  // Recomputed from the list rather than subtracted, because one row can be both
+  // a duplicate and flagged, and subtracting both counts would double-count it.
+  const acceptableCount = txList.filter((tx) => !tx.duplicate && !tx.flag).length;
 
   const handleAcceptAll = () => {
-    const rows = txList.filter((tx) => !tx.duplicate);
+    const rows = txList.filter((tx) => !tx.duplicate && !tx.flag);
     const ids = approveAll();
     offerUndo(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`, () => {
       deleteTransactions(ids);
@@ -57,6 +61,14 @@ export const TriageInboxWidget: React.FC = () => {
             Reject {duplicates.length} duplicate{duplicates.length === 1 ? '' : 's'}
           </button>
         )}
+        {cardPayments.length > 0 && (
+          <button
+            onClick={rejectCardPayments}
+            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
+          >
+            Reject {cardPayments.length} card payment{cardPayments.length === 1 ? '' : 's'}
+          </button>
+        )}
         <button
           onClick={handleAcceptAll}
           className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
@@ -77,10 +89,15 @@ export const TriageInboxWidget: React.FC = () => {
                       {tx.duplicate === 'exact' ? 'already imported' : 'possible duplicate'}
                     </span>
                   )}
+                  {tx.flag === 'card-payment' && (
+                    <span className="ml-2 px-2 py-0.5 rounded-md text-meta bg-error/10 text-error">
+                      card payment, not income
+                    </span>
+                  )}
                 </p>
               </div>
               <span className={`text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
-                {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                {tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount)}
               </span>
             </div>
             

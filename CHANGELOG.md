@@ -6,6 +6,26 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.6-beta] - 2026-08-25
+
+Support for Chase credit card statements, and the groundwork refunds needed in
+order to be recorded honestly.
+
+### Added
+- Chase credit card activity exports now import directly, instead of falling through to the manual column-mapping dialog. Merchant names arrive readable rather than HTML-escaped
+- A credit card bill payment is now recognized for what it is. It arrives in triage badged "card payment, not income", is held back from Accept All so it can never be swept in as earnings, and can be cleared in one click with "Reject N card payments"
+- Where you have no rule of your own for a merchant, Chase's own category is now used as a starting guess. Your own learned rules always win
+
+### Changed
+- A refund is now recorded as money returning to the category it left, rather than as income. Your income figure no longer counts refunds, and the category the money came back to reflects it
+- A transaction amount may now be negative when it is an expense, so a refund can be entered or corrected by hand. Income still has to be greater than zero
+- Amounts ending in exactly 50 cents now round the same way whether they are money in or money out. An expense of 21.50 and an income of 21.50 used to round to different dollar figures; now they match
+
+### Fixed
+- Amounts no longer render with two minus signs where a transaction is negative
+- A month whose refunds outweigh its spending no longer shows a broken figure in the Monthly Summary, and an expense group in the same position is now left out of the Cash Flow chart instead of being drawn as a flow that cannot exist
+- A budget progress bar can no longer render backwards when refunds exceed what was spent in a category, while the figure beside it still correctly reads as the negative amount it is
+
 ## [0.9.5-beta] - 2026-08-22
 
 A desktop and tablet pass. The previous release fixed the phone experience; an audit of the

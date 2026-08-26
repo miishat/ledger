@@ -106,7 +106,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
               <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
                 <div
                   className={`h-full ${totalSpent > budgeted ? 'bg-error' : 'bg-accent'}`}
-                  style={{ width: `${Math.min(100, (totalSpent / budgeted) * 100)}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, (totalSpent / budgeted) * 100))}%` }}
                 />
               </div>
             </div>
@@ -123,7 +123,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
               <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
                 <div
                   className={`h-full ${pace === 'over' ? 'bg-error' : 'bg-accent'}`}
-                  style={{ width: `${Math.min(100, (spent / target) * 100)}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, (spent / target) * 100))}%` }}
                 />
               </div>
             </div>
@@ -143,7 +143,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
                   <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
                     <div
                       className={`h-full ${pace === 'over' ? 'bg-error' : 'bg-accent'}`}
-                      style={{ width: `${Math.min(100, (spent / annual) * 100)}%` }}
+                      style={{ width: `${Math.max(0, Math.min(100, (spent / annual) * 100))}%` }}
                     />
                   </div>
                   <p className="text-meta text-text-secondary">

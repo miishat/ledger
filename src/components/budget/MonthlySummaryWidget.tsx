@@ -34,7 +34,7 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ rang
   const forecast = forecastMonthEnd(transactions, detectRecurring(transactions), range.to, today);
   const pendingSummary = forecast.pending
     .slice(0, 5)
-    .map((p) => `${p.expectedDate}: ${p.type === 'income' ? '+' : '-'}${formatMoney(p.amount)} ${p.description}`)
+    .map((p) => `${p.expectedDate}: ${p.type === 'income' ? `+${formatMoney(p.amount)}` : formatMoney(-p.amount)} ${p.description}`)
     .join('\n');
 
   return (
@@ -57,7 +57,7 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ rang
               <span className="text-text-secondary">Money Out</span>
             </div>
             <span className="font-medium text-text-primary">
-              -{formatMoney(totalExpense)}
+              {formatMoney(-totalExpense)}
             </span>
           </div>
 

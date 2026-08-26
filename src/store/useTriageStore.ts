@@ -11,10 +11,14 @@ interface TriageState {
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
   approveTransaction: (id: string) => void;
-  /** Approves every row that is not flagged as a duplicate. Returns the ids it
-   *  approved, so the caller can offer to undo the batch. */
+  /** Approves every row that is neither flagged as a duplicate nor held back by
+   *  a flag. Returns the ids it approved, so the caller can offer to undo the
+   *  batch. */
   approveAll: () => string[];
   rejectDuplicates: () => void;
+  /** Clears every row flagged as not real income or spending, such as a credit
+   *  card bill payment. */
+  rejectCardPayments: () => void;
   rejectTransaction: (id: string) => void;
   clearAll: () => void;
   learnRule: (description: string, categoryId: string) => void;
@@ -87,7 +91,7 @@ export const useTriageStore = create<TriageState>()(
       approveAll: () => {
         const state = get();
         const budgetState = useBudgetStore.getState();
-        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate);
+        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag);
 
         txs.forEach((tx) => {
           budgetState.addTransaction({
@@ -117,6 +121,13 @@ export const useTriageStore = create<TriageState>()(
         set((state) => ({
           pendingTransactions: Object.fromEntries(
             Object.entries(state.pendingTransactions).filter(([, tx]) => !tx.duplicate),
+          ),
+        })),
+
+      rejectCardPayments: () =>
+        set((state) => ({
+          pendingTransactions: Object.fromEntries(
+            Object.entries(state.pendingTransactions).filter(([, tx]) => tx.flag !== 'card-payment'),
           ),
         })),
 

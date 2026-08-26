@@ -4,6 +4,18 @@ import type { TriageTransaction } from '../types/triage';
 
 /** One parsed CSV record. PapaParse gives an object keyed by header when the
  *  file has headers, and a positional string array when it does not. */
+/** Chase escapes a handful of characters in merchant names, so `H&M` arrives as
+ *  `H&amp;M`. Only the entities Chase actually emits are handled; this is
+ *  deliberately not a general HTML parser. */
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
 export type CsvRow = Record<string, string>
 export type CsvHeaderlessRow = string[]
 
@@ -104,6 +116,51 @@ export const PARSERS: BankParserConfig[] = [
       }
 
       return { date, amount, description: row['Description 1']?.trim() || 'Unknown', type, originalRowData: row };
+    }
+  },
+  {
+    name: 'Chase Credit Card',
+    // Headers: Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+    detect: (headers) =>
+      headers.includes('Transaction Date') && headers.includes('Post Date') && headers.includes('Type'),
+    parse: (row) => {
+      if (Array.isArray(row)) return null;
+      const amountRaw = parseFloat(row['Amount']);
+      if (isNaN(amountRaw)) return null;
+
+      let date = row['Transaction Date'];
+      if (date && date.includes('/')) {
+        const [m, d, y] = date.split('/');
+        date = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+
+      const description = decodeEntities(row['Description']?.trim() || 'Unknown');
+      const chaseType = row['Type'];
+
+      // A card bill payment is a transfer between the user's own accounts, so it
+      // is flagged rather than counted as earnings. A refund is money returning
+      // to the category it left, so it is a negative expense rather than income.
+      if (chaseType === 'Payment') {
+        return {
+          date,
+          amount: Math.abs(amountRaw),
+          description,
+          type: 'income' as const,
+          flag: 'card-payment' as const,
+          originalRowData: row,
+        };
+      }
+      if (chaseType === 'Return') {
+        return { date, amount: -Math.abs(amountRaw), description, type: 'expense' as const, originalRowData: row };
+      }
+
+      return {
+        date,
+        amount: Math.abs(amountRaw),
+        description,
+        type: amountRaw > 0 ? ('income' as const) : ('expense' as const),
+        originalRowData: row,
+      };
     }
   },
   {

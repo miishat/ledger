@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { BudgetProgressWidget } from './BudgetProgressWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { formatMoney } from '../planner/format'
 
 const seed = (opts: { spentOnVacation: number }) => {
   useBudgetStore.setState({
@@ -140,5 +141,73 @@ describe('BudgetProgressWidget unbudgeted spending', () => {
     })
     render(<BudgetProgressWidget range={{ from: '2026-04', to: '2026-04' }} />)
     expect(screen.queryByText('Unbudgeted spending')).not.toBeInTheDocument()
+  })
+})
+
+describe('BudgetProgressWidget negative spend', () => {
+  it('clamps the monthly bar at zero width but still reports the negative figure', () => {
+    const month = new Date().toISOString().slice(0, 7)
+    useBudgetStore.setState({
+      // kind: 'income' (not 'expense') keeps this category out of
+      // totalMonthlyBudget, so the Total bar does not render. That bar has
+      // its own, separate clamp and would still produce a valid width even
+      // if the row-level clamp under test were broken, masking a failure.
+      categoryGroups: { g1: { id: 'g1', name: 'Shopping', kind: 'income' } },
+      categories: { c1: { id: 'c1', groupId: 'g1', name: 'Personal', targetAmount: 100 } },
+      transactions: {
+        r1: {
+          id: 'r1', date: `${month}-03`, amount: -50, description: 'REFUND',
+          type: 'expense', categoryId: 'c1',
+        },
+      },
+      reallocations: {},
+    })
+    const { container } = render(<BudgetProgressWidget range={{ from: month, to: month }} />)
+    const widths = [...container.querySelectorAll<HTMLElement>('[style*="width"]')].map((el) => el.style.width)
+    // jsdom refuses to set an invalid CSS value (e.g. "width: -50%") at all,
+    // so an unclamped bar drops its style attribute entirely rather than
+    // keeping a negative width string. With the Total bar excluded above,
+    // this row's bar is the only width-bearing element in the tree, so its
+    // absence from the selector match (length 0) is what a broken clamp
+    // looks like here. This is the assertion that actually goes red.
+    expect(widths.length).toBeGreaterThan(0)
+    expect(widths.every((w) => !w.startsWith('-'))).toBe(true)
+    // The bar width may be clamped, but the number shown to the user must
+    // stay truthful: still negative.
+    expect(screen.getByText(new RegExp(`${formatMoney(-50).replace('$', '\\$')} / ${formatMoney(100).replace('$', '\\$')}`))).toBeInTheDocument()
+  })
+})
+
+describe('BudgetProgressWidget annual negative spend', () => {
+  it('clamps the annual bar at zero width but still reports the negative figure', () => {
+    const now = new Date()
+    const month = now.toISOString().slice(0, 7)
+    const year = now.getFullYear()
+    useBudgetStore.setState({
+      // kind: 'income' keeps this category out of totalMonthlyBudget, so the
+      // Total bar (its own, separately-clamped element) does not render and
+      // cannot mask a broken annual-bar clamp, same reasoning as the
+      // monthly-bar test above.
+      categoryGroups: { g1: { id: 'g1', name: 'Travel', kind: 'income' } },
+      categories: {
+        c1: { id: 'c1', groupId: 'g1', name: 'Vacation', targetAmount: 2400, cadence: 'annual' },
+      },
+      transactions: {
+        r1: {
+          id: 'r1', date: `${year}-01-05`, amount: -300, description: 'REFUND',
+          type: 'expense', categoryId: 'c1',
+        },
+      },
+      reallocations: {},
+    })
+    const { container } = render(<BudgetProgressWidget range={{ from: month, to: month }} />)
+    const widths = [...container.querySelectorAll<HTMLElement>('[style*="width"]')].map((el) => el.style.width)
+    // Same reasoning as the monthly-bar test above: an unclamped annual bar
+    // (annualTarget / yearSpentByCategory, not the monthly divisor/map) drops
+    // its style attribute rather than reporting a negative width, so this is
+    // the assertion that actually goes red.
+    expect(widths.length).toBeGreaterThan(0)
+    expect(widths.every((w) => !w.startsWith('-'))).toBe(true)
+    expect(screen.getByText(new RegExp(`${formatMoney(-300).replace('$', '\\$')} / ${formatMoney(2400).replace('$', '\\$')}`))).toBeInTheDocument()
   })
 })
