@@ -86,7 +86,7 @@ export const ParadigmBanner: React.FC<{ selectedMonth: string }> = ({ selectedMo
       footer={
         <div data-testid="ratio-bar" className="flex w-full h-2 rounded overflow-hidden bg-bg-primary/50">
           {buckets.map((b) => (
-            <div key={b.label} className={b.color} style={{ width: `${Math.min(b.pct, 100)}%` }} />
+            <div key={b.label} className={b.color} style={{ width: `${Math.max(0, Math.min(b.pct, 100))}%` }} />
           ))}
         </div>
       }

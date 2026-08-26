@@ -70,4 +70,40 @@ describe('ParadigmBanner', () => {
     const { container } = render(<ParadigmBanner selectedMonth="2026-07" />)
     expect(container.querySelector('[data-testid="ratio-bar"]')).not.toBeNull()
   })
+
+  it('50/30/20: a class whose refunds outweigh its spend clamps to a zero-width bucket, not a dropped/negative one', () => {
+    // A refund is stored as a negative-amount expense-typed transaction, so a
+    // budget class (need/want/savings) can net negative for the month. The
+    // bucket must render at 0% width, not a negative or CSS-invalid width,
+    // and the label must still show the truthful negative percent.
+    useBudgetStore.setState({
+      paradigm: '50/30/20',
+      transactions: {
+        i: { id: 'i', date: '2026-07-01', amount: 1000, categoryId: 'inc', description: 'pay', type: 'income' },
+        // A big refund against Housing (a "need") outweighs any other need spend this month.
+        r: { id: 'r', date: '2026-07-02', amount: -300, categoryId: 'rent', description: 'refund', type: 'expense' },
+      },
+      categories: {
+        inc: { id: 'inc', groupId: 'gi', name: 'Salary', targetAmount: 0 },
+        rent: { id: 'rent', groupId: 'ge', name: 'Rent', targetAmount: 200 },
+      },
+      categoryGroups: {
+        gi: { id: 'gi', name: 'Income', kind: 'income' },
+        ge: { id: 'ge', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+      },
+      reallocations: {},
+    })
+    const { container } = render(<ParadigmBanner selectedMonth="2026-07" />)
+
+    // Truthful negative label is preserved.
+    expect(screen.getByText(/Needs -30%/)).toBeInTheDocument()
+
+    // The Needs bucket bar (first bucket div in the ratio bar) must not have
+    // a negative or dropped width.
+    const bar = container.querySelector('[data-testid="ratio-bar"]') as HTMLElement
+    const needsBucket = bar.firstElementChild as HTMLElement
+    const width = needsBucket.style.width
+    expect(width).not.toMatch(/^-/)
+    expect(parseFloat(width)).toBe(0)
+  })
 })
