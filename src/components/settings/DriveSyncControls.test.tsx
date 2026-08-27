@@ -284,4 +284,25 @@ describe('DriveSyncControls', () => {
     render(<DriveSyncControls />)
     expect(screen.getByText('Forgets the Drive link only. Nothing is deleted.')).toBeInTheDocument()
   })
+
+  // The auto sync caveats used to be three sentences inline in the checkbox
+  // label, which rendered as a five line paragraph. They moved behind a
+  // disclosure. None of them may be quietly dropped in the process: the API
+  // key sentence is a privacy disclosure and has to stay reachable.
+  it('keeps the auto sync label to one line and the caveats behind a disclosure', () => {
+    render(<DriveSyncControls />)
+
+    const label = screen.getByText('Sync automatically when there is nothing to resolve')
+    expect(label).toBeInTheDocument()
+
+    const details = screen.getByText('What automatic sync does').closest('details')!
+    expect(details.open).toBe(false)
+
+    // Present in the DOM, collapsed rather than removed, so each caveat is
+    // still reachable and still findable by a text search of the panel.
+    expect(details).toHaveTextContent('Conflicts still wait for you in this panel.')
+    expect(details).toHaveTextContent('does not stay primed across a reload')
+    expect(details).toHaveTextContent('including any market data API key you have entered')
+  })
+
 })

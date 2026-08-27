@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CloudUpload, CloudDownload, AlertTriangle } from 'lucide-react'
+import { CloudUpload, CloudDownload, AlertTriangle, ChevronRight } from 'lucide-react'
 import { useSyncStore } from '../../store/useSyncStore'
 import { requestAccessToken, getCachedToken, clearCachedToken } from '../../utils/driveAuth'
 import { previewPush, previewPull, performPush, performPull } from '../../utils/syncService'
@@ -200,19 +200,37 @@ export const DriveSyncControls: React.FC = () => {
         </button>
       </div>
 
-      <label className="flex items-center gap-2 text-[12px] text-text-secondary">
-        <Checkbox
-          checked={autoSync}
-          ariaLabel="Sync automatically"
-          onChange={(next) => {
-            setAutoSyncEnabled(next)
-            setAutoSync(next)
-          }}
-        />
-        Sync automatically here when there is nothing to resolve. Conflicts still wait for you in this panel.
-        Automatic sync resumes after your next manual push or pull in this session, it does not stay primed across a reload.
-        Automatic sync uploads the same snapshot manual sync does, including any market data API key you have entered.
-      </label>
+      {/* Three sentences used to sit inline as this checkbox's label, which
+          made a five line paragraph with the box floated against its middle.
+          The label is now the one line that says what the setting does, and
+          the caveats moved behind the same disclosure the market data section
+          uses. None of them was dropped: the API key sentence in particular
+          is a privacy disclosure and has to stay reachable. */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-2 text-[12px] text-text-secondary">
+          <Checkbox
+            checked={autoSync}
+            ariaLabel="Sync automatically"
+            onChange={(next) => {
+              setAutoSyncEnabled(next)
+              setAutoSync(next)
+            }}
+          />
+          Sync automatically when there is nothing to resolve
+        </label>
+
+        <details className="text-[12px] group">
+          <summary className="flex items-center gap-1 cursor-pointer text-accent hover:underline list-none [&::-webkit-details-marker]:hidden select-none">
+            <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" aria-hidden="true" />
+            What automatic sync does
+          </summary>
+          <ul className="mt-2 text-text-secondary list-disc list-inside flex flex-col gap-1.5">
+            <li>Conflicts still wait for you in this panel.</li>
+            <li>It resumes after your next manual push or pull in this session. It does not stay primed across a reload.</li>
+            <li>It uploads the same snapshot a manual sync does, including any market data API key you have entered.</li>
+          </ul>
+        </details>
+      </div>
 
       <label className="flex items-center gap-2 text-[12px] text-text-secondary">
         This device
