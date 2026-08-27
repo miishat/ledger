@@ -48,4 +48,15 @@ describe('App routing', () => {
     await act(async () => { useThemeStore.getState().setTheme('luxury') })
     expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#000000')
   })
+
+  it('treats Gilded Bloom as a light theme, not a dark one', async () => {
+    useThemeStore.getState().setTheme('luxury')
+    render(<App />)
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+
+    await act(async () => { useThemeStore.getState().setTheme('nouveau') })
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('nouveau')
+    expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#FDF6EA')
+  })
 })
