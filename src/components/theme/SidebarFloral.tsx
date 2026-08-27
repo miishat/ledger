@@ -12,15 +12,25 @@ interface SidebarFloralProps {
  *  It is mounted inside the desktop sidebar rather than in ThemeBackground
  *  on purpose. ThemeBackground paints the full viewport, and cards are
  *  opaque, so ornament placed there would be visible only in whatever gaps
- *  the page happened to leave. Confined to the sidebar it always has a
- *  reliable, uncluttered field to draw on, and it can never intrude on the
- *  data.
+ *  the page happened to leave. Confined to the sidebar it draws on a
+ *  reliably uncluttered width, and it can never intrude on the data.
  *
  *  Sizes are fixed rather than responsive: the sidebar is a fixed w-64, so a
  *  256px drawing anchored to the bottom left lands the same way at every
  *  window height, and the wrapper's overflow-hidden clips it. On a phone
  *  there is no desktop sidebar and therefore no ornament, which is the
  *  intended scope for this theme.
+ *
+ *  The height is not equally reliable, and the wrapper being absolute
+ *  inset-0 inside an overflow-y-auto nav is why: when the nav actually
+ *  scrolls, the ornament scrolls away with the content and leaves the
+ *  revealed lower area bare. Shrinking the window does not cause this, since
+ *  the nav's justify-between absorbs the slack and scrollHeight stays equal
+ *  to clientHeight. An enlarged root font size does: at a 24px root the nav
+ *  measured scrollHeight 670 against clientHeight 492, and scrolled to the
+ *  bottom the drawing ended 186px above the nav's lower edge. Cosmetic only,
+ *  and it costs nothing functional, but do not describe this ornament as
+ *  always covering the sidebar.
  *
  *  Every id is prefixed `gb-` because these live in the main document, not a
  *  shadow root, and a bare `#leaf` would be one collision away from another

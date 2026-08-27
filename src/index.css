@@ -225,20 +225,26 @@
    gradient card fill, a 1px white inner top highlight folded into the same
    box-shadow, and the wash ThemeBackground paints behind everything.
 
-   Contrast against --bg-primary #FDF6EA: accent 5.80:1, text-primary
-   14.57:1, text-secondary 4.65:1, border-strong 3.41:1 on the page and
-   3.61:1 on a card, error 5.09:1.
+   Contrast against --bg-primary #FDF6EA: accent 5.77:1, text-primary
+   14.45:1, text-secondary 5.23:1 on the page and 5.53:1 on a card,
+   border-strong 3.41:1 on the page and 3.60:1 on a card, error 5.06:1.
 
-   --ornament is 2.35:1 and is decoration only. It must never carry text or
+   --text-secondary is also checked against the --bg-secondary sidebar
+   composite, not only the page: the desktop sidebar's inactive nav links
+   sit on bg-bg-secondary/70 over the ThemeBackground wash, and that
+   composite is the binding constraint, measuring as low as 4.74:1. Retune
+   against it too, not just the figures above, if this token changes again.
+
+   --ornament is 2.34:1 and is decoration only. It must never carry text or
    mark a control. SidebarFloral is its only consumer. */
 [data-theme='nouveau'] {
   --bg-primary: #FDF6EA;
   --bg-secondary: #F5EDDD;
   --text-primary: #22251F;
-  --text-secondary: #6E7266;
+  --text-secondary: #65695E;
   --accent: #2F6B5E;
   --border-color: #EADFCB;
-  --border-strong: #8C866B;   /* 3.41:1 on #FDF6EA, 3.61:1 on the card */
+  --border-strong: #8C866B;   /* 3.41:1 on #FDF6EA, 3.60:1 on the card */
   --error: #B04A2E;
   --chart-1: #2F6B5E;
   --chart-2: #A8842F;

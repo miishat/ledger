@@ -34,4 +34,16 @@ describe('ThemeBackground', () => {
     expect(wash).not.toBeNull()
     expect(wash.style.backgroundImage).toMatch(/radial-gradient/)
   })
+
+  // The outer layer is opaque and covers the whole viewport, so this hex is
+  // not decoration: if it drifted from --bg-primary, the entire app would
+  // repaint the stale colour rather than just showing it in gaps. It is the
+  // fourth copy of this value in the codebase and the only one no other
+  // guard covers.
+  it('backs the nouveau layer with the theme background colour', () => {
+    const { container } = render(<ThemeBackground theme="nouveau" />)
+    const root = container.firstElementChild as HTMLElement
+    expect(root).not.toBeNull()
+    expect(root.className).toMatch(/bg-\[#FDF6EA\]/)
+  })
 })
