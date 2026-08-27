@@ -219,6 +219,51 @@
   --calendar-filter: invert(0.8) hue-rotate(180deg);
 }
 
+/* Gilded Bloom: the second light theme, and the first with any depth to it.
+   Where `geometric` is flat white on white, this one gets its elevation from
+   four stacked things: a warm-tinted shadow rather than a grey one, a
+   gradient card fill, a 1px white inner top highlight folded into the same
+   box-shadow, and the wash ThemeBackground paints behind everything.
+
+   Contrast against --bg-primary #FDF6EA: accent 5.80:1, text-primary
+   14.57:1, text-secondary 4.65:1, border-strong 3.41:1 on the page and
+   3.61:1 on a card, error 5.09:1.
+
+   --ornament is 2.35:1 and is decoration only. It must never carry text or
+   mark a control. SidebarFloral is its only consumer. */
+[data-theme='nouveau'] {
+  --bg-primary: #FDF6EA;
+  --bg-secondary: #F5EDDD;
+  --text-primary: #22251F;
+  --text-secondary: #6E7266;
+  --accent: #2F6B5E;
+  --border-color: #EADFCB;
+  --border-strong: #8C866B;   /* 3.41:1 on #FDF6EA, 3.61:1 on the card */
+  --error: #B04A2E;
+  --chart-1: #2F6B5E;
+  --chart-2: #A8842F;
+  --chart-3: #9A5A6B;
+  --chart-4: #7B7F52;
+  --chart-5: #46708F;
+  --chart-6: #B04A2E;
+
+  /* Gold leaf for the sidebar ornament. Not a text or control colour. */
+  --ornament: #C49E4A;
+
+  --font-family-body: 'Poppins', sans-serif;
+  --font-family-display: 'Playfair Display', serif;
+
+  --card-bg: #FFFDF9;
+  --card-gradient: linear-gradient(172deg, #FFFDF9 0%, #FCF5E8 100%);
+  --card-border: #EDE2CE;
+  --card-shadow: 0 1px 2px rgba(60, 60, 30, 0.06), 0 12px 30px -14px rgba(60, 60, 30, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --card-blur: none;
+  --dropdown-bg: #FFFDF9;
+
+  color-scheme: light;
+  --calendar-filter: invert(0);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -234,6 +279,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .themed-card {
   background-color: var(--card-bg);
+  /* A theme may layer a gradient over its flat fill. `background-color`
+     cannot hold one, so a gradient assigned to --card-bg alone would be an
+     invalid background-color and silently drop the card's fill entirely.
+     Every theme that does not define --card-gradient falls through to
+     `none` and paints exactly as it did before. */
+  background-image: var(--card-gradient, none);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
   backdrop-filter: var(--card-blur);

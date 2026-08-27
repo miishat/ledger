@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { STORAGE_KEYS } from './storageKeys'
 
-export type AppTheme = 'geometric' | 'tactical' | 'luxury' | 'aurora' | 'glass'
+export type AppTheme = 'geometric' | 'tactical' | 'luxury' | 'aurora' | 'glass' | 'nouveau'
 
 interface ThemeState {
   theme: AppTheme
@@ -10,7 +10,13 @@ interface ThemeState {
   cycleTheme: () => void
 }
 
-const THEME_CYCLE: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass']
+const THEME_CYCLE: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau']
+
+/** Themes whose --bg-primary is light. App.tsx drives Tailwind's `dark`
+ *  class off this set. A new light theme left out of it renders every
+ *  dark-mode utility in the app over a cream background, and nothing else
+ *  in the codebase would catch that. */
+export const LIGHT_THEMES: ReadonlySet<AppTheme> = new Set<AppTheme>(['geometric', 'nouveau'])
 
 // Mirrors each theme's --bg-primary in src/index.css. jsdom's
 // getComputedStyle does not resolve CSS custom properties from stylesheets,
@@ -23,6 +29,7 @@ export const THEME_BACKGROUNDS: Record<AppTheme, string> = {
   luxury: '#000000',
   aurora: '#090d16',
   glass: '#0b0910',
+  nouveau: '#FDF6EA',
 }
 
 export const useThemeStore = create<ThemeState>()(
