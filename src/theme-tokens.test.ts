@@ -9,11 +9,10 @@ import { THEME_BACKGROUNDS, type AppTheme } from './store/useThemeStore'
 //
 // Explicitly import URL from node:url rather than using the ambient global:
 // this suite runs under the jsdom test environment, which replaces the
-// global URL constructor with its own implementation. fs.readFileSync only
-// accepts a URL created by Node's own url module; handed a jsdom URL
-// instance it throws "TypeError: The URL must be of scheme file" regardless
-// of the actual protocol, because Node checks the object's internal brand,
-// not its string value.
+// global URL constructor with its own implementation. jsdom's URL resolves
+// a string base against its document location (http://localhost) rather
+// than against this test file, so the relative path never becomes a file:
+// URL. Node's own URL resolves it correctly, sidestepping jsdom entirely.
 const css = readFileSync(new NodeURL('./index.css', import.meta.url), 'utf8')
 
 const THEMES: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau']

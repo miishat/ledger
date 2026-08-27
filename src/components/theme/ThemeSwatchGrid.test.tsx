@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { URL as NodeURL } from 'node:url'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ThemeSwatchGrid, SWATCHES } from './ThemeSwatchGrid'
@@ -32,10 +33,11 @@ describe('ThemeSwatchGrid', () => {
 // stopped them drifting: a theme could be recoloured and its picker tile
 // would keep advertising the old palette.
 describe('ThemeSwatchGrid swatch parity with src/index.css', () => {
-  // The base must be pre-parsed into a URL object: passing import.meta.url
-  // as a raw string base resolves against jsdom's http://localhost document
-  // location instead of the file itself on this Windows + jsdom setup.
-  const css = readFileSync(new URL('../../index.css', new URL(import.meta.url)), 'utf8')
+  // Use Node's own URL rather than the ambient global: this suite runs under
+  // jsdom, which replaces global URL with one that resolves a string base
+  // against its document location instead of this test file. Same reason
+  // and construction as src/theme-tokens.test.ts; keep the two in sync.
+  const css = readFileSync(new NodeURL('../../index.css', import.meta.url), 'utf8')
 
   const valueIn = (theme: string, token: string): string => {
     const start = css.indexOf(`[data-theme='${theme}'] {`)
@@ -45,6 +47,9 @@ describe('ThemeSwatchGrid swatch parity with src/index.css', () => {
     return match[1].toLowerCase()
   }
 
+  // Only bg is checked per theme here: geometric's accent (#3b82f6) is
+  // deliberately lighter than its CSS value (#2563eb) for tile legibility,
+  // so asserting accent for every theme would break that on purpose choice.
   it.each(Object.keys(SWATCHES))('%s tile mirrors the theme background', (theme) => {
     expect(SWATCHES[theme as keyof typeof SWATCHES].bg.toLowerCase()).toBe(valueIn(theme, '--bg-primary'))
   })
