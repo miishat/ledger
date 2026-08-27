@@ -608,3 +608,49 @@ test('the Planner grid keeps one column count down the page', async ({ page }) =
   const allCardWidths = new Set(widths.flatMap((w) => w.cardWidths))
   expect(allCardWidths.size).toBe(1)
 })
+
+// The Gilded Bloom ornament sweeps up the sidebar and used to run straight
+// under the settings dock, which is scrimmed at only 20% opacity, leaving
+// "Settings" and the version number sitting on top of gold stems. A mask
+// fades the drawing out before it gets there.
+//
+// This lives here rather than in the component's unit test because jsdom
+// drops mask-image entirely: the wrapper's style attribute comes back as
+// "z-index: -10;" alone, so no assertion written against jsdom could tell a
+// working mask from a missing one. A real engine is required.
+test('the Gilded Bloom sidebar ornament fades out behind the settings dock', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: 'nouveau' }, version: 0 }))
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  const ornament = page.locator('[data-testid="sidebar-floral"]')
+  await expect(ornament).toHaveCount(1)
+
+  const mask = await ornament.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return cs.maskImage || cs.webkitMaskImage
+  })
+  // A gradient that reaches full transparency. `none` is what a dropped or
+  // deleted mask computes to, and is the failure this exists to catch.
+  expect(mask).toContain('linear-gradient')
+  expect(mask).toMatch(/transparent|rgba\(0, 0, 0, 0\)/)
+
+  // The fade has to clear the dock, not merely exist. The dock is the last
+  // child of the sidebar nav; the ornament must be fully transparent by the
+  // time it reaches the dock's top edge.
+  const geometry = await page.evaluate(() => {
+    // Reached through the ornament rather than by selector: the sidebar's
+    // class contains a colon (`desktop:flex`) whose CSS escaping does not
+    // survive being written into an evaluate string.
+    const nav = document.querySelector('[data-testid="sidebar-floral"]')!.parentElement!
+    const dock = nav.lastElementChild!
+    const navRect = nav.getBoundingClientRect()
+    const dockRect = dock.getBoundingClientRect()
+    return { dockHeightFromBottom: Math.round(navRect.bottom - dockRect.top) }
+  })
+  // The mask reaches full transparency 78px from the bottom, so the dock has
+  // to sit within that band for the fade to actually clear it.
+  expect(geometry.dockHeightFromBottom).toBeLessThanOrEqual(78)
+})
