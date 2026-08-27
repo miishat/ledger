@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, NotebookText } from 'lucide-react'
+import { Plus, NotebookText, Upload } from 'lucide-react'
 import { AnalysisCard } from '../components/investments/AnalysisCard'
 import { AnalysisModal } from '../components/investments/AnalysisModal'
 import { PortfolioView } from '../components/investments/PortfolioView'
@@ -41,6 +41,9 @@ export const Investments: React.FC = () => {
   const quotes = useMarketDataStore((s) => s.quotes)
   const overrides = useMarketDataStore((s) => s.overrides)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  // Owned here rather than in PortfolioView because the trigger lives in this
+  // page's header, in the slot the other tabs use for their action.
+  const [importOpen, setImportOpen] = useState(false)
   const holdings = usePortfolioStore((s) => s.holdings)
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
@@ -80,6 +83,19 @@ export const Investments: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" /> New Analysis
+          </button>
+        )}
+        {/* Same slot and same treatment as New Analysis above. The two are
+            mutually exclusive, one per tab, so a difference in size or fill
+            between them would read as the header action changing shape as you
+            move between tabs. */}
+        {tab === 'portfolio' && (
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+          >
+            <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
           </button>
         )}
       </header>
@@ -123,7 +139,7 @@ export const Investments: React.FC = () => {
 
       {tab === 'portfolio' && (
         <TabPanel id="portfolio">
-          <PortfolioView />
+          <PortfolioView importOpen={importOpen} onImportOpenChange={setImportOpen} />
         </TabPanel>
       )}
 
