@@ -12,13 +12,14 @@
 
 - Theme key is `nouveau`. Display name is `Gilded Bloom`. Both spellings are exact; do not rename either.
 - **Fonts:** use only families already in the `@import url(...)` on `src/index.css:1`. This theme uses `Poppins` (body) and `Playfair Display` (display). Do not add a font request.
-- **Contrast**, measured against `--bg-primary` `#FDF6EA`, all values verified before this plan was written:
-  - `--accent` `#2F6B5E` = 5.80:1
-  - `--text-primary` `#22251F` = 14.57:1
-  - `--text-secondary` `#6E7266` = 4.65:1
-  - `--border-strong` `#8C866B` = 3.41:1 on the page, 3.61:1 on a card
-  - `--error` `#B04A2E` = 5.09:1
-  - `--ornament` `#C49E4A` = 2.35:1. **Decoration only.** It must never carry text or mark a control. `SidebarFloral` is its only consumer.
+- **Contrast** against `--bg-primary` `#FDF6EA`. These are the values independently recomputed by Task 1's reviewer with the strict WCAG relative-luminance formula, and they supersede the slightly looser figures the plan was drafted with:
+  - `--accent` `#2F6B5E` = 5.77:1
+  - `--text-primary` `#22251F` = 14.45:1
+  - `--text-secondary` `#65695E` = 5.23:1 on the page, 5.53:1 on a card, 4.74:1 on the darkest sidebar composite. CORRECTED after the final review: this token was originally `#6E7266`, chosen against `--bg-primary` alone at 4.59:1. It measured only 4.34:1 to 4.15:1 on `--bg-secondary` surfaces once Task 3's wash was composited under the sidebar, and 3.05:1 for the `kbd` at `Layout.tsx:182`. The binding surface for this token is the sidebar composite, not the page.
+  - `--border-strong` `#8C866B` = 3.41:1 on the page, 3.60:1 on a card
+  - `--error` `#B04A2E` = 5.06:1
+  - `--ornament` `#C49E4A` = 2.34:1. **Decoration only.** It must never carry text or mark a control. `SidebarFloral` is its only consumer.
+  - The comment block in `src/index.css` now carries these corrected figures and records the sidebar-composite constraint.
 - Do not use em dashes in any code comment, changelog line, or commit message.
 - **Existing tests are modified, never recreated.** `src/store/useThemeStore.test.ts` and `src/components/theme/ThemeSwatchGrid.test.tsx` both hardcode the count five. Edit those specific assertions in place; do not rewrite either file.
 - **Known and accepted:** the desktop sidebar is `hidden desktop:flex`, so on a phone this theme renders its warm surfaces and depth with no floral ornament at all. That is the agreed scope, not a defect to fix.
@@ -29,7 +30,7 @@
 | File | Change | Responsibility |
 | --- | --- | --- |
 | `src/index.css` | Modify (add block after line 220) | The `[data-theme='nouveau']` custom-property block: the whole palette, fonts, card surface, and `--ornament`. |
-| `src/App.css` | Modify (`.themed-card`, line 5) | Lets any theme layer a gradient over its flat card fill via `--card-gradient`. |
+| ~~`src/App.css`~~ **`src/index.css`** | Modify (`.themed-card`, line 280) | Lets any theme layer a gradient over its flat card fill via `--card-gradient`. CORRECTED during Task 1: `.themed-card` lives in `src/index.css`, not `src/App.css`. `src/App.css` is untouched by this plan. |
 | `src/store/useThemeStore.ts` | Modify | `AppTheme` union, `THEME_CYCLE`, `THEME_BACKGROUNDS`, and a new exported `LIGHT_THEMES`. |
 | `src/theme-tokens.test.ts` | Create | Reads `src/index.css` as text and proves every theme block declares the same tokens, a `color-scheme`, and a `--bg-primary` matching its `THEME_BACKGROUNDS` entry. |
 | `src/store/useThemeStore.test.ts` | Modify (cycle test only) | Cycle now visits six themes. |
@@ -52,7 +53,7 @@
 
 **Files:**
 - Modify: `src/index.css` (insert a new block after the `[data-theme='aurora']` block ends at line 191, i.e. between `aurora` and `glass`, or after `glass` ends at line 220. either position works; put it after `glass` so the file reads in cycle order)
-- Modify: `src/App.css:5-12` (the `.themed-card` rule)
+- Modify: `src/index.css:280` (the `.themed-card` rule). CORRECTED: the plan originally said `src/App.css:5-12`, which holds `.counter`, not `.themed-card`.
 - Modify: `src/store/useThemeStore.ts`
 - Modify: `src/store/useThemeStore.test.ts:19-27` (the cycle test only)
 - Test: `src/theme-tokens.test.ts` (create)
@@ -211,7 +212,7 @@ In `src/index.css`, insert this immediately after the closing brace of the `[dat
 
 - [ ] **Step 5: Let a card carry a gradient**
 
-In `src/App.css`, replace the `.themed-card` rule at lines 5-12 with:
+In `src/index.css`, replace the `.themed-card` rule at line 280 with:
 
 ```css
 .themed-card {
@@ -262,7 +263,7 @@ Expected: PASS, 3 tests.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/index.css src/App.css src/store/useThemeStore.ts src/store/useThemeStore.test.ts src/theme-tokens.test.ts
+git add src/index.css src/store/useThemeStore.ts src/store/useThemeStore.test.ts src/theme-tokens.test.ts
 git commit -m "feat(theme): add Gilded Bloom tokens and a theme token parity guard"
 ```
 
@@ -932,7 +933,7 @@ git commit -m "docs(theme): note Gilded Bloom in the changelog and drop the mock
 
 Three things in this plan live between tasks, where a per-task review cannot see them:
 
-1. **Task 2 is the one that would have shipped broken.** `src/App.tsx:26` reads `theme === 'geometric'`. Adding a light theme without touching that line produces an app that sets `data-theme='nouveau'` correctly and then paints every Tailwind dark-mode utility over a cream background. It looks like a CSS bug and is not one.
+1. **Task 2, corrected after the final review.** `src/App.tsx:26` read `theme === 'geometric'`, and driving it off `LIGHT_THEMES` is correct hygiene. But this plan claimed a second light theme would otherwise paint "every Tailwind dark-mode utility over a cream background", and that claim is FALSE: the final review grepped `src/` and found zero `dark:` utilities and no `@custom-variant dark`. The `dark` class currently has no consumer in this app. Task 2 prevents a future bug, not a present one. Recorded so the next maintainer is not misled by the original claim.
 2. **Task 1's `.themed-card` change is load-bearing for Task 1's own CSS.** `--card-gradient` is read from `src/App.css`, not from `src/index.css`. If Step 5 of Task 1 is skipped, the token block still parses, the parity test still passes, and every card in the new theme silently loses its gradient. The manual check in Task 8 Step 5 item 4 is the only thing that catches it.
 3. **The mockup's 16px card radius is deliberately not implemented.** Card corner radius in this app is a Tailwind class chosen per component, not a theme token. Matching the mockup exactly would mean adding a `--card-radius` token and touching every card call site, which is a much larger change than a theme and is not in this plan's scope. Cards keep whatever radius they already have. If that reads wrong once it is running, it is a separate piece of work.
 4. **Task 6 depends on append order.** `ThemeSwatchGrid.test.tsx` asserts `polyline[2]` carries luxury's `#d4a853`. That index comes from `Object.keys(SWATCHES)`. Appending `nouveau` last preserves it; inserting it anywhere earlier breaks a test that has nothing to do with the new theme.
