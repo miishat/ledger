@@ -97,10 +97,20 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>
           <p className="text-[14px] text-text-secondary mt-1">All your accounts, balances, and trends in one place.</p>
         </div>
+        {/* Sized to the page-header tier, matching New Analysis on
+            Investments and Add Compensation on Compensation: px-4 and 14px,
+            not px-3 and 13px. It stays an outline button rather than a filled
+            accent one on purpose. Those two create a record; this one only
+            changes a layout preference, and promoting it to the same weight
+            would put two competing primaries in the header language.
+            `control-border` is also deliberate over the more common
+            `border-border`: see the note above .control-border in
+            src/index.css. A control's own edge has to reach 3:1, and
+            e2e/desktop-guards.spec.ts enforces exactly that on this button. */}
         <button
           type="button"
           onClick={() => setCustomizeOpen(true)}
-          className="px-3 py-2 rounded-md text-[13px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+          className="px-4 py-2 rounded-md text-[14px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
         >
           Customize
         </button>
