@@ -6,6 +6,25 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.9.7-beta] - 2026-08-27
+
+A sixth theme, Gilded Bloom, and the round of interface fixes that living
+with it turned up.
+
+### Added
+- A sixth theme, Gilded Bloom: a warm light theme with softly raised cards, peacock green accents, and an art nouveau floral drawn in gold down the desktop sidebar. Pick it in Settings alongside the other five
+
+### Changed
+- The automatic sync setting now reads as one line, with its details collapsed behind "What automatic sync does". Nothing was removed, including the note that an automatic sync uploads the same snapshot a manual one does, any market data API key included
+- Gilded Bloom sits second in the theme picker, beside the other light theme, rather than last
+- In Gilded Bloom the settings dock at the foot of the sidebar is frosted, so Settings and the version number stay readable where the floral passes behind them
+- The Customize button on the Dashboard is now the same size as the header buttons on Investments and Compensation. It was a size smaller
+- Import holdings on the Investments Portfolio tab now sits in the page header, next to where New Analysis appears on the other tab, instead of in a row of its own below the tab strip
+
+### Fixed
+- The desktop sidebar no longer shows a stray horizontal scrollbar along its bottom edge. It affected every theme, on any display scaled so that a one pixel border renders as a fraction of a pixel
+- The figures in the Allocation legend no longer sit flush against its scrollbar, which made the last digit of each amount read as cut off
+
 ## [0.9.6-beta] - 2026-08-25
 
 Support for Chase credit card statements, and the groundwork refunds needed in
@@ -15,22 +34,16 @@ order to be recorded honestly.
 - Chase credit card activity exports now import directly, instead of falling through to the manual column-mapping dialog. Merchant names arrive readable rather than HTML-escaped
 - A credit card bill payment is now recognized for what it is. It arrives in triage badged "card payment, not income", is held back from Accept All so it can never be swept in as earnings, and can be cleared in one click with "Reject N card payments"
 - Where you have no rule of your own for a merchant, Chase's own category is now used as a starting guess. Your own learned rules always win
-- A sixth theme, Gilded Bloom: a warm light theme with softly raised cards, peacock green accents, and an art nouveau floral drawn in gold down the desktop sidebar. Pick it in Settings alongside the other five
 
 ### Changed
 - A refund is now recorded as money returning to the category it left, rather than as income. Your income figure no longer counts refunds, and the category the money came back to reflects it
 - A transaction amount may now be negative when it is an expense, so a refund can be entered or corrected by hand. Income still has to be greater than zero
 - Amounts ending in exactly 50 cents now round the same way whether they are money in or money out. An expense of 21.50 and an income of 21.50 used to round to different dollar figures; now they match
-- The automatic sync setting now reads as one line, with its details collapsed behind "What automatic sync does". Nothing was removed, including the note that an automatic sync uploads the same snapshot a manual one does, any market data API key included
-- Gilded Bloom sits second in the theme picker, beside the other light theme, rather than last
-- In Gilded Bloom the settings dock at the foot of the sidebar is frosted, so Settings and the version number stay readable where the floral passes behind them
-- The Customize button on the Dashboard is now the same size as the header buttons on Investments and Compensation. It was a size smaller
 
 ### Fixed
 - Amounts no longer render with two minus signs where a transaction is negative
 - A month whose refunds outweigh its spending no longer shows a broken figure in the Monthly Summary, and an expense group in the same position is now left out of the Cash Flow chart instead of being drawn as a flow that cannot exist
 - A budget progress bar can no longer render backwards when refunds exceed what was spent in a category, while the figure beside it still correctly reads as the negative amount it is
-- The desktop sidebar no longer shows a stray horizontal scrollbar along its bottom edge. It affected every theme, on any display scaled so that a one pixel border renders as a fraction of a pixel
 
 ## [0.9.5-beta] - 2026-08-22
 
