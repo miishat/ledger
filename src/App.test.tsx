@@ -59,4 +59,30 @@ describe('App routing', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('nouveau')
     expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#FDF6EA')
   })
+
+  it('pins the light or dark class for every theme, not just a sample', async () => {
+    // The dark class is now driven by LIGHT_THEMES set membership, not a
+    // per-theme comparison, so a single wrongly added or removed theme
+    // would not fail any test that only checks one or two themes. This
+    // enumerates all six so an incorrect edit to the set is caught.
+    render(<App />)
+
+    await act(async () => { useThemeStore.getState().setTheme('geometric') })
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+
+    await act(async () => { useThemeStore.getState().setTheme('nouveau') })
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+
+    await act(async () => { useThemeStore.getState().setTheme('tactical') })
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+
+    await act(async () => { useThemeStore.getState().setTheme('luxury') })
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+
+    await act(async () => { useThemeStore.getState().setTheme('aurora') })
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+
+    await act(async () => { useThemeStore.getState().setTheme('glass') })
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+  })
 })
