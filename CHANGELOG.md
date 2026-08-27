@@ -6,9 +6,6 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
-### Added
-- A sixth theme, Gilded Bloom: a warm light theme with softly raised cards, peacock green accents, and an art nouveau floral drawn in gold down the desktop sidebar. Pick it in Settings alongside the other five
-
 ## [0.9.6-beta] - 2026-08-25
 
 Support for Chase credit card statements, and the groundwork refunds needed in
@@ -18,6 +15,7 @@ order to be recorded honestly.
 - Chase credit card activity exports now import directly, instead of falling through to the manual column-mapping dialog. Merchant names arrive readable rather than HTML-escaped
 - A credit card bill payment is now recognized for what it is. It arrives in triage badged "card payment, not income", is held back from Accept All so it can never be swept in as earnings, and can be cleared in one click with "Reject N card payments"
 - Where you have no rule of your own for a merchant, Chase's own category is now used as a starting guess. Your own learned rules always win
+- A sixth theme, Gilded Bloom: a warm light theme with softly raised cards, peacock green accents, and an art nouveau floral drawn in gold down the desktop sidebar. Pick it in Settings alongside the other five
 
 ### Changed
 - A refund is now recorded as money returning to the category it left, rather than as income. Your income figure no longer counts refunds, and the category the money came back to reflects it
