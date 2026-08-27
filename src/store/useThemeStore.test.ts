@@ -19,10 +19,10 @@ describe('useThemeStore', () => {
   it('cycles forward through every theme', () => {
     useThemeStore.getState().setTheme('geometric')
     const seen: string[] = []
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       useThemeStore.getState().cycleTheme()
       seen.push(useThemeStore.getState().theme)
     }
-    expect(seen).toEqual(['tactical', 'luxury', 'aurora', 'glass', 'geometric'])
+    expect(seen).toEqual(['tactical', 'luxury', 'aurora', 'glass', 'nouveau', 'geometric'])
   })
 })

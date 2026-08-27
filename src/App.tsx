@@ -1,6 +1,6 @@
 import { lazy, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useThemeStore, THEME_BACKGROUNDS } from './store/useThemeStore'
+import { useThemeStore, THEME_BACKGROUNDS, LIGHT_THEMES } from './store/useThemeStore'
 import { useAccountsStore } from './store/useAccountsStore'
 import { Layout } from './components/Layout'
 
@@ -23,7 +23,7 @@ function App() {
     const root = document.documentElement
     root.setAttribute('data-theme', theme)
     
-    if (theme === 'geometric') {
+    if (LIGHT_THEMES.has(theme)) {
       root.classList.remove('dark')
     } else {
       root.classList.add('dark')

@@ -26,8 +26,14 @@ function themeBlocks(): Array<{ name: string; tokens: Record<string, string> }> 
 describe('theme token contrast', () => {
   const blocks = themeBlocks()
 
+  // Pinned to the exact set, not a count, and not a minimum. This used to
+  // assert `blocks.length >= 6`, which still passed with a whole theme block
+  // deleted once a sixth theme existed. `root` belongs in this list: the
+  // regex above deliberately matches the `:root` fallback palette and names
+  // it that, so its contrast is checked alongside the real themes.
   it('finds every theme defined in index.css', () => {
-    expect(blocks.length).toBeGreaterThanOrEqual(6)
+    const names = blocks.map((b) => b.name).sort()
+    expect(names).toEqual(['aurora', 'geometric', 'glass', 'luxury', 'nouveau', 'root', 'tactical'])
   })
 
   it.each(blocks.map((b) => [b.name, b] as const))(

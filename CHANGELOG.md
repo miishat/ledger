@@ -6,6 +6,9 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Added
+- A sixth theme, Gilded Bloom: a warm light theme with softly raised cards, peacock green accents, and an art nouveau floral drawn in gold down the desktop sidebar. Pick it in Settings alongside the other five
+
 ## [0.9.6-beta] - 2026-08-25
 
 Support for Chase credit card statements, and the groundwork refunds needed in

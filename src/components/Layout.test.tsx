@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { setDemoActive } from '../utils/demoData'
 import { resetMatchMedia } from '../test-utils/matchMedia'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
+import { useThemeStore } from '../store/useThemeStore'
 
 vi.mock('../hooks/useSWUpdate', () => ({
   useSWUpdate: () => ({
@@ -170,5 +171,24 @@ describe('Layout mobile top bar', () => {
     expect(bar.querySelectorAll('a').length).toBe(5)
     // Settings lives in the top bar now, so the bar has no buttons at all.
     expect(bar.querySelectorAll('button').length).toBe(0)
+  })
+})
+
+describe('Layout sidebar ornament', () => {
+  afterEach(() => useThemeStore.setState({ theme: 'luxury' }))
+
+  it('draws the floral inside the sidebar for the Gilded Bloom theme', () => {
+    useThemeStore.setState({ theme: 'nouveau' })
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const sidebar = container.querySelector('nav.desktop\\:flex')!
+    // Queried from the sidebar, not the document: the whole point of this
+    // ornament is that it cannot escape into the page.
+    expect(sidebar.querySelector('[data-testid="sidebar-floral"]')).not.toBeNull()
+  })
+
+  it('draws no floral for any other theme', () => {
+    useThemeStore.setState({ theme: 'luxury' })
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    expect(container.querySelector('[data-testid="sidebar-floral"]')).toBeNull()
   })
 })

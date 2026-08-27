@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useRef, useState, useSyncExternalStore } fr
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
+import { SidebarFloral } from './theme/SidebarFloral'
 import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
@@ -149,6 +150,11 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar Navigation */}
       <nav className="hidden desktop:flex w-64 shrink-0 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between overflow-y-auto transition-all duration-300 z-10">
+        {/* Theme ornament, clipped to the sidebar. Renders null for every
+            theme but Gilded Bloom. The nav is `relative z-10`, so it owns a
+            stacking context and the ornament's negative z-index keeps it
+            behind the links without escaping the sidebar. */}
+        <SidebarFloral theme={theme} />
         {/* The divider fades in from the top rather than starting at a hard
             edge with nothing meeting it. Its lower end is already anchored by
             the settings dock's border-t. Absolutely positioned, so it stays

@@ -39,5 +39,25 @@ export const ThemeBackground: React.FC<ThemeBackgroundProps> = ({ theme }) => {
     )
   }
 
+  if (theme === 'nouveau') {
+    return (
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FDF6EA]">
+        {/* Two static washes: warm light spilling in from the top right, and
+            a cooler sand tone pooling at the bottom left, so a full-screen
+            page is not one flat field of cream. Deliberately not animated,
+            unlike aurora and glass. */}
+        <div
+          data-testid="nouveau-wash"
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(900px 440px at 92% -8%, rgba(255, 242, 214, 0.9), transparent 68%), ' +
+              'radial-gradient(640px 440px at -4% 100%, rgba(222, 212, 182, 0.45), transparent 72%)',
+          }}
+        />
+      </div>
+    )
+  }
+
   return null
 }
