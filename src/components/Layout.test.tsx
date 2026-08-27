@@ -58,6 +58,22 @@ describe('Layout desktop sidebar', () => {
       .find((l) => l.getAttribute('aria-current') === 'page')!
     expect(active.className).toMatch(/border-l-2/)
   })
+
+  // Both axes have to be declared. CSS computes a `visible` overflow on one
+  // axis to `auto` when the other is not visible, so overflow-y-auto on its
+  // own quietly made the sidebar a horizontal scroll container as well. At a
+  // 1.5 device pixel ratio the 1px border-r rasterises to 0.667px, clientWidth
+  // lands on 255.33 against a scrollWidth that rounds to 256, and that
+  // sub-pixel phantom overflow painted a real 8px scrollbar along the bottom
+  // of the sidebar. Measured in a browser, not here: jsdom has no layout
+  // engine, so this pins the declaration that fixes it rather than the
+  // geometry, and it fails the moment either half is dropped.
+  it('scrolls the sidebar vertically only, never horizontally', () => {
+    const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
+    const sidebar = container.querySelector('nav.desktop\\:flex')!
+    expect(sidebar.className).toMatch(/\boverflow-y-auto\b/)
+    expect(sidebar.className).toMatch(/\boverflow-x-hidden\b/)
+  })
 })
 
 describe('Layout mobile bottom nav sizing', () => {
