@@ -149,7 +149,16 @@ export const Layout: React.FC = () => {
       <ThemeBackground theme={theme} />
 
       {/* Sidebar Navigation */}
-      <nav className="hidden desktop:flex w-64 shrink-0 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between overflow-y-auto transition-all duration-300 z-10">
+      {/* overflow-x-hidden is not redundant next to overflow-y-auto. CSS
+          computes a `visible` overflow on one axis to `auto` when the other
+          axis is not visible, so overflow-y-auto alone silently made this a
+          horizontal scroll container too. On a display at fractional device
+          pixel ratio (1.5, i.e. 150% scaling) the 1px border-r rasterises to
+          0.667px, clientWidth lands on 255.33 while scrollWidth rounds to
+          256, and that sub-pixel phantom overflow was enough to paint an 8px
+          horizontal scrollbar across the bottom of the sidebar. There is no
+          horizontally scrollable content here and there should never be. */}
+      <nav className="hidden desktop:flex w-64 shrink-0 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between overflow-y-auto overflow-x-hidden transition-all duration-300 z-10">
         {/* Theme ornament, clipped to the sidebar. Renders null for every
             theme but Gilded Bloom. The nav is `relative z-10`, so it owns a
             stacking context and the ornament's negative z-index keeps it

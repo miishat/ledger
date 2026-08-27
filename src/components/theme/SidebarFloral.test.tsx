@@ -35,6 +35,14 @@ describe('SidebarFloral', () => {
     expect(wrapper.className).toMatch(/overflow-hidden/)
   })
 
+  // The mask that fades this ornament out behind the settings dock is NOT
+  // asserted here, deliberately. jsdom drops mask-image on assignment: the
+  // wrapper's style attribute comes back as exactly "z-index: -10;", and both
+  // style.maskImage and style.webkitMaskImage read "". A test written here
+  // would either fail against correct code or, worse, be written loosely
+  // enough to pass against no mask at all. It is covered in
+  // e2e/desktop-guards.spec.ts instead, where a real engine computes it.
+
   // The gold and the peacock green both come from the theme block, so
   // changing the palette in one place changes the ornament too.
   it('draws from theme tokens rather than hardcoded colours', () => {
