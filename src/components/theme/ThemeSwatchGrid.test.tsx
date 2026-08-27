@@ -23,10 +23,17 @@ describe('ThemeSwatchGrid', () => {
     expect(useThemeStore.getState().theme).toBe('aurora')
   })
 
-  it('renders a sparkline preview in every tile', () => {
-    const { container } = render(<ThemeSwatchGrid />)
-    expect(container.querySelectorAll('svg polyline')).toHaveLength(6)
-    expect(container.querySelectorAll('svg polyline')[2]).toHaveAttribute('stroke', '#d4a853')
+  // Located by the tile's accessible name, not by position. This used to
+  // assert polyline[2] carried luxury's stroke, which silently coupled an
+  // unrelated test to the order of the SWATCHES object: reordering the picker
+  // broke it, and the only way to keep it passing was to chase the index.
+  it('renders a sparkline preview in every tile, drawn in that theme accent', () => {
+    render(<ThemeSwatchGrid />)
+    expect(document.querySelectorAll('svg polyline')).toHaveLength(6)
+    for (const [name, accent] of [['Luxury Dark', '#d4a853'], ['Gilded Bloom', '#2F6B5E']] as const) {
+      const tile = screen.getByRole('radio', { name: new RegExp(name) })
+      expect(tile.querySelector('polyline')).toHaveAttribute('stroke', accent)
+    }
   })
 })
 
