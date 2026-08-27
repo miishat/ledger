@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Trash2, Landmark, Upload, X } from 'lucide-react'
+import { Trash2, Landmark, X } from 'lucide-react'
 import { useFxRates } from '../../hooks/useFxRates'
 import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -16,14 +16,33 @@ import { EmptyState } from '../ui/EmptyState'
 import { DataFreshness } from '../ui/DataFreshness'
 import { Sheet } from '../ui/Sheet'
 
-export const PortfolioView: React.FC = () => {
+interface PortfolioViewProps {
+  /** The import sheet is controlled by the page, because its trigger lives in
+   *  the page header alongside the other tabs' actions rather than in a row of
+   *  its own inside this panel. Both props are optional so this view still
+   *  renders standalone, which is how its tests use it; omit them and it falls
+   *  back to managing the sheet itself. */
+  importOpen?: boolean
+  onImportOpenChange?: (open: boolean) => void
+}
+
+export const PortfolioView: React.FC<PortfolioViewProps> = ({
+  importOpen: importOpenProp,
+  onImportOpenChange,
+}) => {
   const holdings = usePortfolioStore((s) => s.holdings)
   const importedAt = usePortfolioStore((s) => s.importedAt)
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
   const currencyReviewPending = usePortfolioStore((s) => s.currencyReviewPending)
   const dismissCurrencyReview = usePortfolioStore((s) => s.dismissCurrencyReview)
   const report = usePortfolioReportStore((s) => s.report)
-  const [importOpen, setImportOpen] = useState(false)
+  const [importOpenSelf, setImportOpenSelf] = useState(false)
+  const isControlled = importOpenProp !== undefined
+  const importOpen = isControlled ? importOpenProp : importOpenSelf
+  const setImportOpen = (open: boolean) => {
+    if (!isControlled) setImportOpenSelf(open)
+    onImportOpenChange?.(open)
+  }
 
   // The imported holdings carry no cash and no margin loan, so their sum is
   // only ever the holdings value. A PortfolioAnalyst report, when one has been
@@ -87,16 +106,11 @@ export const PortfolioView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setImportOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium border control-border text-text-primary hover:bg-bg-secondary transition-colors"
-        >
-          <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
-        </button>
-      </div>
-
+      {/* The Import holdings trigger used to sit here, in a right aligned row
+          of its own below the tab strip, which left it floating in empty space
+          while every other tab puts its action in the page header. It now
+          renders in that header, in src/pages/Investments.tsx, next to where
+          New Analysis appears on the Plan vs Actual tab. */}
       <Sheet
         open={importOpen}
         onClose={() => setImportOpen(false)}

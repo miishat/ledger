@@ -289,4 +289,34 @@ describe('account subtotal correctness', () => {
       .map((c) => Number((c.textContent ?? '').replace(/[$,]/g, '')))
     expect(rowValues.reduce((a, b) => a + b, 0)).toBe(600)
   })
+
+  // The import sheet became page controlled so its trigger could move into the
+  // Investments page header, beside where New Analysis sits on the other tab.
+  // These pin both halves of that wiring, since the page is the only caller
+  // that passes the props and nothing else would catch them drifting.
+  describe('page controlled import sheet', () => {
+    it('opens the sheet from the page prop rather than any control of its own', () => {
+      const { rerender, queryByRole } = render(<PortfolioView importOpen={false} onImportOpenChange={() => {}} />)
+      expect(queryByRole('dialog')).toBeNull()
+      rerender(<PortfolioView importOpen onImportOpenChange={() => {}} />)
+      expect(queryByRole('dialog')).not.toBeNull()
+    })
+
+    it('reports a close back to the page instead of closing itself', () => {
+      const onChange = vi.fn()
+      render(<PortfolioView importOpen onImportOpenChange={onChange} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      expect(onChange).toHaveBeenCalledWith(false)
+      // Still open: the page owns the state, so the sheet may only close when
+      // the page sends a new importOpen. Closing itself here would desync the
+      // two and leave the header trigger unable to reopen it.
+      expect(screen.queryByRole('dialog')).not.toBeNull()
+    })
+
+    it('still manages the sheet itself when the page passes nothing', () => {
+      render(<PortfolioView />)
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+  })
+
 })
