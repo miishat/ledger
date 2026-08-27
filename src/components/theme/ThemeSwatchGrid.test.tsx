@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { URL as NodeURL } from 'node:url'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { ThemeSwatchGrid, SWATCHES } from './ThemeSwatchGrid'
+import { ThemeSwatchGrid } from './ThemeSwatchGrid'
+import { SWATCHES } from './themeSwatches'
 import { useThemeStore } from '../../store/useThemeStore'
 
 describe('ThemeSwatchGrid', () => {
