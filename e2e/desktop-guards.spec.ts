@@ -98,7 +98,7 @@ test('a sheet never renders its header twice', async ({ page }) => {
   expect(visibleHeadings).toEqual(['Settings'])
 })
 
-const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass'] as const
+const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
 
 // The routes a control might live on. Task 9's original guard only ever
 // visited /#/budget, so the Customize button on / and the two investments
