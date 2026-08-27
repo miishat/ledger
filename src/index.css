@@ -68,6 +68,8 @@
   --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --card-blur: none;
+  --dock-bg: rgba(255, 255, 255, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #ffffff;
 
   color-scheme: light;
@@ -97,6 +99,8 @@
   --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --card-blur: none;
+  --dock-bg: rgba(255, 255, 255, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #ffffff;
 
   color-scheme: light;
@@ -126,6 +130,8 @@
   --card-border: #27272a;
   --card-shadow: none;
   --card-blur: none;
+  --dock-bg: rgba(10, 10, 10, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #111111;
 
   color-scheme: dark;
@@ -155,6 +161,8 @@
   --card-border: #1a1a1a;
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   --card-blur: none;
+  --dock-bg: rgba(0, 0, 0, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #0a0a0a;
 
   color-scheme: dark;
@@ -184,6 +192,8 @@
   --card-border: rgba(30, 41, 59, 0.55);
   --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   --card-blur: none;
+  --dock-bg: rgba(9, 13, 22, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #0f172a;
 
   color-scheme: dark;
@@ -213,6 +223,8 @@
   --card-border: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   --card-blur: blur(12px);
+  --dock-bg: rgba(11, 9, 16, 0.2);
+  --dock-blur: none;
   --dropdown-bg: #1a1625;
 
   color-scheme: dark;
@@ -264,6 +276,8 @@
   --card-border: #EDE2CE;
   --card-shadow: 0 1px 2px rgba(60, 60, 30, 0.06), 0 12px 30px -14px rgba(60, 60, 30, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --card-blur: none;
+  --dock-bg: rgba(253, 246, 234, 0.82);
+  --dock-blur: blur(10px);
   --dropdown-bg: #FFFDF9;
 
   color-scheme: light;

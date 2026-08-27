@@ -35,13 +35,13 @@ describe('SidebarFloral', () => {
     expect(wrapper.className).toMatch(/overflow-hidden/)
   })
 
-  // The mask that fades this ornament out behind the settings dock is NOT
-  // asserted here, deliberately. jsdom drops mask-image on assignment: the
-  // wrapper's style attribute comes back as exactly "z-index: -10;", and both
-  // style.maskImage and style.webkitMaskImage read "". A test written here
-  // would either fail against correct code or, worse, be written loosely
-  // enough to pass against no mask at all. It is covered in
-  // e2e/desktop-guards.spec.ts instead, where a real engine computes it.
+  // This ornament runs the full height of the sidebar on purpose and is not
+  // faded or clipped where the settings dock overlaps it. The dock stays
+  // legible by being a frosted panel of its own, which is a property of the
+  // dock and is asserted in e2e/desktop-guards.spec.ts. It cannot be checked
+  // here: jsdom resolves neither backdrop-filter nor a var() indirection in
+  // an inline style, reporting both as empty, so a test written against
+  // jsdom could not tell a working dock from a transparent one.
 
   // The gold and the peacock green both come from the theme block, so
   // changing the palette in one place changes the ornament too.

@@ -216,7 +216,23 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Settings Dock */}
-        <div className="p-4 border-t border-border bg-bg-primary/20 flex items-center justify-between">
+        {/* The scrim and blur are theme tokens rather than fixed utilities.
+            This used to be a flat bg-bg-primary/20, which is nearly
+            transparent, and that was fine while nothing was drawn behind it.
+            Gilded Bloom draws a floral up the sidebar, and at 20% the stems
+            ran straight under "Settings" and the version number. Every theme
+            but Gilded Bloom sets --dock-bg to exactly its own bg-primary at
+            20% and --dock-blur to none, so all five render as they always
+            did. Gilded Bloom raises the scrim and frosts it, so the artwork
+            reads as passing behind a solid footer instead of through it. */}
+        <div
+          className="p-4 border-t border-border flex items-center justify-between"
+          style={{
+            backgroundColor: 'var(--dock-bg)',
+            backdropFilter: 'var(--dock-blur)',
+            WebkitBackdropFilter: 'var(--dock-blur)',
+          }}
+        >
           <button
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"

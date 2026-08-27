@@ -43,21 +43,17 @@ export const SidebarFloral: React.FC<SidebarFloralProps> = ({ theme }) => {
       aria-hidden="true"
       data-testid="sidebar-floral"
       className="pointer-events-none absolute inset-0 overflow-hidden"
-      style={{
-        // Inline rather than a `-z-10` utility: this has to paint behind the
-        // sidebar's in-flow nav links, and an inline value cannot go missing
-        // because a utility was never generated.
-        zIndex: -10,
-        // Fade the drawing out before it reaches the settings dock. That dock
-        // is 69px tall and scrimmed at only 20% opacity, so stems and blooms
-        // were running straight under "Settings" and the version number and
-        // making both hard to read. The gradient is fully opaque down to
-        // 150px from the bottom and fully clear by 78px, which lands the end
-        // of the fade a few pixels above the dock's top border rather than
-        // cutting the artwork off at a hard edge.
-        maskImage: 'linear-gradient(to bottom, #000 calc(100% - 150px), transparent calc(100% - 78px))',
-        WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 150px), transparent calc(100% - 78px))',
-      }}
+      // Inline rather than a `-z-10` utility: this has to paint behind the
+      // sidebar's in-flow nav links, and an inline value cannot go missing
+      // because a utility was never generated.
+      //
+      // The drawing deliberately runs the full height of the sidebar and is
+      // not faded or clipped at the bottom. An earlier attempt masked it out
+      // behind the settings dock, which dissolved the stems mid-stroke and
+      // read as a rendering glitch rather than a design. The dock earns its
+      // own legibility instead, by being a solid frosted panel: see --dock-bg
+      // and --dock-blur in src/index.css.
+      style={{ zIndex: -10 }}
     >
       <svg
         width="256"

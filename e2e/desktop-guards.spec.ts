@@ -609,48 +609,44 @@ test('the Planner grid keeps one column count down the page', async ({ page }) =
   expect(allCardWidths.size).toBe(1)
 })
 
-// The Gilded Bloom ornament sweeps up the sidebar and used to run straight
-// under the settings dock, which is scrimmed at only 20% opacity, leaving
-// "Settings" and the version number sitting on top of gold stems. A mask
-// fades the drawing out before it gets there.
+// Gilded Bloom draws a floral up the sidebar that passes behind the settings
+// dock. The dock is only legible over it because that theme raises the dock's
+// scrim and frosts it. Both halves are theme tokens, so this also pins that
+// the other five themes are untouched.
 //
-// This lives here rather than in the component's unit test because jsdom
-// drops mask-image entirely: the wrapper's style attribute comes back as
-// "z-index: -10;" alone, so no assertion written against jsdom could tell a
-// working mask from a missing one. A real engine is required.
-test('the Gilded Bloom sidebar ornament fades out behind the settings dock', async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: 'nouveau' }, version: 0 }))
-  })
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
+// This lives in e2e rather than a component test because jsdom resolves
+// neither backdrop-filter nor a var() indirection in an inline style: it
+// reports both as empty, so no jsdom assertion could tell a working dock from
+// a plain transparent one.
+for (const [theme, expectBlur] of [['nouveau', true], ['luxury', false]] as const) {
+  test(`the settings dock is ${expectBlur ? 'frosted' : 'left plain'} in the ${theme} theme`, async ({ page }) => {
+    await page.addInitScript((t) => {
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+    }, theme)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
-  const ornament = page.locator('[data-testid="sidebar-floral"]')
-  await expect(ornament).toHaveCount(1)
+    const dock = await page.evaluate(() => {
+      // Reached via the sidebar's last child. The nav's own class contains a
+      // colon (`desktop:flex`) whose escaping does not survive an evaluate
+      // string, so it is found by a stable child instead.
+      const brand = document.querySelector('nav a[href="#/budget"]')
+      const nav = brand ? brand.closest('nav')! : null
+      if (!nav) return null
+      const el = nav.lastElementChild as HTMLElement
+      const cs = getComputedStyle(el)
+      return { backdrop: cs.backdropFilter, bg: cs.backgroundColor }
+    })
 
-  const mask = await ornament.evaluate((el) => {
-    const cs = getComputedStyle(el)
-    return cs.maskImage || cs.webkitMaskImage
+    expect(dock).not.toBeNull()
+    if (expectBlur) {
+      expect(dock!.backdrop).toContain('blur')
+      // A near transparent scrim is what made the text hard to read over the
+      // floral. Anything at or below 0.5 alpha is the defect this catches.
+      const alpha = Number(/rgba?\([^)]*?,\s*([\d.]+)\)$/.exec(dock!.bg)?.[1] ?? '1')
+      expect(alpha).toBeGreaterThan(0.5)
+    } else {
+      expect(dock!.backdrop).toBe('none')
+    }
   })
-  // A gradient that reaches full transparency. `none` is what a dropped or
-  // deleted mask computes to, and is the failure this exists to catch.
-  expect(mask).toContain('linear-gradient')
-  expect(mask).toMatch(/transparent|rgba\(0, 0, 0, 0\)/)
-
-  // The fade has to clear the dock, not merely exist. The dock is the last
-  // child of the sidebar nav; the ornament must be fully transparent by the
-  // time it reaches the dock's top edge.
-  const geometry = await page.evaluate(() => {
-    // Reached through the ornament rather than by selector: the sidebar's
-    // class contains a colon (`desktop:flex`) whose CSS escaping does not
-    // survive being written into an evaluate string.
-    const nav = document.querySelector('[data-testid="sidebar-floral"]')!.parentElement!
-    const dock = nav.lastElementChild!
-    const navRect = nav.getBoundingClientRect()
-    const dockRect = dock.getBoundingClientRect()
-    return { dockHeightFromBottom: Math.round(navRect.bottom - dockRect.top) }
-  })
-  // The mask reaches full transparency 78px from the bottom, so the dock has
-  // to sit within that band for the fade to actually clear it.
-  expect(geometry.dockHeightFromBottom).toBeLessThanOrEqual(78)
-})
+}
