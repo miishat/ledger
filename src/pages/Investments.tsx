@@ -19,11 +19,13 @@ import { TabPanel } from '../components/ui/TabPanel'
 
 type InvestTab = 'journal' | 'portfolio' | 'trades' | 'wheel'
 
+// Ordered by how often each is actually used, most first. The tab ids are
+// unchanged, so existing ?tab= links and bookmarks still resolve.
 const INVEST_TABS: readonly TabItem<InvestTab>[] = [
-  { id: 'journal', label: 'Plan vs Actual' },
   { id: 'portfolio', label: 'Portfolio' },
-  { id: 'trades', label: 'Trades' },
   { id: 'wheel', label: 'Options' },
+  { id: 'trades', label: 'Trades' },
+  { id: 'journal', label: 'Plan vs Actual' },
 ]
 
 const isInvestTab = (v: string | null): v is InvestTab =>
@@ -49,7 +51,10 @@ export const Investments: React.FC = () => {
   const tabParam = searchParams.get('tab')
   // Landing on an empty "Plan vs Actual" while the Portfolio tab holds data
   // made the page look broken to anyone who imports holdings but keeps no
-  // decision journal. Default to the first tab that actually has something.
+  // decision journal, so a portfolio with no journal opens on Portfolio.
+  // Note this rule predates the tab reorder and is deliberately unchanged by
+  // it: with neither holdings nor analyses the page still opens on Plan vs
+  // Actual, which is now the last tab rather than the first.
   const defaultTab: InvestTab = analyses.length === 0 && holdings.length > 0 ? 'portfolio' : 'journal'
   const tab: InvestTab = isInvestTab(tabParam) ? tabParam : defaultTab
   const setTab = (next: InvestTab) => {
