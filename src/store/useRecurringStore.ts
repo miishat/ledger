@@ -19,6 +19,13 @@ export const useRecurringStore = create<RecurringState>()(
         set((s) => (s.ignoredKeys.includes(key) ? s : { ignoredKeys: [...s.ignoredKeys, key] })),
       unignore: (key) => set((s) => ({ ignoredKeys: s.ignoredKeys.filter((k) => k !== key) })),
     }),
-    { name: STORAGE_KEYS.recurring },
+    {
+      name: STORAGE_KEYS.recurring,
+      version: 1,
+      // Existing installs wrote version 0 with this exact shape, so v0 to v1
+      // is an identity migration. It exists so the next schema change has a
+      // hook instead of a silent reinterpretation of whatever is on disk.
+      migrate: (persisted: unknown) => persisted,
+    },
   ),
 )

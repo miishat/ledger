@@ -44,6 +44,11 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: STORAGE_KEYS.theme,
+      version: 1,
+      // Existing installs wrote version 0 with this exact shape, so v0 to v1
+      // is an identity migration. It exists so the next schema change has a
+      // hook instead of a silent reinterpretation of whatever is on disk.
+      migrate: (persisted: unknown) => persisted,
     }
   )
 )

@@ -19,6 +19,13 @@ export const usePortfolioReportStore = create<PortfolioReportState>()(
       setReport: (report) => set({ report, uploadedAt: new Date().toISOString() }),
       clearReport: () => set({ report: null, uploadedAt: null }),
     }),
-    { name: STORAGE_KEYS.portfolioReport },
+    {
+      name: STORAGE_KEYS.portfolioReport,
+      version: 1,
+      // Existing installs wrote version 0 with this exact shape, so v0 to v1
+      // is an identity migration. It exists so the next schema change has a
+      // hook instead of a silent reinterpretation of whatever is on disk.
+      migrate: (persisted: unknown) => persisted,
+    },
   ),
 )
