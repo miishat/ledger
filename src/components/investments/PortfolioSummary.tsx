@@ -39,13 +39,13 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
       sub: nav.cash !== null ? `Cash ${formatMoney(nav.cash)}` : undefined,
     })
   }
-  if (h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: 'text-accent' })
+  if (h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: h.strongest.plPct >= 0 ? 'text-accent' : 'text-error' })
   if (h.weakest) facts.push({ label: 'Weakest', value: `${h.weakest.ticker} ${pct(h.weakest.plPct)}`, tone: h.weakest.plPct >= 0 ? 'text-accent' : 'text-error' })
   if (h.largestWeight) facts.push({ label: 'Largest weight', value: `${h.largestWeight.name} ${h.largestWeight.pct.toFixed(1)}%` })
   if (h.currencySplit.length > 0) {
     facts.push({
       label: 'Currency split',
-      value: h.currencySplit.map((c) => `${c.name} ${c.pct.toFixed(0)}%`).join(' / '),
+      value: h.currencySplit.map((c) => `${c.name} ${c.pct.toFixed(1)}%`).join(' / '),
     })
   }
   facts.push({ label: 'Holdings', value: `${h.holdingCount} in ${h.accountCount} account${h.accountCount === 1 ? '' : 's'}` })
@@ -59,8 +59,8 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
             {formatMoney(totals.valueCad)}
           </p>
           <p className={`text-[14px] font-medium tabular-nums mt-3 ${up ? 'text-accent' : 'text-error'}`}>
-            {up ? '▲' : '▼'} {up ? '+' : ''}{formatMoney(totals.plCad)}
-            {totals.plPct !== null ? ` · ${pct(totals.plPct)} all time` : ''}
+            <span aria-hidden="true">{up ? '▲' : '▼'}</span> {up ? '+' : ''}{formatMoney(totals.plCad)}
+            {totals.plPct !== null ? ` · ${pct(totals.plPct)} all-time` : ''}
           </p>
           {totals.excludedCount > 0 && (
             <p className="text-[13px] text-error mt-2">

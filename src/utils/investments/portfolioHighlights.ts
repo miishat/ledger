@@ -50,7 +50,11 @@ export function portfolioHighlights(
   return {
     totals: portfolioTotals(rows, rates),
     strongest: ranked.length > 0 ? ranked[0] : null,
-    weakest: ranked.length > 0 ? ranked[ranked.length - 1] : null,
+    // A single ranked holding is both the best and worst return there is,
+    // which would render as the same ticker and number twice in
+    // contradictory colours. Weakest stays null until there is a genuine
+    // second data point to contrast it with.
+    weakest: ranked.length > 1 ? ranked[ranked.length - 1] : null,
     largestWeight: byHolding.length > 0 ? { name: byHolding[0].name, pct: byHolding[0].pct } : null,
     currencySplit: byCurrency.map((s) => ({ name: s.name, pct: s.pct })),
     holdingCount: rows.length,

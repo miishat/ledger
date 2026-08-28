@@ -60,13 +60,34 @@ describe('portfolioHighlights', () => {
 
   it('ignores holdings with no computable return when ranking', () => {
     // A zero cost basis makes holdingPlPct null, which must not become 0
-    // and win the weakest slot.
+    // and win the weakest slot. Only CNQ ends up ranked, so weakest is
+    // null rather than a duplicate of strongest.
     const zeroCost = [
       { holding: h({ id: '1', ticker: 'FREE', avgCost: 0 }), price: 10 },
       { holding: h({ id: '2', ticker: 'CNQ' }), price: 90 },
     ]
     const r = portfolioHighlights(zeroCost, {})
-    expect(r.weakest).toEqual({ ticker: 'CNQ', plPct: -10 })
     expect(r.strongest).toEqual({ ticker: 'CNQ', plPct: -10 })
+    expect(r.weakest).toBeNull()
+  })
+
+  it('returns weakest as null when only one holding has a computable return', () => {
+    // A single ranked holding is both the best and worst return there is,
+    // which is not a meaningful "weakest" to show next to "strongest" with
+    // the same ticker and number in contradictory colours.
+    const single = [{ holding: h({ id: '1', ticker: 'VFV' }), price: 150 }]
+    const r = portfolioHighlights(single, {})
+    expect(r.strongest).toEqual({ ticker: 'VFV', plPct: 50 })
+    expect(r.weakest).toBeNull()
+  })
+
+  it('still populates weakest once two holdings have a computable return', () => {
+    const two = [
+      { holding: h({ id: '1', ticker: 'VFV' }), price: 150 },
+      { holding: h({ id: '2', ticker: 'CNQ', account: 'RRSP' }), price: 90 },
+    ]
+    const r = portfolioHighlights(two, {})
+    expect(r.strongest).toEqual({ ticker: 'VFV', plPct: 50 })
+    expect(r.weakest).toEqual({ ticker: 'CNQ', plPct: -10 })
   })
 })
