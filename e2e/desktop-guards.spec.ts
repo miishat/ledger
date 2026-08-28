@@ -65,6 +65,24 @@ test('submitting Add Transaction empty explains itself', async ({ page }) => {
   await expect(page.locator('#tx-amount')).toHaveAttribute('aria-invalid', 'true')
 })
 
+test('an over-allocated split cannot be saved', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  await page.waitForTimeout(400)
+  await page.locator('#tx-amount').fill('100')
+  // The split toggle is a checkbox, not a button: its accessible name comes
+  // from an aria-label on the input, so it must be queried as a checkbox.
+  await page.getByLabel('Split across categories').click()
+  await page.locator('[data-testid=sheet-panel] input[id^=tx-split-amount]').first().fill('150')
+  await page.locator('[data-testid=sheet-panel] button[type=submit]').click()
+  await expect(page.getByRole('alert')).toHaveText(
+    'Slices add up to more than the amount. Reduce a slice before saving.',
+  )
+  // The sheet is still open, which is the proof it did not save.
+  await expect(page.locator('[data-testid=sheet-panel]')).toBeVisible()
+})
+
 test('no focusable control is invisible while focused', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')

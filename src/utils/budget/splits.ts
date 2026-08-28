@@ -21,14 +21,22 @@ export function splitRemainder(total: number, splits: TransactionSplit[]): numbe
  *  category. Every widget, selector and stat routes through it, so an unsplit
  *  transaction and a split one cannot drift apart. An unsplit transaction
  *  contributes its whole amount to its own category. A split one contributes
- *  its slices, plus any uncovered remainder on its own category so that the
+ *  its slices, plus the remainder, of either sign, on its own category so that the
  *  sum of the parts always equals the transaction amount. */
 export function splitParts(tx: Transaction): SplitPart[] {
   const splits = tx.splits
   if (!splits || splits.length === 0) return [{ categoryId: tx.categoryId, amount: tx.amount }]
   const parts: SplitPart[] = splits.map((p) => ({ categoryId: p.categoryId, amount: p.amount }))
   const remainder = splitRemainder(tx.amount, splits)
-  if (remainder > 0) parts.push({ categoryId: tx.categoryId, amount: remainder })
+  // Both signs matter. A positive remainder is the uncovered part of the
+  // transaction and lands on its own category. A negative one means the
+  // slices over-cover, and dropping it (which this used to do) made the parts
+  // sum to more than the transaction, inflating every budget total that reads
+  // through here. Pushing it back keeps the documented invariant true in both
+  // directions. The UI refuses to create this state (see TransactionModal),
+  // so this is the guard for data that arrived some other way: an import, a
+  // restored backup, or a hand-edited store.
+  if (remainder !== 0) parts.push({ categoryId: tx.categoryId, amount: remainder })
   return parts
 }
 

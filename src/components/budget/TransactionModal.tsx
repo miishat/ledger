@@ -98,6 +98,17 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
     }
     setAmountError(null);
 
+    // The slice editor already says "Slices exceed the amount by X", but it
+    // only warned: submit validated the amount and nothing else, so an
+    // over-allocated split saved and then contributed more than its own
+    // amount to every budget total. splitParts now clamps that case too, but
+    // the honest place to stop it is before it is stored.
+    if (isSplit && amount > 0 && splitRemainder(amount, splits) < 0) {
+      setAmountError('Slices add up to more than the amount. Reduce a slice before saving.');
+      document.getElementById('tx-amount')?.focus();
+      return;
+    }
+
     const sharedField =
       type === 'expense' && amount > 0 && isShared && totalPaid > amount && sharedWith.trim()
         ? { totalAmount: totalPaid, sharedWith: sharedWith.trim() }
@@ -340,6 +351,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                       ]}
                     />
                     <NumberInput
+                      id={`tx-split-amount-${i}`}
                       value={slice.amount}
                       onCommit={(v) =>
                         setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, amount: v } : s)))
