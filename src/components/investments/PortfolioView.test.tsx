@@ -344,9 +344,12 @@ describe('portfolio page composition', () => {
     // has a sortable "Holding" column header with the exact same text, so it
     // matches two elements. The bar's accessible name is unambiguous and is
     // the thing that actually matters: that all three cuts render.
-    expect(screen.getByRole('img', { name: /^Allocation by holding:/ })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /^Allocation by account:/ })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /^Allocation by currency:/ })).toBeInTheDocument()
+    // The trailing \S requires at least one non-space character after the
+    // colon and space, so a bar whose slice list came back empty (label
+    // "Allocation by holding: ") does not satisfy this match.
+    expect(screen.getByRole('img', { name: /^Allocation by holding: \S/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^Allocation by account: \S/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^Allocation by currency: \S/ })).toBeInTheDocument()
   })
 
   it('no longer offers the allocation mode toggle', async () => {

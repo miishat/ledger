@@ -364,12 +364,12 @@ test('money axes are formatted, not raw digits', async ({ page }) => {
   expect(ticks.every((t) => t.startsWith('$'))).toBe(true)
 })
 
-// Task 11's grep sweep wrapped every ResponsiveContainer in the app (16
+// Task 11's grep sweep wrapped every ResponsiveContainer in the app (15
 // files) in ChartFigure. This guard reaches every one of those files that
 // the app's own navigation can put on screen with seeded data alone, so a
 // later change that strips ChartFigure off any of them gets caught here
 // instead of by a screen reader user. Each route below is commented with
-// which of the 16 files it exercises.
+// which of the 15 files it exercises.
 //
 // Left out on purpose: ReportAllocations, ReportContributors, and
 // ReportPerformance (src/components/investments/report/). All three render

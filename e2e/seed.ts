@@ -22,10 +22,10 @@ export async function seedApp(page: Page): Promise<void> {
 
     const holding = (ticker: string, quantity: number, avgCost: number, currency: string) =>
       ({ id: ticker, ticker, quantity, avgCost, currency, account: 'Questrade TFSA' })
-    // Fifteen more tickers on top of the original two, so AllocationChart's
-    // "By holding" legend (max-h-[260px]/[320px]) genuinely overflows instead
-    // of rendering two rows. Real large-cap tickers, no significance to the
-    // choice beyond being distinct and recognizable.
+    // Fifteen more tickers on top of the original two, so the stacked
+    // allocation bar's "By holding" cut genuinely has to lay out 17
+    // segments instead of two. Real large-cap tickers, no significance to
+    // the choice beyond being distinct and recognizable.
     ls.setItem('ledger-portfolio', JSON.stringify({
       state: {
         holdings: [
