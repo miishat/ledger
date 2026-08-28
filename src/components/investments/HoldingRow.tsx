@@ -3,7 +3,7 @@ import { useCurrentPrice } from '../../services/marketData'
 import { CURRENCIES, type Currency } from '../../services/marketData/types'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, convertedPrice, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
+  bookValue, convertedPrice, holdingPlDollars, holdingPlPct, marketValue, quoteCurrencyForHolding, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
@@ -22,7 +22,10 @@ interface HoldingRowProps {
 export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalValueCad, onPrice }) => {
   const setHoldingCurrency = usePortfolioStore((s) => s.setHoldingCurrency)
   const live = useCurrentPrice(holding.ticker, holding.exchange)
-  const quoteCurrency = live.data?.value.currency ?? holding.currency
+  // Not live.data.value.currency directly: an override's currency is a
+  // placeholder the service cannot fill in correctly. See
+  // quoteCurrencyForHolding.
+  const quoteCurrency = quoteCurrencyForHolding(holding, live.data?.value.currency, live.data?.source)
   const nativePrice = live.data?.value.price ?? holding.avgCost
 
   // The quote's currency is authoritative for the price; convert it into the

@@ -116,4 +116,25 @@ describe('HoldingCard', () => {
     // 1000 EUR at 1.47 into CAD, against a 1000 CAD total.
     expect(getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(1000 * 1.47, 1000)))
   })
+
+  it('does not convert a manual override, which is already in the holding currency', () => {
+    // source: 'override' is the point. The placeholder currency the service
+    // stamps on overrides is USD; believing it turns this CAD price of
+    // 148.90 into 206.51.
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 148.9, currency: 'USD' }, source: 'override', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+    const holding = buildHolding({
+      id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'TFSA',
+    })
+    const { getByText, queryByText } = render(
+      <HoldingCard holding={holding} rates={{ USD: 1.3869 }} totalValueCad={10000} onPrice={() => {}} />,
+    )
+    expect(getByText('148.90')).toBeInTheDocument()
+    expect(queryByText('206.51')).not.toBeInTheDocument()
+  })
 })

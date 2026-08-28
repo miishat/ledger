@@ -131,4 +131,23 @@ describe('quote currency', () => {
     )
     expect(await screen.findByLabelText('Refresh VFV price')).toBeInTheDocument()
   })
+
+  it('does not convert a manual override, which is already in the holding currency', async () => {
+    // A CAD holding with a manually entered CAD price. Reading the
+    // override's placeholder currency as USD multiplies this price by the
+    // USD rate: 148.90 becomes 206.51, and the tab disagrees with the
+    // dashboard rollup on the same data.
+    useMarketDataStore.setState({ overrides: { VFV: 148.9 } })
+    const holding = {
+      id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+      currency: 'CAD' as const, account: 'TFSA',
+    }
+    render(
+      <table><tbody>
+        <HoldingRow holding={holding} rates={{ USD: 1.3869 }} totalValueCad={10000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+    expect(await screen.findByText('148.90')).toBeInTheDocument()
+    expect(screen.queryByText('206.51')).not.toBeInTheDocument()
+  })
 })

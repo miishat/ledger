@@ -82,3 +82,32 @@ describe('portfolio totals parity: unconvertible cached quote', () => {
     expect(viewValues).not.toContain('$2,000')
   })
 })
+
+describe('portfolio totals parity: manual override', () => {
+  // A CAD holding priced by hand. The rollup has always trusted an override
+  // raw; the tab used to convert it as though the placeholder currency the
+  // service stamps on overrides were real, so the same holding read $1,489
+  // in one place and $2,065 in the other.
+  const holdings = [
+    { id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD' as const, account: 'TFSA' },
+  ]
+
+  beforeEach(() => {
+    installMatchMedia()
+    usePortfolioStore.setState({ holdings, importedAt: new Date().toISOString(), currencyReviewPending: false })
+    useMarketDataStore.setState({ quotes: {}, overrides: { [quoteKey('VFV')]: 148.9 } })
+    __resetMinInterval()
+  })
+
+  it('reports the same holdings value on both surfaces when the price is a manual override', async () => {
+    const { unmount } = render(<MemoryRouter><PortfolioRollupWidget /></MemoryRouter>)
+    expect(await screen.findByText('$1,489')).toBeInTheDocument()
+    unmount()
+
+    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+    expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
+    const viewValues = screen.getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
+    expect(viewValues).toContain('$1,489')
+    expect(viewValues).not.toContain('$2,065')
+  })
+})
