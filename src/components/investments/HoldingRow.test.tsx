@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { HoldingRow } from './HoldingRow'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
@@ -149,5 +149,58 @@ describe('quote currency', () => {
     )
     expect(await screen.findByText('148.90')).toBeInTheDocument()
     expect(screen.queryByText('206.51')).not.toBeInTheDocument()
+  })
+})
+
+describe('row disclosure', () => {
+  const holding = {
+    id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+    currency: 'CAD' as const, account: 'TFSA',
+  }
+
+  const renderRow = () =>
+    render(
+      <table><tbody>
+        <HoldingRow holding={holding} rates={{}} totalValueCad={10000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+
+  it('starts collapsed, with avg cost and book hidden', () => {
+    renderRow()
+    expect(screen.getByRole('button', { name: 'Details for VFV' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Avg cost')).not.toBeInTheDocument()
+    expect(screen.queryByText('Book')).not.toBeInTheDocument()
+  })
+
+  it('reveals avg cost and book when opened', () => {
+    renderRow()
+    fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
+    expect(screen.getByRole('button', { name: 'Details for VFV' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Avg cost')).toBeInTheDocument()
+    expect(screen.getByText('Book')).toBeInTheDocument()
+    // Scoped to the detail row: with no live quote, the Price cell also
+    // reads 100.00 (it falls back to avgCost), so a page-wide getByText
+    // would match both cells.
+    const detail = document.getElementById('holding-detail-h1')!
+    expect(within(detail).getByText('100.00')).toBeInTheDocument()
+    expect(within(detail).getByText(formatMoney(1000))).toBeInTheDocument()
+  })
+
+  it('closes again on a second click', () => {
+    renderRow()
+    const toggle = screen.getByRole('button', { name: 'Details for VFV' })
+    fireEvent.click(toggle)
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Avg cost')).not.toBeInTheDocument()
+  })
+
+  it('points the disclosure at the detail row it controls', () => {
+    renderRow()
+    const toggle = screen.getByRole('button', { name: 'Details for VFV' })
+    fireEvent.click(toggle)
+    const controlled = toggle.getAttribute('aria-controls')
+    expect(controlled).toBe('holding-detail-h1')
+    expect(document.getElementById(controlled!)).not.toBeNull()
   })
 })

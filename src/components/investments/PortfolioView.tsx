@@ -192,12 +192,12 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             const accountHoldings = sortRows(holdings.filter((h) => h.account === account))
             const subtotalValue = accountHoldings.reduce((s, h) => s + valueCadOf(h), 0)
             const subtotalPl = accountHoldings.reduce((s, h) => s + plCadOf(h), 0)
+            // Avg Cost and Book moved into the per-row disclosure in
+            // HoldingRow. Neither was sortable, so no sort key is lost.
             const headers: { key: SortKey | null; label: string; align: string }[] = [
               { key: 'ticker', label: 'Holding', align: 'text-left' },
               { key: null, label: 'Qty', align: 'text-right' },
-              { key: null, label: 'Avg Cost', align: 'text-right' },
               { key: null, label: 'Price', align: 'text-right' },
-              { key: null, label: 'Book', align: 'text-right' },
               { key: 'value', label: 'Value', align: 'text-right' },
               { key: 'pl', label: 'P/L', align: 'text-right' },
               { key: 'alloc', label: 'Alloc', align: 'text-right' },
@@ -216,7 +216,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                   </p>
                 </div>
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-[13px] min-w-[720px]">
+                  <table className="w-full text-[13px] min-w-[560px]">
                     <caption className="sr-only">
                       Holdings in {account}, sortable by ticker, value, profit and loss, or allocation.
                     </caption>
