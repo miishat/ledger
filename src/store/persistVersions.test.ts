@@ -21,6 +21,12 @@ const STORE_DIR = join(process.cwd(), 'src', 'store')
  *    unversioned store from the audit that produced this task. */
 const DECLARES_VERSION = /^\s*version:\s*(?:\d+|[A-Za-z_$][\w$]*)\s*,?$/m
 
+/** Zustand discards a store's persisted state when it sees version 0 and the
+ *  store declares a version with no migrate function. This pattern guards that
+ *  any store declaring a version also declares a migrate to handle old data.
+ *  Anchored to line start for the same reason DECLARES_VERSION is. */
+const DECLARES_MIGRATE = /^\s*migrate:\s*/m
+
 const storeSource = (file: string) => readFileSync(join(STORE_DIR, file), 'utf8')
 
 /** useAccountsStore is persisted but deliberately declares no version, and
@@ -51,6 +57,13 @@ describe('persisted stores declare a version', () => {
   for (const file of persistedStores.filter((f) => !NO_VERSION_BY_DESIGN.includes(f))) {
     it(`${file} declares a persist version`, () => {
       expect(storeSource(file)).toMatch(DECLARES_VERSION)
+    })
+
+    it(`${file} pairs its version with a migrate`, () => {
+      const source = storeSource(file)
+      if (source.match(DECLARES_VERSION)) {
+        expect(source).toMatch(DECLARES_MIGRATE)
+      }
     })
   }
 })
