@@ -146,6 +146,27 @@ describe('syncService', () => {
 
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ fresh: true })
   })
+
+  it('performPull leaves a registered key alone when the snapshot has no app version', async () => {
+    // This guards performPull's wiring to keysToPruneOnPull. If a future edit
+    // breaks the call, or adds a second unguarded sweep, nothing else would
+    // catch the data loss: keysToPruneOnPull's unit tests pass, and the
+    // snapshot-with-version case passes too. This end-to-end test catches it.
+    localStorage.setItem('ledger-portfolio', JSON.stringify({ holdings: [1, 2, 3] }))
+    const envelope: BackupEnvelope = {
+      version: BACKUP_VERSION, exportedAt: '', app: 'ledger',
+      // No appVersion field: every snapshot written before 0.9.8. The writer
+      // may predate any registered store, so an absent key proves nothing.
+      data: { 'ledger-budget': { pulled: true } }, revision: 5,
+    }
+    vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
+
+    await performPull('tok', remoteMeta(5))
+
+    expect(localStorage.getItem('ledger-portfolio')).not.toBeNull()
+    const facts = collectFacts()
+    expect(facts.currentHash).toBe(facts.lastSyncedHash)
+  })
 })
 
 const envelope = (data: Record<string, unknown>, appVersion?: string): BackupEnvelope => ({
