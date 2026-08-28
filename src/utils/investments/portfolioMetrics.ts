@@ -146,3 +146,22 @@ export function allocationBreakdown(
     .map(([name, valueCad]) => ({ name, valueCad, pct: total > 0 ? (valueCad / total) * 100 : 0 }))
     .sort((a, b) => b.valueCad - a.valueCad)
 }
+
+/** The currency a holding's resolved quote should be read in.
+ *
+ *  A manual price override is typed by the user while looking at one
+ *  holding, so it is already denominated in that holding's own currency.
+ *  getCurrentPrice has no holding context and stamps a placeholder currency
+ *  on the override it returns, so that value must not be believed: doing so
+ *  converts the price a second time and inflates value, P/L and allocation
+ *  by the exchange rate. PortfolioRollupWidget has always applied this rule
+ *  by short-circuiting overrides; this is the same rule in one shared place
+ *  so the row, the card and the rollup cannot disagree again. */
+export function quoteCurrencyForHolding(
+  holding: Holding,
+  quoteCurrency: Currency | null | undefined,
+  source: 'override' | 'live' | 'cache' | undefined,
+): Currency | null {
+  if (source === 'override') return holding.currency
+  return quoteCurrency ?? holding.currency
+}
