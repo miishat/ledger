@@ -13,6 +13,15 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
   const sortedHistory = data ? [...data.history].sort((a, b) => a.date.localeCompare(b.date)) : []
   const totalCashFlow = sortedHistory.reduce((s, h) => s + h.proceeds + h.commFee, 0)
 
+  // The panel is capped at 85dvh, but a cap alone does nothing: with the
+  // default visible overflow the ledger simply painted outside the panel and
+  // the rounded card edge read as cutting the table off. Measured on a 60 row
+  // ledger: the panel clamped to 612px while the table's bottom sat 1659px
+  // past it, and the inner scroll container could not scroll because nothing
+  // bounded its height (scrollHeight === clientHeight). Making the panel a
+  // bounded flex column gives that container something to shrink against, so
+  // the table scrolls inside the sheet and the header with its close button
+  // stays pinned on a long ledger.
   return (
     <Sheet
       open={data !== null}
@@ -20,8 +29,8 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
       desktop="modal"
       ariaLabel="Detailed ledger"
       title={<>{data?.ticker} Detailed Ledger</>}
-      panelClassName="themed-menu desktop:rounded-lg w-full max-w-3xl desktop:p-6 desktop:max-h-[85dvh]"
-      contentClassName="flex flex-col gap-3"
+      panelClassName="themed-menu desktop:rounded-lg w-full max-w-3xl desktop:p-6 desktop:max-h-[85dvh] desktop:flex desktop:flex-col desktop:overflow-hidden"
+      contentClassName="flex flex-col gap-3 min-h-0 desktop:flex-1"
     >
       <div className="hidden desktop:flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-text-primary">{data?.ticker} Detailed Ledger</h2>
@@ -34,7 +43,7 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
         </button>
       </div>
 
-      <div className="overflow-auto">
+      <div className="overflow-auto min-h-0">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="text-left text-text-secondary border-b border-border">

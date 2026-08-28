@@ -45,7 +45,23 @@ export const NetWorthTrendWidget: React.FC = () => {
         className="h-[220px] mt-2"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={history} accessibilityLayer={false}>
+          {/* The right margin exists so the final date label has somewhere to
+              go. The last tick sits on the plot's right edge and its label is
+              anchored middle, so with the default 5px margin the label is
+              wider than the space left for it. Recharts then shoves it left
+              until its right edge lands exactly on the SVG boundary: measured
+              at 1800px, the tick was at 1240 but the label's centre was 1212,
+              28px off its own tick, ending flush at 1245 with a zero pixel
+              gutter. Flush against the card edge is what reads as a cut off
+              date. 40px clears half of the widest label (66px in the mono
+              theme), so the clamp never fires and the label sits centred on
+              its own tick again. Measured gutters: 7px in tactical (JetBrains
+              Mono) and 8px in geometric (Inter).
+
+              Note for anyone re-measuring this: nothing here ever overflows
+              the SVG, so a guard that looks for text escaping its container
+              cannot see this. The symptom is a zero gutter, not an overflow. */}
+          <AreaChart data={history} accessibilityLayer={false} margin={{ top: 5, right: 40, bottom: 5, left: 5 }}>
             {/* The axes meet at the corner, so a full-precision y label like
                 $316,621 sits directly against the first date and the two read as
                 one string. Compact labels keep the corner legible, and match the
