@@ -55,6 +55,12 @@ export async function getCurrentPrice(
   const override = store.getOverride(key)
   if (override !== undefined) {
     const asOf = new Date().toISOString()
+    // The currency here is a placeholder and is NOT authoritative. An
+    // override is entered by the user in whatever currency they were
+    // looking at, and this function has no holding context to name it.
+    // Holding-aware callers must resolve it with quoteCurrencyForHolding
+    // in src/utils/investments/portfolioMetrics.ts rather than reading
+    // this field. Quote.currency is not nullable, so a placeholder it is.
     return {
       value: { ticker: ticker.trim(), exchange, price: override, currency: 'USD', asOf },
       source: 'override', status: 'success', asOf, stale: false,

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { HoldingRow } from './HoldingRow'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
@@ -130,5 +130,77 @@ describe('quote currency', () => {
       </tbody></table>,
     )
     expect(await screen.findByLabelText('Refresh VFV price')).toBeInTheDocument()
+  })
+
+  it('does not convert a manual override, which is already in the holding currency', async () => {
+    // A CAD holding with a manually entered CAD price. Reading the
+    // override's placeholder currency as USD multiplies this price by the
+    // USD rate: 148.90 becomes 206.51, and the tab disagrees with the
+    // dashboard rollup on the same data.
+    useMarketDataStore.setState({ overrides: { VFV: 148.9 } })
+    const holding = {
+      id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+      currency: 'CAD' as const, account: 'TFSA',
+    }
+    render(
+      <table><tbody>
+        <HoldingRow holding={holding} rates={{ USD: 1.3869 }} totalValueCad={10000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+    expect(await screen.findByText('148.90')).toBeInTheDocument()
+    expect(screen.queryByText('206.51')).not.toBeInTheDocument()
+  })
+})
+
+describe('row disclosure', () => {
+  const holding = {
+    id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+    currency: 'CAD' as const, account: 'TFSA',
+  }
+
+  const renderRow = () =>
+    render(
+      <table><tbody>
+        <HoldingRow holding={holding} rates={{}} totalValueCad={10000} onPrice={() => {}} />
+      </tbody></table>,
+    )
+
+  it('starts collapsed, with avg cost and book hidden', () => {
+    renderRow()
+    expect(screen.getByRole('button', { name: 'Details for VFV' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Avg cost')).not.toBeInTheDocument()
+    expect(screen.queryByText('Book')).not.toBeInTheDocument()
+  })
+
+  it('reveals avg cost and book when opened', () => {
+    renderRow()
+    fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
+    expect(screen.getByRole('button', { name: 'Details for VFV' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Avg cost')).toBeInTheDocument()
+    expect(screen.getByText('Book')).toBeInTheDocument()
+    // Scoped to the detail row: with no live quote, the Price cell also
+    // reads 100.00 (it falls back to avgCost), so a page-wide getByText
+    // would match both cells.
+    const detail = document.getElementById('holding-detail-h1')!
+    expect(within(detail).getByText('100.00')).toBeInTheDocument()
+    expect(within(detail).getByText(formatMoney(1000))).toBeInTheDocument()
+  })
+
+  it('closes again on a second click', () => {
+    renderRow()
+    const toggle = screen.getByRole('button', { name: 'Details for VFV' })
+    fireEvent.click(toggle)
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Avg cost')).not.toBeInTheDocument()
+  })
+
+  it('points the disclosure at the detail row it controls', () => {
+    renderRow()
+    const toggle = screen.getByRole('button', { name: 'Details for VFV' })
+    fireEvent.click(toggle)
+    const controlled = toggle.getAttribute('aria-controls')
+    expect(controlled).toBe('holding-detail-h1')
+    expect(document.getElementById(controlled!)).not.toBeNull()
   })
 })

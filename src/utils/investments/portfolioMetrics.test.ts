@@ -1,6 +1,6 @@
 import type { Holding } from '../../store/usePortfolioStore'
 import {
-  allocationBreakdown, bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, portfolioTotals, toCad, type FxRates,
+  allocationBreakdown, bookValue, convertAmount, holdingPlDollars, holdingPlPct, marketValue, portfolioTotals, quoteCurrencyForHolding, toCad, type FxRates,
 } from './portfolioMetrics'
 
 const h = (over: Partial<Holding>): Holding => ({
@@ -142,5 +142,36 @@ describe('allocationBreakdown', () => {
     const slices = allocationBreakdown(withUnknown, rates, 'currency')
     expect(slices.map((s) => s.name)).not.toContain('Unknown')
     expect(slices.reduce((s, x) => s + x.pct, 0)).toBeCloseTo(100, 5)
+  })
+})
+
+describe('quoteCurrencyForHolding', () => {
+  const cadHolding = {
+    id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+    currency: 'CAD' as const, account: 'TFSA',
+  }
+
+  it('ignores the currency reported for a manual override and uses the holding currency', () => {
+    // The service stamps a placeholder currency on overrides because it has
+    // no holding context. Believing it converts a CAD price as though it
+    // were USD, which is the defect this function exists to prevent.
+    expect(quoteCurrencyForHolding(cadHolding, 'USD', 'override')).toBe('CAD')
+  })
+
+  it('believes the currency on a live quote', () => {
+    expect(quoteCurrencyForHolding(cadHolding, 'USD', 'live')).toBe('USD')
+  })
+
+  it('believes the currency on a cached quote', () => {
+    expect(quoteCurrencyForHolding(cadHolding, 'USD', 'cache')).toBe('USD')
+  })
+
+  it('falls back to the holding currency when there is no quote at all', () => {
+    expect(quoteCurrencyForHolding(cadHolding, undefined, undefined)).toBe('CAD')
+  })
+
+  it('returns the unset holding currency for an override on a holding with no currency', () => {
+    const unset = { ...cadHolding, currency: null }
+    expect(quoteCurrencyForHolding(unset, 'USD', 'override')).toBeNull()
   })
 })

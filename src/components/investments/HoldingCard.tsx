@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useCurrentPrice } from '../../services/marketData'
 import { CURRENCIES, type Currency } from '../../services/marketData/types'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import {
-  bookValue, convertedPrice, holdingPlDollars, holdingPlPct, marketValue, toCad, type FxRates,
+  bookValue, convertedPrice, holdingPlDollars, holdingPlPct, marketValue, quoteCurrencyForHolding, toCad, type FxRates,
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
@@ -22,7 +23,10 @@ interface HoldingCardProps {
 export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalValueCad, onPrice }) => {
   const setHoldingCurrency = usePortfolioStore((s) => s.setHoldingCurrency)
   const live = useCurrentPrice(holding.ticker, holding.exchange)
-  const quoteCurrency = live.data?.value.currency ?? holding.currency
+  // Not live.data.value.currency directly: an override's currency is a
+  // placeholder the service cannot fill in correctly. See
+  // quoteCurrencyForHolding.
+  const quoteCurrency = quoteCurrencyForHolding(holding, live.data?.value.currency, live.data?.source)
   const nativePrice = live.data?.value.price ?? holding.avgCost
 
   // The quote's currency is authoritative for the price; convert it into the
@@ -51,12 +55,27 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
   const valueCad = toCad(marketValue(holding, effectivePrice), holding.currency, rates)
   const plDollars = holdingPlDollars(holding, effectivePrice)
   const isLoadingPrice = live.status === 'loading' && !live.data
+  const [open, setOpen] = useState(false)
+  const detailId = `holding-card-detail-${holding.id}`
 
   return (
     <div className="themed-card rounded-lg p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls={detailId}
+            aria-label={`Details for ${holding.ticker}`}
+            className="inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+          >
+            <ChevronRight
+              className={`w-3.5 h-3.5 text-text-secondary transition-transform ${open ? 'rotate-90' : ''}`}
+              aria-hidden="true"
+            />
+            <span className="text-[15px] font-semibold text-text-primary">{holding.ticker}</span>
+          </button>
           <span className="block text-meta text-text-secondary">
             <span className="inline-flex align-middle items-center">
               <ThemedSelect
@@ -99,7 +118,6 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
         <span className="text-text-secondary">Qty</span><span className="text-right tabular-nums">{holding.quantity}</span>
-        <span className="text-text-secondary">Avg Cost</span><span className="text-right tabular-nums">{holding.avgCost.toFixed(2)}</span>
         <span className="text-text-secondary">Price</span>
         <span className="text-right tabular-nums">
           {isLoadingPrice ? <Skeleton className="h-4 w-16 inline-block" /> : price.toFixed(2)}
@@ -122,7 +140,6 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
             </>
           )}
         </span>
-        <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
         <span className="text-text-secondary">Value</span>
         <span data-testid="value-cell" className="text-right tabular-nums">
           {isLoadingPrice
@@ -130,6 +147,12 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({ holding, rates, totalV
             : formatMoney(marketValue(holding, effectivePrice))}
         </span>
       </div>
+      {open && (
+        <div id={detailId} className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px] rounded-md bg-bg-primary/50 px-2 py-2">
+          <span className="text-text-secondary">Avg Cost</span><span className="text-right tabular-nums">{holding.avgCost.toFixed(2)}</span>
+          <span className="text-text-secondary">Book</span><span className="text-right tabular-nums">{formatMoney(bookValue(holding))}</span>
+        </div>
+      )}
     </div>
   )
 }

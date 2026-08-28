@@ -5,7 +5,8 @@ import type { Currency } from '../../services/marketData/types'
 import { accountNames, usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
 import { holdingPlDollars, marketValue, portfolioTotals, safeHoldingPrice, toCad } from '../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../planner/format'
-import { AllocationChart } from './AllocationChart'
+import { AllocationBars } from './AllocationBars'
+import { PortfolioSummary } from './PortfolioSummary'
 import { HoldingRow } from './HoldingRow'
 import { HoldingCard } from './HoldingCard'
 import { PortfolioImport } from './PortfolioImport'
@@ -154,50 +155,20 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             </div>
           )}
 
-          <div className={`grid grid-cols-1 gap-4 ${nav ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Total Invested (CAD)</p><p className="text-[22px] font-semibold text-text-primary">{formatMoney(totals.investedCad)}</p></div>
-            <div className="themed-card rounded-lg p-4"><p className="text-[12px] uppercase text-text-secondary">Holdings Value (CAD)</p><p className="text-[22px] font-semibold text-accent">{formatMoney(totals.valueCad)}</p></div>
-            <div className="themed-card rounded-lg p-4">
-              <p className="text-[12px] uppercase text-text-secondary">Total P/L</p>
-              <p className={`text-[22px] font-semibold ${totals.plCad >= 0 ? 'text-accent' : 'text-error'}`}>
-                {formatMoney(totals.plCad)}{totals.plPct !== null ? ` (${totals.plPct >= 0 ? '+' : ''}${totals.plPct.toFixed(1)}%)` : ''}
-              </p>
-              {totals.excludedCount > 0 && (
-                <p className="text-[13px] text-error mt-1">
-                  {totals.excludedCount} holding{totals.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {totals.excludedCount === 1 ? 'its' : 'their'} currency.{' '}
-                  <button
-                    type="button"
-                    onClick={() => fx.refresh()}
-                    className="border control-border rounded px-1.5 py-0.5 text-[12px] hover:text-error/80 hover:border-error/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  >
-                    Retry exchange rates
-                  </button>
-                </p>
-              )}
-            </div>
-            {nav && (
-              <div className="themed-card rounded-lg p-4">
-                <p className="text-[12px] uppercase text-text-secondary">Account Value ({nav.baseCurrency})</p>
-                <p className="text-[22px] font-semibold text-text-primary">{formatMoney(nav.nav)}</p>
-                <p className="text-meta text-text-secondary mt-1">
-                  {nav.cash !== null ? `Cash ${formatMoney(nav.cash)} · ` : ''}per report{report?.period ? `, ${report.period}` : ''}
-                </p>
-              </div>
-            )}
-          </div>
+          <PortfolioSummary rows={rows} rates={rates} nav={nav} onRetryRates={() => fx.refresh()} />
 
-          <AllocationChart rows={rows} rates={rates} />
+          <AllocationBars rows={rows} rates={rates} />
 
           {accountNames(holdings).map((account) => {
             const accountHoldings = sortRows(holdings.filter((h) => h.account === account))
             const subtotalValue = accountHoldings.reduce((s, h) => s + valueCadOf(h), 0)
             const subtotalPl = accountHoldings.reduce((s, h) => s + plCadOf(h), 0)
+            // Avg Cost and Book moved into the per-row disclosure in
+            // HoldingRow. Neither was sortable, so no sort key is lost.
             const headers: { key: SortKey | null; label: string; align: string }[] = [
               { key: 'ticker', label: 'Holding', align: 'text-left' },
               { key: null, label: 'Qty', align: 'text-right' },
-              { key: null, label: 'Avg Cost', align: 'text-right' },
               { key: null, label: 'Price', align: 'text-right' },
-              { key: null, label: 'Book', align: 'text-right' },
               { key: 'value', label: 'Value', align: 'text-right' },
               { key: 'pl', label: 'P/L', align: 'text-right' },
               { key: 'alloc', label: 'Alloc', align: 'text-right' },
@@ -216,7 +187,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                   </p>
                 </div>
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-[13px] min-w-[720px]">
+                  <table className="w-full text-[13px] min-w-[560px]">
                     <caption className="sr-only">
                       Holdings in {account}, sortable by ticker, value, profit and loss, or allocation.
                     </caption>

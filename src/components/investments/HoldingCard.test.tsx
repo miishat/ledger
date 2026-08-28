@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { HoldingCard } from './HoldingCard'
 import type { Holding } from '../../store/usePortfolioStore'
 import { formatMoney } from '../planner/format'
@@ -115,5 +115,66 @@ describe('HoldingCard', () => {
     expect(getByTestId('pl-cell')).toHaveTextContent(`${formatMoney(0)} (${pct(0)})`)
     // 1000 EUR at 1.47 into CAD, against a 1000 CAD total.
     expect(getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(1000 * 1.47, 1000)))
+  })
+
+  it('does not convert a manual override, which is already in the holding currency', () => {
+    // source: 'override' is the point. The placeholder currency the service
+    // stamps on overrides is USD; believing it turns this CAD price of
+    // 148.90 into 206.51.
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 148.9, currency: 'USD' }, source: 'override', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+    const holding = buildHolding({
+      id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'TFSA',
+    })
+    const { getByText, queryByText } = render(
+      <HoldingCard holding={holding} rates={{ USD: 1.3869 }} totalValueCad={10000} onPrice={() => {}} />,
+    )
+    expect(getByText('148.90')).toBeInTheDocument()
+    expect(queryByText('206.51')).not.toBeInTheDocument()
+  })
+})
+
+describe('card disclosure', () => {
+  const holding = {
+    id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,
+    currency: 'CAD' as const, account: 'TFSA',
+  }
+
+  it('starts collapsed, with avg cost and book hidden', () => {
+    // Set explicitly rather than relying on whatever the previous test in
+    // this file configured: there is no beforeEach resetting this mock, so
+    // an unset value here would make the test order-dependent. A settled,
+    // matching-currency quote keeps the render free of loading skeletons
+    // and unconverted markers, which are not what this test is about.
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 150, currency: 'CAD' }, source: 'live', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+    render(<HoldingCard holding={holding} rates={{}} totalValueCad={10000} onPrice={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Details for VFV' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Avg Cost')).not.toBeInTheDocument()
+    expect(screen.queryByText('Book')).not.toBeInTheDocument()
+  })
+
+  it('reveals avg cost and book when opened', () => {
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 150, currency: 'CAD' }, source: 'live', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+    render(<HoldingCard holding={holding} rates={{}} totalValueCad={10000} onPrice={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
+    expect(screen.getByText('Avg Cost')).toBeInTheDocument()
+    expect(screen.getByText('Book')).toBeInTheDocument()
   })
 })

@@ -6,6 +6,13 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- Investments Portfolio tab: the three stat cards and the allocation donut with its mode toggle are replaced by a summary band (headline holdings value and all-time delta, strongest/weakest holding, largest weight, currency split, account value) and three allocation bars shown at once, for holding, account and currency
+- Holdings table drops from eight columns to six: Avg Cost and Book open from a disclosure on the ticker instead of sitting in their own columns
+
+### Fixed
+- A manual price override on a non-USD holding no longer gets converted a second time by the placeholder currency the market data service stamps on it. This had inflated the Portfolio tab's total by the USD exchange rate for every affected holding, disagreeing with the Dashboard rollup, which read the same override correctly
+
 ## [0.9.7-beta] - 2026-08-27
 
 A sixth theme, Gilded Bloom, and the round of interface fixes that living
