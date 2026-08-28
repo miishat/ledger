@@ -78,7 +78,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
         <dl className="flex flex-col">
           {facts.map((f) => (
             <div key={f.label} className="flex justify-between items-baseline gap-4 py-2 border-b border-border last:border-b-0">
-              <dt className="text-[11px] uppercase tracking-wide text-text-secondary">{f.label}</dt>
+              <dt className="text-meta uppercase tracking-wide text-text-secondary">{f.label}</dt>
               <dd className="text-right">
                 <span className={`block text-[13px] font-medium tabular-nums ${f.tone ?? 'text-text-primary'}`}>{f.value}</span>
                 {f.sub && <span className="block text-meta text-text-secondary tabular-nums">{f.sub}</span>}

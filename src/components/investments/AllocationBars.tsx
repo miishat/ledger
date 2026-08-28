@@ -27,7 +27,7 @@ const CUTS: { by: AllocationBy; label: string }[] = [
 const Bar: React.FC<{ label: string; by: AllocationBy; slices: AllocationSlice[] }> = ({ label, by, slices }) => (
   <div className="flex flex-col gap-1.5">
     <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[11px] uppercase tracking-wide text-text-secondary">{label}</span>
+      <span className="text-meta uppercase tracking-wide text-text-secondary">{label}</span>
     </div>
     <div
       role="img"
@@ -40,7 +40,7 @@ const Bar: React.FC<{ label: string; by: AllocationBy; slices: AllocationSlice[]
     </div>
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {slices.map((s, i) => (
-        <span key={s.name} className="inline-flex items-center gap-1.5 text-[11px] text-text-secondary">
+        <span key={s.name} className="inline-flex items-center gap-1.5 text-meta text-text-secondary">
           <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: sliceColor(i) }} aria-hidden="true" />
           <span className="tabular-nums">{s.name} {s.pct.toFixed(1)}% &middot; {formatMoney(s.valueCad)}</span>
         </span>

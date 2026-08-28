@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import { PortfolioView } from './PortfolioView'
 import { usePortfolioStore, type Holding } from '../../store/usePortfolioStore'
@@ -8,6 +9,7 @@ import { sampleReport } from './report/testFixtures'
 import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __resetMinInterval } from '../../services/marketData/throttle'
+import { installMatchMedia } from '../../test-utils/matchMedia'
 
 // Ticker -> quote override, consulted by the mocked useCurrentPrice below.
 // Empty by default so every existing test keeps getting the idle/no-quote
@@ -112,7 +114,7 @@ describe('multi-currency totals', () => {
       importedAt: '2026-07-21T00:00:00.000Z',
     })
     render(<PortfolioView />)
-    expect(await screen.findByText('Total Invested (CAD)')).toBeInTheDocument()
+    expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
     expect(screen.queryByText(/left out of these totals/)).not.toBeInTheDocument()
   })
 })
@@ -319,4 +321,46 @@ describe('account subtotal correctness', () => {
     })
   })
 
+})
+
+describe('portfolio page composition', () => {
+  beforeEach(() => {
+    installMatchMedia()
+    usePortfolioStore.setState({
+      holdings: [
+        { id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'TFSA' },
+      ],
+      importedAt: new Date().toISOString(),
+      currencyReviewPending: false,
+    })
+    useMarketDataStore.setState({ quotes: {}, overrides: {} })
+  })
+
+  it('leads with the summary band and shows all three allocation cuts', async () => {
+    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+    expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
+    expect(screen.getByText('Total invested')).toBeInTheDocument()
+    // Plain getByText('Holding') is ambiguous here: the holdings table also
+    // has a sortable "Holding" column header with the exact same text, so it
+    // matches two elements. The bar's accessible name is unambiguous and is
+    // the thing that actually matters: that all three cuts render.
+    expect(screen.getByRole('img', { name: /^Allocation by holding:/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^Allocation by account:/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^Allocation by currency:/ })).toBeInTheDocument()
+  })
+
+  it('no longer offers the allocation mode toggle', async () => {
+    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+    await screen.findByText('Holdings Value (CAD)')
+    expect(screen.queryByRole('button', { name: 'By holding' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'By account' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'By currency' })).not.toBeInTheDocument()
+  })
+
+  it('no longer shows the separate Total Invested stat card', async () => {
+    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+    await screen.findByText('Holdings Value (CAD)')
+    expect(screen.queryByText('Total Invested (CAD)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Total P/L')).not.toBeInTheDocument()
+  })
 })

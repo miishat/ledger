@@ -410,13 +410,6 @@ const CHART_ROUTES: { path: string; afterNav?: (page: Page) => Promise<void> }[]
       await page.getByRole('tab', { name: 'Insights' }).click()
     },
   },
-  // AllocationChart (Pie), behind the Investments Portfolio tab.
-  {
-    path: '#/investments',
-    afterNav: async (page) => {
-      await page.getByRole('tab', { name: 'Portfolio' }).click()
-    },
-  },
   // CompoundInterestCalculator (Area)
   { path: '#/planner/compound-interest' },
   // DebtPayoffCalculator (Line)
