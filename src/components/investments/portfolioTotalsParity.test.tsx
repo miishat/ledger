@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { PortfolioView } from './PortfolioView'
 import { PortfolioRollupWidget } from '../dashboard/widgets/PortfolioRollupWidget'
@@ -84,10 +84,15 @@ describe('portfolio totals parity: unconvertible cached quote', () => {
 })
 
 describe('portfolio totals parity: manual override', () => {
-  // A CAD holding priced by hand. The rollup has always trusted an override
-  // raw; the tab used to convert it as though the placeholder currency the
-  // service stamps on overrides were real, so the same holding read $1,489
-  // in one place and $2,065 in the other.
+  // A CAD holding priced by hand. With no FX rate resolvable in the test
+  // environment, the bug was believing the override's placeholder USD
+  // currency made the price unconvertible, so the holding silently fell
+  // back to its cost basis and read $1,000 instead of $1,489. PortfolioView
+  // renders both the desktop table and the mobile card list for every
+  // holding at once (CSS only hides one of them), so each surface is
+  // asserted independently here, scoped to its own container, or a
+  // regression in one surface could hide behind a correct value from
+  // the other.
   const holdings = [
     { id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD' as const, account: 'TFSA' },
   ]
@@ -106,8 +111,14 @@ describe('portfolio totals parity: manual override', () => {
 
     render(<MemoryRouter><PortfolioView /></MemoryRouter>)
     expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
-    const viewValues = screen.getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
-    expect(viewValues).toContain('$1,489')
-    expect(viewValues).not.toContain('$2,065')
+
+    const table = document.querySelector('table')
+    expect(table, 'expected exactly one desktop table to be rendered').not.toBeNull()
+    const tableValues = within(table as HTMLElement).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
+    expect(tableValues, 'desktop table did not show the converted override price').toContain('$1,489')
+
+    const cards = screen.getByTestId('portfolio-cards-TFSA')
+    const cardValues = within(cards).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
+    expect(cardValues, 'mobile card did not show the converted override price').toContain('$1,489')
   })
 })
