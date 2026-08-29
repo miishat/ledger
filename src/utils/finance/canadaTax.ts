@@ -23,12 +23,14 @@ export const TAX_YEAR = 2026
  *  The estimate is still arithmetically correct for TAX_YEAR, it is just no
  *  longer the current year, and the UI has to say so rather than present a
  *  stale number as this year's. Takes `now` so the test is not clock
- *  dependent. Compares by UTC year, not local year: a machine west of UTC
- *  would otherwise call the last few hours of December 31st still last
- *  year, and a fixed year rollover should not depend on the reader's time
- *  zone. */
+ *  dependent. Compares by local year, not UTC year: the Canadian tax year
+ *  is a local calendar year, so the reader's own clock is what decides
+ *  whether it has turned. A UTC comparison would tell someone west of UTC
+ *  their rates are stale while it is still the old year where they live,
+ *  and it would disagree with the local year the warning text itself
+ *  prints below. */
 export function isTaxYearStale(now: Date = new Date()): boolean {
-  return now.getUTCFullYear() > TAX_YEAR
+  return now.getFullYear() > TAX_YEAR
 }
 
 export type Province =
