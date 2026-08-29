@@ -661,3 +661,19 @@ for (const [theme, expectBlur] of [['nouveau', true], ['luxury', false]] as cons
     }
   })
 }
+
+// The tablet project runs this file at 768x1024, exactly the width where the
+// sidebar takes 256px and the holdings table's min-w-[560px] no longer fits.
+// Two of its six columns used to sit entirely outside the viewport.
+test('no holdings column falls outside the viewport', async ({ page }) => {
+  await page.goto('/#/investments')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(500)
+  const offscreen = await page.evaluate(() =>
+    [...document.querySelectorAll('th')]
+      .filter((th) => th.getBoundingClientRect().width > 0)
+      .filter((th) => th.getBoundingClientRect().right > window.innerWidth + 1)
+      .map((th) => ({ text: (th.textContent || '').trim(), right: Math.round(th.getBoundingClientRect().right) })),
+  )
+  expect(offscreen).toEqual([])
+})

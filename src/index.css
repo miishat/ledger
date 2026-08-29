@@ -44,6 +44,16 @@
    not, and both a sheet header and a modal header render at once. */
 @custom-variant desktop (@media (min-width: 768px) and (min-height: 500px));
 
+/* The width at which the holdings table's min-w-[560px] first clears the
+   256px sidebar and the page and card padding: 256 + 560 + 96 = 912. The
+   96 is not 64: the main content area is `px-4 sm:px-8`, and `sm` (640px)
+   is already active at every width in question, so its real padding is
+   32px a side (64px total), plus the card's own p-4 (16px a side, 32px
+   total). Below this, the card layout is used instead. `desktop` (768) is
+   not the same question: that is where the sidebar appears, not where a
+   560px table fits beside it. */
+@custom-variant wide (@media (min-width: 912px));
+
 :root {
   /* Default/Fallback values matching Geometric Light */
   --bg-primary: #ffffff;
