@@ -91,6 +91,19 @@ async function collectBlockingViolations(page: Page, name: string, hash: string)
   await page.goto(`/${hash}`)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(400)
+  // The aurora and glass themes render continuously animating, blurred
+  // background blobs (ThemeBackground.tsx's animate-float-1/2, 18s and 22s
+  // infinite alternate). axe measures color contrast against the composited
+  // background, so a translucent card over a moving blob has a different
+  // effective background from one instant to the next, and the page settles
+  // on an unpredictable frame under parallel worker load. That produced a
+  // real intermittent failure (compensation: color-contrast in aurora) that
+  // does not reproduce in isolation. Freezing animation here makes the
+  // composite the same every run, in every theme, without touching the
+  // reduced-motion behavior the app ships to real users.
+  await page.addStyleTag({
+    content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
+  })
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
@@ -106,6 +119,13 @@ async function collectBlockingViolations(page: Page, name: string, hash: string)
 
 for (const theme of THEMES) {
   test(`no serious or critical accessibility violations in the ${theme} theme`, async ({ page }) => {
+    // Eight routes means eight navigations plus axe passes in one test.
+    // The default 30s budget is enough for that in isolation, but under
+    // verify's parallel workers (five projects, eight workers) the same
+    // test twice hit the 30s wall on the glass theme with no assertion
+    // failure at all, just contention. Give it real headroom without
+    // letting it run long enough to mask an actual hang.
+    test.setTimeout(75_000)
     // Without seeding, several routes render an empty state instead of the
     // populated UI (e.g. Investments defaults to an empty journal tab, not
     // the portfolio tab), so an unseeded scan misses the surfaces the
