@@ -55,7 +55,19 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
                     4.19:1 in glass, both under AA. Lowering the accent share
                     moves the fill toward the page background, which raises
                     contrast in dark and light themes alike. */}
-                <div className="absolute inset-y-0 left-0 bg-accent/45" style={{ width: `${filledPct}%` }} />
+                {/* Fill and track are necessarily close in tone once the fill is
+                    light enough for the label on top of it to read, so the
+                    filled/unfilled boundary cannot rely on colour alone: WCAG
+                    1.4.11 asks 3:1 for a graphical object against its
+                    surroundings, and the two tones alone fall well short of
+                    that in every theme. A full-strength accent edge is the
+                    non-colour channel that keeps the boundary legible. Only
+                    render it once there is a fill to bound, or an empty
+                    bracket grows a stray line at its own left edge. */}
+                <div
+                  className={`absolute inset-y-0 left-0 bg-accent/45 ${filledPct > 0 ? 'border-r-2 border-accent' : ''}`}
+                  style={{ width: `${filledPct}%` }}
+                />
                 <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-meta font-medium text-text-primary">
                   {(s.rate * 100).toFixed(1)}%
                 </span>
