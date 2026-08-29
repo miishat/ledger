@@ -72,6 +72,11 @@ the writing app's version, and a pull only prunes stores the writing build
 actually knew about, so syncing from a device on an older release cannot
 destroy data that release predates.
 
+A snapshot carries every registered store not explicitly excluded, including
+the market data API key in plain text if one has been set. Treat backup files
+and your Drive folder as you would the key itself: do not share them with
+someone you would not give the credential to.
+
 ## Themes
 
 Six themes, defined as CSS custom properties in `src/index.css` under
