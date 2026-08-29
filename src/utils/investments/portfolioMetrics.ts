@@ -154,11 +154,11 @@ export function allocationBreakdown(
  *  getCurrentPrice has no holding context and stamps a placeholder currency
  *  on the override it returns, so that value must not be believed: doing so
  *  converts the price a second time and inflates value, P/L and allocation
- *  by the exchange rate. The row and the card now call this function.
- *  PortfolioRollupWidget still applies the same rule by hand-rolling its
- *  own override short-circuit rather than calling this; the two are kept
- *  equivalent by the parity test in portfolioTotalsParity.test.tsx, not by
- *  sharing this code. */
+ *  by the exchange rate. The row, the card and PortfolioRollupWidget all
+ *  call this. The widget used to hand-roll its own copy of the rule, kept
+ *  equal only by the parity test in portfolioTotalsParity.test.tsx; that
+ *  test now guards a single implementation rather than the agreement of
+ *  two. */
 export function quoteCurrencyForHolding(
   holding: Holding,
   quoteCurrency: Currency | null | undefined,

@@ -5,7 +5,7 @@ import { accountNames, usePortfolioStore } from '../../../store/usePortfolioStor
 import { useMarketDataStore } from '../../../store/useMarketDataStore'
 import { quoteKey } from '../../../services/marketData'
 import { useFxRates } from '../../../hooks/useFxRates'
-import { portfolioTotals, safeHoldingPrice } from '../../../utils/investments/portfolioMetrics'
+import { portfolioTotals, quoteCurrencyForHolding, safeHoldingPrice } from '../../../utils/investments/portfolioMetrics'
 import { formatMoney } from '../../planner/format'
 import { DataFreshness } from '../../ui/DataFreshness'
 import { timeAgo } from '../../../utils/timeAgo'
@@ -41,19 +41,22 @@ export const PortfolioRollupWidget: React.FC = () => {
   }
 
   // Rollup uses override > cached > avgCost prices (the Investments page
-  // fetches live). A manual override is entered by the user in the
-  // holding's own currency, so it is trusted directly with no conversion.
-  // A cached quote carries its own currency, which does not always match
-  // the holding's recorded currency; when it does not and no rate bridges
-  // them, safeHoldingPrice falls back to cost basis instead of feeding a
-  // wrong-currency number into the total (the same rule PortfolioView
-  // applies to its rows).
+  // fetches live). Source and currency are handed to quoteCurrencyForHolding
+  // rather than decided here: a manual override is entered by the user in
+  // the holding's own currency, so its currency must not be read off the
+  // cached quote, and safeHoldingPrice falls back to cost basis instead of
+  // feeding a wrong-currency number into the total when a cached quote's
+  // currency does not match and no rate bridges them (the same rule
+  // PortfolioView applies to its rows).
   const rows = holdings.map((h) => {
     const key = quoteKey(h.ticker, h.exchange)
     const override = overrides[key]
-    if (override !== undefined) return { holding: h, price: override }
-    const cached = quotes[key]?.value
-    return { holding: h, price: safeHoldingPrice(h, cached?.price, cached?.currency, fx.rates) }
+    const cached = quotes[key]
+    const source: 'override' | 'cache' | undefined =
+      override !== undefined ? 'override' : cached ? 'cache' : undefined
+    const nativePrice = override ?? cached?.value.price ?? h.avgCost
+    const quoteCurrency = quoteCurrencyForHolding(h, cached?.value.currency, source)
+    return { holding: h, price: safeHoldingPrice(h, nativePrice, quoteCurrency, fx.rates) }
   })
   const t = portfolioTotals(rows, fx.rates)
 
