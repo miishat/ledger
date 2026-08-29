@@ -60,3 +60,46 @@ for (const [name, hash] of routes) {
     expect(blocking.map((v) => `${v.id}: ${v.help}`)).toEqual([])
   })
 }
+
+// Every theme, not just the default. The contrast helpers in e2e/contrast.ts
+// measure borders, and a composited text helper measures text against the
+// element's own background, which is right for text on an opaque surface and
+// wrong for `bg-accent/10`: a translucent fill layered over a card. Neither
+// can see that pattern, and the 2026-08-28 audit found it failing on all
+// eight routes in the geometric theme. Only axe catches it, and only when
+// axe is actually pointed at each theme.
+const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
+
+const THEME_ROUTES = [
+  ['dashboard', ''],
+  ['budget', '#/budget'],
+  ['investments', '#/investments'],
+  ['salary-tax', '#/planner/salary-tax'],
+  ['mortgage', '#/planner/mortgage'],
+  ['forecaster', '#/planner/forecaster'],
+  ['compensation', '#/compensation'],
+  ['planner', '#/planner'],
+] as const
+
+for (const theme of THEMES) {
+  test(`no serious or critical accessibility violations in the ${theme} theme`, async ({ page }) => {
+    await page.addInitScript((t) => {
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+    }, theme)
+
+    const found: string[] = []
+    for (const [name, hash] of THEME_ROUTES) {
+      await page.goto(`/${hash}`)
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(400)
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze()
+      for (const v of results.violations) {
+        if (v.impact !== 'serious' && v.impact !== 'critical') continue
+        found.push(`${name}: ${v.id} (${v.impact}) x${v.nodes.length} - ${v.nodes[0]?.target?.[0] ?? ''}`)
+      }
+    }
+    expect(found).toEqual([])
+  })
+}
