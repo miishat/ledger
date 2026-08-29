@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { seedApp } from './seed'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
 const BUDGET_KEY = 'ledger-budget'
@@ -83,6 +84,12 @@ const THEME_ROUTES = [
 
 for (const theme of THEMES) {
   test(`no serious or critical accessibility violations in the ${theme} theme`, async ({ page }) => {
+    // Without seeding, several routes render an empty state instead of the
+    // populated UI (e.g. Investments defaults to an empty journal tab, not
+    // the portfolio tab), so an unseeded scan misses the surfaces the
+    // defects actually live on. seedApp matches what desktop-guards.spec.ts
+    // already does for the same reason.
+    await seedApp(page)
     await page.addInitScript((t) => {
       window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
     }, theme)
@@ -97,7 +104,14 @@ for (const theme of THEMES) {
         .analyze()
       for (const v of results.violations) {
         if (v.impact !== 'serious' && v.impact !== 'critical') continue
-        found.push(`${name}: ${v.id} (${v.impact}) x${v.nodes.length} - ${v.nodes[0]?.target?.[0] ?? ''}`)
+        // axe groups every node that breaks the same rule into one violation
+        // object. Printing only v.nodes[0] hid an entire family of failures
+        // (bg-accent/10 + text-accent tabs, chips, and panels) behind a
+        // single kbd line, and two readers concluded kbd was the only
+        // offender. List one entry per node so every selector surfaces.
+        for (const node of v.nodes) {
+          found.push(`${name}: ${v.id} (${v.impact}) - ${node.target?.[0] ?? ''}`)
+        }
       }
     }
     expect(found).toEqual([])
