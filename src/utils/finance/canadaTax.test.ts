@@ -4,6 +4,7 @@ import {
   eiPremium,
   estimateRrspRoom,
   federalTax,
+  isTaxYearStale,
   marginalRate,
   marginalRateBreakdown,
   marginalSlices,
@@ -12,6 +13,7 @@ import {
   RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
   takeHomeWithDeductions,
+  TAX_YEAR,
   totalIncomeTax,
 } from './canadaTax'
 
@@ -226,5 +228,19 @@ describe('estimateRrspRoom', () => {
   it('is zero for no income', () => {
     expect(estimateRrspRoom(0)).toBe(0)
     expect(estimateRrspRoom(-100)).toBe(0)
+  })
+})
+
+describe('tax year', () => {
+  it('names the year these tables are for', () => {
+    expect(TAX_YEAR).toBe(2026)
+  })
+
+  it('is not stale during its own year', () => {
+    expect(isTaxYearStale(new Date('2026-12-31T23:59:59Z'))).toBe(false)
+  })
+
+  it('is stale once the year has turned', () => {
+    expect(isTaxYearStale(new Date('2027-01-01T00:00:01Z'))).toBe(true)
   })
 })

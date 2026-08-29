@@ -4,11 +4,13 @@ import {
   effectiveRate,
   estimateRrspRoom,
   FEDERAL_BRACKETS,
+  isTaxYearStale,
   marginalRate,
   marginalRateBreakdown,
   PROVINCES,
   PROVINCIAL_TAX,
   takeHomeWithDeductions,
+  TAX_YEAR,
   totalIncomeTax,
   type Bracket,
   type Province,
@@ -107,6 +109,16 @@ export const SalaryTaxTool: React.FC = () => {
         <CalculatorField label="RRSP Contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
         <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
         <CalculatorField label="RRSP Room" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <p className="text-meta uppercase tracking-wide text-text-secondary">{TAX_YEAR} tax year</p>
+        {isTaxYearStale() && (
+          <p role="status" className="text-[13px] text-error">
+            These are {TAX_YEAR} rates. Brackets and contribution limits have not been updated for{' '}
+            {new Date().getFullYear()}.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

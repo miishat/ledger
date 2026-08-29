@@ -154,3 +154,33 @@ describe('SalaryTaxTool layout', () => {
     expect(screen.getByText(new RegExp(`${remaining.replace('$', '\\$')} estimated remaining room`, 'i'))).toBeInTheDocument()
   })
 })
+
+describe('SalaryTaxTool tax year', () => {
+  it('names the tax year on the result', () => {
+    render(<SalaryTaxTool />)
+    expect(screen.getByText(/2026 tax year/i)).toBeInTheDocument()
+  })
+
+  it('does not warn about a stale year while the current year is still the tax year', () => {
+    render(<SalaryTaxTool />)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  describe('once the tax year has passed', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2027-03-01T00:00:00Z'))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('warns when the tax year has passed', () => {
+      render(<SalaryTaxTool />)
+      expect(
+        screen.getByText(/These are 2026 rates\. Brackets and contribution limits have not been updated for 2027\./i),
+      ).toBeInTheDocument()
+    })
+  })
+})
