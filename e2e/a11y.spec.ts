@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { seedApp } from './seed'
 
@@ -82,6 +82,28 @@ const THEME_ROUTES = [
   ['planner', '#/planner'],
 ] as const
 
+// Scans one route with axe and returns one formatted string per offending
+// node (not per rule), matching the accounting used below: a single rule
+// broken by several elements is several distinct defects, and collapsing
+// them to v.nodes[0] previously hid a whole family of bg-accent/text-accent
+// failures behind one kbd line.
+async function collectBlockingViolations(page: Page, name: string, hash: string): Promise<string[]> {
+  await page.goto(`/${hash}`)
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(400)
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze()
+  const found: string[] = []
+  for (const v of results.violations) {
+    if (v.impact !== 'serious' && v.impact !== 'critical') continue
+    for (const node of v.nodes) {
+      found.push(`${name}: ${v.id} (${v.impact}) - ${node.target?.[0] ?? ''}`)
+    }
+  }
+  return found
+}
+
 for (const theme of THEMES) {
   test(`no serious or critical accessibility violations in the ${theme} theme`, async ({ page }) => {
     // Without seeding, several routes render an empty state instead of the
@@ -96,24 +118,56 @@ for (const theme of THEMES) {
 
     const found: string[] = []
     for (const [name, hash] of THEME_ROUTES) {
-      await page.goto(`/${hash}`)
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(400)
-      const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze()
-      for (const v of results.violations) {
-        if (v.impact !== 'serious' && v.impact !== 'critical') continue
-        // axe groups every node that breaks the same rule into one violation
-        // object. Printing only v.nodes[0] hid an entire family of failures
-        // (bg-accent/10 + text-accent tabs, chips, and panels) behind a
-        // single kbd line, and two readers concluded kbd was the only
-        // offender. List one entry per node so every selector surfaces.
-        for (const node of v.nodes) {
-          found.push(`${name}: ${v.id} (${v.impact}) - ${node.target?.[0] ?? ''}`)
-        }
-      }
+      found.push(...(await collectBlockingViolations(page, name, hash)))
     }
     expect(found).toEqual([])
   })
 }
+
+// The 9 registry ids from src/components/planner/toolRegistry.tsx that
+// THEME_ROUTES above does not already reach (forecaster, salary-tax, and
+// mortgage are covered there). Read straight from the registry rather than
+// guessed, since the registry is the single source of truth the /planner/:toolId
+// route itself reads from.
+const UNCOVERED_PLANNER_TOOL_IDS = [
+  'compound-interest',
+  'savings-goal',
+  'emergency-fund',
+  'currency-converter',
+  'raise-inflation',
+  'debt-payoff',
+  'rent-vs-buy',
+  'inflation-adjuster',
+  'rate-converter',
+] as const
+
+// Built from THEME_ROUTES plus the ids above rather than a second literal
+// list of the eight core routes, so the two route lists cannot drift apart.
+const WIDE_ROUTES = [
+  ...THEME_ROUTES,
+  ...UNCOVERED_PLANNER_TOOL_IDS.map((id) => [id, `#/planner/${id}`] as const),
+]
+
+// Scanning all 6 themes across all planner tools would roughly triple this
+// suite's e2e time. The contrast family is a theme token problem, so a fix
+// either resolves it in geometric (the theme the 2026-08-28 audit found it
+// failing in) or it does not; the other five themes already pass on the
+// core eight routes above, so only geometric needs the wide sweep.
+test('every planner tool has no serious or critical accessibility violations in the geometric theme', async ({ page }) => {
+  // 17 routes means 17 full navigations plus axe passes in one test, more
+  // than double the 8-route theme tests above. The default 30s budget is
+  // fine for one of those in isolation but flakes under the same worker
+  // contention the rest of this file already runs with, so this test alone
+  // gets a larger, fixed budget rather than raising it file-wide.
+  test.setTimeout(90_000)
+  await seedApp(page)
+  await page.addInitScript((t) => {
+    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+  }, 'geometric')
+
+  const found: string[] = []
+  for (const [name, hash] of WIDE_ROUTES) {
+    found.push(...(await collectBlockingViolations(page, name, hash)))
+  }
+  expect(found).toEqual([])
+})
