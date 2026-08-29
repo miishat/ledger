@@ -50,7 +50,7 @@
   --bg-secondary: #f3f4f6;
   --text-primary: #111827;
   --text-secondary: #4b5563;
-  --accent: #2563eb;
+  --accent: #1d4ed8;  /* 6.70:1 on #ffffff, 5.74:1 on accent/10 over the card */
   --border-color: #e5e7eb;
   --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;
@@ -81,7 +81,7 @@
   --bg-secondary: #f3f4f6;
   --text-primary: #111827;
   --text-secondary: #4b5563;
-  --accent: #2563eb;
+  --accent: #1d4ed8;  /* 6.70:1 on #ffffff, 5.74:1 on accent/10 over the card */
   --border-color: #e5e7eb;
   --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
   --error: #dc2626;

@@ -50,7 +50,12 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
             <div key={s.start} className="@container flex flex-col gap-1 min-w-0 overflow-hidden" style={{ flex: `${width} 1 0%` }}>
               <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
                    title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
-                <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
+                {/* /45 not /60: the rate label sits on top of this fill, and at
+                    60% the composite was 4.27:1 against the label in aurora and
+                    4.19:1 in glass, both under AA. Lowering the accent share
+                    moves the fill toward the page background, which raises
+                    contrast in dark and light themes alike. */}
+                <div className="absolute inset-y-0 left-0 bg-accent/45" style={{ width: `${filledPct}%` }} />
                 <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-meta font-medium text-text-primary">
                   {(s.rate * 100).toFixed(1)}%
                 </span>

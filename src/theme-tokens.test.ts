@@ -17,13 +17,25 @@ const css = readFileSync(new NodeURL('./index.css', import.meta.url), 'utf8')
 
 const THEMES: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau']
 
-function blockFor(theme: string): string {
-  const marker = `[data-theme='${theme}'] {`
+// Generalized over blockFor so the bare :root block (which is not keyed by
+// theme name) can be read the same way as a [data-theme='x'] block.
+function rawBlockFor(selector: string): string {
+  const marker = `${selector} {`
   const start = css.indexOf(marker)
-  if (start === -1) throw new Error(`no [data-theme='${theme}'] block in src/index.css`)
+  if (start === -1) throw new Error(`no ${selector} block in src/index.css`)
   const end = css.indexOf('\n}', start)
-  if (end === -1) throw new Error(`unterminated [data-theme='${theme}'] block in src/index.css`)
+  if (end === -1) throw new Error(`unterminated ${selector} block in src/index.css`)
   return css.slice(start, end)
+}
+
+function blockFor(theme: string): string {
+  return rawBlockFor(`[data-theme='${theme}']`)
+}
+
+function tokenFor(selector: string, token: string): string {
+  const match = new RegExp(`${token}:\\s*(#[0-9a-fA-F]{3,8})`).exec(rawBlockFor(selector))
+  if (!match) throw new Error(`no ${token} in ${selector} block`)
+  return match[1].toLowerCase()
 }
 
 function tokensIn(theme: string): string[] {
@@ -51,5 +63,14 @@ describe('theme token blocks', () => {
     const match = /--bg-primary:\s*(#[0-9a-fA-F]{3,8})/.exec(blockFor(theme))
     expect(match).not.toBeNull()
     expect(THEME_BACKGROUNDS[theme].toLowerCase()).toBe(match![1].toLowerCase())
+  })
+
+  it('the light theme accent clears AA on its own 10% tint', () => {
+    // #2563eb measured 4.48:1 on accent/10 over a white card, which axe reports
+    // as a serious violation on every route. Anything lighter than #1d4ed8
+    // reopens that.
+    for (const block of [':root', "[data-theme='geometric']"]) {
+      expect(tokenFor(block, '--accent')).toBe('#1d4ed8')
+    }
   })
 })
