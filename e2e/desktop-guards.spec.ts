@@ -676,4 +676,34 @@ test('no holdings column falls outside the viewport', async ({ page }) => {
       .map((th) => ({ text: (th.textContent || '').trim(), right: Math.round(th.getBoundingClientRect().right) })),
   )
   expect(offscreen).toEqual([])
+
+  // A column clearing window.innerWidth is not the same guarantee as the
+  // table fitting: it could still overflow its own card behind the
+  // horizontal scroller that overflow-x-auto exists to hide. This is
+  // checked as "fits its container" rather than as a fixed width number
+  // because a width number would have to be updated every time the sidebar
+  // or padding changes, and the previous version of this check (the
+  // offscreen-column check above, on its own) passed 48px below the real
+  // 912px `wide` breakpoint.
+  const result = await page.evaluate(() => {
+    const tables = [...document.querySelectorAll('table')]
+    const visible = tables.filter((t) => t.getBoundingClientRect().width > 0)
+    if (visible.length === 0) return { rendered: false as const }
+    const overflowing = visible
+      .map((t) => t.closest('.overflow-x-auto') as HTMLElement | null)
+      .filter((el): el is HTMLElement => el !== null)
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }))
+    return { rendered: true as const, overflowing }
+  })
+
+  if (!result.rendered) {
+    // Below the `wide` breakpoint the card layout stands in for the table
+    // entirely (this is the tablet project's 768px case), so there is
+    // nothing to check. Asserted explicitly so an absent table reads as an
+    // intentional pass, not a check that silently examined nothing.
+    expect(result.rendered).toBe(false)
+  } else {
+    expect(result.overflowing).toEqual([])
+  }
 })
