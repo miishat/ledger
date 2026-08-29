@@ -524,6 +524,19 @@ textarea:focus-visible,
   animation: float-slow-2 22s infinite alternate ease-in-out;
 }
 
+/* The framer-motion components (Sheet, PageTransition, AnimatedNumber) all
+   call useReducedMotion. These keyframes did not, so the aurora and glass
+   background blobs kept drifting behind every screen for a user who had
+   asked the whole system to stop moving. Paused rather than removed: the
+   blobs are the theme's identity, and a paused animation still paints its
+   current frame. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-1,
+  .animate-float-2 {
+    animation-play-state: paused;
+  }
+}
+
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;

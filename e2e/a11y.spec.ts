@@ -191,3 +191,25 @@ test('every planner tool has no serious or critical accessibility violations in 
   }
   expect(found).toEqual([])
 })
+
+// Deliberately does not call collectBlockingViolations: that helper injects
+// `animation: none !important` after every navigation so axe's contrast
+// readings are deterministic. Going through it here would measure a
+// stylesheet the test itself injected, not the app's own reduced-motion
+// behavior, and the test would pass no matter what src/index.css does. This
+// test does its own goto and its own assertions instead.
+test('background ornament animation stops under prefers-reduced-motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.addInitScript(() => {
+    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: 'aurora' }, version: 0 }))
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  const running = await page.evaluate(() =>
+    [...document.querySelectorAll('.animate-float-1, .animate-float-2')]
+      .map((el) => getComputedStyle(el).animationPlayState)
+      .filter((s) => s === 'running'),
+  )
+  expect(running).toEqual([])
+})
