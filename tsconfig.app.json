@@ -16,10 +16,16 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
+
+    /* noUncheckedIndexedAccess is deliberately off. Turning it on reports 457
+       errors, overwhelmingly in tests indexing into fixture arrays, and
+       fixing them is its own project rather than a config change. The 2026-08-28
+       audit measured that number; re-measure before reopening the question. */
   },
   "include": ["src"]
 }
