@@ -174,7 +174,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
   return (
     <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-        <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h3>
+        {/* h2, not h3: this card sits directly under the page h1 with no h2
+            between them, and the jump made the document outline unusable from
+            a screen reader's heading list. The size is unchanged. */}
+        <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h2>
         {/* Three segmented groups totalling 430px. Without flex-wrap the
             Gross/After-Tax group starts past the right edge of a 375px
             screen and is clipped by main's overflow-x-hidden, which made

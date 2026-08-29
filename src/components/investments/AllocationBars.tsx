@@ -56,7 +56,10 @@ export const AllocationBars: React.FC<AllocationBarsProps> = ({ rows, rates }) =
 
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
-      <h3 className="text-[14px] font-semibold text-text-primary">Allocation</h3>
+      {/* h2, not h3: this card sits directly under the page h1 with no h2
+          between them, and the jump made the document outline unusable from
+          a screen reader's heading list. The size is unchanged. */}
+      <h2 className="text-[14px] font-semibold text-text-primary">Allocation</h2>
       {cuts.map((c) => (
         <Bar key={c.by} label={c.label} by={c.by} slices={c.slices} />
       ))}

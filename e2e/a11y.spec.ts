@@ -213,3 +213,33 @@ test('background ornament animation stops under prefers-reduced-motion', async (
   )
   expect(running).toEqual([])
 })
+
+// Heading level is the outline a screen reader user navigates a page by, so
+// a jump from h1 straight to h3 makes that outline lie about the page's
+// structure. This is a different kind of check from the axe scans above (it
+// is not a rule axe itself flags), so it gets its own goto rather than going
+// through collectBlockingViolations.
+for (const [name, hash] of [['investments', '#/investments'], ['compensation', '#/compensation']] as const) {
+  test(`${name} has no heading-level skip`, async ({ page }) => {
+    // Both pages only render the heading in question once populated:
+    // Investments opens on an empty Plan vs Actual tab with no holdings, and
+    // Compensation shows a placeholder instead of "Total Compensation" with
+    // no package saved. Unseeded, this test would pass for the wrong reason.
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const skips = await page.evaluate(() => {
+      const hs = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')]
+        .filter((h) => !h.closest('.sr-only') && h.getBoundingClientRect().height > 0)
+        .map((h) => ({ lvl: Number(h.tagName[1]), text: (h.textContent || '').trim().slice(0, 30) }))
+      const out: string[] = []
+      let prev = 0
+      for (const h of hs) {
+        if (prev && h.lvl > prev + 1) out.push(`h${prev} to h${h.lvl} at "${h.text}"`)
+        prev = h.lvl
+      }
+      return out
+    })
+    expect(skips).toEqual([])
+  })
+}
