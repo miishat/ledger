@@ -737,3 +737,28 @@ test('every focus stop uses the same ring', async ({ page }) => {
   }
   expect([...seen]).toHaveLength(1)
 })
+
+// Runs under the tablet project at 768x1024. Neither of these was truncated,
+// because overflow is visible, but a label wider than its own box has
+// outgrown the space the layout gives it and will collide the moment a
+// neighbour grows.
+test('no text outgrows its own box', async ({ page }) => {
+  const overflowing: unknown[] = []
+  for (const hash of ['#/investments', '#/planner/forecaster']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(500)
+    const hits = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => el.children.length === 0 && (el.textContent || '').trim())
+        .filter((el) => !el.closest('.sr-only'))
+        .filter((el) => {
+          const s = getComputedStyle(el)
+          return !['auto', 'scroll'].includes(s.overflowX) && el.scrollWidth > el.clientWidth + 1
+        })
+        .map((el) => ({ text: (el.textContent || '').trim().slice(0, 30), shown: el.clientWidth, needs: el.scrollWidth })),
+    )
+    hits.forEach((h) => overflowing.push({ hash, ...h }))
+  }
+  expect(overflowing).toEqual([])
+})

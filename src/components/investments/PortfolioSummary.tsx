@@ -63,7 +63,12 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
         <div>
           <p className="text-[12px] uppercase text-text-secondary">Holdings Value (CAD)</p>
-          <p className="text-[36px] desktop:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
+          {/* wide:, not desktop:. The desktop variant starts at 768, where the
+              sidebar has already taken 256px and this grid column is 183px
+              wide: 44px type needed 189px and spilled into the gutter. 912 is
+              where the column genuinely has room, the same threshold the
+              holdings table uses. */}
+          <p className="text-[36px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
             {formatMoney(totals.valueCad)}
           </p>
           <p className={`text-[14px] font-medium tabular-nums mt-3 ${up ? 'text-accent' : 'text-error'}`}>
