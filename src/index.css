@@ -468,28 +468,37 @@ input[type="date"]::-webkit-calendar-picker-indicator {
    getMatchedStylesForNode), silently dropping the whole declaration on
    some elements. Longhands sidestep that.
 
-   `transition: none` is not decorative. Almost every control here also
-   carries Tailwind's `transition-colors` (or `transition-all`), which lists
-   `outline-color` among the properties it animates. With that transition
-   left running, this rule's `!important` still wins the cascade, but the
-   browser then tries to animate outline-color from the control's own
-   currentColor toward the accent color, confirmed via CDP
-   (getComputedStyleForNode) to simply never finish: the used value stays
-   pinned at the pre-focus color indefinitely, so the ring silently kept
-   whatever hue the control already had instead of turning the accent
-   color, exactly reproducing the "nine treatments" bug this rule exists to
-   close, just relocated from the cascade to the transition engine. `none`
-   is not itself `!important` because it does not need to be: this rule is
-   unlayered, and Tailwind's utilities live in `@layer utilities`, so an
-   unlayered normal declaration already outranks a layered one regardless
-   of specificity or source order. */
+   Almost every control here also carries Tailwind's `transition-colors` (or
+   `transition-all`), which lists `outline-color` among the properties it
+   animates. With that transition left running, this rule's `!important`
+   still wins the cascade, but the browser then tries to animate
+   outline-color from the control's own currentColor toward the accent
+   color, confirmed via CDP (getComputedStyleForNode) to simply never
+   finish: the used value stays pinned at the pre-focus color indefinitely,
+   so the ring silently kept whatever hue the control already had instead
+   of turning the accent color, exactly reproducing the "nine treatments"
+   bug this rule exists to close, just relocated from the cascade to the
+   transition engine. Disabling `transition` outright also stopped that,
+   but it silenced every other transition on the element for as long as it
+   held focus, so a hover fade paired with focus (transition-colors plus
+   hover:) would snap instead of animate while tabbed to. Listing
+   `transition-property` instead disables only outline-color: the value
+   below is Tailwind's own default transition-property list (see
+   node_modules/tailwindcss/dist/lib.js) with outline-color removed, so
+   every other property Tailwind would otherwise transition, including the
+   background-color and border-color a hover fade relies on, keeps
+   transitioning normally even while focused. Revisit this list if
+   Tailwind's default ever changes. Not itself `!important` because it does
+   not need to be: this rule is unlayered, and Tailwind's utilities live in
+   `@layer utilities`, so an unlayered normal declaration already outranks a
+   layered one regardless of specificity or source order. */
 :focus-visible {
   outline-style: solid !important;
   outline-width: 2px !important;
   outline-color: var(--accent) !important;
   outline-offset: 2px !important;
   box-shadow: none;
-  transition: none;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
 }
 
 /* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
