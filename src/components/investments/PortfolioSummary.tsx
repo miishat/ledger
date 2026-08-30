@@ -67,8 +67,21 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
               sidebar has already taken 256px and this grid column is 183px
               wide: 44px type needed 189px and spilled into the gutter. 912 is
               where the column genuinely has room, the same threshold the
-              holdings table uses. */}
-          <p className="text-[36px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
+              holdings table uses.
+
+              36px below that was measured against the seeded $138,200 and
+              looked like a flush fit (scrollWidth === clientWidth), but that
+              equality is what a non-overflowing block always reports, not a
+              real margin: its true unconstrained width was only 154px in a
+              183px column, 29px of slack the guard could not see. A seven
+              figure portfolio ($1,384,200, ten characters) needs the entire
+              183px at 36px, zero real headroom, and an eight figure one
+              ($12,384,200, eleven characters) needs 204px and overflows.
+              28px is the size PortfolioRollupWidget and BudgetHealthWidget
+              already use for a large money headline; at 183px it leaves 24px
+              of genuine headroom for eleven characters and still clears an
+              unlikely twelve character figure ($123,384,200) by 8px. */}
+          <p className="text-[28px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
             {formatMoney(totals.valueCad)}
           </p>
           <p className={`text-[14px] font-medium tabular-nums mt-3 ${up ? 'text-accent' : 'text-error'}`}>

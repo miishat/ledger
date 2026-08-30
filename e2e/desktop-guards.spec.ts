@@ -762,3 +762,37 @@ test('no text outgrows its own box', async ({ page }) => {
   }
   expect(overflowing).toEqual([])
 })
+
+// The guard above only ever measures the seeded $138,200 headline. That
+// number cannot expose a fragile fit: scrollWidth equals clientWidth for
+// any non-overflowing block regardless of how much slack is left, so a
+// value with room to spare and a value with none look identical to it. A
+// seven figure portfolio needs an eleven character figure, not eight, and
+// this seeds one directly so the headline is measured against the size a
+// real user can actually have.
+test('the portfolio headline fits a seven figure portfolio, not just the seeded one', async ({ page }) => {
+  await page.addInitScript(() => {
+    const holding = (ticker: string, quantity: number, avgCost: number, currency: string) =>
+      ({ id: ticker, ticker, quantity, avgCost, currency, account: 'Questrade TFSA' })
+    // 100,000 units at $130 CAD prices the headline at $13,000,000, eleven
+    // characters. CAD needs no exchange rate, and avgCost is the price the
+    // app falls back to when no live quote is available, so this renders
+    // the same way with or without network access in the test run.
+    window.localStorage.setItem('ledger-portfolio', JSON.stringify({
+      state: {
+        holdings: [holding('VFV', 100000, 130, 'CAD')],
+        importedAt: new Date().toISOString(),
+        currencyReviewPending: false,
+      },
+      version: 2,
+    }))
+  })
+  await page.goto('/#/investments')
+  await page.waitForLoadState('networkidle')
+  const headline = await page.evaluate(() => {
+    const el = document.querySelector('p.tabular-nums.font-semibold') as HTMLElement | null
+    return { text: el?.textContent ?? '', shown: el?.clientWidth ?? 0, needs: el?.scrollWidth ?? 0 }
+  })
+  expect(headline.text.length).toBeGreaterThanOrEqual(11)
+  expect(headline.needs).toBeLessThanOrEqual(headline.shown)
+})
