@@ -131,6 +131,12 @@ export function allocationBreakdown(
   rows: { holding: Holding; price: number }[],
   rates: FxRates,
   by: AllocationBy,
+  /** Fold everything past this many slices into a single "Other" entry. The
+   *  by-holding cut is otherwise unbounded: seventeen holdings drew seventeen
+   *  segments and a seventeen-entry legend, which on a phone put more than a
+   *  screen of preamble in front of the first holding. Omit for no cap, which
+   *  is what the account and currency cuts want. */
+  maxSlices?: number,
 ): AllocationSlice[] {
   const byName = new Map<string, number>()
   let total = 0
@@ -142,9 +148,16 @@ export function allocationBreakdown(
     byName.set(name, (byName.get(name) ?? 0) + value)
     total += value
   }
-  return [...byName.entries()]
+  const all = [...byName.entries()]
     .map(([name, valueCad]) => ({ name, valueCad, pct: total > 0 ? (valueCad / total) * 100 : 0 }))
     .sort((a, b) => b.valueCad - a.valueCad)
+
+  if (maxSlices === undefined || all.length <= maxSlices) return all
+
+  const head = all.slice(0, maxSlices - 1)
+  const tail = all.slice(maxSlices - 1)
+  const tailValue = tail.reduce((s, x) => s + x.valueCad, 0)
+  return [...head, { name: 'Other', valueCad: tailValue, pct: total > 0 ? (tailValue / total) * 100 : 0 }]
 }
 
 /** The currency a holding's resolved quote should be read in.

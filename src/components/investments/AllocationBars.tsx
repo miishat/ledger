@@ -11,8 +11,11 @@ interface AllocationBarsProps {
   rates: FxRates
 }
 
-const CUTS: { by: AllocationBy; label: string }[] = [
-  { by: 'holding', label: 'Holding' },
+/** `max` caps the by-holding cut at eight named slices plus Other. Account and
+ *  currency are uncapped: a portfolio has a handful of each, and folding two
+ *  accounts into "Other" would say less than naming them. */
+const CUTS: { by: AllocationBy; label: string; max?: number }[] = [
+  { by: 'holding', label: 'Holding', max: 8 },
   { by: 'account', label: 'Account' },
   { by: 'currency', label: 'Currency' },
 ]
@@ -51,8 +54,14 @@ const Bar: React.FC<{ label: string; by: AllocationBy; slices: AllocationSlice[]
 
 export const AllocationBars: React.FC<AllocationBarsProps> = ({ rows, rates }) => {
   if (rows.length === 0) return null
-  const cuts = CUTS.map((c) => ({ ...c, slices: allocationBreakdown(rows, rates, c.by) }))
-  if (cuts.every((c) => c.slices.length === 0)) return null
+  const cuts = CUTS.map((c) => ({ ...c, slices: allocationBreakdown(rows, rates, c.by, c.max) }))
+  // A cut with one slice is a full-width bar reading 100%, which carries no
+  // information, so it is dropped below. A one-holding, one-account,
+  // one-currency portfolio leaves every cut at one slice; rather than render
+  // a card with a heading and nothing under it, omit the whole card, same as
+  // the already-empty case.
+  const visibleCuts = cuts.filter((c) => c.slices.length > 1)
+  if (visibleCuts.length === 0) return null
 
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
@@ -60,7 +69,9 @@ export const AllocationBars: React.FC<AllocationBarsProps> = ({ rows, rates }) =
           between them, and the jump made the document outline unusable from
           a screen reader's heading list. The size is unchanged. */}
       <h2 className="text-[14px] font-semibold text-text-primary">Allocation</h2>
-      {cuts.map((c) => (
+      {/* A cut with one slice is a full-width bar reading 100%, which carries
+          no information. Drop it rather than draw it. */}
+      {visibleCuts.map((c) => (
         <Bar key={c.by} label={c.label} by={c.by} slices={c.slices} />
       ))}
     </div>

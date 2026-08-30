@@ -39,8 +39,12 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
       sub: nav.cash !== null ? `Cash ${formatMoney(nav.cash)}` : undefined,
     })
   }
-  if (h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: h.strongest.plPct >= 0 ? 'text-accent' : 'text-error' })
-  if (h.weakest) facts.push({ label: 'Weakest', value: `${h.weakest.ticker} ${pct(h.weakest.plPct)}`, tone: h.weakest.plPct >= 0 ? 'text-accent' : 'text-error' })
+  // Only when they actually differ. With no quotes yet every holding sits at
+  // +0.0%, and naming an arbitrary ticker as strongest and another as weakest
+  // reads as a finding when it is an artifact of having no data.
+  const spread = h.strongest && h.weakest && h.strongest.plPct !== h.weakest.plPct
+  if (spread && h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: h.strongest.plPct >= 0 ? 'text-accent' : 'text-error' })
+  if (spread && h.weakest) facts.push({ label: 'Weakest', value: `${h.weakest.ticker} ${pct(h.weakest.plPct)}`, tone: h.weakest.plPct >= 0 ? 'text-accent' : 'text-error' })
   if (h.largestWeight) facts.push({ label: 'Largest weight', value: `${h.largestWeight.name} ${h.largestWeight.pct.toFixed(1)}%` })
   if (h.currencySplit.length > 0) {
     facts.push({
@@ -52,7 +56,11 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
 
   return (
     <div className="themed-card rounded-lg p-5 desktop:p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+      {/* items-start, not items-center: centring left the headline floating in
+          the middle of a column as tall as the six-row fact list beside it,
+          with roughly 90px of void above and below at 1440 and a badly
+          unbalanced band at 768. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
         <div>
           <p className="text-[12px] uppercase text-text-secondary">Holdings Value (CAD)</p>
           <p className="text-[36px] desktop:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
