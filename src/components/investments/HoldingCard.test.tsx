@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { HoldingCard } from './HoldingCard'
 import type { Holding } from '../../store/usePortfolioStore'
 import { formatMoney } from '../planner/format'
-import { pct } from './holdingMetrics'
+import { pct, share } from './holdingMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 
 const { useCurrentPriceMock } = vi.hoisted(() => ({ useCurrentPriceMock: vi.fn() }))
@@ -114,7 +114,7 @@ describe('HoldingCard', () => {
     expect(getByTestId('value-cell')).toHaveTextContent(formatMoney(1000))
     expect(getByTestId('pl-cell')).toHaveTextContent(`${formatMoney(0)} (${pct(0)})`)
     // 1000 EUR at 1.47 into CAD, against a 1000 CAD total.
-    expect(getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(1000 * 1.47, 1000)))
+    expect(getByTestId('allocation-cell')).toHaveTextContent(share(allocationPct(1000 * 1.47, 1000)))
   })
 
   it('does not convert a manual override, which is already in the holding currency', () => {

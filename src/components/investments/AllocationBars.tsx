@@ -68,7 +68,13 @@ export const AllocationBars: React.FC<AllocationBarsProps> = ({ rows, rates }) =
       {/* h2, not h3: this card sits directly under the page h1 with no h2
           between them, and the jump made the document outline unusable from
           a screen reader's heading list. The size is unchanged. */}
-      <h2 className="text-[14px] font-semibold text-text-primary">Allocation</h2>
+      {/* The amounts in this legend are CAD, converted. The holdings table
+          below prints each holding in its own currency, also with a bare $,
+          so the same holding shows two different figures a card apart. Say
+          which one this is. */}
+      <h2 className="text-[14px] font-semibold text-text-primary">
+        Allocation <span className="text-meta font-normal text-text-secondary">(CAD)</span>
+      </h2>
       {/* A cut with one slice is a full-width bar reading 100%, which carries
           no information. Drop it rather than draw it. */}
       {visibleCuts.map((c) => (

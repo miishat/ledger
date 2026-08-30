@@ -5,7 +5,7 @@ import { __setProviders, __resetProviders } from '../../services/marketData/mark
 import { useMarketDataStore } from '../../store/useMarketDataStore'
 import { __resetMinInterval } from '../../services/marketData/throttle'
 import { formatMoney } from '../planner/format'
-import { pct } from './holdingMetrics'
+import { pct, share } from './holdingMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 
 beforeEach(() => {
@@ -109,7 +109,7 @@ describe('quote currency', () => {
     expect(screen.getByTestId('value-cell')).toHaveTextContent(formatMoney(50))
     expect(screen.getByTestId('pl-cell')).toHaveTextContent(`${formatMoney(0)} (${pct(0)})`)
     // 50 EUR at 1.47 into CAD, against a 1000 CAD total.
-    expect(screen.getByTestId('allocation-cell')).toHaveTextContent(pct(allocationPct(50 * 1.47, 1000)))
+    expect(screen.getByTestId('allocation-cell')).toHaveTextContent(share(allocationPct(50 * 1.47, 1000)))
   })
 
   it('says how old the price is and offers a refresh', async () => {
