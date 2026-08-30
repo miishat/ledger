@@ -90,7 +90,7 @@ export const Compensation: React.FC = () => {
                 value={manualPriceDraft}
                 onCommit={setManualPriceDraft}
                 placeholder="Manual price"
-                className="w-28 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+                className="w-28 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] transition-colors"
               />
               <button
                 type="submit"
@@ -170,7 +170,7 @@ export const Compensation: React.FC = () => {
                     onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
                     maxDecimals={3}
                     disabled={useCadConversion}
-                    className="w-28 bg-[var(--color-bg-primary)] border control-border rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right focus:border-[var(--color-accent)] focus:outline-none transition-colors disabled:opacity-60"
+                    className="w-28 bg-[var(--color-bg-primary)] border control-border rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right transition-colors disabled:opacity-60"
                   />
                 </div>
               </div>

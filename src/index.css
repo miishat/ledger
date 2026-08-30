@@ -455,37 +455,41 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Focus rings were split between a 2px accent ring on some controls and the
-   browser's default grey outline (2px or 3px) on others, depending on
-   whether the component happened to style focus-visible itself. The audit
-   found 198 button/link call sites with no focus style of their own; rather
-   than tag each one, set the accent outline as the default here, at the
-   element level, for every natively focusable element and anything made
-   focusable with tabindex (the scroll-region containers fixed earlier in
-   this file among them).
+/* One ring for the whole app. Nine different treatments used to be reachable
+   in a single tab-through, and which one you got depended on whether the
+   control was active, so two buttons in one segmented control ringed
+   differently. `!important` is deliberate and is the only one in this file:
+   the alternative is auditing every focus-visible:ring-* and
+   focus:border-accent utility at every call site and hoping none returns.
 
-   outline-style reads --tw-outline-style instead of a literal `solid`
-   because that is the custom property Tailwind's own ring/outline-none
-   utilities write to, for example the focus-visible:outline-none
-   focus-visible:ring-2 pairing on ExpenseWidget's scroll container. A
-   component that already suppresses the outline in favour of its own ring
-   sets that variable to `none` on itself; reading it back here means that
-   suppression keeps winning instead of being overridden. A literal `solid`
-   would ignore that signal, since this rule is unlayered and would
-   otherwise always beat the utility regardless of source order, causing
-   the ring and this outline to render at once. */
-button:focus-visible,
-a:focus-visible,
-[role='button']:focus-visible,
-summary:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-[tabindex]:focus-visible {
-  outline-style: var(--tw-outline-style, solid);
-  outline-color: var(--accent);
-  outline-width: 2px;
-  outline-offset: 2px;
+   Declared as longhands, not the `outline` shorthand: the shorthand
+   combined with var() and !important resolves each sub-property to an
+   empty value in this browser's cascade (confirmed via CDP
+   getMatchedStylesForNode), silently dropping the whole declaration on
+   some elements. Longhands sidestep that.
+
+   `transition: none` is not decorative. Almost every control here also
+   carries Tailwind's `transition-colors` (or `transition-all`), which lists
+   `outline-color` among the properties it animates. With that transition
+   left running, this rule's `!important` still wins the cascade, but the
+   browser then tries to animate outline-color from the control's own
+   currentColor toward the accent color, confirmed via CDP
+   (getComputedStyleForNode) to simply never finish: the used value stays
+   pinned at the pre-focus color indefinitely, so the ring silently kept
+   whatever hue the control already had instead of turning the accent
+   color, exactly reproducing the "nine treatments" bug this rule exists to
+   close, just relocated from the cascade to the transition engine. `none`
+   is not itself `!important` because it does not need to be: this rule is
+   unlayered, and Tailwind's utilities live in `@layer utilities`, so an
+   unlayered normal declaration already outranks a layered one regardless
+   of specificity or source order. */
+:focus-visible {
+  outline-style: solid !important;
+  outline-width: 2px !important;
+  outline-color: var(--accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: none;
+  transition: none;
 }
 
 /* Two semantic tiers replace the raw 10px and 11px arbitrary values. Both
@@ -563,10 +567,11 @@ textarea:focus-visible,
   background-color: var(--color-text-secondary);
 }
 
-/* Focus rings: never on mouse click. The accent outline for interactive
-   elements lives with the other unlayered rules above (search "Focus rings
-   were split"). Components with their own focus affordance
-   (focus:border-accent) keep it. */
+/* Focus rings: never on mouse click. The one accent outline for every
+   focusable element lives with the other unlayered rules above (search "One
+   ring for the whole app"). A component that also recolours its own border
+   on focus (focus:border-accent) keeps that border change; it now gets the
+   same outline as everything else on top of it, not instead of it. */
 :focus:not(:focus-visible) {
   outline: none;
 }

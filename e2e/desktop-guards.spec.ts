@@ -707,3 +707,33 @@ test('no holdings column falls outside the viewport', async ({ page }) => {
     expect(result.overflowing).toEqual([])
   }
 })
+
+// Nine distinct focus treatments across the app, with the choice tracking
+// active state so two buttons in one segmented control ringed differently.
+// One ring, everywhere.
+test('every focus stop uses the same ring', async ({ page }) => {
+  const seen = new Set<string>()
+  for (const hash of ['', '#/budget', '#/investments', '#/compensation', '#/planner/salary-tax']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur())
+    for (let i = 0; i < 25; i++) {
+      await page.keyboard.press('Tab')
+      const ring = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement
+        if (!el || el === document.body) return null
+        // A disabled or off-screen element cannot actually be tabbed to by a
+        // real user, so if the browser still reports it as activeElement
+        // (rare, but happens transiently around re-renders) it should not
+        // manufacture a spurious signature.
+        if ((el as HTMLInputElement).disabled) return null
+        const rect = el.getBoundingClientRect()
+        if (rect.width === 0 && rect.height === 0) return null
+        const s = getComputedStyle(el)
+        return `${s.outlineStyle}|${s.outlineWidth}|${s.outlineColor}|${s.outlineOffset}`
+      })
+      if (ring) seen.add(ring)
+    }
+  }
+  expect([...seen]).toHaveLength(1)
+})
