@@ -4,7 +4,14 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
-## [Unreleased]
+## [0.10.0] - 2026-08-31
+
+The remediation of a full engineering audit, plus the portfolio redesign that
+preceded it. The headline is a sync bug that could destroy data: pulling from a
+device running an older version of Ledger deleted anything that version predated,
+silently, on app open. That is fixed. Alongside it, the test suite now actually
+runs before a deploy, every WCAG contrast failure in the light theme is closed,
+and the app loads a fifth less code.
 
 ### Added
 - Every chart that draws more than one series now names those series in text beneath it, with a colour swatch, instead of leaving them identifiable only by hovering for a tooltip
