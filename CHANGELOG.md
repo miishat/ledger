@@ -8,7 +8,7 @@ pre-1.0 beta.
 
 ### Added
 - Every chart that draws more than one series now names those series in text beneath it, with a colour swatch, instead of leaving them identifiable only by hovering for a tooltip
-- The Salary and Tax result says which tax year it is for, and says plainly once that year has passed that the brackets and contribution limits have not been updated
+- The Salary and Tax result says which tax year it is for, and says plainly once that year has passed that the brackets and contribution limits have not been updated. The same warning now appears wherever else those rates are used: on Compensation's after-tax figure, and on the forecaster when it is applying an automatic tax rate
 - Settings warns when automatic Drive sync has failed several times in a row. A single failure is still ignored, since a transient one is not worth interrupting you for, but a run of them meant sync had quietly stopped working and only a stale timestamp said so
 
 ### Changed
