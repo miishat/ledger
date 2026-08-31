@@ -7,6 +7,7 @@ import type { ForecastPoint } from '../../../utils/finance/forecast'
 import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
+import { ChartLegend } from '../../ui/ChartLegend'
 
 interface GoalMarker {
   label: string
@@ -56,37 +57,20 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
 
   const projectedLabel = showReal ? 'Projected (real)' : 'Projected'
 
+  const legendItems = view === 'line'
+    ? [
+        { name: projectedLabel, color: 'var(--accent)' },
+        { name: 'Conservative to Optimistic band', color: 'var(--accent)' },
+        { name: 'Actual', color: 'var(--text-primary)' },
+      ]
+    : [
+        { name: 'Contributed', color: 'var(--text-secondary)' },
+        { name: 'Growth', color: 'var(--accent)' },
+        { name: 'Actual', color: 'var(--text-primary)' },
+      ]
+
   return (
     <div className="themed-card rounded-lg p-4 h-[380px] flex flex-col">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-meta text-text-secondary">
-        {view === 'line' ? (
-          <>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 rounded" style={{ backgroundColor: 'var(--accent)' }} />
-              {projectedLabel}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent)', opacity: 0.25 }} />
-              Conservative to Optimistic band
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--text-secondary)', opacity: 0.4 }} />
-              Contributed
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent)', opacity: 0.5 }} />
-              Growth
-            </span>
-          </>
-        )}
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 rounded" style={{ backgroundColor: 'var(--text-primary)' }} />
-          Actual
-        </span>
-      </div>
       <ChartFigure
         label={`Net worth forecast, ${projectedLabel.toLowerCase()} to reach ${formatMoneyCompact(future[future.length - 1]?.projected ?? 0)} by ${(future[future.length - 1]?.month ?? 0) / 12} years out`}
         className="flex-1 min-h-0"
@@ -144,6 +128,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         </ComposedChart>
       </ResponsiveContainer>
       </ChartFigure>
+      <ChartLegend items={legendItems} />
     </div>
   )
 }

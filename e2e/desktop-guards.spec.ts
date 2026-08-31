@@ -796,3 +796,56 @@ test('the portfolio headline fits a seven figure portfolio, not just the seeded 
   expect(headline.text.length).toBeGreaterThanOrEqual(11)
   expect(headline.needs).toBeLessThanOrEqual(headline.shown)
 })
+
+// M1 from the 2026-08-20 audit: every multi-series chart names its series in
+// text, not only inside the drawing. The portfolio redesign deleted the one
+// example the audit had pointed at as the template, and nothing noticed.
+//
+// The scope climbs to the nearest ChartFigure boundary (role="img", our own
+// wrapper around ResponsiveContainer) and then one level further, to the
+// container each chart component actually renders its <ChartLegend> into as
+// a sibling of that figure. Recharts' own generated wrapper divs sit between
+// a chart's SVG and that figure with no room for anything else, so a scope
+// of just `chart.parentElement` never contains a legend under any of this
+// app's chart components, including the pre-existing one (CompHeroWidget's
+// annualized donut) this task started from as its template: measured before
+// this fix, that scope was always empty.
+function countLegends(page: Page): Promise<number> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('.recharts-wrapper')].filter((chart) => {
+      const scope = chart.closest('[role="img"]')?.parentElement ?? chart.parentElement ?? chart
+      return !!scope.querySelector('ul li span[aria-hidden="true"]')
+    }).length,
+  )
+}
+
+// Both routes render every chart unconditionally on load, so a plain goto
+// is enough: Compensation's donut (already legended) plus the equity vesting
+// chart, and the forecaster's net-worth fan plus its Monte Carlo band.
+const LEGEND_ROUTES = [
+  ['#/compensation', 2],
+  ['#/planner/forecaster', 2],
+] as const
+
+for (const [hash, expected] of LEGEND_ROUTES) {
+  test(`multi-series charts on ${hash} name their series in text`, async ({ page }) => {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(900)
+    expect(await countLegends(page)).toBeGreaterThanOrEqual(expected)
+  })
+}
+
+// Budget's only chart on load is the Cash Flow Sankey, which already names
+// every node in the drawing itself and is deliberately not given a redundant
+// legend (see CashFlowWidget.tsx). The only *legend-bearing* multi-series
+// chart on this route is the Savings Rate widget's Saved-vs-Spent bar, which
+// only renders once its Split tab is selected, so this guard selects it
+// first rather than asserting a count of zero, which would guard nothing.
+test('the savings split chart on #/budget, once selected, name their series in text', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Split' }).click()
+  await page.waitForTimeout(900)
+  expect(await countLegends(page)).toBeGreaterThanOrEqual(1)
+})

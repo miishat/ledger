@@ -1,11 +1,12 @@
 import React from 'react'
-import { Line, LineChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { PAReport } from '../../../utils/investments/ibkrPortfolioAnalyst'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { formatReportMonth, growthSeries } from './reportMetrics'
 import { Section } from './Section'
 import { pct } from './format'
 import { ChartFigure } from '../../ui/ChartFigure'
+import { ChartLegend } from '../../ui/ChartLegend'
 
 const chartColors = ['var(--accent)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-5)']
 
@@ -23,13 +24,13 @@ export const ReportPerformance: React.FC<{ report: PAReport }> = ({ report }) =>
             <XAxis dataKey="month" stroke="var(--text-secondary)" fontSize={11} tickFormatter={formatReportMonth} minTickGap={20} />
             <YAxis stroke="var(--text-secondary)" fontSize={11} domain={['auto', 'auto']} />
             <Tooltip {...chartTooltipStyles} labelFormatter={(label) => formatReportMonth(String(label))} />
-            <Legend />
             {names.map((n, i) => (
               <Line key={n} type="monotone" dataKey={n} stroke={chartColors[i % chartColors.length]} strokeWidth={n === 'Account' ? 2 : 1.5} dot={false} isAnimationActive={false} />
             ))}
           </LineChart>
         </ResponsiveContainer>
       </ChartFigure>
+      <ChartLegend items={names.map((n, i) => ({ name: n, color: chartColors[i % chartColors.length] }))} />
       {report.benchmarkSummary.length > 0 && (
         <div className="overflow-x-auto mt-3">
           <table className="w-full text-[12px] min-w-[560px]">

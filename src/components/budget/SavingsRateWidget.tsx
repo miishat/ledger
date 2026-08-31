@@ -7,6 +7,7 @@ import { formatMoney } from '../planner/format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { monthsInRange, type MonthRange } from '../../utils/budget/period'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
 
 type View = 'rate' | 'trend' | 'split'
 const VIEWS: { id: View; label: string }[] = [
@@ -148,10 +149,10 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
               </BarChart>
             </ResponsiveContainer>
           </ChartFigure>
-          <div className="flex gap-4 mt-2 text-[12px] text-text-secondary">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--accent)' }} /> Saved</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--error)' }} /> Spent</span>
-          </div>
+          <ChartLegend items={[
+            { name: 'Saved', color: 'var(--accent)' },
+            { name: 'Spent', color: 'var(--error)' },
+          ]} />
         </>
       )}
     </WidgetWrapper>

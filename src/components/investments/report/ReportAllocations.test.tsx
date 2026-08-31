@@ -12,8 +12,7 @@ describe('ReportAllocations', () => {
 
   it('lists each slice with its percentage and value', () => {
     render(<ReportAllocations report={sampleReport} />)
-    expect(screen.getByText('Technology')).toBeInTheDocument()
-    expect(screen.getByText(/60.0% · \$70,800/)).toBeInTheDocument()
+    expect(screen.getByText(/Technology · 60\.0% · \$70,800/)).toBeInTheDocument()
   })
 
   it('orders slices largest-first regardless of the order the report listed them', () => {
@@ -31,8 +30,12 @@ describe('ReportAllocations', () => {
         }}
       />,
     )
-    const labels = screen.getAllByText(/^(Small|Biggest|Middle)$/).map((el) => el.textContent)
-    expect(labels).toEqual(['Biggest', 'Middle', 'Small'])
+    const labels = screen.getAllByRole('listitem').map((el) => el.textContent)
+    expect(labels).toEqual([
+      expect.stringContaining('Biggest'),
+      expect.stringContaining('Middle'),
+      expect.stringContaining('Small'),
+    ])
   })
 
   it('renders nothing when every breakdown is empty', () => {

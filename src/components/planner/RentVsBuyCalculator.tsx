@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import { rentVsBuy } from '../../utils/finance/rentVsBuy'
@@ -9,6 +9,7 @@ import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
 
 const TOOL_ID = 'rent-vs-buy'
 const DEFAULTS = {
@@ -68,12 +69,15 @@ export const RentVsBuyCalculator: React.FC = () => {
                 formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
                 {...chartTooltipStyles}
               />
-              <Legend />
               <Line type="monotone" dataKey="Renting" stroke="var(--text-secondary)" dot={false} strokeWidth={2} />
               <Line type="monotone" dataKey="Buying" stroke="var(--accent)" dot={false} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </ChartFigure>
+        <ChartLegend items={[
+          { name: 'Renting', color: 'var(--text-secondary)', value: formatMoney(last?.rentCost ?? 0) },
+          { name: 'Buying', color: 'var(--accent)', value: formatMoney(last?.buyCost ?? 0) },
+        ]} />
         <p className="text-[12px] text-text-secondary mt-2">
           Cumulative unrecoverable costs only: rent vs interest, taxes, maintenance and the return your down payment could have earned.
         </p>

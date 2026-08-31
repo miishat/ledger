@@ -9,6 +9,7 @@ import { ResultCard } from '../ResultCard'
 import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
+import { ChartLegend } from '../../ui/ChartLegend'
 
 interface MonteCarloSectionProps {
   startBalance: number
@@ -72,6 +73,10 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
             </ComposedChart>
           </ResponsiveContainer>
         </ChartFigure>
+        <ChartLegend items={[
+          { name: 'Median outcome', color: 'var(--accent)', value: formatMoney(bands[bands.length - 1]?.p50 ?? 0) },
+          { name: '10th-90th percentile range', color: 'var(--accent)' },
+        ]} />
         <p className="text-[12px] text-text-secondary mt-2">
           500 seeded simulations. Shaded band spans the 10th to 90th percentile.
         </p>
