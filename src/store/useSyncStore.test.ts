@@ -62,3 +62,49 @@ describe('useSyncStore', () => {
     expect(after.deviceName).toBe(deviceName)
   })
 })
+
+describe('automatic sync failure tracking', () => {
+  beforeEach(() => useSyncStore.setState({ consecutiveAutoFailures: 0 }))
+
+  it('starts at zero', () => {
+    expect(useSyncStore.getState().consecutiveAutoFailures).toBe(0)
+  })
+
+  it('counts consecutive failures', () => {
+    useSyncStore.getState().recordAutoFailure()
+    useSyncStore.getState().recordAutoFailure()
+    expect(useSyncStore.getState().consecutiveAutoFailures).toBe(2)
+  })
+
+  it('resets on a success', () => {
+    useSyncStore.getState().recordAutoFailure()
+    useSyncStore.getState().clearAutoFailures()
+    expect(useSyncStore.getState().consecutiveAutoFailures).toBe(0)
+  })
+
+  // A real existing install has a persisted blob written before this field
+  // existed. zustand's default merge shallow-spreads that blob over the
+  // initial state, so a genuinely absent key should fall back to the
+  // in-code default of 0. Writing the raw legacy payload and rehydrating
+  // from it (rather than just reading the in-memory store, which would
+  // pass even if merge were broken) is what actually exercises that path.
+  it('an existing install with a persisted blob missing the field rehydrates to zero', async () => {
+    localStorage.setItem(
+      'ledger-sync',
+      JSON.stringify({
+        state: {
+          deviceId: 'old-device',
+          deviceName: 'Old Device',
+          lastSyncedRevision: 4,
+          lastSyncedHash: 'abc12345',
+          // consecutiveAutoFailures intentionally absent: this is what a
+          // pre-Task-22 install actually has on disk.
+        },
+        version: 1,
+      }),
+    )
+    await useSyncStore.persist.rehydrate()
+    expect(useSyncStore.getState().consecutiveAutoFailures).toBe(0)
+    expect(useSyncStore.getState().deviceId).toBe('old-device')
+  })
+})

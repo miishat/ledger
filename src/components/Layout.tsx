@@ -107,8 +107,10 @@ export const Layout: React.FC = () => {
           if (!currentFolderId) return
           await performPush(cachedToken, currentFolderId, push.nextRevision, push.baseRevision)
         }
+        useSyncStore.getState().clearAutoFailures()
       } catch (err) {
         console.error('Automatic Drive sync failed:', err)
+        useSyncStore.getState().recordAutoFailure()
       } finally {
         autoSyncInFlight.current = false
       }

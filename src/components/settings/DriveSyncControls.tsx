@@ -49,6 +49,7 @@ export const DriveSyncControls: React.FC = () => {
   const lastSyncedRevision = useSyncStore((s) => s.lastSyncedRevision)
   const deviceName = useSyncStore((s) => s.deviceName)
   const setDeviceName = useSyncStore((s) => s.setDeviceName)
+  const consecutiveAutoFailures = useSyncStore((s) => s.consecutiveAutoFailures)
 
   const [nameDraft, setNameDraft] = useState(deviceName)
   const [clientIdDraft, setClientIdDraft] = useState('')
@@ -241,6 +242,13 @@ export const DriveSyncControls: React.FC = () => {
           className="flex-1 px-2 py-1 rounded-md border border-border bg-transparent text-[12px] text-text-primary"
         />
       </label>
+
+      {consecutiveAutoFailures >= 3 && (
+        <p role="status" className="text-[13px] text-error">
+          Automatic sync has failed {consecutiveAutoFailures} times in a row. Your devices are not
+          exchanging changes. Try Sync now below, or reconnect.
+        </p>
+      )}
 
       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
         <p className="text-meta text-text-secondary/80">
