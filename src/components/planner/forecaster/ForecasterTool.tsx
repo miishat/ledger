@@ -11,6 +11,7 @@ import { ListEditor } from './ListEditor'
 import { MonteCarloSection } from './MonteCarloSection'
 import { useForecasterSettings, type Goal, type LifeEvent } from './useForecasterSettings'
 import { Sheet } from '../../ui/Sheet'
+import { TaxYearNotice } from '../../ui/TaxYearNotice'
 
 function formatMonthsOut(m: number | null): string {
   if (m === null) return 'Beyond horizon'
@@ -168,6 +169,9 @@ export const ForecasterTool: React.FC = () => {
             {settings.compTaxEnabled && !settings.compTaxAuto ? (
               <CalculatorField label="Manual Rate" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
             ) : null}
+            {/* Only the auto rate reads canadaTax.ts; a manual percentage never
+                touches the tables, so it has nothing to go stale. */}
+            {settings.compTaxEnabled && settings.compTaxAuto ? <TaxYearNotice /> : null}
             <p className="text-meta text-text-secondary">
               Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
             </p>

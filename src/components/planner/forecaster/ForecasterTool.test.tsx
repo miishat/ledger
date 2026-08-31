@@ -50,6 +50,37 @@ describe('ForecasterTool comp tax controls', () => {
   })
 })
 
+describe('ForecasterTool stale tax year notice', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('does not warn about stale tax rates today', () => {
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('warns once the tax year has passed, next to the auto tax rate it affects', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2027-03-01T00:00:00Z'))
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /These are 2026 rates\. Brackets and contribution limits have not been updated for 2027\./i,
+    )
+  })
+
+  it('does not warn when the manual rate is in use, since it does not read the tables', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2027-03-01T00:00:00Z'))
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Marginal/ }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+})
+
 describe('ForecasterTool goal dates in card', () => {
   it('shows a Projected cell inside the goals card after adding a goal', () => {
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)

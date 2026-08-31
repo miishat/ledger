@@ -4,13 +4,11 @@ import {
   effectiveRate,
   estimateRrspRoom,
   FEDERAL_BRACKETS,
-  isTaxYearStale,
   marginalRate,
   marginalRateBreakdown,
   PROVINCES,
   PROVINCIAL_TAX,
   takeHomeWithDeductions,
-  TAX_YEAR,
   totalIncomeTax,
   type Bracket,
   type Province,
@@ -21,6 +19,7 @@ import { ResultCard } from './ResultCard'
 import { formatMoney, formatMoneyCompact } from './format'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
 import { RrspEfficiencyCard } from './RrspEfficiencyCard'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
 
 const TOOL_ID = 'salary-tax'
 const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0, rrspRoom: 0 }
@@ -128,15 +127,7 @@ export const SalaryTaxTool: React.FC = () => {
         <CalculatorField label="RRSP Room" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <p className="text-meta uppercase tracking-wide text-text-secondary">{TAX_YEAR} tax year</p>
-        {isTaxYearStale() && (
-          <p role="status" className="text-[13px] text-error">
-            These are {TAX_YEAR} rates. Brackets and contribution limits have not been updated for{' '}
-            {new Date().getFullYear()}.
-          </p>
-        )}
-      </div>
+      <TaxYearNotice showYearLabel />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ResultCard label="Total Income Tax" value={formatMoney(totalIncomeTax(t.taxableIncome, province))} highlight />

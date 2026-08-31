@@ -24,6 +24,7 @@ import { usePlannerStore } from '../../store/usePlannerStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -372,6 +373,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               </p>
             </div>
           </div>
+          {/* Only relevant here, in After-Tax mode: this is the one place on
+              this widget a figure derived from the tax tables reaches the
+              screen. Gross mode never shows one, so it never needs the notice. */}
+          <TaxYearNotice />
           <p className="text-[12px] text-[var(--color-text-secondary)]">
             Estimate. Treats all compensation as {PROVINCIAL_TAX[province].name} employment income for the
             year. RRSP match is actually tax-sheltered; ESPP and RSU values assume sale at vest.
