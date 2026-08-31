@@ -55,17 +55,19 @@ describe('ForecasterTool stale tax year notice', () => {
     vi.useRealTimers()
   })
 
-  it('does not warn about stale tax rates today', () => {
+  it('does not warn about stale tax rates today, with the settings popover left closed', () => {
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
-    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('warns once the tax year has passed, next to the auto tax rate it affects', () => {
+  it('warns on the main body with default settings, without opening the settings popover', () => {
+    // The tax-derived figures (chart, FI Number, Coast-FI, goal dates) render
+    // unconditionally on the body, so the warning has to live there too. A
+    // copy that only shows up once a closed popover is opened protects
+    // nothing, since compTaxEnabled and compTaxAuto both default to true.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2027-03-01T00:00:00Z'))
     render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
-    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
     expect(screen.getByRole('status')).toHaveTextContent(
       /These are 2026 rates\. Brackets and contribution limits have not been updated for 2027\./i,
     )

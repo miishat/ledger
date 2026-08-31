@@ -169,9 +169,11 @@ export const ForecasterTool: React.FC = () => {
             {settings.compTaxEnabled && !settings.compTaxAuto ? (
               <CalculatorField label="Manual Rate" suffix="%" step={1} value={settings.compTaxManualPct as number} onChange={(v) => setSetting('compTaxManualPct', v)} />
             ) : null}
-            {/* Only the auto rate reads canadaTax.ts; a manual percentage never
-                touches the tables, so it has nothing to go stale. */}
-            {settings.compTaxEnabled && settings.compTaxAuto ? <TaxYearNotice /> : null}
+            {/* The staleness warning lives on the main body now, next to the
+                chart and result cards it actually describes, since this
+                popover starts closed and those figures render regardless.
+                Repeating the same sentence in here too would just be a
+                second copy of it on screen at once whenever both are open. */}
             <p className="text-meta text-text-secondary">
               Comp events taxed at your marginal rate; RSU/ESPP treated as employment income.
             </p>
@@ -213,6 +215,14 @@ export const ForecasterTool: React.FC = () => {
         view={settings.view as 'line' | 'stacked'}
         goalMarkers={goalMarkers}
       />
+
+      {/* Sits between the chart above and the FI/Coast-FI cards below,
+          the same figures compTaxEnabled + compTaxAuto feed via the comp
+          lumps. compTaxEnabled and compTaxAuto both default to true, so
+          the chart, FI Number, Coast-FI and every goal's Projected date
+          below are tax-derived by default; a manual rate never touches
+          canadaTax.ts's tables, so it has nothing to go stale. */}
+      {settings.compTaxEnabled && settings.compTaxAuto ? <TaxYearNotice /> : null}
 
       {/* FIRE engine */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
