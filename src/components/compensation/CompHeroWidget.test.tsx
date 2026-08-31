@@ -144,6 +144,32 @@ describe('CompHeroWidget annualized legend', () => {
   })
 })
 
+describe('CompHeroWidget monthly legend', () => {
+  beforeEach(() => {
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: { ...defaultPrimaryPackage, baseSalary: 120_000, pastSalaryChanges: [], rsuGrants: [] },
+    })
+  })
+
+  it('shows the monthly figure the bars draw, not the annual total', () => {
+    // Base Salary is the only series with a nonzero annual value here (no
+    // bonus, ESPP, RRSP, or RSU), so its legend value should read as one
+    // twelfth of the annual figure, the same number the stacked bar for any
+    // given month actually draws, not the $120,000 annual total.
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Cash Flow View' }))
+    expect(screen.getByText(/Base Salary.*\$10,000/)).toBeInTheDocument()
+    expect(screen.queryByText(/Base Salary.*\$120,000/)).toBeNull()
+  })
+})
+
 describe('CompHeroWidget mobile layout', () => {
   beforeEach(() => {
     usePlannerStore.setState({ inputs: {} })

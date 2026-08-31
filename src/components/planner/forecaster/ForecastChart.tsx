@@ -60,6 +60,11 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
   const legendItems = view === 'line'
     ? [
         { name: projectedLabel, color: 'var(--accent)' },
+        // The band itself renders as a low-opacity accent area over an
+        // opaque background fill, so it reads as pale, not solid. ChartLegend's
+        // swatch has no opacity slot, so this shows the band's base colour at
+        // full strength, the same simplification already noted for
+        // MonteCarloSection's percentile band.
         { name: 'Conservative to Optimistic band', color: 'var(--accent)' },
         { name: 'Actual', color: 'var(--text-primary)' },
       ]

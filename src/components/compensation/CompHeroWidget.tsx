@@ -165,12 +165,37 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     return {
       month: dm.label,
       baseSalary: timeMode === 'current-year' ? getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12 : primaryPackage.baseSalary / 12,
-      bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, 
+      bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0,
       espp: esppValue / 12,
       rrsp: rrspValue / 12,
       rsu: rsuThisMonth,
     }
   })
+
+  // The monthly view's legend used to show pieData's annual totals next to a
+  // chart of monthly bars, so a bar for one month of pay sat under a figure
+  // for a year of it. Averaging the same monthlyData the bars draw from
+  // (rather than dividing the annual figure by 12) keeps the two from
+  // drifting apart, and it is the only option that stays honest for bonus
+  // and RSU, which land unevenly across months rather than splitting evenly.
+  const monthlyBarKeyByName: Record<string, keyof (typeof monthlyData)[number]> = {
+    'Base Salary': 'baseSalary',
+    'Bonus': 'bonus',
+    'Equity (RSU)': 'rsu',
+    'ESPP Profit': 'espp',
+    'RRSP': 'rrsp',
+  }
+  const avgMonthlyValue = (name: string) => {
+    const key = monthlyBarKeyByName[name]
+    if (!key || monthlyData.length === 0) return 0
+    const total = monthlyData.reduce((sum, m) => sum + (m[key] as number), 0)
+    return total / monthlyData.length
+  }
+  const monthlyLegendItems = pieData.map((d) => ({
+    name: d.name,
+    color: d.color,
+    value: cad(avgMonthlyValue(d.name)),
+  }))
 
   return (
     <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
@@ -316,7 +341,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               </BarChart>
             </ResponsiveContainer>
           </ChartFigure>
-          <ChartLegend items={pieData.map((d) => ({ name: d.name, color: d.color, value: cad(d.value) }))} />
+          <ChartLegend items={monthlyLegendItems} />
         </>
       )}
 
