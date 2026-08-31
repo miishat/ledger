@@ -30,11 +30,17 @@ describe('App routing', () => {
     // a lazy chunk that resolves in single-digit ms in isolation can take
     // well over the default 1000ms timeout under that load. Use a generous
     // timeout here rather than in isolation-only runs.
+    //
+    // The per-test timeout below is deliberately larger than this one. They
+    // used to both be 5000, so vitest killed the test at the exact moment
+    // findByRole's own wait expired, and this test failed intermittently as
+    // "Test timed out in 5000ms" rather than with a useful assertion error.
+    // An inner wait can only report anything if the outer one outlives it.
     expect(
       await screen.findByRole('heading', { name: 'Budgeting' }, { timeout: 5000 }),
     ).toBeInTheDocument()
     window.location.hash = ''
-  })
+  }, 15000)
 
   it('keeps the browser chrome colour in step with the active theme', async () => {
     useThemeStore.getState().setTheme('geometric')
