@@ -7,12 +7,25 @@ const FIXTURE = [
   'Key Statistics,MetaInfo,Analysis Period,"January 1, 2026 - July 17, 2026"',
   'Key Statistics,Header,BeginningNAV,EndingNAV,CumulativeReturn,5DayReturn,5DayReturnDateRange,10DayReturn,10DayReturnDateRange,BestReturn,BestReturnDate,WorstReturn,WorstReturnDate,MTM,Deposits & Withdrawals,Dividends,Interest,Fees & Commissions,Other,ChangeInNAV',
   'Key Statistics,Data,115596.40,155142.25,-4.86,-8.37,20260713 - 20260717,-10.84,20260706 - 20260717,8.88,20260206,-7.97,20260605,-10052.68,46120.26,11.11,662.33,-598.79,3403.61,39545.84',
+  'Historical Performance Benchmark Comparison,MetaInfo,Analysis Period,"May 12, 2021 - July 17, 2026"',
   'Historical Performance Benchmark Comparison,Header,Account,MTD,QTD,YTD,1 Year,3 Year,5 Year,Since Inception',
+  // Real exports list every benchmark first and the account LAST. A fixture
+  // with the account first hides an off-by-position bug in benchmarkDelta.
   'Historical Performance Benchmark Comparison,Data,SPXTR,-0.51,-0.51,9.63,20.49,72.32,85.21,93.56',
+  'Historical Performance Benchmark Comparison,Data,EFA,-0.40,-0.40,8.00,18.00,60.00,55.00,62.92',
   'Historical Performance Benchmark Comparison,Data,U1234567,-13.52,-13.52,-4.86,2.69,57.38,14.59,-58.12',
   'Historical Performance Benchmark Comparison,Header,Month,BM1,BM1Return,BM2,BM2Return,BM3,BM3Return,Account,AccountReturn',
+  // IBKR pads the grid to whole calendar years and writes a dash where there
+  // is no data: before inception, and for months that have not happened yet.
+  'Historical Performance Benchmark Comparison,Data,202012,SPXTR,-,EFA,-,VT,-,U1234567,-',
   'Historical Performance Benchmark Comparison,Data,202601,SPXTR,1.45,EFA,4.90,VT,3.11,U1234567,-0.23',
   'Historical Performance Benchmark Comparison,Data,202602,SPXTR,-0.75,EFA,4.60,VT,1.64,U1234567,-7.24',
+  'Historical Performance Benchmark Comparison,Data,202612,SPXTR,-,EFA,-,VT,-,U1234567,-',
+  'Cumulative Benchmark Comparison,MetaInfo,Analysis Period,"January 1, 2026 - July 17, 2026"',
+  'Cumulative Benchmark Comparison,Header,Date,BM1,BM1Return,BM2,BM2Return,BM3,BM3Return,U1234567,U1234567Return',
+  'Cumulative Benchmark Comparison,Data,01/01/26,SPXTR,0,EFA,0,VT,0,U1234567,0.0078',
+  'Cumulative Benchmark Comparison,Data,01/02/26,SPXTR,0.2126,EFA,1.0517,VT,0.7372,U1234567,2.1955',
+  'Cumulative Benchmark Comparison,Data,07/17/26,SPXTR,9.63,EFA,8.00,VT,8.50,U1234567,-4.86',
   'Allocation by Asset Class,Header,Date,Equities,Cash,NAV',
   'Allocation by Asset Class,Data,20260101,12051.12,103554.30,115605.42',
   'Allocation by Asset Class,Data,20260717,100383.74,54758.51,155142.25',
@@ -62,8 +75,8 @@ describe('parsePortfolioAnalyst', () => {
   })
 
   it('reads benchmark summary and monthly series', () => {
-    expect(report.benchmarkSummary).toHaveLength(2)
-    expect(report.benchmarkSummary[1]).toMatchObject({ name: 'U1234567', ytd: -4.86 })
+    expect(report.benchmarkSummary).toHaveLength(3)
+    expect(report.benchmarkSummary[2]).toMatchObject({ name: 'U1234567', ytd: -4.86 })
     expect(report.benchmarkSeries).toHaveLength(2)
     expect(report.benchmarkSeries[0]).toEqual({
       month: '202601',
@@ -95,5 +108,36 @@ describe('parsePortfolioAnalyst', () => {
   it('reads open positions, skipping Total rows', () => {
     expect(report.openPositions).toHaveLength(2)
     expect(report.openPositions[0]).toMatchObject({ symbol: 'KORU', instrument: 'ETFs', quantity: 140, costBasis: 5931.35 })
+  })
+})
+
+describe('benchmark series bounds', () => {
+  const report = parsePortfolioAnalyst(FIXTURE)
+
+  it('records the account id so the account row can be found by name, not position', () => {
+    expect(report.accountId).toBe('U1234567')
+  })
+
+  it('drops padded months that carry a dash instead of scoring them as a flat 0%', () => {
+    // parseFloat('-') is NaN, and the shared num() helper turns that into 0.
+    // Left alone, a pre-inception month and a month in the future both become
+    // real 0% points and stretch the axis years past the data.
+    const months = report.benchmarkSeries.map((p) => p.month)
+    expect(months).toEqual(['202601', '202602'])
+    expect(months).not.toContain('202012')
+    expect(months).not.toContain('202612')
+  })
+
+  it('parses the cumulative series, which is already bounded to the report period', () => {
+    expect(report.cumulativeSeries).toHaveLength(3)
+    expect(report.cumulativeSeries[0]).toEqual({
+      date: '01/01/26', account: 0.0078, benchmarks: { SPXTR: 0, EFA: 0, VT: 0 },
+    })
+    expect(report.cumulativeSeries[2].account).toBe(-4.86)
+  })
+
+  it('keeps each benchmark section its own declared period', () => {
+    expect(report.cumulativePeriod).toBe('January 1, 2026 - July 17, 2026')
+    expect(report.historicalPeriod).toBe('May 12, 2021 - July 17, 2026')
   })
 })

@@ -1,5 +1,5 @@
 import type { PABenchmarkPoint, PAReport, PASymbolPerf } from '../../../utils/investments/ibkrPortfolioAnalyst'
-import { accountValue, benchmarkDelta, contributors, feeTotal, formatReportMonth, growthSeries, incomeTotals } from './reportMetrics'
+import { accountValue, benchmarkDelta, contributors, feeTotal, formatReportMonth, growthSeries, incomeTotals, rebasedGrowth } from './reportMetrics'
 import { sampleReport } from './testFixtures'
 
 const sym = (symbol: string, contribution: number): PASymbolPerf => ({
@@ -73,11 +73,16 @@ describe('benchmarkDelta', () => {
     const row = (name: string, inception: number) => ({
       name, mtd: 0, qtd: 0, ytd: 0, oneYear: 0, threeYear: 0, fiveYear: 0, inception,
     })
-    expect(benchmarkDelta([row('Account', 12), row('SPX', 9)])).toBeCloseTo(3, 5)
+    // The account row is identified by id. This fixture used to name it the
+    // literal string "Account" and put it first, which no real export does,
+    // and that is why it went green against the wrong implementation.
+    const d = benchmarkDelta([row('U1234567', 12), row('SPX', 9)], 'U1234567')
+    expect(d!.delta).toBeCloseTo(3, 5)
+    expect(d!.benchmarkName).toBe('SPX')
   })
 
   it('is null without a benchmark to compare against', () => {
-    expect(benchmarkDelta([])).toBeNull()
+    expect(benchmarkDelta([], 'U1234567')).toBeNull()
   })
 })
 
@@ -159,5 +164,68 @@ describe('growthSeries ordering', () => {
     ]
     growthSeries(points)
     expect(points.map((p) => p.month)).toEqual(['202603', '202601'])
+  })
+})
+
+describe('benchmarkDelta finds the account by id, not by position', () => {
+  // Real exports list every benchmark first and the account last. Reading
+  // row 0 as "the account" computes one benchmark minus another and presents
+  // it as the user's outperformance.
+  const summary = [
+    { name: 'SPXTR', mtd: 0, qtd: 0, ytd: 0, oneYear: 0, threeYear: 0, fiveYear: 0, inception: 99.46 },
+    { name: 'EFA', mtd: 0, qtd: 0, ytd: 0, oneYear: 0, threeYear: 0, fiveYear: 0, inception: 62.92 },
+    { name: 'VT', mtd: 0, qtd: 0, ytd: 0, oneYear: 0, threeYear: 0, fiveYear: 0, inception: 77.11 },
+    { name: 'U6147733', mtd: 0, qtd: 0, ytd: 0, oneYear: 0, threeYear: 0, fiveYear: 0, inception: -53.97 },
+  ]
+
+  it('subtracts the first benchmark from the account, however they are ordered', () => {
+    // -53.97 against SPXTR's +99.46, not SPXTR minus EFA.
+    const d = benchmarkDelta(summary, 'U6147733')
+    expect(d).not.toBeNull()
+    expect(d!.delta).toBeCloseTo(-153.43, 2)
+    expect(d!.benchmarkName).toBe('SPXTR')
+  })
+
+  it('still works when the account happens to be listed first', () => {
+    const flipped = [summary[3], summary[0]]
+    const d = benchmarkDelta(flipped, 'U6147733')
+    expect(d!.delta).toBeCloseTo(-153.43, 2)
+    expect(d!.benchmarkName).toBe('SPXTR')
+  })
+
+  it('returns null when the account row is not present at all', () => {
+    expect(benchmarkDelta(summary.slice(0, 3), 'U6147733')).toBeNull()
+  })
+
+  it('returns null when there is no benchmark to compare against', () => {
+    expect(benchmarkDelta([summary[3]], 'U6147733')).toBeNull()
+  })
+})
+
+describe('rebasedGrowth', () => {
+  const points = [
+    { month: '202601', account: 10, benchmarks: { SPX: 5 } },
+    { month: '202602', account: 10, benchmarks: { SPX: 5 } },
+    { month: '202603', account: -50, benchmarks: { SPX: 0 } },
+  ]
+
+  it('restarts every series at 100 from the chosen start, not at its running value', () => {
+    // Clipping alone would begin the account line at 121, which makes the
+    // comparison unreadable. Every series must restart at 100.
+    const { data } = rebasedGrowth(points, '202602')
+    expect(data).toHaveLength(2)
+    expect(data[0].month).toBe('202602')
+    expect(data[0].Account).toBe(110)
+    expect(data[0].SPX).toBe(105)
+  })
+
+  it('compounds forward from the rebased start', () => {
+    const { data } = rebasedGrowth(points, '202602')
+    // 110 after the first month, then -50% => 55.
+    expect(data[1].Account).toBe(55)
+  })
+
+  it('keeps the whole series when the start is at or before the first point', () => {
+    expect(rebasedGrowth(points, '202001').data).toHaveLength(3)
   })
 })

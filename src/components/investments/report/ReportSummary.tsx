@@ -11,8 +11,8 @@ export const ReportSummary: React.FC<{ report: PAReport }> = ({ report }) => {
   const stats = report.keyStats
   if (!stats) return null
 
-  const delta = benchmarkDelta(report.benchmarkSummary)
-  const benchmarkName = report.benchmarkSummary[1]?.name
+  // Identified by account id, because the summary lists the account last.
+  const delta = benchmarkDelta(report.benchmarkSummary, report.accountId)
   const income = incomeTotals(report.dividends, report.projectedIncome)
 
   return (
@@ -22,7 +22,10 @@ export const ReportSummary: React.FC<{ report: PAReport }> = ({ report }) => {
         label="Cumulative Return"
         value={pct(stats.cumulativeReturn)}
         tone={stats.cumulativeReturn >= 0 ? 'accent' : 'error'}
-        sub={delta !== null && benchmarkName ? `${pct(delta)} vs ${benchmarkName}` : undefined}
+        // Says "since inception" because that is the horizon the delta covers,
+        // while the headline above it is the report period. Naming the horizon
+        // is the honest fix for two different spans sharing one card.
+        sub={delta ? `${pct(delta.delta)} vs ${delta.benchmarkName} since inception` : undefined}
       />
       <Stat
         label="Change in NAV"
