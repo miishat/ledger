@@ -89,7 +89,9 @@ describe('AnimatedNumber', () => {
   it('cancels the pending frame on unmount so a mid tween teardown never leaves one running', () => {
     setMatchMedia(false)
     const { raf, caf } = stubRaf()
-    let now = 1000
+    // const, not let: this test unmounts before advancing the clock, so the
+    // frozen value is the point. The tween test above reassigns its own.
+    const now = 1000
     vi.spyOn(performance, 'now').mockImplementation(() => now)
 
     const { rerender, unmount } = render(<AnimatedNumber value={10} durationMs={100} />)
