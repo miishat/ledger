@@ -101,8 +101,44 @@ export function feeTotal(fees: PAFeeRow[]): number {
   return fees.reduce((s, f) => s + f.amount, 0)
 }
 
-/** Account return minus the first benchmark's, since inception. */
-export function benchmarkDelta(summary: PABenchmarkSummaryRow[]): number | null {
-  if (summary.length < 2) return null
-  return summary[0].inception - summary[1].inception
+export interface BenchmarkDelta {
+  /** Account since-inception return minus the benchmark's. */
+  delta: number
+  /** The benchmark it was measured against, for labelling. */
+  benchmarkName: string
+}
+
+/** Account return minus the first benchmark's, since inception.
+ *
+ *  The account has to be found by id, not by position. IBKR lists every
+ *  benchmark first and the account LAST, so reading row 0 as the account
+ *  computes one benchmark minus another and presents it as the user's own
+ *  outperformance. On a real export that produced "+36.53% vs EFA" for an
+ *  account that was down 54% since inception. */
+export function benchmarkDelta(
+  summary: PABenchmarkSummaryRow[],
+  accountId: string,
+): BenchmarkDelta | null {
+  if (!accountId) return null
+  const account = summary.find((r) => r.name === accountId)
+  if (!account) return null
+  const benchmark = summary.find((r) => r.name !== accountId)
+  if (!benchmark) return null
+  return { delta: account.inception - benchmark.inception, benchmarkName: benchmark.name }
+}
+
+/** Growth of 100 from `start` onwards, with every series restarting at 100.
+ *
+ *  Clipping without rebasing would begin each line at whatever value it had
+ *  already compounded to, so a "last 1 year" view could open at 46 and read
+ *  as a catastrophe rather than as a starting point. Rebasing is what makes
+ *  one range comparable with another. A start at or before the first point
+ *  keeps the whole series. */
+export function rebasedGrowth(
+  points: PABenchmarkPoint[],
+  start: string,
+): { names: string[]; data: GrowthPoint[] } {
+  const ordered = [...points].sort((a, b) => (a.month < b.month ? -1 : a.month > b.month ? 1 : 0))
+  const from = ordered.filter((p) => p.month >= start)
+  return growthSeries(from.length > 0 ? from : ordered)
 }

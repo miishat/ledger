@@ -11,8 +11,9 @@ function position(over: Partial<PAOpenPosition>): PAOpenPosition {
 
 function report(openPositions: PAOpenPosition[]): PAReport {
   return {
-    period: '2026-06', baseCurrency: 'CAD',
-    benchmarkSeries: [], benchmarkSummary: [],
+    period: '2026-06', baseCurrency: 'CAD', accountId: 'U1234567',
+    historicalPeriod: '', cumulativePeriod: '',
+    benchmarkSeries: [], cumulativeSeries: [], benchmarkSummary: [],
     sectorAllocation: [], regionAllocation: [], assetClassAllocation: [],
     performanceBySymbol: [], dividends: [], projectedIncome: [], fees: [],
     openPositions,
