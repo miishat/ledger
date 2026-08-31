@@ -6,12 +6,32 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Added
+- Every chart that draws more than one series now names those series in text beneath it, with a colour swatch, instead of leaving them identifiable only by hovering for a tooltip
+- The Salary and Tax result says which tax year it is for, and says plainly once that year has passed that the brackets and contribution limits have not been updated
+- Settings warns when automatic Drive sync has failed several times in a row. A single failure is still ignored, since a transient one is not worth interrupting you for, but a run of them meant sync had quietly stopped working and only a stale timestamp said so
+
 ### Changed
-- Investments Portfolio tab: the three stat cards and the allocation donut with its mode toggle are replaced by a summary band (headline holdings value and all-time delta, strongest/weakest holding, largest weight, currency split, account value) and three allocation bars shown at once, for holding, account and currency
+- Investments Portfolio tab: the three stat cards and the allocation donut with its mode toggle are replaced by a summary band (headline holdings value and all-time delta, strongest/weakest holding, largest weight, currency split, account value) and allocation bars for holding, account and currency
+- The allocation breakdown by holding now shows the largest holdings and folds the remainder into a single "Other" entry. Seventeen holdings previously drew seventeen slivers and a seventeen-entry legend, which on a phone filled more than a screen before the first holding appeared
+- An allocation bar is left out when it has only one segment, since a bar reading 100% says nothing. Strongest and weakest holding are left out when every holding has the same return, which is what happens before any live price arrives
 - Holdings table drops from eight columns to six: Avg Cost and Book open from a disclosure on the ticker instead of sitting in their own columns
+- On a tablet the holdings table is replaced by the same cards a phone shows. At that width the table needed more room than the sidebar left it, so two columns sat off the edge of the screen behind a scrollbar nothing advertised
+- Every control now shows the same focus outline when you tab to it. Many different outlines were reachable in a single pass, and which one you got depended on whether the control was active, so two buttons in the same group could look different
+- The app loads noticeably less code up front: 428 kB instead of 555 kB, after replacing the animation library with plain CSS. Sheets, page transitions and counting figures behave as before
+- The moving background in the Aurora and Glass themes now holds still if your system is set to reduce motion
 
 ### Fixed
+- Syncing from a device running an older version of Ledger no longer destroys data that version predates. A snapshot written by an older build simply has no record of newer features, and pulling it deleted them: an entire trade log could vanish on app open, with no prompt and no way back. A pull now only removes something when the device that wrote the snapshot actually knew about it
+- A split transaction whose slices add up to more than the transaction itself can no longer be saved. It could be before, and every budget total then counted the larger figure: a 100 expense split 80 and 70 contributed 150 to the month
 - A manual price override on a non-USD holding no longer gets converted a second time by the placeholder currency the market data service stamps on it. This had inflated the Portfolio tab's total by the USD exchange rate for every affected holding, disagreeing with the Dashboard rollup, which read the same override correctly
+- A holding's share of the portfolio no longer displays with a plus sign, which made a weight of 15% read as a gain of 15%
+- The allocation figures are labelled as Canadian dollars. The holdings table beneath them shows each holding in its own currency, so the same holding could appear as two different amounts one card apart with nothing to distinguish them
+- Text in the light theme now meets the contrast standard everywhere. Active tabs, emphasised figures on Salary and Tax, the Mortgage and Forecaster controls and the keyboard shortcut hint were all slightly too faint against their own tinted backgrounds
+- A market data request that never responds now gives up after ten seconds instead of leaving the price on a loading skeleton until you reload the page
+- The Customize button on the Dashboard no longer runs into the edge of the screen on the narrowest phones
+- The portfolio total no longer outgrows its column on a tablet, and now has room for an eight figure amount rather than only the value it happened to be designed against
+- Screen readers can navigate the Investments and Compensation pages by heading again: both skipped a level, which breaks the outline those tools rely on
 
 ## [0.9.7-beta] - 2026-08-27
 
