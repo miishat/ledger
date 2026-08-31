@@ -1,6 +1,7 @@
 import type { Currency, HistoricalPrice, Quote } from '../types'
 import { toDateKey } from '../dateKey'
 import { useMarketDataStore } from '../../../store/useMarketDataStore'
+import { fetchWithTimeout } from '../fetchWithTimeout'
 
 export const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query'
 
@@ -37,7 +38,7 @@ function requireKey(): string {
 }
 
 async function getJson(url: string): Promise<Record<string, unknown>> {
-  const res = await fetch(url)
+  const res = await fetchWithTimeout(url)
   if (!res.ok) throw new Error(`Alpha Vantage request failed: ${res.status}`)
   const json = (await res.json()) as Record<string, unknown>
   // Rate-limit and error replies come back as HTTP 200 with these keys. See R11.

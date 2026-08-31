@@ -15,7 +15,7 @@ describe('fetchErApiFxRate', () => {
   it('fetches latest rates for the base currency and picks the target', async () => {
     mockFetchOnce({ result: 'success', base_code: 'USD', rates: { BDT: 117.5 } })
     const fx = await fetchErApiFxRate('USD', 'BDT')
-    expect(globalThis.fetch).toHaveBeenCalledWith(`${ER_API_BASE}/latest/USD`)
+    expect(globalThis.fetch).toHaveBeenCalledWith(`${ER_API_BASE}/latest/USD`, expect.objectContaining({ signal: expect.any(AbortSignal) }))
     expect(fx.rate).toBe(117.5)
     expect(fx.from).toBe('USD')
     expect(fx.to).toBe('BDT')
