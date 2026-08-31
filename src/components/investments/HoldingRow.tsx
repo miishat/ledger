@@ -8,7 +8,7 @@ import {
 } from '../../utils/investments/portfolioMetrics'
 import { allocationPct } from '../../utils/investments/analysisMetrics'
 import { formatMoney } from '../planner/format'
-import { pct } from './holdingMetrics'
+import { pct, share } from './holdingMetrics'
 import { Skeleton } from '../ui/Skeleton'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { DataFreshness } from '../ui/DataFreshness'
@@ -126,7 +126,7 @@ export const HoldingRow: React.FC<HoldingRowProps> = ({ holding, rates, totalVal
             '-'
           ) : (
             <>
-              <span className="tabular-nums">{pct(allocationPct(valueCad, totalValueCad))}</span>
+              <span className="tabular-nums">{share(allocationPct(valueCad, totalValueCad))}</span>
               <span data-testid="allocation-bar" className="block h-1 mt-1 rounded bg-bg-primary/50 overflow-hidden">
                 <span
                   className="block h-full bg-accent"

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import {
-  CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
+  CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import { minPaymentFor, simulatePayoff, type Debt, type DebtType, type PayoffStrategy } from '../../utils/finance/debtPayoff'
@@ -11,6 +11,7 @@ import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
 
 const TOOL_ID = 'debt-payoff'
 const DEFAULT_DEBTS: Debt[] = [
@@ -204,12 +205,17 @@ export const DebtPayoffCalculator: React.FC = () => {
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
               {...chartTooltipStyles}
             />
-            <Legend />
             <Line type="monotone" dataKey="avalanche" stroke="var(--accent)" dot={false} strokeWidth={2} />
             <Line type="monotone" dataKey="snowball" stroke="var(--text-secondary)" dot={false} strokeWidth={2} strokeDasharray="5 3" />
           </LineChart>
         </ResponsiveContainer>
       </ChartFigure>
+      {other.series.length > 0 && (
+        <ChartLegend items={[
+          { name: 'Avalanche', color: 'var(--accent)' },
+          { name: 'Snowball', color: 'var(--text-secondary)' },
+        ]} />
+      )}
     </div>
   )
 }

@@ -26,6 +26,12 @@ export interface BackupEnvelope {
   deviceName?: string
   revision?: number
   baseRevision?: number
+  /** The app version that wrote this snapshot, e.g. "0.9.8-beta". Absent on
+   *  every snapshot written before 0.9.8, which is exactly the case
+   *  performPull has to treat as "this writer may not have known about every
+   *  store I have". Never used for gating features, only for deciding whether
+   *  a missing key means "deleted" or "never existed over there". */
+  appVersion?: string
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -73,7 +79,13 @@ export function buildBackup(meta?: BackupMeta): BackupEnvelope {
       data[key] = raw
     }
   }
-  const env: BackupEnvelope = { version: BACKUP_VERSION, exportedAt: new Date().toISOString(), app: 'ledger', data }
+  const env: BackupEnvelope = {
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    app: 'ledger',
+    appVersion: __APP_VERSION__,
+    data,
+  }
   if (meta) {
     env.deviceId = meta.deviceId
     env.deviceName = meta.deviceName

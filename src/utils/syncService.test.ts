@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { collectFacts, performPush, performPull } from './syncService'
+import { collectFacts, performPush, performPull, keysToPruneOnPull } from './syncService'
 import { useSyncStore } from '../store/useSyncStore'
-import { BACKUP_VERSION, type BackupEnvelope } from './backup'
+import { BACKUP_VERSION, BACKUP_KEYS, restoreBackup, type BackupEnvelope } from './backup'
 import { hashBackupData } from './syncHash'
 import type { SnapshotMeta } from './syncDecision'
 
@@ -120,6 +120,9 @@ describe('syncService', () => {
     localStorage.setItem('ledger-portfolio', JSON.stringify({ holdings: [1, 2, 3] }))
     const envelope: BackupEnvelope = {
       version: BACKUP_VERSION, exportedAt: '', app: 'ledger',
+      // Stamped with this build's own version: the writer knew about every
+      // store this build has, so an absent key is a real deletion.
+      appVersion: __APP_VERSION__,
       data: { 'ledger-budget': { pulled: true } }, revision: 5,
     }
     vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
@@ -142,5 +145,82 @@ describe('syncService', () => {
     await performPull('tok', remoteMeta(5))
 
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ fresh: true })
+  })
+
+  it('performPull leaves a registered key alone when the snapshot has no app version', async () => {
+    // This guards performPull's wiring to keysToPruneOnPull. If a future edit
+    // breaks the call, or adds a second unguarded sweep, nothing else would
+    // catch the data loss: keysToPruneOnPull's unit tests pass, and the
+    // snapshot-with-version case passes too. This end-to-end test catches it.
+    localStorage.setItem('ledger-portfolio', JSON.stringify({ holdings: [1, 2, 3] }))
+    const envelope: BackupEnvelope = {
+      version: BACKUP_VERSION, exportedAt: '', app: 'ledger',
+      // No appVersion field: every snapshot written before 0.9.8. The writer
+      // may predate any registered store, so an absent key proves nothing.
+      data: { 'ledger-budget': { pulled: true } }, revision: 5,
+    }
+    vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
+
+    await performPull('tok', remoteMeta(5))
+
+    expect(localStorage.getItem('ledger-portfolio')).not.toBeNull()
+    const facts = collectFacts()
+    expect(facts.currentHash).toBe(facts.lastSyncedHash)
+  })
+})
+
+const envelope = (data: Record<string, unknown>, appVersion?: string): BackupEnvelope => ({
+  version: 2,
+  exportedAt: '2026-08-28T00:00:00.000Z',
+  app: 'ledger',
+  appVersion,
+  data,
+})
+
+const REGISTERED = ['ledger-budget', 'ledger-trades', 'ledger-wheel']
+
+describe('keysToPruneOnPull', () => {
+  it('prunes a key the writer knew about and deliberately dropped', () => {
+    // Same version on both sides: an absent key really was deleted.
+    const env = envelope({ 'ledger-budget': {}, 'ledger-wheel': {} }, __APP_VERSION__)
+    expect(keysToPruneOnPull(env, REGISTERED)).toEqual(['ledger-trades'])
+  })
+
+  it('prunes nothing when the snapshot carries no app version at all', () => {
+    // Every snapshot written before 0.9.8. The writer may predate any of
+    // these stores, so an absent key proves nothing.
+    const env = envelope({ 'ledger-budget': {} }, undefined)
+    expect(keysToPruneOnPull(env, REGISTERED)).toEqual([])
+  })
+
+  it('prunes nothing when the snapshot came from an older build', () => {
+    const env = envelope({ 'ledger-budget': {} }, '0.8.1-beta')
+    expect(keysToPruneOnPull(env, REGISTERED)).toEqual([])
+  })
+
+  it('prunes normally when the snapshot came from a newer build', () => {
+    // A newer build knows about every store this build has, so an absent
+    // key is a real deletion.
+    const env = envelope({ 'ledger-budget': {} }, '99.0.0')
+    expect(keysToPruneOnPull(env, REGISTERED)).toEqual(['ledger-trades', 'ledger-wheel'])
+  })
+
+  it('treats an unparseable version as older, which is the safe direction', () => {
+    const env = envelope({ 'ledger-budget': {} }, 'not-a-version')
+    expect(keysToPruneOnPull(env, REGISTERED)).toEqual([])
+  })
+})
+
+describe('a pull from an older build does not destroy newer stores', () => {
+  it('leaves the trade log alone', () => {
+    localStorage.clear()
+    localStorage.setItem('ledger-trades', JSON.stringify({ state: { trades: [{ id: 'tr1' }] } }))
+    localStorage.setItem('ledger-budget', JSON.stringify({ state: { transactions: {} } }))
+
+    const fromOldDevice = envelope({ 'ledger-budget': { state: { transactions: {} } } }, '0.8.1-beta')
+    restoreBackup(fromOldDevice)
+    for (const key of keysToPruneOnPull(fromOldDevice, BACKUP_KEYS)) localStorage.removeItem(key)
+
+    expect(localStorage.getItem('ledger-trades')).not.toBeNull()
   })
 })

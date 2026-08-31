@@ -23,6 +23,8 @@ import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
 
 interface CompHeroWidgetProps {
   className?: string
@@ -164,17 +166,45 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     return {
       month: dm.label,
       baseSalary: timeMode === 'current-year' ? getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12 : primaryPackage.baseSalary / 12,
-      bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0, 
+      bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0,
       espp: esppValue / 12,
       rrsp: rrspValue / 12,
       rsu: rsuThisMonth,
     }
   })
 
+  // The monthly view's legend used to show pieData's annual totals next to a
+  // chart of monthly bars, so a bar for one month of pay sat under a figure
+  // for a year of it. Averaging the same monthlyData the bars draw from
+  // (rather than dividing the annual figure by 12) keeps the two from
+  // drifting apart, and it is the only option that stays honest for bonus
+  // and RSU, which land unevenly across months rather than splitting evenly.
+  const monthlyBarKeyByName: Record<string, keyof (typeof monthlyData)[number]> = {
+    'Base Salary': 'baseSalary',
+    'Bonus': 'bonus',
+    'Equity (RSU)': 'rsu',
+    'ESPP Profit': 'espp',
+    'RRSP': 'rrsp',
+  }
+  const avgMonthlyValue = (name: string) => {
+    const key = monthlyBarKeyByName[name]
+    if (!key || monthlyData.length === 0) return 0
+    const total = monthlyData.reduce((sum, m) => sum + (m[key] as number), 0)
+    return total / monthlyData.length
+  }
+  const monthlyLegendItems = pieData.map((d) => ({
+    name: d.name,
+    color: d.color,
+    value: cad(avgMonthlyValue(d.name)),
+  }))
+
   return (
     <div className={`themed-card rounded-lg p-4 flex flex-col ${className}`}>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-        <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h3>
+        {/* h2, not h3: this card sits directly under the page h1 with no h2
+            between them, and the jump made the document outline unusable from
+            a screen reader's heading list. The size is unchanged. */}
+        <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Total Compensation</h2>
         {/* Three segmented groups totalling 430px. Without flex-wrap the
             Gross/After-Tax group starts past the right edge of a 375px
             screen and is clipped by main's overflow-x-hidden, which made
@@ -290,27 +320,30 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
           </ul>
         </div>
       ) : (
-        <ChartFigure
-          label={`Monthly compensation breakdown for ${monthlyData.length} months from ${monthlyData[0]?.month ?? ''} to ${monthlyData[monthlyData.length - 1]?.month ?? ''}, split into base salary, bonus, ESPP, RRSP and RSU`}
-          className="relative w-full h-[280px] desktop:h-[400px]"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} accessibilityLayer={false}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-              <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: 'var(--color-border)' }}
-              />
-              <Bar dataKey="baseSalary" stackId="a" fill={COMP_COLORS.baseSalary} name="Base Salary" />
-              <Bar dataKey="bonus" stackId="a" fill={COMP_COLORS.cashBonus} name="Bonus" />
-              <Bar dataKey="espp" stackId="a" fill={COMP_COLORS.espp} name="ESPP Profit" />
-              <Bar dataKey="rrsp" stackId="a" fill={COMP_COLORS.rrsp} name="RRSP" />
-              <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartFigure>
+        <>
+          <ChartFigure
+            label={`Monthly compensation breakdown for ${monthlyData.length} months from ${monthlyData[0]?.month ?? ''} to ${monthlyData[monthlyData.length - 1]?.month ?? ''}, split into base salary, bonus, ESPP, RRSP and RSU`}
+            className="relative w-full h-[280px] desktop:h-[400px]"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} accessibilityLayer={false}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
+                <YAxis tickFormatter={(v) => `$${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: 'var(--color-border)' }}
+                />
+                <Bar dataKey="baseSalary" stackId="a" fill={COMP_COLORS.baseSalary} name="Base Salary" />
+                <Bar dataKey="bonus" stackId="a" fill={COMP_COLORS.cashBonus} name="Bonus" />
+                <Bar dataKey="espp" stackId="a" fill={COMP_COLORS.espp} name="ESPP Profit" />
+                <Bar dataKey="rrsp" stackId="a" fill={COMP_COLORS.rrsp} name="RRSP" />
+                <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartFigure>
+          <ChartLegend items={monthlyLegendItems} />
+        </>
       )}
 
       {view === 'monthly' && showAfterTax && (
@@ -340,6 +373,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               </p>
             </div>
           </div>
+          {/* Only relevant here, in After-Tax mode: this is the one place on
+              this widget a figure derived from the tax tables reaches the
+              screen. Gross mode never shows one, so it never needs the notice. */}
+          <TaxYearNotice />
           <p className="text-[12px] text-[var(--color-text-secondary)]">
             Estimate. Treats all compensation as {PROVINCIAL_TAX[province].name} employment income for the
             year. RRSP match is actually tax-sheltered; ESPP and RSU values assume sale at vest.

@@ -39,4 +39,24 @@ describe('AllocationBars', () => {
     const { container } = render(<AllocationBars rows={[]} rates={{}} />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('renders nothing when every cut has only one slice', () => {
+    // One holding, one account, one currency: all three cuts collapse to a
+    // single 100% slice, which is dropped as uninformative. With nothing
+    // left to show, the whole card should be omitted rather than rendered
+    // with a heading and no bars under it.
+    const single = [{ holding: h({ id: '1', ticker: 'ENB' }), price: 100 }]
+    const { container } = render(<AllocationBars rows={single} rates={{}} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('folds a long holdings list into Other', () => {
+    const twelveHoldings = Array.from({ length: 12 }, (_, i) => ({
+      holding: h({ id: `h${i}`, ticker: `T${i}`, account: i % 2 === 0 ? 'RRSP' : 'TFSA' }),
+      price: 12 - i,
+    }))
+    render(<AllocationBars rows={twelveHoldings} rates={{}} />)
+    expect(screen.getByText(/Other/)).toBeInTheDocument()
+    expect(screen.getAllByText(/%/).length).toBeLessThan(12)
+  })
 })

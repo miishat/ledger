@@ -15,6 +15,7 @@ import { ThemedSelect } from '../ui/ThemedSelect'
 import { formatMoney, formatMoneyCompact } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
 
 const TOOL_ID = 'mortgage'
 const DEFAULTS = {
@@ -74,6 +75,22 @@ export const MortgageCalculator: React.FC = () => {
       }
     })
   const emphasizeBaseline = frequency === 'monthly' && extras.length === 0
+
+  // Only monthly-with-extras and biweekly draw a second area; the default
+  // (monthly, no extras) chart has one series and names it in the axis and
+  // heading alone, matching every other single-series chart in the app.
+  const secondSeriesLegend =
+    frequency === 'monthly' && extras.length > 0
+      ? [
+          { name: 'Original schedule', color: 'var(--text-secondary)' },
+          { name: 'With extra payments', color: 'var(--accent)' },
+        ]
+      : frequency === 'biweekly'
+        ? [
+            { name: 'Monthly schedule', color: 'var(--text-secondary)' },
+            { name: 'Biweekly accelerated', color: 'var(--accent)' },
+          ]
+        : []
 
   // Recharts' Tooltip trigger="click" listens for a native click event, but a
   // tap on a phone does not reliably synthesize one on the SVG surface. This
@@ -213,13 +230,13 @@ export const MortgageCalculator: React.FC = () => {
           )}
 
           <div
-            className="themed-card rounded-lg p-4 h-[240px] desktop:h-[300px]"
+            className="themed-card rounded-lg p-4 h-[240px] desktop:h-[300px] flex flex-col"
             onTouchStart={handleChartTouchStart}
             onTouchEnd={handleChartTouchEnd}
           >
             <ChartFigure
               label={`Mortgage balance from year 1 to year ${chartData.length}, starting at ${formatMoneyCompact(chartData[0]?.baseline ?? 0)} and ending at ${formatMoneyCompact(chartData[chartData.length - 1]?.baseline ?? 0)}`}
-              className="w-full h-full"
+              className="w-full flex-1 min-h-0"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }} accessibilityLayer={false}>
@@ -258,6 +275,7 @@ export const MortgageCalculator: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </ChartFigure>
+            {secondSeriesLegend.length > 0 && <ChartLegend items={secondSeriesLegend} />}
           </div>
         </>
       ) : (

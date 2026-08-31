@@ -285,6 +285,35 @@ describe('TransactionModal negative expense splitting is out of scope', () => {
     expect(saved.splits).toBeUndefined()
   })
 
+  it('refuses to save when the slices exceed the amount', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
+        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
+      },
+      transactions: {},
+    })
+    const onClose = vi.fn()
+    render(<TransactionModal isOpen onClose={onClose} />)
+
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '100' } })
+    fireEvent.blur(screen.getByPlaceholderText('0.00'))
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+
+    const sliceAmounts = screen.getAllByLabelText('Slice amount')
+    fireEvent.change(sliceAmounts[0], { target: { value: '150' } })
+    fireEvent.blur(sliceAmounts[0])
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Slices add up to more than the amount. Reduce a slice before saving.',
+    )
+    expect(onClose).not.toHaveBeenCalled()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  })
+
   it('still saves an ordinary positive split exactly as before', () => {
     useBudgetStore.setState({
       categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },

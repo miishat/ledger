@@ -107,8 +107,10 @@ export const Layout: React.FC = () => {
           if (!currentFolderId) return
           await performPush(cachedToken, currentFolderId, push.nextRevision, push.baseRevision)
         }
+        useSyncStore.getState().clearAutoFailures()
       } catch (err) {
         console.error('Automatic Drive sync failed:', err)
+        useSyncStore.getState().recordAutoFailure()
       } finally {
         autoSyncInFlight.current = false
       }
@@ -188,7 +190,10 @@ export const Layout: React.FC = () => {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border control-border text-sm text-text-secondary hover:text-text-primary hover:border-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
               <Search className="w-4 h-4" /> Search
-              <kbd className="ml-auto text-micro px-1.5 py-0.5 rounded border border-border text-text-secondary/80">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+              {/* Not text-text-secondary/80: at 80% over the search field this composited
+                  to #6d7581 in the geometric theme, 4.35:1 against a 4.5 requirement.
+                  Full strength is 7.06:1 and reads no louder at this size. */}
+              <kbd className="ml-auto text-micro px-1.5 py-0.5 rounded border border-border text-text-secondary">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
             </button>
           </div>
 

@@ -186,7 +186,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                     </span>
                   </p>
                 </div>
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden wide:block overflow-x-auto">
                   <table className="w-full text-[13px] min-w-[560px]">
                     <caption className="sr-only">
                       Holdings in {account}, sortable by ticker, value, profit and loss, or allocation.
@@ -220,7 +220,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                     </tbody>
                   </table>
                 </div>
-                <div data-testid={`portfolio-cards-${account}`} className="md:hidden flex flex-col gap-3">
+                <div data-testid={`portfolio-cards-${account}`} className="wide:hidden flex flex-col gap-3">
                   {accountHoldings.map((h) => (
                     <HoldingCard key={h.id} holding={h} rates={rates} totalValueCad={totals.valueCad} onPrice={onPrice} />
                   ))}

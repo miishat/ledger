@@ -279,3 +279,19 @@ test('search is reachable without a keyboard', async ({ page }) => {
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
   await expect(page.getByPlaceholder('Jump to a page or tool…')).toBeVisible()
 })
+
+// 0.9.7 made the Dashboard's Customize button the same size as other header
+// buttons, which left it 5px too narrow for its own label at 320px: it
+// rendered a 76px box for an 81px label, hard against the screen edge with
+// its right padding eaten.
+test('no header button is squeezed below its own label', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const squeezed = await page.evaluate(() =>
+    [...document.querySelectorAll('header button, main button')]
+      .filter((b) => b.getBoundingClientRect().width > 0)
+      .filter((b) => b.scrollWidth > b.clientWidth + 1)
+      .map((b) => ({ text: (b.textContent || '').trim(), shown: b.clientWidth, needs: b.scrollWidth })),
+  )
+  expect(squeezed).toEqual([])
+})

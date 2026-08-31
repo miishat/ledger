@@ -39,8 +39,12 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
       sub: nav.cash !== null ? `Cash ${formatMoney(nav.cash)}` : undefined,
     })
   }
-  if (h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: h.strongest.plPct >= 0 ? 'text-accent' : 'text-error' })
-  if (h.weakest) facts.push({ label: 'Weakest', value: `${h.weakest.ticker} ${pct(h.weakest.plPct)}`, tone: h.weakest.plPct >= 0 ? 'text-accent' : 'text-error' })
+  // Only when they actually differ. With no quotes yet every holding sits at
+  // +0.0%, and naming an arbitrary ticker as strongest and another as weakest
+  // reads as a finding when it is an artifact of having no data.
+  const spread = h.strongest && h.weakest && h.strongest.plPct !== h.weakest.plPct
+  if (spread && h.strongest) facts.push({ label: 'Strongest', value: `${h.strongest.ticker} ${pct(h.strongest.plPct)}`, tone: h.strongest.plPct >= 0 ? 'text-accent' : 'text-error' })
+  if (spread && h.weakest) facts.push({ label: 'Weakest', value: `${h.weakest.ticker} ${pct(h.weakest.plPct)}`, tone: h.weakest.plPct >= 0 ? 'text-accent' : 'text-error' })
   if (h.largestWeight) facts.push({ label: 'Largest weight', value: `${h.largestWeight.name} ${h.largestWeight.pct.toFixed(1)}%` })
   if (h.currencySplit.length > 0) {
     facts.push({
@@ -52,10 +56,32 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
 
   return (
     <div className="themed-card rounded-lg p-5 desktop:p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+      {/* items-start, not items-center: centring left the headline floating in
+          the middle of a column as tall as the six-row fact list beside it,
+          with roughly 90px of void above and below at 1440 and a badly
+          unbalanced band at 768. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
         <div>
           <p className="text-[12px] uppercase text-text-secondary">Holdings Value (CAD)</p>
-          <p className="text-[36px] desktop:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
+          {/* wide:, not desktop:. The desktop variant starts at 768, where the
+              sidebar has already taken 256px and this grid column is 183px
+              wide: 44px type needed 189px and spilled into the gutter. 912 is
+              where the column genuinely has room, the same threshold the
+              holdings table uses.
+
+              36px below that was measured against the seeded $138,200 and
+              looked like a flush fit (scrollWidth === clientWidth), but that
+              equality is what a non-overflowing block always reports, not a
+              real margin: its true unconstrained width was only 154px in a
+              183px column, 29px of slack the guard could not see. A seven
+              figure portfolio ($1,384,200, ten characters) needs the entire
+              183px at 36px, zero real headroom, and an eight figure one
+              ($12,384,200, eleven characters) needs 204px and overflows.
+              28px is the size PortfolioRollupWidget and BudgetHealthWidget
+              already use for a large money headline; at 183px it leaves 24px
+              of genuine headroom for eleven characters and still clears an
+              unlikely twelve character figure ($123,384,200) by 8px. */}
+          <p className="text-[28px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
             {formatMoney(totals.valueCad)}
           </p>
           <p className={`text-[14px] font-medium tabular-nums mt-3 ${up ? 'text-accent' : 'text-error'}`}>

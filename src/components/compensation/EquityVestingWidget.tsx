@@ -4,6 +4,7 @@ import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import type { ChartTooltipProps, ChartTooltipPayloadItem } from '../../utils/chartTheme'
 import { LEADING_LABEL, TRAILING_LABEL, isPaddingLabel } from './vestingPadding'
+import { ChartLegend } from '../ui/ChartLegend'
 import {
   ComposedChart,
   Area,
@@ -246,26 +247,15 @@ export function EquityVestingWidget() {
           </ResponsiveContainer>
         </ChartFigure>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-meta text-[var(--color-text-secondary)]">
-          {primaryPackage.rsuGrants.map((grant, index) => (
-            <span key={grant.id} className="inline-flex items-center gap-1.5">
-              <span
-                className="w-2.5 h-2.5 rounded-sm"
-                style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                aria-hidden="true"
-              />
-              {grant.grantName}
-            </span>
-          ))}
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="w-3.5 h-0.5"
-              style={{ backgroundColor: 'var(--unvested)' }}
-              aria-hidden="true"
-            />
-            Unvested remaining
-          </span>
-          <span className="ml-auto">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <ChartLegend items={[
+            ...primaryPackage.rsuGrants.map((grant, index) => ({
+              name: grant.grantName,
+              color: COLORS[index % COLORS.length],
+            })),
+            { name: 'Unvested remaining', color: 'var(--unvested)' },
+          ]} />
+          <span className="text-meta text-[var(--color-text-secondary)]">
             Valued at {cad(primaryPackage.companyCurrentPrice)} per share
           </span>
         </div>

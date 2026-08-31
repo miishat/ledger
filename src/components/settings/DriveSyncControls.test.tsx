@@ -32,7 +32,13 @@ describe('DriveSyncControls', () => {
     vi.mocked(service.performPush).mockReset().mockResolvedValue(undefined as never)
     vi.mocked(service.performPull).mockReset().mockResolvedValue(undefined)
     vi.mocked(auth.clearCachedToken).mockReset()
-    useSyncStore.setState({ clientId: 'client-1', folderId: 'folder-1', lastSyncedRevision: 3, lastSyncedHash: 'h' })
+    useSyncStore.setState({
+      clientId: 'client-1',
+      folderId: 'folder-1',
+      lastSyncedRevision: 3,
+      lastSyncedHash: 'h',
+      consecutiveAutoFailures: 0,
+    })
     vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
   })
 
@@ -303,6 +309,43 @@ describe('DriveSyncControls', () => {
     expect(details).toHaveTextContent('Conflicts still wait for you in this panel.')
     expect(details).toHaveTextContent('does not stay primed across a reload')
     expect(details).toHaveTextContent('including any market data API key you have entered')
+  })
+
+  it('warns after three consecutive automatic sync failures', () => {
+    useSyncStore.setState({ consecutiveAutoFailures: 3 })
+    render(<DriveSyncControls />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Automatic sync has failed 3 times in a row.',
+    )
+  })
+
+  it('names the sync controls in the automatic sync failure warning', () => {
+    useSyncStore.setState({ consecutiveAutoFailures: 3 })
+    render(<DriveSyncControls />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Try Push to Drive or Pull from Drive, or reconnect.',
+    )
+  })
+
+  it('says nothing after one failure', () => {
+    useSyncStore.setState({ consecutiveAutoFailures: 1 })
+    render(<DriveSyncControls />)
+    expect(screen.queryByText(/times in a row/)).not.toBeInTheDocument()
+  })
+
+  // clearStorage() only deletes the localStorage entry; it does not touch
+  // the already-hydrated in-memory store, so it alone would prove nothing
+  // about the fallback. The real exercise of a persisted blob genuinely
+  // missing the field, via persist.rehydrate(), lives in
+  // useSyncStore.test.ts. This test covers the visible consequence: a
+  // fresh install with nothing (or a pre-Task-22 blob) persisted must not
+  // show the warning.
+  it('an install with no persisted counter starts at zero', () => {
+    useSyncStore.setState({ consecutiveAutoFailures: 0 })
+    useSyncStore.persist.clearStorage()
+    render(<DriveSyncControls />)
+    expect(useSyncStore.getState().consecutiveAutoFailures).toBe(0)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
 })

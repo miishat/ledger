@@ -145,6 +145,37 @@ describe('allocationBreakdown', () => {
   })
 })
 
+describe('allocationBreakdown slice cap', () => {
+  const rows = Array.from({ length: 12 }, (_, i) => ({
+    holding: { id: `h${i}`, ticker: `T${i}`, quantity: 1, avgCost: 1, currency: 'CAD', account: 'A' },
+    price: 12 - i,
+  })) as Parameters<typeof allocationBreakdown>[0]
+
+  it('returns every slice when no cap is given', () => {
+    expect(allocationBreakdown(rows, {}, 'holding')).toHaveLength(12)
+  })
+
+  it('folds the tail into Other when a cap is given', () => {
+    const out = allocationBreakdown(rows, {}, 'holding', 8)
+    expect(out).toHaveLength(8)
+    expect(out[7].name).toBe('Other')
+    // Nothing is lost: the percentages still sum to 100.
+    expect(out.reduce((s, x) => s + x.pct, 0)).toBeCloseTo(100, 6)
+  })
+
+  it('does not add Other when the cap is not exceeded', () => {
+    const out = allocationBreakdown(rows.slice(0, 5), {}, 'holding', 8)
+    expect(out).toHaveLength(5)
+    expect(out.some((x) => x.name === 'Other')).toBe(false)
+  })
+
+  it('does not add Other for exactly the cap', () => {
+    const out = allocationBreakdown(rows.slice(0, 8), {}, 'holding', 8)
+    expect(out).toHaveLength(8)
+    expect(out.some((x) => x.name === 'Other')).toBe(false)
+  })
+})
+
 describe('quoteCurrencyForHolding', () => {
   const cadHolding = {
     id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100,

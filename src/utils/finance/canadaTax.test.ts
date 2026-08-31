@@ -4,6 +4,7 @@ import {
   eiPremium,
   estimateRrspRoom,
   federalTax,
+  isTaxYearStale,
   marginalRate,
   marginalRateBreakdown,
   marginalSlices,
@@ -12,6 +13,7 @@ import {
   RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
   takeHomeWithDeductions,
+  TAX_YEAR,
   totalIncomeTax,
 } from './canadaTax'
 
@@ -226,5 +228,32 @@ describe('estimateRrspRoom', () => {
   it('is zero for no income', () => {
     expect(estimateRrspRoom(0)).toBe(0)
     expect(estimateRrspRoom(-100)).toBe(0)
+  })
+})
+
+describe('tax year', () => {
+  it('names the year these tables are for', () => {
+    expect(TAX_YEAR).toBe(2026)
+  })
+
+  it('is not stale during its own year', () => {
+    // Local constructors, not a Z-suffixed instant: the tax year is a local
+    // calendar year, so a UTC literal would test a different day depending on
+    // where the suite runs.
+    expect(isTaxYearStale(new Date(2026, 11, 31, 23, 59, 59))).toBe(false)
+  })
+
+  it('is stale once the year has turned', () => {
+    expect(isTaxYearStale(new Date(2027, 0, 1, 0, 0, 1))).toBe(true)
+  })
+
+  it('keeps the staleness trigger and the printed year in agreement', () => {
+    // A UTC comparison here once made the banner print "not been updated
+    // for 2026" while still showing 2026 rates, because isTaxYearStale used
+    // the UTC year but the banner text used the local year. At the last
+    // local moment of the tax year, both must agree it is still TAX_YEAR.
+    const lastMomentOfTaxYear = new Date(2026, 11, 31, 23, 59, 59)
+    expect(isTaxYearStale(lastMomentOfTaxYear)).toBe(false)
+    expect(lastMomentOfTaxYear.getFullYear()).toBe(TAX_YEAR)
   })
 })

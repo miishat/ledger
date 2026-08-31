@@ -15,6 +15,7 @@ import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
+import { ChartLegend } from '../ui/ChartLegend'
 
 const TOOL_ID = 'compound-interest'
 const DEFAULTS: Record<string, number> = { principal: 10000, monthlyContribution: 500, annualRatePct: 7, years: 20 }
@@ -68,6 +69,10 @@ export const CompoundInterestCalculator: React.FC = () => {
           </AreaChart>
         </ResponsiveContainer>
       </ChartFigure>
+      <ChartLegend items={[
+        { name: 'Contributed', color: 'var(--text-secondary)', value: formatMoney(contributed) },
+        { name: 'Growth', color: 'var(--accent)', value: formatMoney(fv - contributed) },
+      ]} />
     </div>
   )
 }

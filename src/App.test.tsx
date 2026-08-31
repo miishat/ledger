@@ -28,13 +28,18 @@ describe('App routing', () => {
     // before the page itself is.
     // Full-suite runs contend for CPU across many parallel worker threads, so
     // a lazy chunk that resolves in single-digit ms in isolation can take
-    // well over the default 1000ms timeout under that load. Use a generous
-    // timeout here rather than in isolation-only runs.
+    // several seconds under that load. Both budgets below have to allow for
+    // that, not just the outer one: findByRole gives up on its own inner
+    // timeout regardless of how long the test itself is allowed to run, so
+    // raising only the outer number (as a previous change here did) does
+    // nothing, it just trades a timeout error for a "could not find" error
+    // at the same wall clock moment. The outer test timeout stays comfortably
+    // above the inner one so it never fires first.
     expect(
-      await screen.findByRole('heading', { name: 'Budgeting' }, { timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'Budgeting' }, { timeout: 10000 }),
     ).toBeInTheDocument()
     window.location.hash = ''
-  })
+  }, 20000)
 
   it('keeps the browser chrome colour in step with the active theme', async () => {
     useThemeStore.getState().setTheme('geometric')

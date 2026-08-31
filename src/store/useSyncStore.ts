@@ -22,6 +22,11 @@ interface SyncState {
   lastSyncedRevision: number;
   lastSyncedAt?: string;
   lastSyncedHash: string;
+  /** How many automatic syncs have failed in a row. Auto-sync deliberately
+   *  swallows errors, since a transient failure should not raise a toast on
+   *  every app focus. A run of them is different: it means sync has been
+   *  quietly not happening, and only the stale chip said so. */
+  consecutiveAutoFailures: number;
 
   setDeviceName: (name: string) => void;
   setClientId: (id: string) => void;
@@ -29,6 +34,8 @@ interface SyncState {
   setFolderId: (id: string) => void;
   recordSync: (revision: number, hash: string) => void;
   disconnect: () => void;
+  recordAutoFailure: () => void;
+  clearAutoFailures: () => void;
 }
 
 export const useSyncStore = create<SyncState>()(
@@ -41,6 +48,7 @@ export const useSyncStore = create<SyncState>()(
       lastSyncedRevision: 0,
       lastSyncedAt: undefined,
       lastSyncedHash: '',
+      consecutiveAutoFailures: 0,
 
       setDeviceName: (name) => set({ deviceName: name.trim() || defaultDeviceName() }),
       setClientId: (id) => set({ clientId: id.trim() || undefined }),
@@ -62,11 +70,18 @@ export const useSyncStore = create<SyncState>()(
           lastSyncedRevision: 0,
           lastSyncedHash: '',
         }),
+      recordAutoFailure: () => set((s) => ({ consecutiveAutoFailures: s.consecutiveAutoFailures + 1 })),
+      clearAutoFailures: () => set({ consecutiveAutoFailures: 0 }),
     }),
     {
       // Intentionally absent from BACKUP_KEYS: this metadata is per-device and
       // must not travel inside a snapshot.
       name: STORAGE_KEYS.sync,
+      version: 1,
+      // Existing installs wrote version 0 with this exact shape, so v0 to v1
+      // is an identity migration. It exists so the next schema change has a
+      // hook instead of a silent reinterpretation of whatever is on disk.
+      migrate: (persisted: unknown) => persisted,
     }
   )
 );

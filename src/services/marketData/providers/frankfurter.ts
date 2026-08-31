@@ -1,5 +1,6 @@
 import type { Currency, FxRate } from '../types'
 import { toDateKey, todayKey } from '../dateKey'
+import { fetchWithTimeout } from '../fetchWithTimeout'
 
 export const FRANKFURTER_BASE = 'https://api.frankfurter.dev/v1'
 
@@ -17,7 +18,7 @@ export async function fetchFxRate(from: Currency, to: Currency, date?: string): 
   }
 
   const path = date ? toDateKey(date) : 'latest'
-  const res = await fetch(`${FRANKFURTER_BASE}/${path}?from=${from}&to=${to}`)
+  const res = await fetchWithTimeout(`${FRANKFURTER_BASE}/${path}?from=${from}&to=${to}`)
   if (!res.ok) throw new Error(`Frankfurter request failed: ${res.status}`)
   const json = (await res.json()) as FrankfurterResponse
   const rate = json.rates?.[to]

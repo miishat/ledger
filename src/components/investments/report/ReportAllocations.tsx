@@ -5,6 +5,7 @@ import { formatMoney } from '../../planner/format'
 import { chartTooltipStyles, sliceColor } from '../../../utils/chartTheme'
 import { Section } from './Section'
 import { ChartFigure } from '../../ui/ChartFigure'
+import { ChartLegend } from '../../ui/ChartLegend'
 
 const Donut: React.FC<{ title: string; rows: PAAllocationRow[] }> = ({ title, rows: rawRows }) => {
   // The report lists allocation rows in whatever order the CSV had them. Sort
@@ -31,17 +32,11 @@ const Donut: React.FC<{ title: string; rows: PAAllocationRow[] }> = ({ title, ro
           </PieChart>
         </ResponsiveContainer>
       </ChartFigure>
-      <div className="flex flex-col gap-1 text-[13px]">
-        {rows.map((r, i) => (
-          <div key={r.name} className="flex justify-between items-center gap-2">
-            <span className="flex items-center gap-2 text-text-primary">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sliceColor(i) }} />
-              {r.name}
-            </span>
-            <span className="text-text-secondary shrink-0">{r.endingPct.toFixed(1)}% · {formatMoney(r.endingNav)}</span>
-          </div>
-        ))}
-      </div>
+      <ChartLegend items={rows.map((r, i) => ({
+        name: r.name,
+        color: sliceColor(i),
+        value: `${r.endingPct.toFixed(1)}% · ${formatMoney(r.endingNav)}`,
+      }))} />
     </div>
   )
 }

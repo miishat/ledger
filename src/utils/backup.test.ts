@@ -223,3 +223,25 @@ describe('backup key coverage', () => {
     })
   })
 })
+
+describe('appVersion stamping', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('stamps the running app version into the envelope', () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({ state: { transactions: {} } }))
+    const env = buildBackup()
+    expect(env.appVersion).toBe(__APP_VERSION__)
+    expect(typeof env.appVersion).toBe('string')
+  })
+
+  it('accepts an envelope with no appVersion, which is every pre-0.9.8 snapshot', () => {
+    const legacy = {
+      version: 2,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      app: 'ledger' as const,
+      data: { 'ledger-budget': { state: { transactions: {} } } },
+    }
+    expect(() => parseBackupText(JSON.stringify(legacy))).not.toThrow()
+    expect(parseBackupText(JSON.stringify(legacy)).appVersion).toBeUndefined()
+  })
+})

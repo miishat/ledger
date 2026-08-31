@@ -43,10 +43,14 @@ describe('PortfolioSummary', () => {
     expect(strongestValue).not.toHaveClass('text-accent')
   })
 
-  it('renders a strongest row with no weakest row for a single holding portfolio', () => {
+  it('omits both strongest and weakest for a single holding portfolio', () => {
+    // A single holding has no second data point to contrast against
+    // (portfolioHighlights leaves weakest null for exactly this reason), so
+    // the spread check that also gates strongest never has both sides to
+    // compare and neither fact renders.
     const single = [{ holding: h({ id: '1', ticker: 'VFV' }), price: 150 }]
     render(<PortfolioSummary rows={single} rates={{}} nav={null} onRetryRates={() => {}} />)
-    expect(screen.getByText('Strongest')).toBeInTheDocument()
+    expect(screen.queryByText('Strongest')).not.toBeInTheDocument()
     expect(screen.queryByText('Weakest')).not.toBeInTheDocument()
   })
 
@@ -92,5 +96,17 @@ describe('PortfolioSummary', () => {
   it('says nothing about exclusions when every holding converts', () => {
     render(<PortfolioSummary rows={rows} rates={{}} nav={null} onRetryRates={() => {}} />)
     expect(screen.queryByText(/left out of these totals/)).not.toBeInTheDocument()
+  })
+
+  it('omits strongest and weakest when every holding is flat', () => {
+    // With no live quotes every holding prices at its own cost basis, so
+    // every plPct is 0 and there is no genuine spread to report.
+    const flatRows = [
+      { holding: h({ id: '1', ticker: 'VFV' }), price: 100 },
+      { holding: h({ id: '2', ticker: 'CNQ', account: 'RRSP' }), price: 100 },
+    ]
+    render(<PortfolioSummary rows={flatRows} rates={{}} nav={null} onRetryRates={() => {}} />)
+    expect(screen.queryByText('Strongest')).not.toBeInTheDocument()
+    expect(screen.queryByText('Weakest')).not.toBeInTheDocument()
   })
 })

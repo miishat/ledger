@@ -65,6 +65,24 @@ test('submitting Add Transaction empty explains itself', async ({ page }) => {
   await expect(page.locator('#tx-amount')).toHaveAttribute('aria-invalid', 'true')
 })
 
+test('an over-allocated split cannot be saved', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  await page.waitForTimeout(400)
+  await page.locator('#tx-amount').fill('100')
+  // The split toggle is a checkbox, not a button: its accessible name comes
+  // from an aria-label on the input, so it must be queried as a checkbox.
+  await page.getByLabel('Split across categories').click()
+  await page.locator('[data-testid=sheet-panel] input[id^=tx-split-amount]').first().fill('150')
+  await page.locator('[data-testid=sheet-panel] button[type=submit]').click()
+  await expect(page.getByRole('alert')).toHaveText(
+    'Slices add up to more than the amount. Reduce a slice before saving.',
+  )
+  // The sheet is still open, which is the proof it did not save.
+  await expect(page.locator('[data-testid=sheet-panel]')).toBeVisible()
+})
+
 test('no focusable control is invisible while focused', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
@@ -81,6 +99,39 @@ test('no focusable control is invisible while focused', async ({ page }) => {
     if (hit) invisible.push(hit)
   }
   expect(invisible).toEqual([])
+})
+
+test('a sheet actually animates in, not just out', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Settings' }).first().click()
+  // waitFor('attached') resolves on the same DOM mutation that adds the
+  // panel, whatever mounts it, so this samples right at insertion rather
+  // than guessing a delay. That timing matters: past the animation's own
+  // 150-220ms, a working entrance and a missing one both settle at the same
+  // resting transform/opacity, so waiting past it would make the assertion
+  // pass either way.
+  const panel = page.locator('[data-testid=sheet-panel]')
+  await panel.waitFor({ state: 'attached' })
+  const sample = await page.evaluate(() => {
+    const read = (el: Element | null) =>
+      el && {
+        animationName: getComputedStyle(el).animationName,
+        running: el.getAnimations().some((a) => a.playState === 'running'),
+      }
+    return {
+      panel: read(document.querySelector('[data-testid=sheet-panel]')),
+      scrim: read(document.querySelector('[data-testid=sheet-scrim]')),
+    }
+  })
+  // Insertion, not a style change on an already-painted element, is what a
+  // freshly opened sheet is: a CSS transition does not run on insertion, so
+  // this can only be a keyframe animation. If the panel or scrim comes back
+  // already resting at its open state, the entrance never played.
+  expect(sample.panel?.animationName).not.toBe('none')
+  expect(sample.panel?.running).toBe(true)
+  expect(sample.scrim?.animationName).not.toBe('none')
+  expect(sample.scrim?.running).toBe(true)
 })
 
 test('a sheet never renders its header twice', async ({ page }) => {
@@ -643,3 +694,191 @@ for (const [theme, expectBlur] of [['nouveau', true], ['luxury', false]] as cons
     }
   })
 }
+
+// The tablet project runs this file at 768x1024, exactly the width where the
+// sidebar takes 256px and the holdings table's min-w-[560px] no longer fits.
+// Two of its six columns used to sit entirely outside the viewport.
+test('no holdings column falls outside the viewport', async ({ page }) => {
+  await page.goto('/#/investments')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(500)
+  const offscreen = await page.evaluate(() =>
+    [...document.querySelectorAll('th')]
+      .filter((th) => th.getBoundingClientRect().width > 0)
+      .filter((th) => th.getBoundingClientRect().right > window.innerWidth + 1)
+      .map((th) => ({ text: (th.textContent || '').trim(), right: Math.round(th.getBoundingClientRect().right) })),
+  )
+  expect(offscreen).toEqual([])
+
+  // A column clearing window.innerWidth is not the same guarantee as the
+  // table fitting: it could still overflow its own card behind the
+  // horizontal scroller that overflow-x-auto exists to hide. This is
+  // checked as "fits its container" rather than as a fixed width number
+  // because a width number would have to be updated every time the sidebar
+  // or padding changes, and the previous version of this check (the
+  // offscreen-column check above, on its own) passed 48px below the real
+  // 912px `wide` breakpoint.
+  const result = await page.evaluate(() => {
+    const tables = [...document.querySelectorAll('table')]
+    const visible = tables.filter((t) => t.getBoundingClientRect().width > 0)
+    if (visible.length === 0) return { rendered: false as const }
+    const overflowing = visible
+      .map((t) => t.closest('.overflow-x-auto') as HTMLElement | null)
+      .filter((el): el is HTMLElement => el !== null)
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }))
+    return { rendered: true as const, overflowing }
+  })
+
+  if (!result.rendered) {
+    // Below the `wide` breakpoint the card layout stands in for the table
+    // entirely (this is the tablet project's 768px case), so there is
+    // nothing to check. Asserted explicitly so an absent table reads as an
+    // intentional pass, not a check that silently examined nothing.
+    expect(result.rendered).toBe(false)
+  } else {
+    expect(result.overflowing).toEqual([])
+  }
+})
+
+// Nine distinct focus treatments across the app, with the choice tracking
+// active state so two buttons in one segmented control ringed differently.
+// One ring, everywhere.
+test('every focus stop uses the same ring', async ({ page }) => {
+  const seen = new Set<string>()
+  for (const hash of ['', '#/budget', '#/investments', '#/compensation', '#/planner/salary-tax']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur())
+    for (let i = 0; i < 25; i++) {
+      await page.keyboard.press('Tab')
+      const ring = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement
+        if (!el || el === document.body) return null
+        // A disabled or off-screen element cannot actually be tabbed to by a
+        // real user, so if the browser still reports it as activeElement
+        // (rare, but happens transiently around re-renders) it should not
+        // manufacture a spurious signature.
+        if ((el as HTMLInputElement).disabled) return null
+        const rect = el.getBoundingClientRect()
+        if (rect.width === 0 && rect.height === 0) return null
+        const s = getComputedStyle(el)
+        return `${s.outlineStyle}|${s.outlineWidth}|${s.outlineColor}|${s.outlineOffset}`
+      })
+      if (ring) seen.add(ring)
+    }
+  }
+  expect([...seen]).toHaveLength(1)
+})
+
+// Runs under the tablet project at 768x1024. Neither of these was truncated,
+// because overflow is visible, but a label wider than its own box has
+// outgrown the space the layout gives it and will collide the moment a
+// neighbour grows.
+test('no text outgrows its own box', async ({ page }) => {
+  const overflowing: unknown[] = []
+  for (const hash of ['#/investments', '#/planner/forecaster']) {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(500)
+    const hits = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => el.children.length === 0 && (el.textContent || '').trim())
+        .filter((el) => !el.closest('.sr-only'))
+        .filter((el) => {
+          const s = getComputedStyle(el)
+          return !['auto', 'scroll'].includes(s.overflowX) && el.scrollWidth > el.clientWidth + 1
+        })
+        .map((el) => ({ text: (el.textContent || '').trim().slice(0, 30), shown: el.clientWidth, needs: el.scrollWidth })),
+    )
+    hits.forEach((h) => overflowing.push({ hash, ...h }))
+  }
+  expect(overflowing).toEqual([])
+})
+
+// The guard above only ever measures the seeded $138,200 headline. That
+// number cannot expose a fragile fit: scrollWidth equals clientWidth for
+// any non-overflowing block regardless of how much slack is left, so a
+// value with room to spare and a value with none look identical to it. A
+// seven figure portfolio needs an eleven character figure, not eight, and
+// this seeds one directly so the headline is measured against the size a
+// real user can actually have.
+test('the portfolio headline fits a seven figure portfolio, not just the seeded one', async ({ page }) => {
+  await page.addInitScript(() => {
+    const holding = (ticker: string, quantity: number, avgCost: number, currency: string) =>
+      ({ id: ticker, ticker, quantity, avgCost, currency, account: 'Questrade TFSA' })
+    // 100,000 units at $130 CAD prices the headline at $13,000,000, eleven
+    // characters. CAD needs no exchange rate, and avgCost is the price the
+    // app falls back to when no live quote is available, so this renders
+    // the same way with or without network access in the test run.
+    window.localStorage.setItem('ledger-portfolio', JSON.stringify({
+      state: {
+        holdings: [holding('VFV', 100000, 130, 'CAD')],
+        importedAt: new Date().toISOString(),
+        currencyReviewPending: false,
+      },
+      version: 2,
+    }))
+  })
+  await page.goto('/#/investments')
+  await page.waitForLoadState('networkidle')
+  const headline = await page.evaluate(() => {
+    const el = document.querySelector('p.tabular-nums.font-semibold') as HTMLElement | null
+    return { text: el?.textContent ?? '', shown: el?.clientWidth ?? 0, needs: el?.scrollWidth ?? 0 }
+  })
+  expect(headline.text.length).toBeGreaterThanOrEqual(11)
+  expect(headline.needs).toBeLessThanOrEqual(headline.shown)
+})
+
+// M1 from the 2026-08-20 audit: every multi-series chart names its series in
+// text, not only inside the drawing. The portfolio redesign deleted the one
+// example the audit had pointed at as the template, and nothing noticed.
+//
+// The scope climbs to the nearest ChartFigure boundary (role="img", our own
+// wrapper around ResponsiveContainer) and then one level further, to the
+// container each chart component actually renders its <ChartLegend> into as
+// a sibling of that figure. Recharts' own generated wrapper divs sit between
+// a chart's SVG and that figure with no room for anything else, so a scope
+// of just `chart.parentElement` never contains a legend under any of this
+// app's chart components, including the pre-existing one (CompHeroWidget's
+// annualized donut) this task started from as its template: measured before
+// this fix, that scope was always empty.
+function countLegends(page: Page): Promise<number> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('.recharts-wrapper')].filter((chart) => {
+      const scope = chart.closest('[role="img"]')?.parentElement ?? chart.parentElement ?? chart
+      return !!scope.querySelector('ul li span[aria-hidden="true"]')
+    }).length,
+  )
+}
+
+// Both routes render every chart unconditionally on load, so a plain goto
+// is enough: Compensation's donut (already legended) plus the equity vesting
+// chart, and the forecaster's net-worth fan plus its Monte Carlo band.
+const LEGEND_ROUTES = [
+  ['#/compensation', 2],
+  ['#/planner/forecaster', 2],
+] as const
+
+for (const [hash, expected] of LEGEND_ROUTES) {
+  test(`multi-series charts on ${hash} name their series in text`, async ({ page }) => {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(900)
+    expect(await countLegends(page)).toBeGreaterThanOrEqual(expected)
+  })
+}
+
+// Budget's only chart on load is the Cash Flow Sankey, which already names
+// every node in the drawing itself and is deliberately not given a redundant
+// legend (see CashFlowWidget.tsx). The only *legend-bearing* multi-series
+// chart on this route is the Savings Rate widget's Saved-vs-Spent bar, which
+// only renders once its Split tab is selected, so this guard selects it
+// first rather than asserting a count of zero, which would guard nothing.
+test('the savings split chart on #/budget, once selected, name their series in text', async ({ page }) => {
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Split' }).click()
+  await page.waitForTimeout(900)
+  expect(await countLegends(page)).toBeGreaterThanOrEqual(1)
+})

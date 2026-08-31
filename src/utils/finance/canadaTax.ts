@@ -15,6 +15,24 @@
 // abatement and approximates QPP/QPIP with CPP + the QC EI rate; no
 // Ontario Health Premium or QC Health Services Fund.
 
+/** The tax year every table in this file is for. Bump it in the same commit
+ *  that updates the brackets, BPAs and CPP/EI maxima, never on its own. */
+export const TAX_YEAR = 2026
+
+/** True once the calendar has moved past the year these tables describe.
+ *  The estimate is still arithmetically correct for TAX_YEAR, it is just no
+ *  longer the current year, and the UI has to say so rather than present a
+ *  stale number as this year's. Takes `now` so the test is not clock
+ *  dependent. Compares by local year, not UTC year: the Canadian tax year
+ *  is a local calendar year, so the reader's own clock is what decides
+ *  whether it has turned. A UTC comparison would tell someone west of UTC
+ *  their rates are stale while it is still the old year where they live,
+ *  and it would disagree with the local year the warning text itself
+ *  prints below. */
+export function isTaxYearStale(now: Date = new Date()): boolean {
+  return now.getFullYear() > TAX_YEAR
+}
+
 export type Province =
   | 'BC' | 'AB' | 'SK' | 'MB' | 'ON' | 'QC' | 'NB'
   | 'NS' | 'PE' | 'NL' | 'YT' | 'NT' | 'NU'

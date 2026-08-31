@@ -108,6 +108,47 @@ describe('CompHeroWidget after-tax toggle', () => {
   })
 })
 
+describe('CompHeroWidget stale tax year notice', () => {
+  beforeEach(() => {
+    usePlannerStore.setState({ inputs: {} })
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100_000, pastSalaryChanges: [], rsuGrants: [] },
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const renderWidget = () =>
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+
+  it('does not warn about stale tax rates today', () => {
+    renderWidget()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('warns once the tax year has passed, only where the after-tax figure is shown', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2027-03-01T00:00:00Z'))
+    renderWidget()
+    // Gross mode shows no tax-derived figure, so nothing to warn about yet.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /These are 2026 rates\. Brackets and contribution limits have not been updated for 2027\./i,
+    )
+  })
+})
+
 describe('CompHeroWidget annualized legend', () => {
   beforeEach(() => {
     useCompensationStore.setState({
@@ -141,6 +182,32 @@ describe('CompHeroWidget annualized legend', () => {
     for (const name of ['Base Salary', 'Bonus', 'Equity (RSU)']) {
       expect(screen.getByText(name)).toBeInTheDocument()
     }
+  })
+})
+
+describe('CompHeroWidget monthly legend', () => {
+  beforeEach(() => {
+    useCompensationStore.setState({
+      showAfterTax: false,
+      timeMode: 'current-year',
+      useCadConversion: false,
+      primaryPackage: { ...defaultPrimaryPackage, baseSalary: 120_000, pastSalaryChanges: [], rsuGrants: [] },
+    })
+  })
+
+  it('shows the monthly figure the bars draw, not the annual total', () => {
+    // Base Salary is the only series with a nonzero annual value here (no
+    // bonus, ESPP, RRSP, or RSU), so its legend value should read as one
+    // twelfth of the annual figure, the same number the stacked bar for any
+    // given month actually draws, not the $120,000 annual total.
+    render(
+      <MemoryRouter>
+        <CompHeroWidget />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Cash Flow View' }))
+    expect(screen.getByText(/Base Salary.*\$10,000/)).toBeInTheDocument()
+    expect(screen.queryByText(/Base Salary.*\$120,000/)).toBeNull()
   })
 })
 

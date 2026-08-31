@@ -337,19 +337,49 @@ describe('portfolio page composition', () => {
   })
 
   it('leads with the summary band and shows all three allocation cuts', async () => {
-    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
-    expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
-    expect(screen.getByText('Total invested')).toBeInTheDocument()
-    // Plain getByText('Holding') is ambiguous here: the holdings table also
-    // has a sortable "Holding" column header with the exact same text, so it
-    // matches two elements. The bar's accessible name is unambiguous and is
-    // the thing that actually matters: that all three cuts render.
-    // The trailing \S requires at least one non-space character after the
-    // colon and space, so a bar whose slice list came back empty (label
-    // "Allocation by holding: ") does not satisfy this match.
-    expect(screen.getByRole('img', { name: /^Allocation by holding: \S/ })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /^Allocation by account: \S/ })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /^Allocation by currency: \S/ })).toBeInTheDocument()
+    // The shared beforeEach seeds a single holding in a single account and
+    // currency, so every cut would have exactly one slice and a single-slice
+    // bar is a full-width 100% bar with nothing to say, which is now
+    // suppressed. Seed two holdings across two accounts and two currencies,
+    // with a resolvable USD rate, so all three cuts have a genuine breakdown
+    // to show.
+    // A prior describe block's test already fetched a USD-CAD rate today,
+    // which leaves the real per-key fetch throttle locked; without resetting
+    // it here this test's own USD fetch is silently skipped and the rate
+    // never resolves, so the by-currency and by-holding cuts stay stuck at
+    // one visible slice (VFV alone) and never render.
+    __resetMinInterval()
+    useMarketDataStore.setState({ quotes: {}, overrides: {}, fx: {} })
+    __setProviders({
+      fetchFxRate: async (from, to) => ({
+        from, to, rate: 1.35, date: '2026-01-01', asOf: '2026-01-01T00:00:00.000Z',
+      }) as never,
+    })
+    usePortfolioStore.setState({
+      holdings: [
+        { id: 'h1', ticker: 'VFV', quantity: 10, avgCost: 100, currency: 'CAD', account: 'TFSA' },
+        { id: 'h2', ticker: 'AAPL', quantity: 5, avgCost: 100, currency: 'USD', account: 'RRSP' },
+      ],
+      importedAt: new Date().toISOString(),
+      currencyReviewPending: false,
+    })
+    try {
+      render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+      expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
+      expect(screen.getByText('Total invested')).toBeInTheDocument()
+      // Plain getByText('Holding') is ambiguous here: the holdings table also
+      // has a sortable "Holding" column header with the exact same text, so it
+      // matches two elements. The bar's accessible name is unambiguous and is
+      // the thing that actually matters: that all three cuts render.
+      // The trailing \S requires at least one non-space character after the
+      // colon and space, so a bar whose slice list came back empty (label
+      // "Allocation by holding: ") does not satisfy this match.
+      expect(await screen.findByRole('img', { name: /^Allocation by holding: \S/ })).toBeInTheDocument()
+      expect(screen.getByRole('img', { name: /^Allocation by account: \S/ })).toBeInTheDocument()
+      expect(screen.getByRole('img', { name: /^Allocation by currency: \S/ })).toBeInTheDocument()
+    } finally {
+      __resetProviders()
+    }
   })
 
   it('no longer offers the allocation mode toggle', async () => {

@@ -110,7 +110,10 @@ export const Dashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setCustomizeOpen(true)}
-          className="px-4 py-2 rounded-md text-[14px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+          /* shrink-0: at 320px the header's flex row squeezed this to a 76px
+             box for an 81px label, so it rendered against the screen edge with
+             its right padding eaten. The heading beside it wraps instead. */
+          className="shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-[14px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
         >
           Customize
         </button>

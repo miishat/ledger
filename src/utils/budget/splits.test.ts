@@ -38,9 +38,12 @@ describe('splitParts', () => {
     ])
   })
 
-  it('ignores an over-covering remainder rather than emitting a negative part', () => {
+  it('takes an over-covering remainder back off the transaction category', () => {
     const tx = { ...base, splits: [{ categoryId: 'household', amount: 200 }] }
-    expect(splitParts(tx)).toEqual([{ categoryId: 'household', amount: 200 }])
+    expect(splitParts(tx)).toEqual([
+      { categoryId: 'household', amount: 200 },
+      { categoryId: 'groceries', amount: -20 },
+    ])
   })
 
   it('carries an undefined categoryId through as uncategorized', () => {
@@ -73,5 +76,30 @@ describe('splitRemainder', () => {
 describe('round2', () => {
   it('rounds to two decimals', () => {
     expect(round2(0.1 + 0.2)).toBe(0.3)
+  })
+})
+
+describe('the parts always sum to the transaction amount', () => {
+  const tx = (amount: number, splits: { categoryId: string; amount: number }[]) =>
+    ({ id: 't', date: '2026-08-01', amount, type: 'expense', description: 'x', categoryId: 'c-main', splits }) as unknown as Transaction
+
+  it('when the slices under-cover, the shortfall lands on the parent category', () => {
+    const parts = splitParts(tx(100, [{ categoryId: 'c-a', amount: 60 }]))
+    expect(parts.reduce((s, p) => s + p.amount, 0)).toBe(100)
+    expect(parts).toContainEqual({ categoryId: 'c-main', amount: 40 })
+  })
+
+  it('when the slices cover exactly, there is no extra part', () => {
+    const parts = splitParts(tx(100, [{ categoryId: 'c-a', amount: 60 }, { categoryId: 'c-b', amount: 40 }]))
+    expect(parts).toHaveLength(2)
+    expect(parts.reduce((s, p) => s + p.amount, 0)).toBe(100)
+  })
+
+  it('when the slices over-cover, the excess is taken back off the parent category', () => {
+    // This is the case that silently inflated every budget total: the parts
+    // used to sum to 150 for a 100 transaction.
+    const parts = splitParts(tx(100, [{ categoryId: 'c-a', amount: 80 }, { categoryId: 'c-b', amount: 70 }]))
+    expect(parts.reduce((s, p) => s + p.amount, 0)).toBe(100)
+    expect(parts).toContainEqual({ categoryId: 'c-main', amount: -50 })
   })
 })

@@ -131,6 +131,12 @@ export function allocationBreakdown(
   rows: { holding: Holding; price: number }[],
   rates: FxRates,
   by: AllocationBy,
+  /** Fold everything past this many slices into a single "Other" entry. The
+   *  by-holding cut is otherwise unbounded: seventeen holdings drew seventeen
+   *  segments and a seventeen-entry legend, which on a phone put more than a
+   *  screen of preamble in front of the first holding. Omit for no cap, which
+   *  is what the account and currency cuts want. */
+  maxSlices?: number,
 ): AllocationSlice[] {
   const byName = new Map<string, number>()
   let total = 0
@@ -142,9 +148,16 @@ export function allocationBreakdown(
     byName.set(name, (byName.get(name) ?? 0) + value)
     total += value
   }
-  return [...byName.entries()]
+  const all = [...byName.entries()]
     .map(([name, valueCad]) => ({ name, valueCad, pct: total > 0 ? (valueCad / total) * 100 : 0 }))
     .sort((a, b) => b.valueCad - a.valueCad)
+
+  if (maxSlices === undefined || all.length <= maxSlices) return all
+
+  const head = all.slice(0, maxSlices - 1)
+  const tail = all.slice(maxSlices - 1)
+  const tailValue = tail.reduce((s, x) => s + x.valueCad, 0)
+  return [...head, { name: 'Other', valueCad: tailValue, pct: total > 0 ? (tailValue / total) * 100 : 0 }]
 }
 
 /** The currency a holding's resolved quote should be read in.
@@ -154,11 +167,11 @@ export function allocationBreakdown(
  *  getCurrentPrice has no holding context and stamps a placeholder currency
  *  on the override it returns, so that value must not be believed: doing so
  *  converts the price a second time and inflates value, P/L and allocation
- *  by the exchange rate. The row and the card now call this function.
- *  PortfolioRollupWidget still applies the same rule by hand-rolling its
- *  own override short-circuit rather than calling this; the two are kept
- *  equivalent by the parity test in portfolioTotalsParity.test.tsx, not by
- *  sharing this code. */
+ *  by the exchange rate. The row, the card and PortfolioRollupWidget all
+ *  call this. The widget used to hand-roll its own copy of the rule, kept
+ *  equal only by the parity test in portfolioTotalsParity.test.tsx; that
+ *  test now guards a single implementation rather than the agreement of
+ *  two. */
 export function quoteCurrencyForHolding(
   holding: Holding,
   quoteCurrency: Currency | null | undefined,

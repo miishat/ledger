@@ -1,5 +1,6 @@
 import type { Currency, FxRate } from '../types'
 import { todayKey } from '../dateKey'
+import { fetchWithTimeout } from '../fetchWithTimeout'
 
 export const ER_API_BASE = 'https://open.er-api.com/v6'
 
@@ -16,7 +17,7 @@ export async function fetchErApiFxRate(from: Currency, to: Currency): Promise<Fx
     return { from, to, rate: 1, date: todayKey(), asOf: now }
   }
 
-  const res = await fetch(`${ER_API_BASE}/latest/${from}`)
+  const res = await fetchWithTimeout(`${ER_API_BASE}/latest/${from}`)
   if (!res.ok) throw new Error(`er-api request failed: ${res.status}`)
   const json = (await res.json()) as ErApiResponse
   if (json.result !== 'success') throw new Error('er-api returned an error')

@@ -19,6 +19,7 @@ import { ResultCard } from './ResultCard'
 import { formatMoney, formatMoneyCompact } from './format'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
 import { RrspEfficiencyCard } from './RrspEfficiencyCard'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
 
 const TOOL_ID = 'salary-tax'
 const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0, rrspRoom: 0 }
@@ -48,7 +49,24 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
             <div key={s.start} className="@container flex flex-col gap-1 min-w-0 overflow-hidden" style={{ flex: `${width} 1 0%` }}>
               <div className={`@container relative h-7 rounded-md overflow-hidden border ${active ? 'border-accent/60' : 'border-border'} bg-bg-primary/40`}
                    title={`${(s.rate * 100).toFixed(2)}% on ${formatMoney(s.start)} to ${formatMoney(s.end)}`}>
-                <div className="absolute inset-y-0 left-0 bg-accent/60" style={{ width: `${filledPct}%` }} />
+                {/* /45 not /60: the rate label sits on top of this fill, and at
+                    60% the composite was 4.27:1 against the label in aurora and
+                    4.19:1 in glass, both under AA. Lowering the accent share
+                    moves the fill toward the page background, which raises
+                    contrast in dark and light themes alike. */}
+                {/* Fill and track are necessarily close in tone once the fill is
+                    light enough for the label on top of it to read, so the
+                    filled/unfilled boundary cannot rely on colour alone: WCAG
+                    1.4.11 asks 3:1 for a graphical object against its
+                    surroundings, and the two tones alone fall well short of
+                    that in every theme. A full-strength accent edge is the
+                    non-colour channel that keeps the boundary legible. Only
+                    render it once there is a fill to bound, or an empty
+                    bracket grows a stray line at its own left edge. */}
+                <div
+                  className={`absolute inset-y-0 left-0 bg-accent/45 ${filledPct > 0 ? 'border-r-2 border-accent' : ''}`}
+                  style={{ width: `${filledPct}%` }}
+                />
                 <span className="absolute inset-0 hidden @min-[44px]:flex items-center justify-center text-meta font-medium text-text-primary">
                   {(s.rate * 100).toFixed(1)}%
                 </span>
@@ -108,6 +126,8 @@ export const SalaryTaxTool: React.FC = () => {
         <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
         <CalculatorField label="RRSP Room" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
       </div>
+
+      <TaxYearNotice showYearLabel />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ResultCard label="Total Income Tax" value={formatMoney(totalIncomeTax(t.taxableIncome, province))} highlight />
