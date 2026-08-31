@@ -319,6 +319,14 @@ describe('DriveSyncControls', () => {
     )
   })
 
+  it('names the sync controls in the automatic sync failure warning', () => {
+    useSyncStore.setState({ consecutiveAutoFailures: 3 })
+    render(<DriveSyncControls />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Try Push to Drive or Pull from Drive, or reconnect.',
+    )
+  })
+
   it('says nothing after one failure', () => {
     useSyncStore.setState({ consecutiveAutoFailures: 1 })
     render(<DriveSyncControls />)

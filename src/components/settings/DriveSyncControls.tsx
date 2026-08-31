@@ -246,7 +246,7 @@ export const DriveSyncControls: React.FC = () => {
       {consecutiveAutoFailures >= 3 && (
         <p role="status" className="text-[13px] text-error">
           Automatic sync has failed {consecutiveAutoFailures} times in a row. Your devices are not
-          exchanging changes. Try Sync now below, or reconnect.
+          exchanging changes. Try Push to Drive or Pull from Drive, or reconnect.
         </p>
       )}
 
