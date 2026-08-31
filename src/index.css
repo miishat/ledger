@@ -351,13 +351,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Sheet's open/close transitions. Was the old animation library's
  * initial/animate/exit; the reduced-motion override lives beside the
- * Task 12 media query below. */
+ * Task 12 media query below.
+ *
+ * Exit still uses a transition: the panel is already mounted and painted
+ * when data-state flips to 'closed', so the browser has a real "before" style
+ * to interpolate from. Entry is the opposite case: the panel is INSERTED
+ * already carrying data-state="open" (see useDeferredUnmount), so there is
+ * no prior style for a transition to start from and it never runs, same
+ * class of bug as .animate-fade-in below. Keyframe animations DO run on
+ * insertion, so the open state gets its own animation instead of relying on
+ * the transition. Durations match the transitions they stand in for. */
 [data-sheet='scrim'] {
   transition: opacity 150ms ease;
   opacity: 1;
 }
 [data-sheet='scrim'][data-state='closed'] {
   opacity: 0;
+}
+[data-sheet='scrim'][data-state='open'] {
+  animation: sheet-scrim-in 150ms ease;
 }
 
 [data-sheet='panel-mobile'] {
@@ -366,6 +378,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 [data-sheet='panel-mobile'][data-state='closed'] {
   transform: translateY(100%);
+}
+[data-sheet='panel-mobile'][data-state='open'] {
+  animation: sheet-panel-mobile-in 220ms ease-out;
 }
 
 [data-sheet='panel-desktop'] {
@@ -376,6 +391,22 @@ h1, h2, h3, h4, h5, h6 {
 [data-sheet='panel-desktop'][data-state='closed'] {
   opacity: 0;
   transform: scale(0.98);
+}
+[data-sheet='panel-desktop'][data-state='open'] {
+  animation: sheet-panel-desktop-in 150ms ease;
+}
+
+@keyframes sheet-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-panel-mobile-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sheet-panel-desktop-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 select option {
@@ -610,6 +641,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   [data-sheet='panel-mobile'][data-state='closed'] {
     transform: none;
     opacity: 0;
+  }
+  /* The entry animations above are keyframes, not transitions, so
+     transition-duration: 0ms above does nothing to them: they need their own
+     animation: none, at matching specificity so it wins over the rules that
+     declare the animation. */
+  [data-sheet='scrim'][data-state='open'],
+  [data-sheet='panel-mobile'][data-state='open'],
+  [data-sheet='panel-desktop'][data-state='open'] {
+    animation: none;
   }
 }
 
