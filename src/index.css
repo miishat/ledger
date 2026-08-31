@@ -339,6 +339,45 @@ h1, h2, h3, h4, h5, h6 {
   transform-origin: top;
 }
 
+/* PageTransition's route-change fade. Was AnimatePresence + motion.div. */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 180ms ease-out;
+}
+
+/* Sheet's open/close transitions. Was the old animation library's
+ * initial/animate/exit; the reduced-motion override lives beside the
+ * Task 12 media query below. */
+[data-sheet='scrim'] {
+  transition: opacity 150ms ease;
+  opacity: 1;
+}
+[data-sheet='scrim'][data-state='closed'] {
+  opacity: 0;
+}
+
+[data-sheet='panel-mobile'] {
+  transition: transform 220ms ease-out;
+  transform: translateY(0);
+}
+[data-sheet='panel-mobile'][data-state='closed'] {
+  transform: translateY(100%);
+}
+
+[data-sheet='panel-desktop'] {
+  transition: opacity 150ms ease, transform 150ms ease;
+  opacity: 1;
+  transform: scale(1);
+}
+[data-sheet='panel-desktop'][data-state='closed'] {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
 select option {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -547,16 +586,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   animation: float-slow-2 22s infinite alternate ease-in-out;
 }
 
-/* The framer-motion components (Sheet, PageTransition, AnimatedNumber) all
-   call useReducedMotion. These keyframes did not, so the aurora and glass
-   background blobs kept drifting behind every screen for a user who had
-   asked the whole system to stop moving. Paused rather than removed: the
-   blobs are the theme's identity, and a paused animation still paints its
-   current frame. */
+/* Sheet, PageTransition and AnimatedNumber each respect reduced motion on
+   their own now (a hook or a direct matchMedia check, no animation library
+   involved), but the aurora and glass background blobs' keyframes did not,
+   so they kept drifting behind every screen for a user who had asked the
+   whole system to stop moving. Paused rather than removed: the blobs are
+   the theme's identity, and a paused animation still paints its current
+   frame. */
 @media (prefers-reduced-motion: reduce) {
   .animate-float-1,
   .animate-float-2 {
     animation-play-state: paused;
+  }
+
+  .animate-fade-in {
+    animation: none;
+  }
+
+  /* Was the old animation library's initial/animate/exit on Sheet. Same durations. */
+  [data-sheet] {
+    transition-duration: 0ms;
+  }
+  [data-sheet='panel-mobile'][data-state='closed'] {
+    transform: none;
+    opacity: 0;
   }
 }
 

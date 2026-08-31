@@ -5,7 +5,10 @@ import { dirname, resolve, extname, relative } from 'node:path'
 // A static import is blocking: the browser must fetch and evaluate it before
 // first paint. A dynamic import() is a split point and is deliberately not
 // followed here.
-const FORBIDDEN = ['recharts']
+// framer-motion was 136.1 kB of a 555.0 kB eager graph, pulled in by Sheet,
+// PageTransition and AnimatedNumber, all of which are on the always-mounted
+// path. All three now animate in CSS.
+const FORBIDDEN = ['recharts', 'framer-motion']
 
 function resolveImp(from, spec) {
   if (!spec.startsWith('.')) return null

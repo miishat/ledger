@@ -26,3 +26,7 @@ export function useMediaQuery(query: string): boolean {
 export const DESKTOP_QUERY = '(min-width: 768px) and (min-height: 500px)'
 
 export const useIsDesktop = (): boolean => useMediaQuery(DESKTOP_QUERY)
+
+/** Mirrors the old animation library's useReducedMotion, which was the only
+ *  reason three always-mounted components imported that library. */
+export const usePrefersReducedMotion = (): boolean => useMediaQuery('(prefers-reduced-motion: reduce)')

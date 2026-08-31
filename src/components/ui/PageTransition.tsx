@@ -1,23 +1,16 @@
 import React from 'react'
 import { useLocation } from 'react-router-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 
+/** A fade on route change. Was AnimatePresence + motion.div; the exit half of
+ *  that was never visible, because the router unmounts the old route before
+ *  the animation could run. A keyed fade-in is what actually shipped.
+ *  min-h-full is load-bearing, not decorative: a fixed height here clips
+ *  page content that grows past the viewport behind the bottom nav. */
 export const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation()
-  const reduced = useReducedMotion()
-  if (reduced) return <>{children}</>
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="min-h-full"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div key={location.pathname} className="min-h-full animate-fade-in">
+      {children}
+    </div>
   )
 }

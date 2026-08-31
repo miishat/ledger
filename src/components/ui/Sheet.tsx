@@ -1,10 +1,10 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { useIsDesktop, usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
 import { shouldDismissOnDragEnd } from './sheetGestures'
+import { useDeferredUnmount } from './useDeferredUnmount'
 
 interface SheetProps {
   open: boolean
@@ -52,11 +52,19 @@ export const Sheet: React.FC<SheetProps> = ({
   children,
 }) => {
   const isDesktop = useIsDesktop()
-  const reduced = useReducedMotion()
+  const reduced = usePrefersReducedMotion()
   const panelRef = useRef<HTMLDivElement>(null)
   const lastFocused = useRef<HTMLElement | null>(null)
   const instanceId = useId()
   useScrollLock(open)
+
+  // Was AnimatePresence: keep the sheet mounted long enough for the CSS exit
+  // transition to finish. The duration must match whichever panel variant is
+  // about to render, since a mismatch would either cut the animation short or
+  // hold the sheet mounted (and blocking pointer events via the scrim) after
+  // it has visually finished closing.
+  const exitMs = reduced ? 0 : isDesktop ? (desktop === 'popover' ? 120 : 150) : 220
+  const { mounted, state } = useDeferredUnmount(open, exitMs)
 
   // Register/unregister this instance on the shared stacking-order stack
   // whenever it opens or closes (regardless of dismissibility: a
@@ -142,16 +150,21 @@ export const Sheet: React.FC<SheetProps> = ({
     setPos({ top, left })
   }, [open, isDesktop, desktop, anchorRef])
 
+  // Swipe-to-dismiss on the mobile panel. shouldDismissOnDragEnd is the same
+  // pure, tested threshold function the old drag gesture used, so the
+  // dismissal feel is unchanged by construction.
+  const dragStart = useRef<{ y: number; t: number } | null>(null)
+  const dragCaptured = useRef(false)
+  const [dragY, setDragY] = useState(0)
+
   if (typeof document === 'undefined') return null
 
   const scrim = (
-    <motion.div
+    <div
       data-testid="sheet-scrim"
+      data-sheet="scrim"
+      data-state={state}
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: reduced ? 0 : 0.15 }}
       onClick={() => dismissible && onClose()}
       aria-hidden="true"
     />
@@ -175,31 +188,27 @@ export const Sheet: React.FC<SheetProps> = ({
   // ---- Desktop: modal (centered) ----
   if (isDesktop && desktop === 'modal') {
     return createPortal(
-      <AnimatePresence>
-        {open && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            {scrim}
-            {/* Centering lives on an inner min-h-full wrapper, NOT on the
-                scroll container. `items-center` on a scroll container overflows
-                a too-tall panel equally in both directions, and the part above
-                the top edge cannot be scrolled back to, so the panel's header
-                is permanently cut off. Growing this wrapper past the viewport
-                instead keeps the whole panel reachable. */}
-            <div className="flex min-h-full items-center justify-center p-4">
-              <motion.div
-                {...commonPanelProps}
-                className={`relative z-50 my-8 ${panelClassName}`}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: reduced ? 0 : 0.15 }}
-              >
-                {desktopContent}
-              </motion.div>
+      mounted && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {scrim}
+          {/* Centering lives on an inner min-h-full wrapper, NOT on the
+              scroll container. `items-center` on a scroll container overflows
+              a too-tall panel equally in both directions, and the part above
+              the top edge cannot be scrolled back to, so the panel's header
+              is permanently cut off. Growing this wrapper past the viewport
+              instead keeps the whole panel reachable. */}
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              {...commonPanelProps}
+              data-sheet="panel-desktop"
+              data-state={state}
+              className={`relative z-50 my-8 ${panelClassName}`}
+            >
+              {desktopContent}
             </div>
           </div>
-        )}
-      </AnimatePresence>,
+        </div>
+      ),
       document.body
     )
   }
@@ -207,83 +216,111 @@ export const Sheet: React.FC<SheetProps> = ({
   // ---- Desktop: popover (anchored) ----
   if (isDesktop && desktop === 'popover') {
     return createPortal(
-      <AnimatePresence>
-        {open && (
-          <>
-            {scrim}
-            <motion.div
-              {...commonPanelProps}
-              className={`fixed z-50 ${panelClassName}`}
-              style={{
-                top: pos?.top ?? 0,
-                left: pos?.left ?? 0,
-                maxWidth: 'calc(100vw - 16px)',
-              }}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: reduced ? 0 : 0.12 }}
-            >
-              {desktopContent}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>,
+      mounted && (
+        <>
+          {scrim}
+          <div
+            {...commonPanelProps}
+            data-sheet="panel-desktop"
+            data-state={state}
+            className={`fixed z-50 ${panelClassName}`}
+            style={{
+              top: pos?.top ?? 0,
+              left: pos?.left ?? 0,
+              maxWidth: 'calc(100vw - 16px)',
+            }}
+          >
+            {desktopContent}
+          </div>
+        </>
+      ),
       document.body
     )
   }
 
   // ---- Mobile: bottom sheet ----
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (dismissible && shouldDismissOnDragEnd(info.offset.y, info.velocity.y)) onClose()
+  // Below this many px of vertical movement, a press-and-release is treated
+  // as a tap, not a drag.
+  const DRAG_CAPTURE_THRESHOLD = 4
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (reduced || !dismissible) return
+    dragStart.current = { y: e.clientY, t: performance.now() }
+    dragCaptured.current = false
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart.current) return
+    const delta = e.clientY - dragStart.current.y
+    // Only take pointer capture once real dragging is underway. Capturing
+    // eagerly on pointerdown also retargets the compatibility mouse/click
+    // event that follows a plain tap to this panel instead of whatever was
+    // actually tapped, which silently broke every button and checkbox
+    // inside the mobile sheet in real browsers. jsdom's fireEvent does not
+    // reproduce that retargeting, so no unit test caught it; the desktop
+    // e2e guards running against the short viewport's mobile-sheet layout
+    // (submitting a transaction, saving an over-allocated split) did.
+    if (!dragCaptured.current && Math.abs(delta) > DRAG_CAPTURE_THRESHOLD) {
+      dragCaptured.current = true
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+    }
+    // Downward only, matching the old dragElastic={{ top: 0, bottom: 0.6 }}.
+    setDragY(Math.max(0, delta))
+  }
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = dragStart.current
+    dragStart.current = null
+    dragCaptured.current = false
+    setDragY(0)
+    if (!start) return
+    const offsetY = e.clientY - start.y
+    const seconds = Math.max(0.001, (performance.now() - start.t) / 1000)
+    if (shouldDismissOnDragEnd(offsetY, offsetY / seconds)) onClose()
   }
 
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          {scrim}
-          <motion.div
-            {...commonPanelProps}
-            className="relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
-            style={{
-              paddingBottom: 'env(safe-area-inset-bottom)',
-              // dvh does not shrink for the software keyboard, so a tall
-              // sheet would put its lower fields behind it. The visual
-              // viewport does shrink; dvh is the fallback where it is not
-              // supported. See useViewportHeight.
-              maxHeight: 'calc(0.9 * var(--app-viewport-height, 100dvh))',
-            }}
-            initial={reduced ? { opacity: 0 } : { y: '100%' }}
-            animate={reduced ? { opacity: 1 } : { y: 0 }}
-            exit={reduced ? { opacity: 0 } : { y: '100%' }}
-            transition={{ type: 'tween', duration: reduced ? 0 : 0.22, ease: 'easeOut' }}
-            drag={reduced ? false : 'y'}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
-            onDragEnd={onDragEnd}
-          >
-            <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
-              <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
-              {title != null && (
-                <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
-              )}
-              {dismissible && (
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={onClose}
-                  className="ml-auto flex items-center justify-center min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 desktop:p-1 text-text-secondary hover:text-text-primary rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-            <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
-          </motion.div>
+    mounted && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center">
+        {scrim}
+        <div
+          {...commonPanelProps}
+          data-sheet="panel-mobile"
+          data-state={state}
+          className="relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
+          style={{
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            // dvh does not shrink for the software keyboard, so a tall
+            // sheet would put its lower fields behind it. The visual
+            // viewport does shrink; dvh is the fallback where it is not
+            // supported. See useViewportHeight.
+            maxHeight: 'calc(0.9 * var(--app-viewport-height, 100dvh))',
+            transform: dragY ? `translateY(${dragY}px)` : undefined,
+          }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+        >
+          <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
+            <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+            {title != null && (
+              <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
+            )}
+            {dismissible && (
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={onClose}
+                className="ml-auto flex items-center justify-center min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 desktop:p-1 text-text-secondary hover:text-text-primary rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
         </div>
-      )}
-    </AnimatePresence>,
+      </div>
+    ),
     document.body
   )
 }

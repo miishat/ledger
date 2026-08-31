@@ -13,7 +13,11 @@ const MAX_ANY_CHUNK_KB = 400
 // the entry chunk plus everything it statically imports, transitively. The
 // per-chunk budgets above cannot see this, so splitting one eager chunk into
 // three eager chunks used to pass while changing nothing for the user.
-const MAX_INITIAL_LOAD_KB = 620
+// Dropping the framer-motion dependency (Sheet, PageTransition and
+// AnimatedNumber now animate in CSS) took this from 556.5 kB to 428.0 kB
+// measured; the budget below is that figure rounded up to the next 25 kB so
+// the win cannot quietly be given back.
+const MAX_INITIAL_LOAD_KB = 450
 
 const files = readdirSync(ASSETS).filter((f) => f.endsWith('.js'))
 const sized = files.map((f) => ({
