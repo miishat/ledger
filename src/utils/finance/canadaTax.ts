@@ -10,10 +10,10 @@
 // - CPP/CPP2/EI 2026: CRA release - YMPE $74,600, YAMPE $85,000, rates
 //   5.95%/4.00%; EI 1.63% (QC 1.30%) on max insurable earnings $68,900.
 //
-// Simplifications (this is an estimator, not payroll): only the basic
-// personal amount credit is modelled; Quebec uses the 16.5% federal
-// abatement and approximates QPP/QPIP with CPP + the QC EI rate; no
-// Ontario Health Premium or QC Health Services Fund.
+// This is an annual employee estimate, not payroll withholding. The new
+// annualSalaryTax path includes standard employee credits and QPP/QPIP.
+// Legacy tax and take-home wrappers still use the BPA-only model until
+// they are switched together. Provincial adjustments are added separately.
 
 /** The tax year every table in this file is for. Bump it in the same commit
  *  that updates the brackets, BPAs and CPP/EI maxima, never on its own. */
@@ -279,6 +279,18 @@ export interface EmployeeContributions {
   qpip: number
 }
 
+export interface AnnualSalaryTax extends EmployeeContributions {
+  gross: number
+  taxableIncome: number
+  provincialTaxableIncome: number
+  federal: number
+  provincialBase: number
+  surtax: number
+  provincialAdjustments: number
+  provincial: number
+  net: number
+}
+
 export function employeeContributions(gross: number, province: Province): EmployeeContributions {
   const pay = Math.max(0, gross)
   const firstTier = Math.max(0, Math.min(pay, YMPE) - CPP_EXEMPTION)
@@ -291,6 +303,41 @@ export function employeeContributions(gross: number, province: Province): Employ
   return {
     plan: quebec ? 'QPP' : 'CPP', pensionBase, pensionAdditional,
     pension: pensionBase + pensionAdditional, ei, qpip,
+  }
+}
+
+const CANADA_EMPLOYMENT_AMOUNT = 1_501
+
+function annualFederalTax(taxable: number, gross: number, province: Province, c: EmployeeContributions): number {
+  const employment = Math.min(Math.max(0, gross), CANADA_EMPLOYMENT_AMOUNT)
+  const credits = 0.14 * (federalBpa(taxable) + c.pensionBase + c.ei + c.qpip + employment)
+  const afterCredits = Math.max(0, bracketTax(taxable, FEDERAL_BRACKETS) - credits)
+  return province === 'QC' ? afterCredits * (1 - QC_ABATEMENT) : afterCredits
+}
+
+function annualProvincialBase(taxable: number, gross: number, province: Province, c: EmployeeContributions): number {
+  const { brackets, bpa } = PROVINCIAL_TAX[province]
+  const baseContributions = province === 'QC' ? 0 : c.pensionBase + c.ei
+  const employment = province === 'YT' ? Math.min(Math.max(0, gross), CANADA_EMPLOYMENT_AMOUNT) : 0
+  const credit = brackets[0].rate * (bpa + baseContributions + employment)
+  return Math.max(0, bracketTax(taxable, brackets) - credit)
+}
+
+export function annualSalaryTax(
+  gross: number, province: Province, rrsp = 0, fhsa = 0,
+): AnnualSalaryTax {
+  const c = employeeContributions(gross, province)
+  const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa) - c.pensionAdditional)
+  const provincialTaxableIncome = taxableIncome
+  const federal = annualFederalTax(taxableIncome, gross, province, c)
+  const provincialBase = annualProvincialBase(provincialTaxableIncome, gross, province, c)
+  const surtax = 0
+  const provincialAdjustments = 0
+  const provincial = provincialBase + surtax + provincialAdjustments
+  return {
+    ...c, gross, taxableIncome, provincialTaxableIncome,
+    federal, provincialBase, surtax, provincialAdjustments, provincial,
+    net: gross - federal - provincial - c.pension - c.ei - c.qpip,
   }
 }
 

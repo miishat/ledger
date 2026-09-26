@@ -1,4 +1,5 @@
 import {
+  annualSalaryTax,
   cppContribution,
   employeeContributions,
   effectiveRate,
@@ -17,6 +18,26 @@ import {
   TAX_YEAR,
   totalIncomeTax,
 } from './canadaTax'
+
+describe('annual employee income tax', () => {
+  it('deducts additional CPP and credits base CPP, EI, and employment', () => {
+    const t = annualSalaryTax(100_000, 'ON')
+    expect(t.taxableIncome).toBe(98_873)
+    expect(t.federal).toBeCloseTo(13_301.5972, 4)
+  })
+
+  it('credits base QPP, EI, and QPIP before Quebec federal abatement', () => {
+    const t = annualSalaryTax(100_000, 'QC')
+    expect(t.federal).toBeCloseTo(11_054.05565, 4)
+  })
+
+  it('keeps pension and insurance contributions on gross when RRSP is entered', () => {
+    const t = annualSalaryTax(100_000, 'ON', 10_000)
+    expect(t.taxableIncome).toBe(88_873)
+    expect(t.pension).toBeCloseTo(4_646.45, 2)
+    expect(t.ei).toBeCloseTo(1_123.07, 2)
+  })
+})
 
 describe('federalTax', () => {
   it('is zero at or below the BPA', () => {
