@@ -39,6 +39,54 @@ describe('annual employee income tax', () => {
   })
 })
 
+describe('2026 provincial salary adjustments', () => {
+  it('includes the $750 Ontario premium at $100k salary', () => {
+    const t = annualSalaryTax(100_000, 'ON')
+    expect(t.provincialBase).toBeCloseTo(5_946.95674, 4)
+    expect(t.surtax).toBeCloseTo(25.791348, 4)
+    expect(t.provincial).toBeCloseTo(6_722.748088, 4)
+    expect(t.net).toBeCloseTo(74_206.134712, 4)
+  })
+
+  it('keeps Ontario Health Premium separate from the low-income tax reduction', () => {
+    const t = annualSalaryTax(30_000, 'ON')
+    expect(t.provincial).toBeGreaterThanOrEqual(0)
+    expect(t.provincialAdjustments).toBeGreaterThan(0)
+  })
+
+  it('uses the annual BC reduction and never makes provincial tax negative', () => {
+    expect(annualSalaryTax(25_000, 'BC').provincial).toBe(0)
+    expect(annualSalaryTax(30_000, 'BC').provincial).toBeCloseTo(282.496, 3)
+  })
+
+  it.each([
+    [20_000, 0], [20_001, 0.06], [36_000, 300], [36_001, 300.06],
+    [48_000, 450], [48_001, 450.25], [72_000, 600], [72_001, 600.25],
+    [200_000, 750], [200_001, 750.25],
+  ])('applies the Ontario premium at taxable income $%i', (taxable, premium) => {
+    const t = annualSalaryTax(250_000, 'ON', 250_000 - 1_127 - taxable)
+    expect(t.provincialTaxableIncome).toBe(taxable)
+    const basicTax = t.provincialBase + t.surtax
+    const reduction = Math.max(0, Math.min(basicTax, 600 - basicTax))
+    expect(t.provincial).toBeCloseTo(basicTax - reduction + premium, 6)
+  })
+
+  it.each([25_570, 25_571, 44_951, 44_952, 44_953])(
+    'applies the annual BC reduction at taxable income $%i', (taxable) => {
+      const t = annualSalaryTax(100_000, 'BC', 100_000 - 1_127 - taxable)
+      expect(t.provincialTaxableIncome).toBe(taxable)
+      const reduction = Math.min(t.provincialBase, Math.max(0, 690 - Math.max(0, taxable - 25_570) * 0.0356))
+      expect(t.provincial).toBeCloseTo(t.provincialBase - reduction, 6)
+    },
+  )
+
+  it('deducts the Quebec worker amount from provincial taxable income', () => {
+    const t = annualSalaryTax(100_000, 'QC')
+    expect(t.provincialTaxableIncome).toBe(97_423)
+    expect(t.provincialBase).toBeCloseTo(13_139.84, 2)
+  })
+})
+
 describe('federalTax', () => {
   it('is zero at or below the BPA', () => {
     expect(federalTax(16452, 'ON')).toBe(0)

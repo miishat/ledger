@@ -11,9 +11,9 @@
 //   5.95%/4.00%; EI 1.63% (QC 1.30%) on max insurable earnings $68,900.
 //
 // This is an annual employee estimate, not payroll withholding. The new
-// annualSalaryTax path includes standard employee credits and QPP/QPIP.
-// Legacy tax and take-home wrappers still use the BPA-only model until
-// they are switched together. Provincial adjustments are added separately.
+// annualSalaryTax path includes standard employee credits, QPP/QPIP, and
+// provincial salary adjustments. Legacy tax and take-home wrappers still
+// use the BPA-only model until they are switched together.
 
 /** The tax year every table in this file is for. Bump it in the same commit
  *  that updates the brackets, BPAs and CPP/EI maxima, never on its own. */
@@ -323,16 +323,55 @@ function annualProvincialBase(taxable: number, gross: number, province: Province
   return Math.max(0, bracketTax(taxable, brackets) - credit)
 }
 
+function ontarioHealthPremium(taxable: number): number {
+  if (taxable <= 20_000) return 0
+  if (taxable <= 36_000) return Math.min(300, (taxable - 20_000) * 0.06)
+  if (taxable <= 48_000) return Math.min(450, 300 + (taxable - 36_000) * 0.06)
+  if (taxable <= 72_000) return Math.min(600, 450 + (taxable - 48_000) * 0.25)
+  if (taxable <= 200_000) return Math.min(750, 600 + (taxable - 72_000) * 0.25)
+  return Math.min(900, 750 + (taxable - 200_000) * 0.25)
+}
+
+function ontarioTaxReduction(basicTax: number): number {
+  return Math.max(0, Math.min(basicTax, 600 - basicTax))
+}
+
+function bcBasicReduction(taxable: number, base: number): number {
+  return Math.min(base, Math.max(0, 690 - Math.max(0, taxable - 25_570) * 0.0356))
+}
+
+function albertaSupplementalCredit(c: EmployeeContributions): number {
+  const bpa = PROVINCIAL_TAX.AB.bpa
+  return Math.max(0, ((bpa + c.pensionBase + c.ei) * 0.08 - 4_896) * 0.25)
+}
+
+function quebecWorkerDeduction(gross: number): number {
+  return Math.min(Math.max(0, gross) * 0.06, 1_450)
+}
+
 export function annualSalaryTax(
   gross: number, province: Province, rrsp = 0, fhsa = 0,
 ): AnnualSalaryTax {
   const c = employeeContributions(gross, province)
   const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa) - c.pensionAdditional)
-  const provincialTaxableIncome = taxableIncome
+  const provincialTaxableIncome = province === 'QC'
+    ? Math.max(0, taxableIncome - quebecWorkerDeduction(gross))
+    : taxableIncome
   const federal = annualFederalTax(taxableIncome, gross, province, c)
   const provincialBase = annualProvincialBase(provincialTaxableIncome, gross, province, c)
-  const surtax = 0
-  const provincialAdjustments = 0
+  const [surtaxLow, surtaxHigh] = ON_SURTAX_THRESHOLDS
+  const surtax = province === 'ON'
+    ? Math.max(0, provincialBase - surtaxLow) * 0.2 + Math.max(0, provincialBase - surtaxHigh) * 0.36
+    : 0
+  const basicTax = provincialBase + surtax
+  let provincialAdjustments = 0
+  if (province === 'ON') {
+    provincialAdjustments = ontarioHealthPremium(provincialTaxableIncome) - ontarioTaxReduction(basicTax)
+  } else if (province === 'BC') {
+    provincialAdjustments = -bcBasicReduction(provincialTaxableIncome, provincialBase)
+  } else if (province === 'AB') {
+    provincialAdjustments = -Math.min(provincialBase, albertaSupplementalCredit(c))
+  }
   const provincial = provincialBase + surtax + provincialAdjustments
   return {
     ...c, gross, taxableIncome, provincialTaxableIncome,
