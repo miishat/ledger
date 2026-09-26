@@ -1,5 +1,6 @@
 import {
   cppContribution,
+  employeeContributions,
   effectiveRate,
   eiPremium,
   estimateRrspRoom,
@@ -67,6 +68,33 @@ describe('CPP and EI (2026)', () => {
   it('caps EI at the 2026 maximum, with the Quebec rate', () => {
     expect(eiPremium(80_000, 'ON')).toBeCloseTo(68_900 * 0.0163, 2) // 1,123.07
     expect(eiPremium(80_000, 'QC')).toBeCloseTo(68_900 * 0.013, 2) // 895.70
+  })
+})
+
+describe('2026 annual employee contributions', () => {
+  it('uses CPP outside Quebec', () => {
+    const c = employeeContributions(100_000, 'ON')
+    expect(c.plan).toBe('CPP')
+    expect(c.pensionBase).toBeCloseTo(3_519.45, 2)
+    expect(c.pensionAdditional).toBeCloseTo(1_127, 2)
+    expect(c.pension).toBeCloseTo(4_646.45, 2)
+    expect(c.ei).toBeCloseTo(1_123.07, 2)
+    expect(c.qpip).toBe(0)
+  })
+
+  it('uses QPP and QPIP in Quebec', () => {
+    const c = employeeContributions(100_000, 'QC')
+    expect(c.plan).toBe('QPP')
+    expect(c.pensionBase).toBeCloseTo(3_768.30, 2)
+    expect(c.pensionAdditional).toBeCloseTo(1_127, 2)
+    expect(c.pension).toBeCloseTo(4_895.30, 2)
+    expect(c.ei).toBeCloseTo(895.70, 2)
+    expect(c.qpip).toBeCloseTo(430, 2)
+  })
+
+  it('caps QPIP and returns zeros for nonpositive pay', () => {
+    expect(employeeContributions(150_000, 'QC').qpip).toBeCloseTo(442.90, 2)
+    expect(employeeContributions(0, 'QC').pension).toBe(0)
   })
 })
 

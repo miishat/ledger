@@ -209,14 +209,18 @@ export const PROVINCES: { code: Province; name: string }[] = (
 ).map(([code, v]) => ({ code, name: v.name }))
 
 // 2026 CPP / EI parameters
-const CPP_RATE = 0.0595
 const CPP_EXEMPTION = 3_500
 const YMPE = 74_600
 const CPP2_RATE = 0.04
 const YAMPE = 85_000
+const CPP_BASE_RATE = 0.0495
+const QPP_BASE_RATE = 0.053
+const PENSION_ADDITIONAL_RATE = 0.01
 const EI_RATE = 0.0163
 const EI_RATE_QC = 0.013
 const EI_MAX_INSURABLE = 68_900
+const QPIP_RATE = 0.0043
+const QPIP_MAX_INSURABLE = 103_000
 
 function bracketTax(income: number, brackets: Bracket[]): number {
   let tax = 0
@@ -266,15 +270,36 @@ export function provincialTax(income: number, province: Province): number {
   return base + surtax
 }
 
+export interface EmployeeContributions {
+  plan: 'CPP' | 'QPP'
+  pensionBase: number
+  pensionAdditional: number
+  pension: number
+  ei: number
+  qpip: number
+}
+
+export function employeeContributions(gross: number, province: Province): EmployeeContributions {
+  const pay = Math.max(0, gross)
+  const firstTier = Math.max(0, Math.min(pay, YMPE) - CPP_EXEMPTION)
+  const secondTier = Math.max(0, Math.min(pay, YAMPE) - YMPE)
+  const quebec = province === 'QC'
+  const pensionBase = firstTier * (quebec ? QPP_BASE_RATE : CPP_BASE_RATE)
+  const pensionAdditional = firstTier * PENSION_ADDITIONAL_RATE + secondTier * CPP2_RATE
+  const ei = Math.min(pay, EI_MAX_INSURABLE) * (quebec ? EI_RATE_QC : EI_RATE)
+  const qpip = quebec ? Math.min(pay, QPIP_MAX_INSURABLE) * QPIP_RATE : 0
+  return {
+    plan: quebec ? 'QPP' : 'CPP', pensionBase, pensionAdditional,
+    pension: pensionBase + pensionAdditional, ei, qpip,
+  }
+}
+
 export function cppContribution(income: number): number {
-  const base = Math.max(0, Math.min(income, YMPE) - CPP_EXEMPTION) * CPP_RATE
-  const second = Math.max(0, Math.min(income, YAMPE) - YMPE) * CPP2_RATE
-  return base + second
+  return employeeContributions(income, 'ON').pension
 }
 
 export function eiPremium(income: number, province: Province): number {
-  const rate = province === 'QC' ? EI_RATE_QC : EI_RATE
-  return Math.min(income, EI_MAX_INSURABLE) * rate
+  return employeeContributions(income, province).ei
 }
 
 export function totalIncomeTax(income: number, province: Province): number {
