@@ -12,7 +12,7 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
   const rows = [
     { label: 'Federal Tax', value: t.federal, color: 'var(--chart-1)' },
     { label: 'Provincial Tax', value: t.provincial, color: 'var(--chart-2)' },
-    { label: 'CPP (incl. CPP2)', value: t.cpp, color: 'var(--chart-3)' },
+    { label: 'CPP (incl. CPP2)', value: t.pension, color: 'var(--chart-3)' },
     { label: 'EI', value: t.ei, color: 'var(--chart-4)' },
   ]
   const total = rows.reduce((sum, r) => sum + r.value, 0)
@@ -22,7 +22,7 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
   const description = [
     `Federal tax ${formatMoney(t.federal)}`,
     `provincial tax ${formatMoney(t.provincial)}`,
-    `CPP ${formatMoney(t.cpp)}`,
+    `CPP ${formatMoney(t.pension)}`,
     `EI ${formatMoney(t.ei)}`,
     `net pay ${formatMoney(t.net)}`,
   ].join(', ')

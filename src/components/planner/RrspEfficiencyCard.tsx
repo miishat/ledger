@@ -29,12 +29,15 @@ const Rung: React.FC<{ slice: MarginalSlice; hot?: boolean }> = ({ slice, hot = 
  *  that clears the top band is worth. Savings come from the tax functions
  *  themselves, so surtax and credit phase-outs are already accounted for. */
 export const RrspEfficiencyCard: React.FC<{
+  gross: number
   taxableIncome: number
+  rrsp: number
+  fhsa: number
   province: Province
   room: number
   roomIsEstimate: boolean
-}> = ({ taxableIncome, province, room, roomIsEstimate }) => {
-  const slices = marginalSlices(taxableIncome, province)
+}> = ({ gross, taxableIncome, rrsp, fhsa, province, room, roomIsEstimate }) => {
+  const slices = marginalSlices(gross, province, rrsp, fhsa)
   const top = slices[0]
 
   if (!top || top.rate <= 0) {

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
 import { usePlannerStore } from '../../store/usePlannerStore'
-import { estimateRrspRoom } from '../../utils/finance/canadaTax'
+import { annualSalaryTax, estimateRrspRoom, salaryMarginalRate } from '../../utils/finance/canadaTax'
 import { formatMoney } from './format'
 
 const initialState = usePlannerStore.getState()
@@ -118,6 +118,22 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('shows annual income tax equal to the federal and provincial deductions with RRSP and FHSA', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)
+    usePlannerStore.getState().setInput('salary-tax', 'fhsa', 8_000)
+    render(<SalaryTaxTool />)
+    const taxCard = screen.getByText('Total Income Tax').parentElement?.lastElementChild?.textContent
+    const federalRow = screen.getByText('Federal Tax').parentElement?.lastElementChild?.textContent
+    const provincialRow = screen.getByText('Provincial Tax').parentElement?.lastElementChild?.textContent
+    const money = (value: string | null | undefined) => Number(value?.replace(/[$,]/g, ''))
+    // Each displayed component is independently rounded to the nearest dollar.
+    expect(Math.abs(money(taxCard) - money(federalRow) - money(provincialRow))).toBeLessThanOrEqual(1)
+    const t = annualSalaryTax(100_000, 'ON', 10_000, 8_000)
+    expect(taxCard).toBe(formatMoney(t.federal + t.provincial))
+    expect(screen.getByText(`${salaryMarginalRate(100_000, 'ON', 10_000, 8_000).toFixed(2)}%`)).toBeInTheDocument()
+  })
+
   it('offers an optional RRSP Room field', () => {
     render(<SalaryTaxTool />)
     expect(screen.getByLabelText('RRSP Room')).toBeInTheDocument()

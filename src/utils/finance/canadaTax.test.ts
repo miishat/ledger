@@ -10,11 +10,13 @@ import {
   marginalRate,
   marginalRateBreakdown,
   marginalSlices,
+  salaryMarginalRate,
   provincialTax,
   provincialTaxParts,
   RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
   takeHomeWithDeductions,
+  taxWithShelter,
   TAX_YEAR,
   totalIncomeTax,
 } from './canadaTax'
@@ -102,28 +104,24 @@ describe('federalTax', () => {
   })
 
   it('taxes $100k in ON correctly', () => {
-    // 58,523×0.14 + (100,000−58,523)×0.205 = 8,193.22 + 8,502.79 = 16,696.01
-    // minus BPA credit 16,452×0.14 = 2,303.28 → 14,392.73
-    expect(federalTax(100_000, 'ON')).toBeCloseTo(14_392.73, 0)
+    // $98,873 taxable after additional CPP; federal BPA, base CPP, EI, and employment credits.
+    expect(federalTax(100_000, 'ON')).toBeCloseTo(13_301.5972, 4)
   })
 
   it('applies the 16.5% Quebec abatement', () => {
-    expect(federalTax(100_000, 'QC')).toBeCloseTo(14_392.73 * 0.835, 0)
+    expect(federalTax(100_000, 'QC')).toBeCloseTo(11_054.05565, 4)
   })
 })
 
 describe('provincialTax', () => {
   it('taxes $100k in ON correctly including surtax', () => {
-    // 53,891×0.0505 + (100,000−53,891)×0.0915 = 2,721.50 + 4,218.97 = 6,940.47
-    // minus BPA credit 12,989×0.0505 = 655.94 → 6,284.52
-    // surtax: (6,284.52 − 5,818)×0.20 = 93.30 → total 6,377.83
-    expect(provincialTax(100_000, 'ON')).toBeCloseTo(6_377.83, 0)
+    // Base $5,946.95674 + surtax $25.791348 + Ontario premium $750.
+    expect(provincialTax(100_000, 'ON')).toBeCloseTo(6_722.748088, 4)
   })
 
   it('taxes $100k in AB correctly', () => {
-    // 61,200×0.08 + (100,000−61,200)×0.10 = 4,896 + 3,880 = 8,776
-    // minus BPA credit 22,769×0.08 = 1,821.52 → 6,954.48
-    expect(provincialTax(100_000, 'AB')).toBeCloseTo(6_954.48, 0)
+    // $98,873 taxable with employee contribution credits and the supplemental credit.
+    expect(provincialTax(100_000, 'AB')).toBeCloseTo(6_470.3784, 4)
   })
 
   it('never returns negative tax', () => {
@@ -176,21 +174,50 @@ describe('2026 annual employee contributions', () => {
 })
 
 describe('rates and take-home', () => {
+  it('uses one annual model for total tax, take-home, and tax savings', () => {
+    const full = annualSalaryTax(100_000, 'ON', 10_000, 8_000)
+    const none = annualSalaryTax(100_000, 'ON')
+    const shown = takeHomeWithDeductions(100_000, 'ON', 10_000, 8_000)
+    expect(totalIncomeTax(100_000, 'ON')).toBeCloseTo(none.federal + none.provincial, 8)
+    expect(shown.federal + shown.provincial).toBeCloseTo(full.federal + full.provincial, 8)
+    expect(shown.taxSavings).toBeCloseTo(
+      none.federal + none.provincial - full.federal - full.provincial, 8)
+    expect(shown.net).toBeCloseTo(full.net, 8)
+    expect(shown.gross - shown.net).toBeCloseTo(
+      shown.federal + shown.provincial + shown.pension + shown.ei + shown.qpip, 8)
+  })
+
+  it('measures the salary marginal rate with contributions fixed', () => {
+    const at = annualSalaryTax(100_000, 'ON', 10_000, 8_000)
+    const next = annualSalaryTax(100_100, 'ON', 10_000, 8_000)
+    expect(salaryMarginalRate(100_000, 'ON', 10_000, 8_000)).toBeCloseTo(
+      next.federal + next.provincial - at.federal - at.provincial, 8)
+  })
+
+  it('decomposes the contribution-aware marginal rate including signed provincial adjustments', () => {
+    const at = annualSalaryTax(72_100, 'ON', 0, 0)
+    const next = annualSalaryTax(72_200, 'ON', 0, 0)
+    const b = marginalRateBreakdown(72_100, 'ON')
+    expect(b.adjustments).toBeCloseTo(next.provincialAdjustments - at.provincialAdjustments, 8)
+    expect(b.federal + b.provincialBase + b.surtax + b.adjustments).toBeCloseTo(b.total, 8)
+    expect(b.total).toBeCloseTo(salaryMarginalRate(72_100, 'ON'), 8)
+  })
+
   it('marginal rate at $100k ON is fed 20.5 + ON 9.15×1.20 surtax = 31.48', () => {
     expect(marginalRate(100_000, 'ON')).toBeCloseTo(31.48, 1)
   })
 
   it('effective rate is total tax over income', () => {
-    expect(effectiveRate(100_000, 'ON')).toBeCloseTo(((14_392.73 + 6_377.83) / 100_000) * 100, 1)
+    expect(effectiveRate(100_000, 'ON')).toBeCloseTo(((13_301.5972 + 6_722.748088) / 100_000) * 100, 6)
   })
 
   it('take-home for $100k ON nets all components', () => {
     const t = takeHomePay(100_000, 'ON')
-    expect(t.federal).toBeCloseTo(14_392.73, 0)
-    expect(t.provincial).toBeCloseTo(6_377.83, 0)
-    expect(t.cpp).toBeCloseTo(4_646.45, 2)
+    expect(t.federal).toBeCloseTo(13_301.5972, 4)
+    expect(t.provincial).toBeCloseTo(6_722.748088, 4)
+    expect(t.pension).toBeCloseTo(4_646.45, 2)
     expect(t.ei).toBeCloseTo(1_123.07, 2)
-    expect(t.net).toBeCloseTo(100_000 - 14_392.73 - 6_377.83 - 4_646.45 - 1_123.07, 0)
+    expect(t.net).toBeCloseTo(74_206.134712, 4)
   })
 })
 
@@ -198,7 +225,7 @@ describe('marginalRateBreakdown', () => {
   it('components sum to the headline marginal rate (ON, $200k)', () => {
     const b = marginalRateBreakdown(200_000, 'ON')
     expect(b.total).toBeCloseTo(marginalRate(200_000, 'ON'), 6)
-    expect(b.federal + b.provincialBase + b.surtax).toBeCloseTo(b.total, 10)
+    expect(b.federal + b.provincialBase + b.surtax + b.adjustments).toBeCloseTo(b.total, 10)
   })
 
   it('shows a positive surtax component once ON tax exceeds both thresholds ($200k)', () => {
@@ -219,7 +246,7 @@ describe('marginalRateBreakdown', () => {
   it('provincialTaxParts sums to provincialTax', () => {
     for (const income of [40_000, 90_000, 150_000, 250_000]) {
       const parts = provincialTaxParts(income, 'ON')
-      expect(parts.base + parts.surtax).toBeCloseTo(provincialTax(income, 'ON'), 8)
+      expect(parts.base + parts.surtax + parts.adjustments).toBeCloseTo(provincialTax(income, 'ON'), 8)
     }
   })
 })
@@ -230,21 +257,21 @@ describe('takeHomeWithDeductions', () => {
     const d = takeHomeWithDeductions(100000, 'ON', 0, 0)
     expect(d.net).toBeCloseTo(base.net, 6)
     expect(d.taxSavings).toBe(0)
-    expect(d.taxableIncome).toBe(100000)
+    expect(d.taxableIncome).toBe(98_873)
   })
 
   it('contributions reduce taxable income and produce positive savings', () => {
     const d = takeHomeWithDeductions(100000, 'ON', 10000, 8000)
-    expect(d.taxableIncome).toBe(82000)
+    expect(d.taxableIncome).toBe(80_873)
     expect(d.taxSavings).toBeGreaterThan(0)
     expect(d.taxSavings).toBeCloseTo(
-      totalIncomeTax(100000, 'ON') - totalIncomeTax(82000, 'ON'), 6)
+      totalIncomeTax(100000, 'ON') - taxWithShelter(100000, 'ON', 18000), 6)
   })
 
-  it('CPP and EI are unaffected by deductions', () => {
+  it('pension and EI are unaffected by deductions', () => {
     const base = takeHomePay(100000, 'ON')
     const d = takeHomeWithDeductions(100000, 'ON', 20000, 0)
-    expect(d.cpp).toBeCloseTo(base.cpp, 6)
+    expect(d.pension).toBeCloseTo(base.pension, 6)
     expect(d.ei).toBeCloseTo(base.ei, 6)
   })
 
@@ -255,6 +282,18 @@ describe('takeHomeWithDeductions', () => {
 })
 
 describe('marginalSlices', () => {
+  it('holds gross fixed and reconciles savings as RRSP shelter increases', () => {
+    const gross = 193_000
+    const rrsp = 20_000
+    const fhsa = 8_000
+    const at = annualSalaryTax(gross, 'ON', rrsp, fhsa)
+    const slices = marginalSlices(gross, 'ON', rrsp, fhsa)
+    const saved = slices.reduce((sum, s) => sum + s.taxSaved, 0)
+    const allSheltered = taxWithShelter(gross, 'ON', rrsp + at.taxableIncome + fhsa)
+    expect(saved).toBeCloseTo(at.federal + at.provincial - allSheltered, 6)
+    expect(slices[0].to).toBeCloseTo(at.taxableIncome, 6)
+  })
+
   it('returns nothing for zero or negative income', () => {
     expect(marginalSlices(0, 'ON')).toEqual([])
     expect(marginalSlices(-5000, 'ON')).toEqual([])
@@ -263,13 +302,13 @@ describe('marginalSlices', () => {
   it('covers the whole income with no gaps, highest slice first', () => {
     const slices = marginalSlices(193_000, 'ON')
     expect(slices.length).toBeGreaterThan(1)
-    expect(slices[0].to).toBe(193_000)
+    expect(slices[0].to).toBe(annualSalaryTax(193_000, 'ON').taxableIncome)
     expect(slices[slices.length - 1].from).toBe(0)
     for (let i = 0; i < slices.length - 1; i++) {
       expect(slices[i].from).toBe(slices[i + 1].to)
     }
     const covered = slices.reduce((sum, s) => sum + s.amount, 0)
-    expect(covered).toBeCloseTo(193_000, 6)
+    expect(covered).toBeCloseTo(annualSalaryTax(193_000, 'ON').taxableIncome, 6)
   })
 
   it('slice savings add up to the total income tax', () => {
@@ -278,17 +317,18 @@ describe('marginalSlices', () => {
     expect(saved).toBeCloseTo(totalIncomeTax(193_000, 'ON'), 6)
   })
 
-  it('rates fall as you go down the slices', () => {
+  it('each slice has finite savings and a rate derived from those savings', () => {
     const slices = marginalSlices(193_000, 'ON')
-    for (let i = 0; i < slices.length - 1; i++) {
-      expect(slices[i].rate).toBeGreaterThan(slices[i + 1].rate)
+    for (const slice of slices) {
+      expect(Number.isFinite(slice.rate)).toBe(true)
+      expect(slice.rate).toBeCloseTo(slice.taxSaved / slice.amount * 100, 8)
     }
   })
 
   it('puts the top slice on the federal bracket edge and matches the marginal rate', () => {
     const slices = marginalSlices(193_000, 'ON')
     expect(slices[0].from).toBe(181_440)
-    expect(slices[0].amount).toBeCloseTo(11_560, 6)
+    expect(slices[0].amount).toBeCloseTo(10_433, 6)
     expect(slices[0].rate).toBeCloseTo(marginalRate(193_000, 'ON'), 1)
   })
 

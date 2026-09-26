@@ -1,16 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
+import { annualSalaryTax } from '../../utils/finance/canadaTax'
 
 const sample = {
+  ...annualSalaryTax(193_000, 'ON'),
   gross: 193_000,
   federal: 37_925,
   provincial: 22_518,
-  cpp: 4_646,
+  pension: 4_646,
   ei: 1_123,
   net: 126_788,
 }
 
 describe('DeductionsBreakdown', () => {
+  it('reads the pension amount from the annual employee result', () => {
+    const t = annualSalaryTax(100_000, 'ON')
+    render(<DeductionsBreakdown t={t} />)
+    expect(screen.getByText('CPP (incl. CPP2) $4,646')).toBeInTheDocument()
+  })
+
   it('names the gross income the bar represents', () => {
     render(<DeductionsBreakdown t={sample} />)
     expect(screen.getByText('Where $193,000 Goes')).toBeInTheDocument()
@@ -61,7 +69,7 @@ describe('DeductionsBreakdown', () => {
   it('does not divide by zero at no income', () => {
     render(
       <DeductionsBreakdown
-        t={{ gross: 0, federal: 0, provincial: 0, cpp: 0, ei: 0, net: 0 }}
+        t={annualSalaryTax(0, 'ON')}
       />,
     )
     expect(screen.getByText('Where $0 Goes')).toBeInTheDocument()
