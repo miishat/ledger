@@ -337,6 +337,7 @@ function ontarioTaxReduction(basicTax: number): number {
 }
 
 function bcBasicReduction(taxable: number, base: number): number {
+  if (taxable > 44_952) return 0
   return Math.min(base, Math.max(0, 690 - Math.max(0, taxable - 25_570) * 0.0356))
 }
 
@@ -368,7 +369,8 @@ export function annualSalaryTax(
   if (province === 'ON') {
     provincialAdjustments = ontarioHealthPremium(provincialTaxableIncome) - ontarioTaxReduction(basicTax)
   } else if (province === 'BC') {
-    provincialAdjustments = -bcBasicReduction(provincialTaxableIncome, provincialBase)
+    const reduction = bcBasicReduction(provincialTaxableIncome, provincialBase)
+    provincialAdjustments = reduction === 0 ? 0 : -reduction
   } else if (province === 'AB') {
     provincialAdjustments = -Math.min(provincialBase, albertaSupplementalCredit(c))
   }

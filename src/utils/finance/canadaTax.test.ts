@@ -80,6 +80,14 @@ describe('2026 provincial salary adjustments', () => {
     },
   )
 
+  it('ends the BC basic reduction immediately above $44,952 taxable income', () => {
+    const taxable = 44_952.01
+    const t = annualSalaryTax(100_000, 'BC', 100_000 - 1_127 - taxable)
+    expect(t.provincialTaxableIncome).toBeCloseTo(taxable, 6)
+    expect(t.provincialAdjustments).toBe(0)
+    expect(t.provincial).toBe(t.provincialBase)
+  })
+
   it('deducts the Quebec worker amount from provincial taxable income', () => {
     const t = annualSalaryTax(100_000, 'QC')
     expect(t.provincialTaxableIncome).toBe(97_423)
