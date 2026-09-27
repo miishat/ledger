@@ -5,6 +5,7 @@ import { useCompensationStore } from '../store/useCompensationStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
 import { __setProviders, __resetProviders } from '../services/marketData/marketDataService'
 import { __resetMinInterval } from '../services/marketData/throttle'
+import { quoteKey } from '../services/marketData'
 
 const initialCompState = useCompensationStore.getState()
 
@@ -39,6 +40,31 @@ describe('Compensation page - live price + CAD toggle', () => {
   it('shows a refresh price control', () => {
     render(<MemoryRouter><Compensation /></MemoryRouter>)
     expect(screen.getByRole('button', { name: /refresh price/i })).toBeInTheDocument()
+  })
+
+  it('returns to a live price when refreshing a manual override', async () => {
+    useMarketDataStore.getState().setOverride(quoteKey('AAPL'), 250)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    await screen.findByText('(override)')
+    expect(screen.getByText('$250.00')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /refresh price/i }))
+
+    await waitFor(() => expect(useMarketDataStore.getState().getOverride(quoteKey('AAPL'))).toBeUndefined())
+    await waitFor(() => expect(screen.getByText('$150.00')).toBeInTheDocument())
+    expect(screen.queryByText('(override)')).not.toBeInTheDocument()
+  })
+
+  it('explains when a live price cannot replace the manual override', async () => {
+    __setProviders({ fetchQuote: async () => { throw new Error('network down') } })
+    useMarketDataStore.getState().setOverride(quoteKey('AAPL'), 250)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    await screen.findByText('(override)')
+
+    fireEvent.click(screen.getByRole('button', { name: /refresh price/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Live price unavailable')
+    expect(screen.queryByText('(override)')).not.toBeInTheDocument()
   })
 })
 

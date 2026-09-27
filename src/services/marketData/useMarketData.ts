@@ -57,6 +57,7 @@ export function useCurrentPrice(ticker: string, exchange?: string) {
 
   const clearManual = useCallback(() => {
     useMarketDataStore.getState().clearOverride(quoteKey(ticker, exchange))
+    setData(undefined)
     refresh(true)
   }, [ticker, exchange, refresh])
 
