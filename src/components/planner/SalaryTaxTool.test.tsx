@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { annualSalaryTax, salaryMarginalRate } from '../../utils/finance/canadaTax'
@@ -119,11 +119,25 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('spaces the annual Ontario premium note and keeps the bracket explanation behind help', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 58_523)
+    render(<SalaryTaxTool />)
+
+    const annualNote = screen.getByText('Included in annual Provincial Tax:').parentElement
+    expect(annualNote?.textContent).toBe('Included in annual Provincial Tax: Annual Ontario Health Premium $600')
+    expect(screen.queryByText(/Filled portion = income inside each bracket/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'About brackets and marginal rates' }))
+    expect(screen.getByRole('dialog', { name: 'Brackets and marginal rates help' })).toHaveTextContent(
+      'Federal brackets use $57,973 taxable income after deductions',
+    )
+  })
+
   it('puts readable spaces between the marginal rate components', () => {
     usePlannerStore.getState().setInput('salary-tax', 'income', 58_523)
     render(<SalaryTaxTool />)
 
-    const equation = screen.getByText('Marginal Rate Breakdown').nextElementSibling
+    const equation = screen.getByText('Marginal Rate Breakdown').parentElement?.nextElementSibling
     expect(equation?.textContent).toBe('Federal 12.94% + Provincial 8.73% = 21.67%')
     expect(equation?.lastElementChild).toHaveClass('font-semibold')
   })
@@ -136,7 +150,10 @@ describe('SalaryTaxTool layout', () => {
     expect(screen.getByText('Federal 19.37%')).toBeInTheDocument()
     expect(screen.getByText('+ Provincial 7.39%')).toBeInTheDocument()
     expect(screen.queryByText(/Provincial adjustments 0.00%/)).not.toBeInTheDocument()
-    expect(screen.getByText(/Federal brackets use \$59,435 taxable income/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'About brackets and marginal rates' }))
+    expect(screen.getByRole('dialog', { name: 'Brackets and marginal rates help' })).toHaveTextContent(
+      'Federal brackets use $59,435 taxable income',
+    )
   })
 
   it('keeps a nonzero provincial marginal adjustment visible', () => {
@@ -154,7 +171,7 @@ describe('SalaryTaxTool layout', () => {
     render(<SalaryTaxTool />)
 
     expect(screen.getByText('Marginal Rate Breakdown')).toBeInTheDocument()
-    expect(screen.getByText('Marginal Rate Breakdown').parentElement).toHaveTextContent('29.65%')
+    expect(screen.getByText('Marginal Rate Breakdown').parentElement?.nextElementSibling).toHaveTextContent('29.65%')
     expect(screen.queryByText(/Provincial adjustments 0.00%/)).not.toBeInTheDocument()
     expect(screen.getByText('Annual Ontario Health Premium').parentElement).toHaveTextContent('$750')
   })
