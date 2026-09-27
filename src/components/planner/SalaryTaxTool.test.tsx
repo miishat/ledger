@@ -119,6 +119,15 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('puts readable spaces between the marginal rate components', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 58_523)
+    render(<SalaryTaxTool />)
+
+    const equation = screen.getByText('Marginal Rate Breakdown').nextElementSibling
+    expect(equation?.textContent).toBe('Federal 12.94% + Provincial 8.73% = 21.67%')
+    expect(equation?.lastElementChild).toHaveClass('font-semibold')
+  })
+
   it('omits a zero provincial marginal adjustment and identifies the taxable bracket income', () => {
     usePlannerStore.getState().setInput('salary-tax', 'income', 60_000)
     usePlannerStore.getState().setInput('salary-tax', 'province', 'AB')

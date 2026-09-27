@@ -172,12 +172,12 @@ export const SalaryTaxTool: React.FC = () => {
         <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.provincialTaxableIncome} />
         <div className="flex flex-col gap-1">
           <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-primary">
-            <span>Federal {breakdown.federal.toFixed(2)}%</span>
-            <span>+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
-            {breakdown.surtax > 0 && <span>+ ON surtax {breakdown.surtax.toFixed(2)}%</span>}
-            {adjustmentPercent !== '0.00' && <span>{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {adjustmentPercent}%</span>}
-            <span className="font-semibold">= {breakdown.total.toFixed(2)}%</span>
+          <div className="text-[13px] leading-relaxed text-text-primary">
+            <span className="whitespace-nowrap">Federal {breakdown.federal.toFixed(2)}%</span>{' '}
+            <span className="whitespace-nowrap">+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
+            {breakdown.surtax > 0 && <>{' '}<span className="whitespace-nowrap">+ ON surtax {breakdown.surtax.toFixed(2)}%</span></>}
+            {adjustmentPercent !== '0.00' && <>{' '}<span className="whitespace-nowrap">{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {adjustmentPercent}%</span></>}
+            {' '}<span className="font-semibold whitespace-nowrap">= {breakdown.total.toFixed(2)}%</span>
           </div>
           {(annualOntarioPremium > 0 || annualOntarioReduction > 0 || (annualReductionLabel && t.provincialAdjustments < 0)) && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-text-secondary">
