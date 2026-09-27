@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyLumpTax, resolveCompTaxRate } from './compTax'
-import { marginalRate } from './canadaTax'
+import { annualSalaryTax, marginalRate } from './canadaTax'
 
 describe('applyLumpTax', () => {
   const lumps = [
@@ -30,6 +30,12 @@ describe('resolveCompTaxRate', () => {
   it('uses marginal rate when auto', () => {
     const expected = marginalRate(100000, 'ON') / 100
     expect(resolveCompTaxRate({ enabled: true, auto: true, manualPct: 50, income: 100000, province: 'ON' })).toBeCloseTo(expected, 10)
+  })
+  it('uses the shared annual salary tax difference for automatic compensation rate', () => {
+    const at = annualSalaryTax(100_000, 'ON')
+    const next = annualSalaryTax(100_100, 'ON')
+    const expected = (next.federal + next.provincial - at.federal - at.provincial) / 100
+    expect(resolveCompTaxRate({ enabled: true, auto: true, manualPct: 0, income: 100_000, province: 'ON' })).toBeCloseTo(expected, 8)
   })
   it('uses clamped manual percent otherwise', () => {
     expect(resolveCompTaxRate({ enabled: true, auto: false, manualPct: 50, income: 0, province: 'ON' })).toBe(0.5)

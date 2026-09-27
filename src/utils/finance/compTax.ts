@@ -2,7 +2,7 @@
 // lumps stack on top of salary, so the marginal rate (not effective rate)
 // is the right approximation. Manual life events are never taxed.
 
-import { marginalRate, type Province } from './canadaTax'
+import { salaryMarginalRate, type Province } from './canadaTax'
 import type { LumpSum } from './forecast'
 
 export function applyLumpTax(lumps: LumpSum[], rate: number): LumpSum[] {
@@ -22,6 +22,6 @@ export interface CompTaxConfig {
 /** Fraction (0..1) to withhold from comp lumps. */
 export function resolveCompTaxRate(cfg: CompTaxConfig): number {
   if (!cfg.enabled) return 0
-  if (cfg.auto) return marginalRate(cfg.income, cfg.province) / 100
+  if (cfg.auto) return salaryMarginalRate(cfg.income, cfg.province) / 100
   return Math.min(Math.max(cfg.manualPct, 0), 100) / 100
 }

@@ -1,16 +1,49 @@
 import { render, screen } from '@testing-library/react'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
+import { annualSalaryTax } from '../../utils/finance/canadaTax'
+import { formatMoney } from './format'
 
 const sample = {
+  ...annualSalaryTax(193_000, 'ON'),
   gross: 193_000,
   federal: 37_925,
   provincial: 22_518,
-  cpp: 4_646,
+  pension: 4_646,
   ei: 1_123,
   net: 126_788,
 }
 
 describe('DeductionsBreakdown', () => {
+  it('shows Quebec pension and QPIP in the annual deduction total and accessible bar', () => {
+    const t = annualSalaryTax(100_000, 'QC')
+    render(<DeductionsBreakdown t={t} />)
+    expect(screen.getByText(`QPP (incl. QPP2) ${formatMoney(t.pension)}`)).toBeInTheDocument()
+    expect(screen.getByText('QPIP $430')).toBeInTheDocument()
+    const total = screen.getByText('Total Deductions').parentElement?.lastElementChild
+    expect(total).toHaveTextContent(formatMoney(t.federal + t.provincial + t.pension + t.ei + t.qpip))
+    expect(screen.getByRole('img')).toHaveAccessibleName(/QPIP \$430/)
+  })
+
+  it('shows CPP but no QPIP row outside Quebec', () => {
+    const t = annualSalaryTax(100_000, 'ON')
+    render(<DeductionsBreakdown t={t} />)
+    expect(screen.getByText(`CPP (incl. CPP2) ${formatMoney(t.pension)}`)).toBeInTheDocument()
+    expect(screen.queryByText(/^QPIP /)).not.toBeInTheDocument()
+  })
+
+  it('describes standard employee credits and the annual estimate limit', () => {
+    render(<DeductionsBreakdown t={annualSalaryTax(100_000, 'ON')} />)
+    expect(screen.getByText(/standard employee credits/i)).toHaveTextContent(/basic personal/i)
+    expect(screen.getByText(/standard employee credits/i)).toHaveTextContent(/employment/i)
+    expect(screen.getByText(/standard employee credits/i)).toHaveTextContent(/annual estimate, not payroll advice/i)
+  })
+
+  it('reads the pension amount from the annual employee result', () => {
+    const t = annualSalaryTax(100_000, 'ON')
+    render(<DeductionsBreakdown t={t} />)
+    expect(screen.getByText('CPP (incl. CPP2) $4,646')).toBeInTheDocument()
+  })
+
   it('names the gross income the bar represents', () => {
     render(<DeductionsBreakdown t={sample} />)
     expect(screen.getByText('Where $193,000 Goes')).toBeInTheDocument()
@@ -61,7 +94,7 @@ describe('DeductionsBreakdown', () => {
   it('does not divide by zero at no income', () => {
     render(
       <DeductionsBreakdown
-        t={{ gross: 0, federal: 0, provincial: 0, cpp: 0, ei: 0, net: 0 }}
+        t={annualSalaryTax(0, 'ON')}
       />,
     )
     expect(screen.getByText('Where $0 Goes')).toBeInTheDocument()

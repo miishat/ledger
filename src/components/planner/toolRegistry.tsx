@@ -199,15 +199,16 @@ export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'salary-tax',
     name: 'Salary & Tax',
-    description: 'Gross to net for any province. 2026 tax breakdown, marginal/effective rates, CPP and EI.',
+    description: 'Gross to net for any province. 2026 annual employee estimate, marginal/effective rates, CPP/QPP, EI and QPIP.',
     group: 'Income & Tax',
     icon: Landmark,
     info: {
-      howTo: 'Enter gross income and province for a full 2026 tax breakdown: federal and provincial brackets, CPP and EI, net pay per period. Add RRSP and FHSA contributions to see the tax you save.',
+      howTo: 'Enter gross income and province for a 2026 annual employee estimate using standard credits and contributions: federal and provincial tax, CPP/QPP, EI, QPIP where applicable, and net pay per period. Add RRSP and FHSA contributions to see the estimated tax savings.',
       params: [
         { name: 'Gross Annual Income', description: 'Your total income before tax and deductions.' },
         { name: 'Province', description: 'Your province of residence, which determines the provincial tax brackets applied.' },
-        { name: 'RRSP Contribution', description: "Deducted from taxable income. Limit is 18% of last year's earned income up to the annual maximum." },
+        { name: 'RRSP Contribution', description: 'The entered contribution is a cash outflow. If you enter a CRA deduction limit, only the amount within that limit reduces taxable income in this estimate.' },
+        { name: 'CRA RRSP Deduction Limit', description: 'Optional 2026 amount from your CRA notice of assessment. If left at zero, room is unknown and the estimate assumes the entered RRSP contribution is deductible.' },
         { name: 'FHSA Contribution', description: 'First Home Savings Account deposits, deductible like RRSP. Annual limit $8,000.' },
         { name: 'Marginal Rate', description: 'The tax rate applied to your next dollar earned. It is higher than your effective rate because Canada uses progressive tax brackets.' },
         { name: 'Effective Rate', description: 'Your total tax as a percent of total income, the blended rate across all brackets, lower than your marginal rate.' },
