@@ -41,6 +41,22 @@ describe('annual employee income tax', () => {
   })
 })
 
+describe('2026 annual PEI and NL parameters', () => {
+  it('uses the PEI fourth ceiling and 20% top rate', () => {
+    const t = annualSalaryTax(250_000, 'PE')
+    expect(t.taxableIncome).toBe(248_873)
+    expect(t.provincial).toBeCloseTo(39_444.399, 2)
+    expect(annualSalaryTax(143_648, 'PE').provincial - annualSalaryTax(143_647, 'PE').provincial).toBeCloseTo(0.19, 6)
+    expect(annualSalaryTax(201_128, 'PE').provincial - annualSalaryTax(201_127, 'PE').provincial).toBeCloseTo(0.20, 6)
+  })
+
+  it('uses the $13,094 NL annual BPA', () => {
+    const t = annualSalaryTax(100_000, 'NL')
+    expect(t.taxableIncome).toBe(98_873)
+    expect(t.provincial).toBeCloseTo(10_325.93076, 2)
+  })
+})
+
 describe('2026 provincial salary adjustments', () => {
   it('includes the $750 Ontario premium at $100k salary', () => {
     const t = annualSalaryTax(100_000, 'ON')

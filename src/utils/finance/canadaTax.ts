@@ -152,13 +152,14 @@ export const PROVINCIAL_TAX: Record<Province, { name: string; brackets: Bracket[
       { upTo: 33_928, rate: 0.095 },
       { upTo: 65_820, rate: 0.1347 },
       { upTo: 106_890, rate: 0.166 },
-      { upTo: 142_250, rate: 0.1762 },
-      { upTo: Infinity, rate: 0.19 },
+      { upTo: 142_520, rate: 0.1762 },
+      { upTo: 200_000, rate: 0.19 },
+      { upTo: Infinity, rate: 0.20 },
     ],
   },
   NL: {
     name: 'Newfoundland and Labrador',
-    bpa: 11_188,
+    bpa: 13_094,
     brackets: [
       { upTo: 44_678, rate: 0.087 },
       { upTo: 89_354, rate: 0.145 },
