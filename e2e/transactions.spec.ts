@@ -2,13 +2,15 @@ import { test, expect } from '@playwright/test'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
 const BUDGET_KEY = 'ledger-budget'
+const now = new Date()
+const transactionDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-04`
 
 test('renders a long transaction list without mounting every row', async ({ page }) => {
   const transactions: Record<string, unknown> = {}
   for (let i = 0; i < 1200; i++) {
     transactions[`t${i}`] = {
       id: `t${i}`,
-      date: '2026-08-04',
+      date: transactionDate,
       amount: 12.5,
       description: `TEST TXN ${i}`,
       type: 'expense',
@@ -53,7 +55,7 @@ test('renders a long transaction list on mobile without mounting every card', as
   for (let i = 0; i < 1200; i++) {
     transactions[`t${i}`] = {
       id: `t${i}`,
-      date: '2026-08-04',
+      date: transactionDate,
       amount: 12.5,
       description: `TEST TXN ${i}`,
       type: 'expense',
