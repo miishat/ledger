@@ -30,6 +30,7 @@ export const Compensation: React.FC = () => {
     priceStale,
     refreshPrice,
     setManualPrice,
+    clearManualPrice,
   } = useCompensationDisplay()
 
   const fxOverrideKey = fxKey('USD', 'CAD', todayKey())
@@ -74,13 +75,18 @@ export const Compensation: React.FC = () => {
             </span>
             <button
               type="button"
-              onClick={() => refreshPrice(true)}
+              onClick={() => priceSource === 'override' ? clearManualPrice() : refreshPrice(true)}
               aria-label="Refresh price"
               className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
             >
               <RefreshCw size={14} className={priceStatus === 'loading' ? 'animate-spin' : ''} />
               Refresh Price
             </button>
+            {priceStatus === 'error' && (
+              <span role="alert" className="text-[12px] text-[var(--color-error)]">
+                Live price unavailable. Try again or enter a manual price.
+              </span>
+            )}
             <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
               <label htmlFor="comp-manual-price" className="sr-only">
                 Set stock price manually, in USD

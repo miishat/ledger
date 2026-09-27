@@ -29,6 +29,19 @@ describe('useCurrentPrice', () => {
     expect(result.current.data?.value.price).toBe(250)
   })
 
+  it('does not keep showing an override after clearing it when the live request fails', async () => {
+    __setProviders({ fetchQuote: async () => { throw new Error('network down') } })
+    useMarketDataStore.getState().setOverride('AAPL', 250)
+    const { result } = renderHook(() => useCurrentPrice('AAPL'))
+    await waitFor(() => expect(result.current.data?.source).toBe('override'))
+
+    act(() => result.current.clearManual())
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+    expect(useMarketDataStore.getState().getOverride('AAPL')).toBeUndefined()
+    expect(result.current.data?.source).not.toBe('override')
+  })
+
   it('stays idle for an empty ticker', () => {
     const { result } = renderHook(() => useCurrentPrice(''))
     expect(result.current.status).toBe('idle')

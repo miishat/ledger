@@ -10,10 +10,9 @@
 // - CPP/CPP2/EI 2026: CRA release - YMPE $74,600, YAMPE $85,000, rates
 //   5.95%/4.00%; EI 1.63% (QC 1.30%) on max insurable earnings $68,900.
 //
-// Simplifications (this is an estimator, not payroll): only the basic
-// personal amount credit is modelled; Quebec uses the 16.5% federal
-// abatement and approximates QPP/QPIP with CPP + the QC EI rate; no
-// Ontario Health Premium or QC Health Services Fund.
+// This is an annual employee estimate, not payroll withholding. The new
+// annualSalaryTax path includes standard employee credits, QPP/QPIP, and
+// provincial salary adjustments. All public tax and take-home helpers use it.
 
 /** The tax year every table in this file is for. Bump it in the same commit
  *  that updates the brackets, BPAs and CPP/EI maxima, never on its own. */
@@ -153,13 +152,14 @@ export const PROVINCIAL_TAX: Record<Province, { name: string; brackets: Bracket[
       { upTo: 33_928, rate: 0.095 },
       { upTo: 65_820, rate: 0.1347 },
       { upTo: 106_890, rate: 0.166 },
-      { upTo: 142_250, rate: 0.1762 },
-      { upTo: Infinity, rate: 0.19 },
+      { upTo: 142_520, rate: 0.1762 },
+      { upTo: 200_000, rate: 0.19 },
+      { upTo: Infinity, rate: 0.20 },
     ],
   },
   NL: {
     name: 'Newfoundland and Labrador',
-    bpa: 11_188,
+    bpa: 13_094,
     brackets: [
       { upTo: 44_678, rate: 0.087 },
       { upTo: 89_354, rate: 0.145 },
@@ -209,14 +209,18 @@ export const PROVINCES: { code: Province; name: string }[] = (
 ).map(([code, v]) => ({ code, name: v.name }))
 
 // 2026 CPP / EI parameters
-const CPP_RATE = 0.0595
 const CPP_EXEMPTION = 3_500
 const YMPE = 74_600
 const CPP2_RATE = 0.04
 const YAMPE = 85_000
+const CPP_BASE_RATE = 0.0495
+const QPP_BASE_RATE = 0.053
+const PENSION_ADDITIONAL_RATE = 0.01
 const EI_RATE = 0.0163
 const EI_RATE_QC = 0.013
 const EI_MAX_INSURABLE = 68_900
+const QPIP_RATE = 0.0043
+const QPIP_MAX_INSURABLE = 103_000
 
 function bracketTax(income: number, brackets: Bracket[]): number {
   let tax = 0
@@ -238,83 +242,236 @@ function federalBpa(income: number): number {
   return FEDERAL_BPA_MAX - f * (FEDERAL_BPA_MAX - FEDERAL_BPA_MIN)
 }
 
-export function federalTax(income: number, province: Province): number {
-  const gross = bracketTax(income, FEDERAL_BRACKETS)
-  const credit = federalBpa(income) * FEDERAL_BRACKETS[0].rate
-  const net = Math.max(0, gross - credit)
-  return province === 'QC' ? net * (1 - QC_ABATEMENT) : net
+export function provincialBpa(province: Province, netIncome: number): number {
+  if (province === 'MB') {
+    if (netIncome <= 200_000) return 15_780
+    if (netIncome >= 400_000) return 0
+    return 15_780 - (netIncome - 200_000) * (15_780 / 200_000)
+  }
+  if (province === 'YT') return federalBpa(netIncome)
+  return PROVINCIAL_TAX[province].bpa
 }
 
-/** Provincial tax split into the statutory bracket tax and the ON surtax.
- *  base + surtax === provincialTax(income, province). */
+export function federalTax(income: number, province: Province): number {
+  return annualSalaryTax(income, province).federal
+}
+
+/** Provincial annual salary tax split into bracket tax, ON surtax, and signed adjustments. */
 export function provincialTaxParts(
   income: number,
   province: Province,
-): { base: number; surtax: number } {
-  const { brackets, bpa } = PROVINCIAL_TAX[province]
-  const gross = bracketTax(income, brackets)
-  const credit = bpa * brackets[0].rate
-  const base = Math.max(0, gross - credit)
-  const [surtaxLow, surtaxHigh] = ON_SURTAX_THRESHOLDS
-  const surtax =
-    province === 'ON' ? Math.max(0, base - surtaxLow) * 0.2 + Math.max(0, base - surtaxHigh) * 0.36 : 0
-  return { base, surtax }
+): { base: number; surtax: number; adjustments: number } {
+  const t = annualSalaryTax(income, province)
+  return { base: t.provincialBase, surtax: t.surtax, adjustments: t.provincialAdjustments }
 }
 
 export function provincialTax(income: number, province: Province): number {
-  const { base, surtax } = provincialTaxParts(income, province)
-  return base + surtax
+  return annualSalaryTax(income, province).provincial
+}
+
+export interface EmployeeContributions {
+  plan: 'CPP' | 'QPP'
+  pensionBase: number
+  pensionAdditional: number
+  pension: number
+  ei: number
+  qpip: number
+}
+
+export interface AnnualSalaryTax extends EmployeeContributions {
+  gross: number
+  taxableIncome: number
+  provincialTaxableIncome: number
+  federal: number
+  provincialBase: number
+  surtax: number
+  provincialAdjustments: number
+  provincial: number
+  net: number
+}
+
+export function employeeContributions(gross: number, province: Province): EmployeeContributions {
+  const pay = Math.max(0, gross)
+  const firstTier = Math.max(0, Math.min(pay, YMPE) - CPP_EXEMPTION)
+  const secondTier = Math.max(0, Math.min(pay, YAMPE) - YMPE)
+  const quebec = province === 'QC'
+  const pensionBase = firstTier * (quebec ? QPP_BASE_RATE : CPP_BASE_RATE)
+  const pensionAdditional = firstTier * PENSION_ADDITIONAL_RATE + secondTier * CPP2_RATE
+  const ei = Math.min(pay, EI_MAX_INSURABLE) * (quebec ? EI_RATE_QC : EI_RATE)
+  const qpip = quebec ? Math.min(pay, QPIP_MAX_INSURABLE) * QPIP_RATE : 0
+  return {
+    plan: quebec ? 'QPP' : 'CPP', pensionBase, pensionAdditional,
+    pension: pensionBase + pensionAdditional, ei, qpip,
+  }
+}
+
+const CANADA_EMPLOYMENT_AMOUNT = 1_501
+
+function annualFederalTax(taxable: number, gross: number, province: Province, c: EmployeeContributions): number {
+  const employment = Math.min(Math.max(0, gross), CANADA_EMPLOYMENT_AMOUNT)
+  const credits = 0.14 * (federalBpa(taxable) + c.pensionBase + c.ei + c.qpip + employment)
+  const afterCredits = Math.max(0, bracketTax(taxable, FEDERAL_BRACKETS) - credits)
+  return province === 'QC' ? afterCredits * (1 - QC_ABATEMENT) : afterCredits
+}
+
+function annualProvincialBase(taxable: number, gross: number, province: Province, c: EmployeeContributions): number {
+  const { brackets } = PROVINCIAL_TAX[province]
+  const bpa = provincialBpa(province, taxable)
+  const baseContributions = province === 'QC' ? 0 : c.pensionBase + c.ei
+  const employment = province === 'YT' ? Math.min(Math.max(0, gross), CANADA_EMPLOYMENT_AMOUNT) : 0
+  const credit = brackets[0].rate * (bpa + baseContributions + employment)
+  return Math.max(0, bracketTax(taxable, brackets) - credit)
+}
+
+function ontarioHealthPremium(taxable: number): number {
+  if (taxable <= 20_000) return 0
+  if (taxable <= 36_000) return Math.min(300, (taxable - 20_000) * 0.06)
+  if (taxable <= 48_000) return Math.min(450, 300 + (taxable - 36_000) * 0.06)
+  if (taxable <= 72_000) return Math.min(600, 450 + (taxable - 48_000) * 0.25)
+  if (taxable <= 200_000) return Math.min(750, 600 + (taxable - 72_000) * 0.25)
+  return Math.min(900, 750 + (taxable - 200_000) * 0.25)
+}
+
+function ontarioTaxReduction(basicTax: number): number {
+  return Math.max(0, Math.min(basicTax, 600 - basicTax))
+}
+
+function bcBasicReduction(taxable: number, base: number): number {
+  if (taxable > 44_952) return 0
+  return Math.min(base, Math.max(0, 690 - Math.max(0, taxable - 25_570) * 0.0356))
+}
+
+function albertaSupplementalCredit(c: EmployeeContributions): number {
+  const bpa = PROVINCIAL_TAX.AB.bpa
+  return Math.max(0, ((bpa + c.pensionBase + c.ei) * 0.08 - 4_896) * 0.25)
+}
+
+function quebecWorkerDeduction(gross: number): number {
+  return Math.min(Math.max(0, gross) * 0.06, 1_450)
+}
+
+export function annualSalaryTax(
+  gross: number, province: Province, rrsp = 0, fhsa = 0,
+): AnnualSalaryTax {
+  const c = employeeContributions(gross, province)
+  const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa) - c.pensionAdditional)
+  const provincialTaxableIncome = province === 'QC'
+    ? Math.max(0, taxableIncome - quebecWorkerDeduction(gross))
+    : taxableIncome
+  const federal = annualFederalTax(taxableIncome, gross, province, c)
+  const provincialBase = annualProvincialBase(provincialTaxableIncome, gross, province, c)
+  const [surtaxLow, surtaxHigh] = ON_SURTAX_THRESHOLDS
+  const surtax = province === 'ON'
+    ? Math.max(0, provincialBase - surtaxLow) * 0.2 + Math.max(0, provincialBase - surtaxHigh) * 0.36
+    : 0
+  const basicTax = provincialBase + surtax
+  let provincialAdjustments = 0
+  if (province === 'ON') {
+    provincialAdjustments = ontarioHealthPremium(provincialTaxableIncome) - ontarioTaxReduction(basicTax)
+  } else if (province === 'BC') {
+    const reduction = bcBasicReduction(provincialTaxableIncome, provincialBase)
+    provincialAdjustments = reduction === 0 ? 0 : -reduction
+  } else if (province === 'AB') {
+    provincialAdjustments = -Math.min(provincialBase, albertaSupplementalCredit(c))
+  }
+  const provincial = provincialBase + surtax + provincialAdjustments
+  return {
+    ...c, gross, taxableIncome, provincialTaxableIncome,
+    federal, provincialBase, surtax, provincialAdjustments, provincial,
+    net: gross - federal - provincial - c.pension - c.ei - c.qpip,
+  }
 }
 
 export function cppContribution(income: number): number {
-  const base = Math.max(0, Math.min(income, YMPE) - CPP_EXEMPTION) * CPP_RATE
-  const second = Math.max(0, Math.min(income, YAMPE) - YMPE) * CPP2_RATE
-  return base + second
+  return employeeContributions(income, 'ON').pension
 }
 
 export function eiPremium(income: number, province: Province): number {
-  const rate = province === 'QC' ? EI_RATE_QC : EI_RATE
-  return Math.min(income, EI_MAX_INSURABLE) * rate
+  return employeeContributions(income, province).ei
 }
 
 export function totalIncomeTax(income: number, province: Province): number {
-  return federalTax(income, province) + provincialTax(income, province)
+  const t = annualSalaryTax(income, province)
+  return t.federal + t.provincial
+}
+
+export function salaryMarginalRate(gross: number, province: Province, rrsp = 0, fhsa = 0): number {
+  const at = annualSalaryTax(gross, province, rrsp, fhsa)
+  const next = annualSalaryTax(gross + 100, province, rrsp, fhsa)
+  return next.federal + next.provincial - at.federal - at.provincial
 }
 
 export function marginalRate(income: number, province: Province): number {
-  const delta = 100
-  return ((totalIncomeTax(income + delta, province) - totalIncomeTax(income, province)) / delta) * 100
+  return salaryMarginalRate(income, province)
 }
 
 export interface MarginalBreakdown {
   federal: number // percentage points, e.g. 29.29
   provincialBase: number
   surtax: number
-  total: number // === federal + provincialBase + surtax === marginalRate()
+  adjustments: number // signed percentage points
+  total: number // === federal + provincialBase + surtax + adjustments
 }
 
-/** Decomposes the marginal rate into federal, provincial-bracket, and ON-surtax
- *  components via the same $100 finite difference marginalRate() uses, so the
- *  parts always sum to the headline number (including BPA phase-out effects). */
-export function marginalRateBreakdown(income: number, province: Province): MarginalBreakdown {
-  const delta = 100
-  const fed = ((federalTax(income + delta, province) - federalTax(income, province)) / delta) * 100
-  const p0 = provincialTaxParts(income, province)
-  const p1 = provincialTaxParts(income + delta, province)
-  const provincialBase = ((p1.base - p0.base) / delta) * 100
-  const surtax = ((p1.surtax - p0.surtax) / delta) * 100
-  return { federal: fed, provincialBase, surtax, total: fed + provincialBase + surtax }
+/** Decomposes the same $100 gross salary change used by salaryMarginalRate. */
+export function marginalRateBreakdown(
+  gross: number, province: Province, rrsp = 0, fhsa = 0,
+): MarginalBreakdown {
+  const at = annualSalaryTax(gross, province, rrsp, fhsa)
+  const next = annualSalaryTax(gross + 100, province, rrsp, fhsa)
+  const federal = next.federal - at.federal
+  const provincialBase = next.provincialBase - at.provincialBase
+  const surtax = next.surtax - at.surtax
+  const adjustments = next.provincialAdjustments - at.provincialAdjustments
+  return { federal, provincialBase, surtax, adjustments, total: federal + provincialBase + surtax + adjustments }
 }
 
-/** Income where the province's pre-surtax tax first reaches `target`, found by
- *  bisection. base is non-decreasing in income, so this is well defined. */
-function incomeAtProvincialBase(target: number, province: Province): number {
+/** Taxable-income point at which provincial bracket tax reaches a threshold. */
+function incomeAtProvincialBase(
+  target: number, gross: number, province: Province, rrsp: number, fhsa: number, currentTaxable: number,
+): number {
   let lo = 0
-  let hi = 1_000_000
-  if (provincialTaxParts(hi, province).base < target) return Infinity
+  let hi = currentTaxable
+  const baseAt = (taxable: number) => annualSalaryTax(
+    gross, province, rrsp + currentTaxable - taxable, fhsa,
+  ).provincialBase
+  if (baseAt(hi) < target) return Infinity
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2
-    if (provincialTaxParts(mid, province).base < target) lo = mid
+    if (baseAt(mid) < target) lo = mid
+    else hi = mid
+  }
+  return hi
+}
+
+/** BC taxable income where bracket tax first exceeds the basic reduction. */
+function incomeAtBcReductionCrossover(
+  gross: number, rrsp: number, fhsa: number, currentTaxable: number,
+): number {
+  let lo = 0
+  let hi = Math.min(currentTaxable, 44_952)
+  const uncoveredBaseAt = (taxable: number) => {
+    const base = annualSalaryTax(gross, 'BC', rrsp + currentTaxable - taxable, fhsa).provincialBase
+    const reduction = 690 - Math.max(0, taxable - 25_570) * 0.0356
+    return base - reduction
+  }
+  if (uncoveredBaseAt(hi) <= 0) return Infinity
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (uncoveredBaseAt(mid) <= 0) lo = mid
+    else hi = mid
+  }
+  return hi
+}
+
+/** First taxable-income point where one annual tax component becomes positive. */
+function incomeAtFirstPositiveTax(currentTaxable: number, taxAt: (taxable: number) => number): number {
+  let lo = 0
+  let hi = currentTaxable
+  if (taxAt(hi) <= 0) return Infinity
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (taxAt(mid) <= 0) lo = mid
     else hi = mid
   }
   return hi
@@ -328,21 +485,62 @@ export interface MarginalSlice {
   taxSaved: number // tax removed by deducting this whole slice
 }
 
-/** Splits income at every point where the combined marginal rate changes:
- *  federal bracket edges, provincial bracket edges and the two Ontario surtax
- *  crossings. Highest slice first. taxSaved is measured by re-running the real
- *  tax functions, so BPA phase-out and surtax are already inside the number,
- *  and the slices always sum back to totalIncomeTax(). */
-export function marginalSlices(taxableIncome: number, province: Province): MarginalSlice[] {
+/** Income tax at fixed gross salary with a specified RRSP shelter amount. */
+export function taxWithShelter(gross: number, province: Province, sheltered: number): number {
+  const t = annualSalaryTax(gross, province, sheltered, 0)
+  return t.federal + t.provincial
+}
+
+/** Split remaining shelterable income while gross salary and payroll contributions stay fixed. */
+export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa = 0): MarginalSlice[] {
+  const at = annualSalaryTax(gross, province, rrsp, fhsa)
+  const taxableIncome = at.taxableIncome
   if (taxableIncome <= 0) return []
+  const annualAt = (taxable: number) => annualSalaryTax(
+    gross, province, rrsp + taxableIncome - taxable, fhsa,
+  )
+  const taxAt = (taxable: number) => {
+    const t = annualAt(taxable)
+    return t.federal + t.provincial
+  }
   const cuts = new Set<number>([0, taxableIncome])
+  for (const component of ['federal', 'provincial'] as const) {
+    const cut = incomeAtFirstPositiveTax(taxableIncome, (taxable) => annualAt(taxable)[component])
+    if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+  }
   for (const b of FEDERAL_BRACKETS) if (b.upTo < taxableIncome) cuts.add(b.upTo)
-  for (const b of PROVINCIAL_TAX[province].brackets) if (b.upTo < taxableIncome) cuts.add(b.upTo)
-  if (province === 'ON') {
-    for (const threshold of ON_SURTAX_THRESHOLDS) {
-      const at = incomeAtProvincialBase(threshold, province)
-      if (at > 0 && at < taxableIncome) cuts.add(at)
+  // Quebec's worker deduction shifts provincial bracket edges relative to federal taxable income.
+  const provincialOffset = taxableIncome - at.provincialTaxableIncome
+  for (const b of PROVINCIAL_TAX[province].brackets) {
+    const cut = b.upTo + provincialOffset
+    if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+  }
+  // These federal BPA phaseout edges also happen to be federal bracket edges.
+  for (const cut of [181_440, 258_482]) if (cut < taxableIncome) cuts.add(cut)
+  if (province === 'MB') {
+    for (const cut of [200_000, 400_000]) {
+      if (cut > 0 && cut < taxableIncome) cuts.add(cut)
     }
+  }
+  if (province === 'ON') {
+    // Starts, caps, and restarts of the annual Ontario Health Premium.
+    for (const cut of [20_000, 25_000, 36_000, 38_500, 48_000, 48_600, 72_000, 72_600, 200_000, 200_600]) {
+      if (cut < taxableIncome) cuts.add(cut)
+    }
+    for (const threshold of ON_SURTAX_THRESHOLDS) {
+      const cut = incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
+      if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+    }
+    // The low-income tax reduction changes slope at $300 and ends at $600 basic tax.
+    for (const threshold of [300, 600]) {
+      const cut = incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
+      if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+    }
+  }
+  if (province === 'BC') {
+    for (const cut of [25_570, 44_952]) if (cut < taxableIncome) cuts.add(cut)
+    const crossover = incomeAtBcReductionCrossover(gross, rrsp, fhsa, taxableIncome)
+    if (crossover > 0 && crossover < taxableIncome) cuts.add(crossover)
   }
   const points = [...cuts].sort((a, b) => a - b)
   const slices: MarginalSlice[] = []
@@ -351,7 +549,7 @@ export function marginalSlices(taxableIncome: number, province: Province): Margi
     const to = points[i]
     const amount = to - from
     if (amount <= 0) continue
-    const taxSaved = totalIncomeTax(to, province) - totalIncomeTax(from, province)
+    const taxSaved = taxAt(to) - taxAt(from)
     const rate = (taxSaved / amount) * 100
     const prev = slices[slices.length - 1]
     if (prev && Math.abs(prev.rate - rate) < 0.005) {
@@ -359,7 +557,7 @@ export function marginalSlices(taxableIncome: number, province: Province): Margi
       // showing the reader two rungs with an identical percentage.
       prev.from = from
       prev.amount = prev.to - from
-      prev.taxSaved = totalIncomeTax(prev.to, province) - totalIncomeTax(from, province)
+      prev.taxSaved = taxAt(prev.to) - taxAt(from)
       prev.rate = (prev.taxSaved / prev.amount) * 100
       continue
     }
@@ -368,57 +566,32 @@ export function marginalSlices(taxableIncome: number, province: Province): Margi
   return slices
 }
 
-/** 2026 RRSP dollar limit (CRA indexed figure). */
-export const RRSP_DOLLAR_LIMIT_2026 = 33_810
-
-/** Room estimated from income alone: 18% of earned income, capped. Ignores
- *  carry-forward and pension adjustments, so the UI must call it an estimate. */
-export function estimateRrspRoom(earnedIncome: number): number {
-  if (earnedIncome <= 0) return 0
-  return Math.min(earnedIncome * 0.18, RRSP_DOLLAR_LIMIT_2026)
-}
-
 export function effectiveRate(income: number, province: Province): number {
   if (income <= 0) return 0
   return (totalIncomeTax(income, province) / income) * 100
 }
 
-export interface TakeHome {
-  gross: number
-  federal: number
-  provincial: number
-  cpp: number
-  ei: number
-  net: number
-}
+export type TakeHome = AnnualSalaryTax
 
 export function takeHomePay(gross: number, province: Province): TakeHome {
-  const federal = federalTax(gross, province)
-  const provincial = provincialTax(gross, province)
-  const cpp = cppContribution(gross)
-  const ei = eiPremium(gross, province)
-  return { gross, federal, provincial, cpp, ei, net: gross - federal - provincial - cpp - ei }
+  return annualSalaryTax(gross, province)
 }
 
-export interface TakeHomeWithDeductions extends TakeHome {
-  taxableIncome: number
+export interface TakeHomeWithDeductions extends AnnualSalaryTax {
   taxSavings: number
 }
 
-/** Take-home with RRSP/FHSA deductions: income tax on (gross - contributions),
- *  CPP/EI still on gross. taxSavings = tax(gross) - tax(taxable). */
+/** Take-home with optional deductions and tax savings from the same annual model. */
 export function takeHomeWithDeductions(
   gross: number,
   province: Province,
   rrsp: number,
   fhsa: number,
 ): TakeHomeWithDeductions {
-  const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa))
-  const federal = federalTax(taxableIncome, province)
-  const provincial = provincialTax(taxableIncome, province)
-  const cpp = cppContribution(gross)
-  const ei = eiPremium(gross, province)
-  const taxSavings = totalIncomeTax(gross, province) - totalIncomeTax(taxableIncome, province)
-  const net = gross - federal - provincial - cpp - ei
-  return { gross, federal, provincial, cpp, ei, net, taxableIncome, taxSavings }
+  const current = annualSalaryTax(gross, province, rrsp, fhsa)
+  const baseline = annualSalaryTax(gross, province)
+  return {
+    ...current,
+    taxSavings: (baseline.federal - current.federal) + (baseline.provincial - current.provincial),
+  }
 }
