@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Info } from 'lucide-react'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   FEDERAL_BRACKETS,
   marginalRateBreakdown,
+  ontarioHealthPremium,
   salaryMarginalRate,
   PROVINCES,
   PROVINCIAL_TAX,
@@ -17,6 +19,7 @@ import { formatMoney, formatMoneyCompact } from './format'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
 import { RrspEfficiencyCard } from './RrspEfficiencyCard'
 import { TaxYearNotice } from '../ui/TaxYearNotice'
+import { Sheet } from '../ui/Sheet'
 
 const TOOL_ID = 'salary-tax'
 const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0, rrspRoom: 0 }
@@ -83,6 +86,8 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
 }
 
 export const SalaryTaxTool: React.FC = () => {
+  const [bracketInfoOpen, setBracketInfoOpen] = useState(false)
+  const bracketInfoButtonRef = useRef<HTMLButtonElement>(null)
   const inputs = useToolInputs(TOOL_ID, DEFAULTS)
   const setInput = usePlannerStore((s) => s.setInput)
   const province = inputs.province as Province
@@ -108,8 +113,13 @@ export const SalaryTaxTool: React.FC = () => {
   const deductibleRrsp = enteredRoom === null ? inputs.rrsp : Math.min(inputs.rrsp, enteredRoom)
   const t = takeHomeWithDeductions(income, province, deductibleRrsp, inputs.fhsa)
   const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
+  const adjustmentPercent = Math.abs(breakdown.adjustments).toFixed(2)
   const incomeTax = t.federal + t.provincial
   const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
+  const annualOntarioPremium = province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
+  const annualOntarioReduction = province === 'ON' ? Math.max(0, annualOntarioPremium - t.provincialAdjustments) : 0
+  const annualReductionLabel = province === 'BC' ? 'Annual BC tax reduction'
+    : province === 'AB' ? 'Annual Alberta supplemental credit' : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -165,19 +175,55 @@ export const SalaryTaxTool: React.FC = () => {
         <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={t.taxableIncome} />
         <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.provincialTaxableIncome} />
         <div className="flex flex-col gap-1">
-          <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-primary">
-            <span>Federal {breakdown.federal.toFixed(2)}%</span>
-            <span>+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
-            {breakdown.surtax > 0 && <span>+ ON surtax {breakdown.surtax.toFixed(2)}%</span>}
-            <span>{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {Math.abs(breakdown.adjustments).toFixed(2)}%</span>
-            <span className="font-semibold">= {breakdown.total.toFixed(2)}%</span>
+          <div className="flex items-center gap-1">
+            <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
+            <button
+              ref={bracketInfoButtonRef}
+              type="button"
+              aria-label="About brackets and marginal rates"
+              aria-expanded={bracketInfoOpen}
+              aria-haspopup="dialog"
+              onClick={() => setBracketInfoOpen((open) => !open)}
+              className="rounded-full p-1 text-text-secondary hover:text-accent min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
+            >
+              <Info className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <Sheet
+              open={bracketInfoOpen}
+              onClose={() => setBracketInfoOpen(false)}
+              desktop="popover"
+              anchorRef={bracketInfoButtonRef}
+              ariaLabel="Brackets and marginal rates help"
+              title="Brackets and marginal rates"
+              panelClassName="w-[26rem] max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-4"
+              contentClassName="flex flex-col gap-2"
+            >
+              <h3 className="text-[14px] font-semibold text-text-primary">How to read these rates</h3>
+              <p className="text-[13px] text-text-secondary">
+                Filled portion = income inside each bracket. Federal brackets use {formatMoney(t.taxableIncome)}
+                {' '}taxable income after deductions{province === 'QC' ? `; Quebec brackets use ${formatMoney(t.provincialTaxableIncome)}` : ''}.
+              </p>
+              <p className="text-[13px] text-text-secondary">
+                Marginal percentages also reflect changes in pension deductions and tax credits, so they can differ from bracket rates.
+              </p>
+            </Sheet>
           </div>
+          <div className="text-[13px] leading-relaxed text-text-primary">
+            <span className="whitespace-nowrap mr-1">Federal {breakdown.federal.toFixed(2)}%</span>{' '}
+            <span className="whitespace-nowrap mr-1">+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
+            {breakdown.surtax > 0 && <>{' '}<span className="whitespace-nowrap mr-1">+ ON surtax {breakdown.surtax.toFixed(2)}%</span></>}
+            {adjustmentPercent !== '0.00' && <>{' '}<span className="whitespace-nowrap mr-1">{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {adjustmentPercent}%</span></>}
+            {' '}<span className="font-semibold whitespace-nowrap">= {breakdown.total.toFixed(2)}%</span>
+          </div>
+          {(annualOntarioPremium > 0 || annualOntarioReduction > 0 || (annualReductionLabel && t.provincialAdjustments < 0)) && (
+            <div className="text-[12px] leading-relaxed text-text-secondary">
+              <span className="mr-1">Included in annual Provincial Tax:</span>{' '}
+              {annualOntarioPremium > 0 && <span>Annual Ontario Health Premium <strong className="font-medium text-text-primary">{formatMoney(annualOntarioPremium)}</strong></span>}
+              {annualOntarioReduction > 0 && <>{annualOntarioPremium > 0 ? '; ' : ''}<span>Ontario tax reduction <strong className="font-medium text-text-primary">{formatMoney(-annualOntarioReduction)}</strong></span></>}
+              {annualReductionLabel && t.provincialAdjustments < 0 && <span>{annualReductionLabel} <strong className="font-medium text-text-primary">{formatMoney(t.provincialAdjustments)}</strong></span>}
+            </div>
+          )}
         </div>
-        <p className="text-[12px] text-text-secondary">
-          Filled portion = income inside each bracket. The breakdown above shows why the marginal
-          rate can exceed the bracket rates: credits, surtax, and provincial adjustments also affect it.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -323,7 +323,7 @@ function annualProvincialBase(taxable: number, gross: number, province: Province
   return Math.max(0, bracketTax(taxable, brackets) - credit)
 }
 
-function ontarioHealthPremium(taxable: number): number {
+export function ontarioHealthPremium(taxable: number): number {
   if (taxable <= 20_000) return 0
   if (taxable <= 36_000) return Math.min(300, (taxable - 20_000) * 0.06)
   if (taxable <= 48_000) return Math.min(450, 300 + (taxable - 36_000) * 0.06)
