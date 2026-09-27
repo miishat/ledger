@@ -12,6 +12,7 @@ import {
   marginalSlices,
   salaryMarginalRate,
   provincialTax,
+  provincialBpa,
   provincialTaxParts,
   RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
@@ -54,6 +55,37 @@ describe('2026 annual PEI and NL parameters', () => {
     const t = annualSalaryTax(100_000, 'NL')
     expect(t.taxableIncome).toBe(98_873)
     expect(t.provincial).toBeCloseTo(10_325.93076, 2)
+  })
+})
+
+describe('2026 Manitoba and Yukon basic personal amounts', () => {
+  it('phases the Manitoba amount from $15,780 to zero', () => {
+    expect(provincialBpa('MB', 200_000)).toBe(15_780)
+    expect(provincialBpa('MB', 300_000)).toBe(7_890)
+    expect(provincialBpa('MB', 400_000)).toBe(0)
+    expect(provincialBpa('MB', 450_000)).toBe(0)
+    expect(annualSalaryTax(300_000, 'MB').provincialBase).toBeCloseTo(45_074.2864476, 2)
+  })
+
+  it('mirrors the federal phaseout for Yukon', () => {
+    expect(provincialBpa('YT', 181_440)).toBe(16_452)
+    expect(provincialBpa('YT', 219_961)).toBeCloseTo(15_640.5, 6)
+    expect(provincialBpa('YT', 258_482)).toBe(14_829)
+    expect(annualSalaryTax(220_000, 'YT').provincialBase).toBeCloseTo(19_427.2868223, 2)
+  })
+
+  it('splits Manitoba RRSP savings at the BPA phaseout boundaries', () => {
+    const gross = 405_000
+    const slices = marginalSlices(gross, 'MB')
+    expect(slices[0].from).toBeCloseTo(400_000, 6)
+    expect(slices.some((slice) => Math.abs(slice.from - 200_000) < 1e-6)).toBe(true)
+    const current = annualSalaryTax(gross, 'MB')
+    const afterDollar = annualSalaryTax(gross, 'MB', 1)
+    const nextDollarRate = current.federal + current.provincial - afterDollar.federal - afterDollar.provincial
+    expect(slices[0].rate).toBeCloseTo(nextDollarRate * 100, 2)
+    const fullShelter = annualSalaryTax(gross, 'MB', current.taxableIncome)
+    expect(slices.reduce((sum, slice) => sum + slice.taxSaved, 0)).toBeCloseTo(
+      current.federal + current.provincial - fullShelter.federal - fullShelter.provincial, 2)
   })
 })
 

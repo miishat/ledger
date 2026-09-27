@@ -242,6 +242,16 @@ function federalBpa(income: number): number {
   return FEDERAL_BPA_MAX - f * (FEDERAL_BPA_MAX - FEDERAL_BPA_MIN)
 }
 
+export function provincialBpa(province: Province, netIncome: number): number {
+  if (province === 'MB') {
+    if (netIncome <= 200_000) return 15_780
+    if (netIncome >= 400_000) return 0
+    return 15_780 - (netIncome - 200_000) * (15_780 / 200_000)
+  }
+  if (province === 'YT') return federalBpa(netIncome)
+  return PROVINCIAL_TAX[province].bpa
+}
+
 export function federalTax(income: number, province: Province): number {
   return annualSalaryTax(income, province).federal
 }
@@ -305,7 +315,8 @@ function annualFederalTax(taxable: number, gross: number, province: Province, c:
 }
 
 function annualProvincialBase(taxable: number, gross: number, province: Province, c: EmployeeContributions): number {
-  const { brackets, bpa } = PROVINCIAL_TAX[province]
+  const { brackets } = PROVINCIAL_TAX[province]
+  const bpa = provincialBpa(province, taxable)
   const baseContributions = province === 'QC' ? 0 : c.pensionBase + c.ei
   const employment = province === 'YT' ? Math.min(Math.max(0, gross), CANADA_EMPLOYMENT_AMOUNT) : 0
   const credit = brackets[0].rate * (bpa + baseContributions + employment)
@@ -506,6 +517,11 @@ export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa
   }
   // These federal BPA phaseout edges also happen to be federal bracket edges.
   for (const cut of [181_440, 258_482]) if (cut < taxableIncome) cuts.add(cut)
+  if (province === 'MB') {
+    for (const cut of [200_000, 400_000]) {
+      if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+    }
+  }
   if (province === 'ON') {
     // Starts, caps, and restarts of the annual Ontario Health Premium.
     for (const cut of [20_000, 25_000, 36_000, 38_500, 48_000, 48_600, 72_000, 72_600, 200_000, 200_600]) {
