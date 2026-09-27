@@ -3,6 +3,7 @@ import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { annualSalaryTax, estimateRrspRoom, salaryMarginalRate } from '../../utils/finance/canadaTax'
 import { formatMoney } from './format'
+import { getTool } from './toolRegistry'
 
 const initialState = usePlannerStore.getState()
 beforeEach(() => {
@@ -118,6 +119,20 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('includes the Ontario premium in total income tax and divides annual net across pay periods', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
+    render(<SalaryTaxTool />)
+    const t = annualSalaryTax(100_000, 'ON')
+    expect(t.provincialAdjustments).toBe(750)
+    expect(screen.getByText('Total Income Tax').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.federal + t.provincial))
+    expect(screen.getByText('Net Monthly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 12))
+    expect(screen.getByText('Net Biweekly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 26))
+  })
+
+  it('explains the annual employee estimate in the tool help', () => {
+    expect(getTool('salary-tax')?.info.howTo).toContain('2026 annual employee estimate using standard credits and contributions')
+  })
+
   it('shows annual income tax equal to the federal and provincial deductions with RRSP and FHSA', () => {
     usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
     usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)

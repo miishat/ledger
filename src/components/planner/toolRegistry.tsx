@@ -199,11 +199,11 @@ export const PLANNER_TOOLS: PlannerTool[] = [
   {
     id: 'salary-tax',
     name: 'Salary & Tax',
-    description: 'Gross to net for any province. 2026 tax breakdown, marginal/effective rates, CPP and EI.',
+    description: 'Gross to net for any province. 2026 annual employee estimate, marginal/effective rates, CPP/QPP, EI and QPIP.',
     group: 'Income & Tax',
     icon: Landmark,
     info: {
-      howTo: 'Enter gross income and province for a full 2026 tax breakdown: federal and provincial brackets, CPP and EI, net pay per period. Add RRSP and FHSA contributions to see the tax you save.',
+      howTo: 'Enter gross income and province for a 2026 annual employee estimate using standard credits and contributions: federal and provincial tax, CPP/QPP, EI, QPIP where applicable, and net pay per period. Add RRSP and FHSA contributions to see the estimated tax savings.',
       params: [
         { name: 'Gross Annual Income', description: 'Your total income before tax and deductions.' },
         { name: 'Province', description: 'Your province of residence, which determines the provincial tax brackets applied.' },

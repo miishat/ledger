@@ -2,28 +2,26 @@ import React from 'react'
 import type { TakeHome } from '../../utils/finance/canadaTax'
 import { formatMoney } from './format'
 
-// Net pay is deliberately not a chart colour: the four deductions carry the
+// Net pay is deliberately not a chart colour: the deductions carry the
 // palette, and what is left over reads as neutral space beside them.
 const NET_COLOR = 'color-mix(in srgb, var(--text-secondary) 30%, transparent)'
 
-/** Where gross income goes: one stacked bar of the whole salary, then the four
+/** Where gross income goes: one stacked bar of the whole salary, then the
  *  deductions as bars scaled to gross so they stay comparable to each other. */
 export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
   const rows = [
     { label: 'Federal Tax', value: t.federal, color: 'var(--chart-1)' },
     { label: 'Provincial Tax', value: t.provincial, color: 'var(--chart-2)' },
-    { label: 'CPP (incl. CPP2)', value: t.pension, color: 'var(--chart-3)' },
+    { label: `${t.plan} (incl. ${t.plan}2)`, value: t.pension, color: 'var(--chart-3)' },
     { label: 'EI', value: t.ei, color: 'var(--chart-4)' },
+    ...(t.plan === 'QPP' ? [{ label: 'QPIP', value: t.qpip, color: 'var(--chart-5)' }] : []),
   ]
   const total = rows.reduce((sum, r) => sum + r.value, 0)
   const denominator = t.gross > 0 ? t.gross : 1
   const pct = (v: number) => (v / denominator) * 100
   const legend = [...rows, { label: 'Net Pay', value: t.net, color: NET_COLOR }]
   const description = [
-    `Federal tax ${formatMoney(t.federal)}`,
-    `provincial tax ${formatMoney(t.provincial)}`,
-    `CPP ${formatMoney(t.pension)}`,
-    `EI ${formatMoney(t.ei)}`,
+    ...rows.map((r, index) => `${index === 0 ? 'Federal tax' : index === 1 ? 'provincial tax' : r.label} ${formatMoney(r.value)}`),
     `net pay ${formatMoney(t.net)}`,
   ].join(', ')
 
@@ -103,7 +101,9 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
         FHSA contribution you entered.
       </p>
       <p className="text-[12px] text-text-secondary">
-        2026 rates, employee side, basic personal amount only. An estimate, not payroll advice.
+        2026 rates for a full-year employee. Includes standard employee credits: basic personal,
+        Canada employment, and eligible CPP/QPP, EI, and QPIP contribution credits. This is an
+        annual estimate, not payroll advice.
       </p>
     </div>
   )
