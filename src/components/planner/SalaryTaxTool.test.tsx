@@ -119,6 +119,25 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('keeps the marginal percentages and separately shows the annual Ontario health premium', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)
+    usePlannerStore.getState().setInput('salary-tax', 'fhsa', 8_000)
+    render(<SalaryTaxTool />)
+
+    expect(screen.getByText('Marginal Rate Breakdown')).toBeInTheDocument()
+    expect(screen.getByText(/Provincial adjustments 0.00%/).parentElement).toHaveTextContent('29.65%')
+    expect(screen.getByText('Annual Ontario Health Premium').parentElement).toHaveTextContent('$750')
+  })
+
+  it('shows the Ontario tax reduction separately when it offsets the annual premium', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 25_000)
+    render(<SalaryTaxTool />)
+
+    expect(screen.getByText('Annual Ontario Health Premium').parentElement).toHaveTextContent('$287')
+    expect(screen.getByText('Ontario tax reduction').parentElement).toHaveTextContent('-$79')
+  })
+
   it('includes the Ontario premium in total income tax and divides annual net across pay periods', () => {
     usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
     render(<SalaryTaxTool />)

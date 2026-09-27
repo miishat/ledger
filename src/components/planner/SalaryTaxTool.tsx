@@ -3,6 +3,7 @@ import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   FEDERAL_BRACKETS,
   marginalRateBreakdown,
+  ontarioHealthPremium,
   salaryMarginalRate,
   PROVINCES,
   PROVINCIAL_TAX,
@@ -110,6 +111,10 @@ export const SalaryTaxTool: React.FC = () => {
   const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
   const incomeTax = t.federal + t.provincial
   const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
+  const annualOntarioPremium = province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
+  const annualOntarioReduction = province === 'ON' ? Math.max(0, annualOntarioPremium - t.provincialAdjustments) : 0
+  const annualReductionLabel = province === 'BC' ? 'Annual BC tax reduction'
+    : province === 'AB' ? 'Annual Alberta supplemental credit' : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -173,6 +178,14 @@ export const SalaryTaxTool: React.FC = () => {
             <span>{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {Math.abs(breakdown.adjustments).toFixed(2)}%</span>
             <span className="font-semibold">= {breakdown.total.toFixed(2)}%</span>
           </div>
+          {(annualOntarioPremium > 0 || annualOntarioReduction > 0 || (annualReductionLabel && t.provincialAdjustments < 0)) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-text-secondary">
+              <span>Included in annual Provincial Tax:</span>
+              {annualOntarioPremium > 0 && <span>Annual Ontario Health Premium <strong className="font-medium text-text-primary">{formatMoney(annualOntarioPremium)}</strong></span>}
+              {annualOntarioReduction > 0 && <span>Ontario tax reduction <strong className="font-medium text-text-primary">{formatMoney(-annualOntarioReduction)}</strong></span>}
+              {annualReductionLabel && t.provincialAdjustments < 0 && <span>{annualReductionLabel} <strong className="font-medium text-text-primary">{formatMoney(t.provincialAdjustments)}</strong></span>}
+            </div>
+          )}
         </div>
         <p className="text-[12px] text-text-secondary">
           Filled portion = income inside each bracket. The breakdown above shows why the marginal
