@@ -119,6 +119,25 @@ describe('BracketBar', () => {
 })
 
 describe('SalaryTaxTool layout', () => {
+  it('omits a zero provincial marginal adjustment and identifies the taxable bracket income', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 60_000)
+    usePlannerStore.getState().setInput('salary-tax', 'province', 'AB')
+    render(<SalaryTaxTool />)
+
+    expect(screen.getByText('Federal 19.37%')).toBeInTheDocument()
+    expect(screen.getByText('+ Provincial 7.39%')).toBeInTheDocument()
+    expect(screen.queryByText(/Provincial adjustments 0.00%/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Federal brackets use \$59,435 taxable income/)).toBeInTheDocument()
+  })
+
+  it('keeps a nonzero provincial marginal adjustment visible', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 35_000)
+    usePlannerStore.getState().setInput('salary-tax', 'province', 'BC')
+    render(<SalaryTaxTool />)
+
+    expect(screen.getByText(/Provincial adjustments 3.52%/)).toBeInTheDocument()
+  })
+
   it('keeps the marginal percentages and separately shows the annual Ontario health premium', () => {
     usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
     usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)
@@ -126,7 +145,8 @@ describe('SalaryTaxTool layout', () => {
     render(<SalaryTaxTool />)
 
     expect(screen.getByText('Marginal Rate Breakdown')).toBeInTheDocument()
-    expect(screen.getByText(/Provincial adjustments 0.00%/).parentElement).toHaveTextContent('29.65%')
+    expect(screen.getByText('Marginal Rate Breakdown').parentElement).toHaveTextContent('29.65%')
+    expect(screen.queryByText(/Provincial adjustments 0.00%/)).not.toBeInTheDocument()
     expect(screen.getByText('Annual Ontario Health Premium').parentElement).toHaveTextContent('$750')
   })
 

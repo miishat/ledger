@@ -109,6 +109,7 @@ export const SalaryTaxTool: React.FC = () => {
   const deductibleRrsp = enteredRoom === null ? inputs.rrsp : Math.min(inputs.rrsp, enteredRoom)
   const t = takeHomeWithDeductions(income, province, deductibleRrsp, inputs.fhsa)
   const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
+  const adjustmentPercent = Math.abs(breakdown.adjustments).toFixed(2)
   const incomeTax = t.federal + t.provincial
   const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
   const annualOntarioPremium = province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
@@ -175,7 +176,7 @@ export const SalaryTaxTool: React.FC = () => {
             <span>Federal {breakdown.federal.toFixed(2)}%</span>
             <span>+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
             {breakdown.surtax > 0 && <span>+ ON surtax {breakdown.surtax.toFixed(2)}%</span>}
-            <span>{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {Math.abs(breakdown.adjustments).toFixed(2)}%</span>
+            {adjustmentPercent !== '0.00' && <span>{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {adjustmentPercent}%</span>}
             <span className="font-semibold">= {breakdown.total.toFixed(2)}%</span>
           </div>
           {(annualOntarioPremium > 0 || annualOntarioReduction > 0 || (annualReductionLabel && t.provincialAdjustments < 0)) && (
@@ -188,8 +189,9 @@ export const SalaryTaxTool: React.FC = () => {
           )}
         </div>
         <p className="text-[12px] text-text-secondary">
-          Filled portion = income inside each bracket. The breakdown above shows why the marginal
-          rate can exceed the bracket rates: credits, surtax, and provincial adjustments also affect it.
+          Filled portion = income inside each bracket. Federal brackets use {formatMoney(t.taxableIncome)}
+          {' '}taxable income after deductions{province === 'QC' ? `; Quebec brackets use ${formatMoney(t.provincialTaxableIncome)}` : ''}.
+          {' '}Marginal percentages also reflect changes in pension deductions and tax credits, so they can differ from bracket rates.
         </p>
       </div>
 
