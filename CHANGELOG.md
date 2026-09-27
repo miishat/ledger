@@ -6,7 +6,13 @@ pre-1.0 beta.
 
 ## [0.10.1] - 2026-09-27
 
+### Changed
+- Salary and Tax now estimates annual take-home pay with standard employee tax credits and contributions, including QPP and QPIP in Quebec. Its tax, marginal-rate, and net-pay figures use the same annual calculation as automatic Compensation estimates
+- RRSP room is no longer guessed from current salary. Enter your CRA deduction limit to compare available room and cap the modeled tax deduction; a contribution above that limit still counts as money paid out
+
 ### Fixed
+- Salary and Tax now includes Ontario Health Premium and the Ontario and BC tax reductions, and uses the correct 2026 annual basic personal amount phaseouts for Manitoba and Yukon
+- Corrected Prince Edward Island's upper tax bands and Newfoundland and Labrador's annual basic personal amount. RRSP tax savings and effective rates now follow the corrected annual calculation
 - Portfolio reports now open the benchmark chart at the report period, with controls for 1Y, 3Y, 5Y, and Max. The chart no longer plots dates outside the account's history as zero returns, and the benchmark comparison uses the account's return rather than another benchmark's return
 - The Compensation package editor can scroll to all of its content on shorter desktop windows instead of clipping it inside the dialog
 - Refresh Price in Compensation now clears a manual stock price override and fetches a live price. If the live price is unavailable, the old override label disappears and the page explains what happened
