@@ -452,6 +452,19 @@ function incomeAtBcReductionCrossover(
   return hi
 }
 
+/** First taxable-income point where one annual tax component becomes positive. */
+function incomeAtFirstPositiveTax(currentTaxable: number, taxAt: (taxable: number) => number): number {
+  let lo = 0
+  let hi = currentTaxable
+  if (taxAt(hi) <= 0) return Infinity
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (taxAt(mid) <= 0) lo = mid
+    else hi = mid
+  }
+  return hi
+}
+
 export interface MarginalSlice {
   from: number // lower bound of the slice
   to: number // upper bound
@@ -471,11 +484,18 @@ export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa
   const at = annualSalaryTax(gross, province, rrsp, fhsa)
   const taxableIncome = at.taxableIncome
   if (taxableIncome <= 0) return []
+  const annualAt = (taxable: number) => annualSalaryTax(
+    gross, province, rrsp + taxableIncome - taxable, fhsa,
+  )
   const taxAt = (taxable: number) => {
-    const t = annualSalaryTax(gross, province, rrsp + taxableIncome - taxable, fhsa)
+    const t = annualAt(taxable)
     return t.federal + t.provincial
   }
   const cuts = new Set<number>([0, taxableIncome])
+  for (const component of ['federal', 'provincial'] as const) {
+    const cut = incomeAtFirstPositiveTax(taxableIncome, (taxable) => annualAt(taxable)[component])
+    if (cut > 0 && cut < taxableIncome) cuts.add(cut)
+  }
   for (const b of FEDERAL_BRACKETS) if (b.upTo < taxableIncome) cuts.add(b.upTo)
   // Quebec's worker deduction shifts provincial bracket edges relative to federal taxable income.
   const provincialOffset = taxableIncome - at.provincialTaxableIncome

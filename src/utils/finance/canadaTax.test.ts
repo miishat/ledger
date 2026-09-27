@@ -95,6 +95,12 @@ describe('2026 provincial salary adjustments', () => {
     expect(t.provincialTaxableIncome).toBe(97_423)
     expect(t.provincialBase).toBeCloseTo(13_139.84, 2)
   })
+
+  it('applies the Yukon provincial employment credit at $100k salary', () => {
+    // Tax: 58,523 × 6.4% + (98,873 − 58,523) × 9% = 7,376.972.
+    // Credit: (16,452 BPA + 3,519.45 CPP base + 1,123.07 EI + 1,501 employment) × 6.4%.
+    expect(annualSalaryTax(100_000, 'YT').provincial).toBeCloseTo(5_930.85872, 4)
+  })
 })
 
 describe('federalTax', () => {
@@ -365,6 +371,24 @@ describe('marginalSlices', () => {
     expect(slices[0].rate).toBeCloseTo(nextDollarRate, 4)
     const saved = slices.reduce((sum, slice) => sum + slice.taxSaved, 0)
     const allSheltered = annualSalaryTax(gross, 'BC', current.taxableIncome)
+    expect(saved).toBeCloseTo(
+      current.federal + current.provincial - allSheltered.federal - allSheltered.provincial, 8)
+  })
+
+  it.each([
+    ['BC', 20_000],
+    ['AB', 25_000],
+    ['QC', 20_000],
+  ] as const)('splits tax-zero crossings for %s salary of $%i', (province, gross) => {
+    const current = annualSalaryTax(gross, province)
+    const afterOneDollar = annualSalaryTax(gross, province, 1)
+    const slices = marginalSlices(gross, province)
+    const nextDollarRate = (
+      current.federal + current.provincial - afterOneDollar.federal - afterOneDollar.provincial
+    ) * 100
+    expect(slices[0].rate).toBeCloseTo(nextDollarRate, 4)
+    const saved = slices.reduce((sum, slice) => sum + slice.taxSaved, 0)
+    const allSheltered = annualSalaryTax(gross, province, current.taxableIncome)
     expect(saved).toBeCloseTo(
       current.federal + current.provincial - allSheltered.federal - allSheltered.provincial, 8)
   })
