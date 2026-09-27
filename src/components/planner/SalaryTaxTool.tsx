@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
-  estimateRrspRoom,
   FEDERAL_BRACKETS,
   marginalRateBreakdown,
   salaryMarginalRate,
@@ -105,11 +104,12 @@ export const SalaryTaxTool: React.FC = () => {
     }
   }, [])
 
-  const t = takeHomeWithDeductions(income, province, inputs.rrsp, inputs.fhsa)
-  const breakdown = marginalRateBreakdown(income, province, inputs.rrsp, inputs.fhsa)
+  const enteredRoom = inputs.rrspRoom > 0 ? inputs.rrspRoom : null
+  const deductibleRrsp = enteredRoom === null ? inputs.rrsp : Math.min(inputs.rrsp, enteredRoom)
+  const t = takeHomeWithDeductions(income, province, deductibleRrsp, inputs.fhsa)
+  const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
   const incomeTax = t.federal + t.provincial
-  const totalRoom = inputs.rrspRoom > 0 ? inputs.rrspRoom : estimateRrspRoom(income)
-  const room = Math.max(0, totalRoom - inputs.rrsp)
+  const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,14 +123,18 @@ export const SalaryTaxTool: React.FC = () => {
         />
         <CalculatorField label="RRSP Contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
         <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
-        <CalculatorField label="RRSP Room" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
+        <CalculatorField label="CRA RRSP Deduction Limit" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
       </div>
+      <p className="text-[12px] text-text-secondary">
+        CRA RRSP Deduction Limit is optional. Leave it at $0 if unknown; $0 is not
+        treated as a verified limit, and no room is estimated from current salary.
+      </p>
 
       <TaxYearNotice showYearLabel />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ResultCard label="Total Income Tax" value={formatMoney(incomeTax)} highlight />
-        <ResultCard label="Marginal Rate" value={`${salaryMarginalRate(income, province, inputs.rrsp, inputs.fhsa).toFixed(2)}%`} />
+        <ResultCard label="Marginal Rate" value={`${salaryMarginalRate(income, province, deductibleRrsp, inputs.fhsa).toFixed(2)}%`} />
         <ResultCard label="Effective Rate" value={`${(income > 0 ? incomeTax / income * 100 : 0).toFixed(2)}%`} />
       </div>
 
@@ -142,11 +146,18 @@ export const SalaryTaxTool: React.FC = () => {
             <ResultCard label="Net After Contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
           </div>
           <p className="text-[12px] text-text-secondary">
-            RRSP limit is estimated as 18% of the gross income entered above, up to the annual
-            maximum, or whatever you enter in RRSP Room. Your CRA notice of assessment has your real
-            number. FHSA limit is $8,000 per year. Contributions here are assumed fully deductible
-            this year.
+            Enter your 2026 RRSP deduction limit from your CRA notice of assessment if known.
+            Leave the limit at $0 if unknown; no room is estimated. Without a limit,
+            tax savings assume your entered RRSP contribution is deductible. With a limit,
+            only the amount within it is treated as deductible. FHSA contributions are
+            assumed deductible within the applicable rules.
           </p>
+          {enteredRoom !== null && inputs.rrsp > enteredRoom && (
+            <p className="text-[12px] text-text-secondary" role="status">
+              Your RRSP contribution exceeds the CRA limit entered by {formatMoney(inputs.rrsp - enteredRoom)}.
+              The excess is included in your cash outflow but receives no current-year tax deduction here.
+            </p>
+          )}
         </div>
       )}
 
@@ -180,11 +191,10 @@ export const SalaryTaxTool: React.FC = () => {
         <RrspEfficiencyCard
           gross={income}
           taxableIncome={t.taxableIncome}
-          rrsp={inputs.rrsp}
+          rrsp={deductibleRrsp}
           fhsa={inputs.fhsa}
           province={province}
           room={room}
-          roomIsEstimate={inputs.rrspRoom <= 0}
         />
       </div>
     </div>

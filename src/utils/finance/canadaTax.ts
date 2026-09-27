@@ -566,16 +566,6 @@ export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa
   return slices
 }
 
-/** 2026 RRSP dollar limit (CRA indexed figure). */
-export const RRSP_DOLLAR_LIMIT_2026 = 33_810
-
-/** Room estimated from income alone: 18% of earned income, capped. Ignores
- *  carry-forward and pension adjustments, so the UI must call it an estimate. */
-export function estimateRrspRoom(earnedIncome: number): number {
-  if (earnedIncome <= 0) return 0
-  return Math.min(earnedIncome * 0.18, RRSP_DOLLAR_LIMIT_2026)
-}
-
 export function effectiveRate(income: number, province: Province): number {
   if (income <= 0) return 0
   return (totalIncomeTax(income, province) / income) * 100

@@ -34,9 +34,8 @@ export const RrspEfficiencyCard: React.FC<{
   rrsp: number
   fhsa: number
   province: Province
-  room: number
-  roomIsEstimate: boolean
-}> = ({ gross, taxableIncome, rrsp, fhsa, province, room, roomIsEstimate }) => {
+  room: number | null
+}> = ({ gross, taxableIncome, rrsp, fhsa, province, room }) => {
   const slices = marginalSlices(gross, province, rrsp, fhsa)
   const top = slices[0]
 
@@ -55,11 +54,9 @@ export const RrspEfficiencyCard: React.FC<{
 
   const shown = slices.slice(0, 2)
   const rest = slices[2]
-  const fits = top.amount <= room
-  const usedPct = room > 0 ? Math.min((top.amount / room) * 100, 100) : 0
-  const roomLabel = roomIsEstimate
-    ? `${formatMoney(room)} estimated remaining room`
-    : `${formatMoney(room)} remaining room`
+  const roomKnown = room !== null
+  const fits = roomKnown && top.amount <= room
+  const usedPct = roomKnown && room > 0 ? Math.min((top.amount / room) * 100, 100) : 0
 
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-3 h-full">
@@ -67,7 +64,7 @@ export const RrspEfficiencyCard: React.FC<{
 
       <div className="flex items-baseline gap-2">
         <span className="text-[26px] font-semibold text-accent leading-none">{top.rate.toFixed(1)}%</span>
-        <span className="text-[12px] text-text-secondary">saved on your next contributed dollar</span>
+        <span className="text-[12px] text-text-secondary">potential tax saved per additional deductible RRSP dollar</span>
       </div>
 
       <div className="flex flex-col gap-1 mt-1">
@@ -87,28 +84,40 @@ export const RrspEfficiencyCard: React.FC<{
 
       <div className="mt-auto border-t border-border pt-3 flex flex-col gap-1.5">
         <p className="text-[13px] text-text-primary">
-          {formatMoney(top.amount)} RRSP clears your top band, saving {formatMoney(top.taxSaved)}
+          If deductible, {formatMoney(top.amount)} RRSP clears your top band, saving {formatMoney(top.taxSaved)}
         </p>
-        <div
-          className="h-1.5 rounded bg-bg-primary/50 overflow-hidden"
-          role="progressbar"
-          aria-label="Remaining room used"
-          aria-valuenow={Math.round(usedPct)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div className="h-full rounded bg-accent" style={{ width: `${usedPct}%` }} />
-        </div>
-        <p className="text-[12px] text-text-secondary">
-          {fits
-            ? `Uses ${usedPct.toFixed(0)}% of your ${roomLabel}`
-            : `Exceeds your ${roomLabel} by ${formatMoney(top.amount - room)}`}
-        </p>
+        {room === null ? (
+          <p className="text-[12px] text-text-secondary">
+            Enter your CRA RRSP deduction limit to compare with available room.
+          </p>
+        ) : room === 0 ? (
+          <p className="text-[12px] text-text-secondary">
+            No entered RRSP deduction room remains.
+          </p>
+        ) : (
+          <>
+            <div
+              className="h-1.5 rounded bg-bg-primary/50 overflow-hidden"
+              role="progressbar"
+              aria-label="Remaining room used"
+              aria-valuenow={Math.round(usedPct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="h-full rounded bg-accent" style={{ width: `${usedPct}%` }} />
+            </div>
+            <p className="text-[12px] text-text-secondary">
+              {fits
+                ? `Uses ${usedPct.toFixed(0)}% of your ${formatMoney(room)} remaining CRA room`
+                : `Exceeds your ${formatMoney(room)} remaining CRA room by ${formatMoney(top.amount - room)}`}
+            </p>
+          </>
+        )}
       </div>
 
       <p className="text-[12px] text-text-secondary">
-        Room is estimated from income unless you enter your own. Your CRA notice of assessment is the
-        real number. An estimate, not tax advice.
+        Your CRA notice of assessment gives your RRSP deduction limit. Without it, this rate assumes
+        another dollar would be deductible. An annual estimate, not tax advice.
       </p>
     </div>
   )

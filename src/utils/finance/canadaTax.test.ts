@@ -4,7 +4,6 @@ import {
   employeeContributions,
   effectiveRate,
   eiPremium,
-  estimateRrspRoom,
   federalTax,
   isTaxYearStale,
   marginalRate,
@@ -14,7 +13,6 @@ import {
   provincialTax,
   provincialBpa,
   provincialTaxParts,
-  RRSP_DOLLAR_LIMIT_2026,
   takeHomePay,
   takeHomeWithDeductions,
   taxWithShelter,
@@ -446,21 +444,6 @@ describe('marginalSlices', () => {
     expect(slices).toHaveLength(1)
     expect(slices[0].rate).toBe(0)
     expect(slices[0].taxSaved).toBe(0)
-  })
-})
-
-describe('estimateRrspRoom', () => {
-  it('is 18% of earned income below the dollar limit', () => {
-    expect(estimateRrspRoom(100_000)).toBeCloseTo(18_000, 6)
-  })
-
-  it('caps at the annual dollar limit', () => {
-    expect(estimateRrspRoom(500_000)).toBe(RRSP_DOLLAR_LIMIT_2026)
-  })
-
-  it('is zero for no income', () => {
-    expect(estimateRrspRoom(0)).toBe(0)
-    expect(estimateRrspRoom(-100)).toBe(0)
   })
 })
 

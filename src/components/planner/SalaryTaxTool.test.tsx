@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { BracketBar, SalaryTaxTool } from './SalaryTaxTool'
 import { usePlannerStore } from '../../store/usePlannerStore'
-import { annualSalaryTax, estimateRrspRoom, salaryMarginalRate } from '../../utils/finance/canadaTax'
+import { annualSalaryTax, salaryMarginalRate } from '../../utils/finance/canadaTax'
 import { formatMoney } from './format'
 import { getTool } from './toolRegistry'
 
@@ -149,9 +149,10 @@ describe('SalaryTaxTool layout', () => {
     expect(screen.getByText(`${salaryMarginalRate(100_000, 'ON', 10_000, 8_000).toFixed(2)}%`)).toBeInTheDocument()
   })
 
-  it('offers an optional RRSP Room field', () => {
+  it('offers an optional CRA RRSP deduction limit field', () => {
     render(<SalaryTaxTool />)
-    expect(screen.getByLabelText('RRSP Room')).toBeInTheDocument()
+    expect(screen.getByLabelText('CRA RRSP Deduction Limit')).toBeInTheDocument()
+    expect(screen.getByText(/Leave it at \$0 if unknown/i)).toBeInTheDocument()
   })
 
   it('renders the deductions block and the RRSP efficiency block side by side', () => {
@@ -170,19 +171,36 @@ describe('SalaryTaxTool layout', () => {
     expect(pair?.className).not.toContain('items-start')
   })
 
-  it('passes the full estimated room through to the efficiency card when nothing has been contributed', () => {
+  it('shows no invented RRSP room when no CRA limit was entered', () => {
     render(<SalaryTaxTool />)
-    const expectedRoom = formatMoney(estimateRrspRoom(100000))
-    expect(screen.getByText(new RegExp(`${expectedRoom.replace('$', '\\$')} estimated remaining room`, 'i'))).toBeInTheDocument()
+    expect(screen.getByLabelText('CRA RRSP Deduction Limit')).toBeInTheDocument()
+    expect(screen.getByText(/Enter your CRA RRSP deduction limit to compare with available room/i)).toBeInTheDocument()
+    expect(screen.queryByText(/estimated remaining room/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('progressbar', { name: /remaining room used/i })).not.toBeInTheDocument()
   })
 
-  it('subtracts an already-entered RRSP contribution from the room shown by the efficiency card', () => {
-    usePlannerStore.getState().setInput('salary-tax', 'income', 193000)
-    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 20000)
+  it('caps modeled RRSP deduction at the entered CRA limit but keeps full cash outflow', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrspRoom', 6_000)
     render(<SalaryTaxTool />)
-    const totalRoom = estimateRrspRoom(193000)
-    const remaining = formatMoney(Math.max(0, totalRoom - 20000))
-    expect(screen.getByText(new RegExp(`${remaining.replace('$', '\\$')} estimated remaining room`, 'i'))).toBeInTheDocument()
+    const capped = annualSalaryTax(100_000, 'ON', 6_000)
+    const noRrsp = annualSalaryTax(100_000, 'ON')
+    const savings = noRrsp.federal + noRrsp.provincial - capped.federal - capped.provincial
+    expect(screen.getByText('Taxable Income').parentElement?.lastElementChild).toHaveTextContent(formatMoney(capped.taxableIncome))
+    expect(screen.getByText('Tax Savings From Contributions').parentElement?.lastElementChild).toHaveTextContent(formatMoney(savings))
+    expect(screen.getByText('Net After Contributions').parentElement?.lastElementChild).toHaveTextContent(formatMoney(capped.net - 10_000))
+    expect(screen.getByText(/exceeds the CRA limit entered by \$4,000/i)).toBeInTheDocument()
+  })
+
+  it('uses gross pay for effective rate after RRSP and FHSA deductions', () => {
+    usePlannerStore.getState().setInput('salary-tax', 'income', 100_000)
+    usePlannerStore.getState().setInput('salary-tax', 'rrsp', 10_000)
+    usePlannerStore.getState().setInput('salary-tax', 'fhsa', 8_000)
+    render(<SalaryTaxTool />)
+    const t = annualSalaryTax(100_000, 'ON', 10_000, 8_000)
+    expect(screen.getByText('Effective Rate').parentElement?.lastElementChild).toHaveTextContent(
+      `${(((t.federal + t.provincial) / 100_000) * 100).toFixed(2)}%`)
   })
 })
 
