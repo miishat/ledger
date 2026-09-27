@@ -432,6 +432,26 @@ function incomeAtProvincialBase(
   return hi
 }
 
+/** BC taxable income where bracket tax first exceeds the basic reduction. */
+function incomeAtBcReductionCrossover(
+  gross: number, rrsp: number, fhsa: number, currentTaxable: number,
+): number {
+  let lo = 0
+  let hi = Math.min(currentTaxable, 44_952)
+  const uncoveredBaseAt = (taxable: number) => {
+    const base = annualSalaryTax(gross, 'BC', rrsp + currentTaxable - taxable, fhsa).provincialBase
+    const reduction = 690 - Math.max(0, taxable - 25_570) * 0.0356
+    return base - reduction
+  }
+  if (uncoveredBaseAt(hi) <= 0) return Infinity
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (uncoveredBaseAt(mid) <= 0) lo = mid
+    else hi = mid
+  }
+  return hi
+}
+
 export interface MarginalSlice {
   from: number // lower bound of the slice
   to: number // upper bound
@@ -482,6 +502,8 @@ export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa
   }
   if (province === 'BC') {
     for (const cut of [25_570, 44_952]) if (cut < taxableIncome) cuts.add(cut)
+    const crossover = incomeAtBcReductionCrossover(gross, rrsp, fhsa, taxableIncome)
+    if (crossover > 0 && crossover < taxableIncome) cuts.add(crossover)
   }
   const points = [...cuts].sort((a, b) => a - b)
   const slices: MarginalSlice[] = []

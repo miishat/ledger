@@ -353,6 +353,22 @@ describe('marginalSlices', () => {
     expect(saved).toBeCloseTo(totalIncomeTax(90_000, 'BC'), 6)
   })
 
+  it('splits BC low-income reduction crossover so the top rate matches the next RRSP dollar', () => {
+    const gross = 30_000
+    const current = annualSalaryTax(gross, 'BC')
+    const afterOneDollar = annualSalaryTax(gross, 'BC', 1)
+    const slices = marginalSlices(gross, 'BC')
+    const nextDollarRate = (
+      current.federal + current.provincial - afterOneDollar.federal - afterOneDollar.provincial
+    ) * 100
+    expect(slices[0].to).toBeCloseTo(current.taxableIncome, 8)
+    expect(slices[0].rate).toBeCloseTo(nextDollarRate, 4)
+    const saved = slices.reduce((sum, slice) => sum + slice.taxSaved, 0)
+    const allSheltered = annualSalaryTax(gross, 'BC', current.taxableIncome)
+    expect(saved).toBeCloseTo(
+      current.federal + current.provincial - allSheltered.federal - allSheltered.provincial, 8)
+  })
+
   it('returns a single zero-rate slice for income under every credit', () => {
     const slices = marginalSlices(10_000, 'ON')
     expect(slices).toHaveLength(1)
