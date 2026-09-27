@@ -4,6 +4,13 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
+## [0.10.1] - 2026-09-27
+
+### Fixed
+- Portfolio reports now open the benchmark chart at the report period, with controls for 1Y, 3Y, 5Y, and Max. The chart no longer plots dates outside the account's history as zero returns, and the benchmark comparison uses the account's return rather than another benchmark's return
+- The Compensation package editor can scroll to all of its content on shorter desktop windows instead of clipping it inside the dialog
+- Refresh Price in Compensation now clears a manual stock price override and fetches a live price. If the live price is unavailable, the old override label disappears and the page explains what happened
+
 ## [0.10.0] - 2026-08-31
 
 The remediation of a full engineering audit, plus the portfolio redesign that
