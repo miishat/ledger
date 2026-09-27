@@ -33,8 +33,6 @@ export const FirstRunChecklist: React.FC<FirstRunChecklistProps> = ({
   const doneCount = steps.filter((s) => s.done).length
   if (dismissed || doneCount === steps.length) return null
 
-  const firstIncompleteIndex = steps.findIndex((s) => !s.done)
-
   return (
     <section
       aria-label="Getting started"
@@ -57,7 +55,7 @@ export const FirstRunChecklist: React.FC<FirstRunChecklistProps> = ({
         </div>
       </div>
       <ul className="flex flex-col gap-2">
-        {steps.map((s, i) => (
+        {steps.map((s) => (
           <li key={s.label} className="flex items-center gap-2 text-[13px]">
             {s.done ? (
               <Check className="w-4 h-4 text-accent" aria-hidden="true" />
@@ -66,17 +64,10 @@ export const FirstRunChecklist: React.FC<FirstRunChecklistProps> = ({
             )}
             {s.done ? (
               <span className="text-text-secondary line-through">{s.label}</span>
-            ) : i === firstIncompleteIndex ? (
-              <Link
-                to={s.to}
-                className="inline-flex items-center px-3 py-1 rounded-md bg-[var(--color-accent)] text-[var(--color-bg-primary)] font-medium hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-              >
-                {s.label}
-              </Link>
             ) : (
               <Link
                 to={s.to}
-                className="text-text-primary hover:text-accent underline underline-offset-2 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                className="inline-flex items-center px-3 py-1 rounded-md bg-[var(--color-accent)] text-[var(--color-bg-primary)] font-medium hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 {s.label}
               </Link>

@@ -7,6 +7,8 @@ pre-1.0 beta.
 ## [0.10.1] - 2026-09-27
 
 ### Changed
+- Aurora Gradient cards now have a subtle emerald-to-sky-to-violet gradient
+- Both Getting started actions on the Dashboard use the same button styling
 - Salary and Tax now estimates annual take-home pay with standard employee tax credits and contributions, including QPP and QPIP in Quebec. Its tax, marginal-rate, and net-pay figures use the same annual calculation as automatic Compensation estimates
 - RRSP room is no longer guessed from current salary. Enter your CRA deduction limit to compare available room and cap the modeled tax deduction; a contribution above that limit still counts as money paid out
 
