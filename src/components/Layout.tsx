@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import React, { Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
@@ -32,6 +32,16 @@ export const Layout: React.FC = () => {
   const swUpdate = useSWUpdate()
   useViewportHeight()
   const routeName = useDocumentTitle()
+
+  // <main> is the scroll container, not the document, so the browser has no
+  // reason to reset it between routes: switching from a long page used to
+  // land the next page partway down. A layout effect, so the old offset is
+  // never painted. Keyed on pathname only: a ?tab= switch inside a page
+  // keeps the user where they are.
+  const mainRef = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0
+  }, [location.pathname])
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -299,6 +309,7 @@ export const Layout: React.FC = () => {
 
         <main
           id="main-content"
+          ref={mainRef}
           tabIndex={-1}
           className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >

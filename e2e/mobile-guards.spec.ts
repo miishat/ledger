@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { seedApp } from './seed'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
 const BUDGET_KEY = 'ledger-budget'
@@ -294,4 +295,23 @@ test('no header button is squeezed below its own label', async ({ page }) => {
       .map((b) => ({ text: (b.textContent || '').trim(), shown: b.clientWidth, needs: b.scrollWidth })),
   )
   expect(squeezed).toEqual([])
+})
+
+// Rule 2 of docs/mobile-layout-rules.md. <main> is the scroll container, so
+// nothing reset it between routes and the next page opened partway down.
+test('switching tabs starts the new page at the top', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  // While the next route mounts, <main> briefly holds almost no content and
+  // the browser clamps scrollTop to 0 by itself, which would make this guard
+  // pass with no reset in place. A tall pseudo-element keeps the scroll range
+  // alive through that window, so only a real reset can bring it back to 0.
+  await page.addStyleTag({ content: 'main::after { content: ""; display: block; height: 3000px; }' })
+  await page.evaluate(() => { document.querySelector('main')!.scrollTop = 600 })
+  expect(await page.evaluate(() => document.querySelector('main')!.scrollTop)).toBe(600)
+  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Planner' }).click()
+  await expect(page).toHaveURL(/#\/planner$/)
+  // The URL changes before the lazy route renders, so poll for the reset.
+  await expect.poll(() => page.evaluate(() => document.querySelector('main')!.scrollTop)).toBe(0)
 })

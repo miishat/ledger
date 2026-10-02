@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { setDemoActive } from '../utils/demoData'
 import { resetMatchMedia } from '../test-utils/matchMedia'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
@@ -206,5 +206,28 @@ describe('Layout sidebar ornament', () => {
     useThemeStore.setState({ theme: 'luxury' })
     const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
     expect(container.querySelector('[data-testid="sidebar-floral"]')).toBeNull()
+  })
+})
+
+describe('Layout route changes', () => {
+  // <main> is the scroll container, not the document, so the browser never
+  // resets it between routes. Measured at 375px before this fix: scrolled to
+  // 1200 on Budgeting, switched to Planner, landed at 1148.
+  it('starts the next route at the top of the scroll area', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/budget']}>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route path="budget" element={<Link to="/planner">to planner</Link>} />
+            <Route path="planner" element={<p>planner page</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+    const main = container.querySelector('main')!
+    main.scrollTop = 600
+    fireEvent.click(screen.getByText('to planner'))
+    expect(screen.getByText('planner page')).toBeInTheDocument()
+    expect(main.scrollTop).toBe(0)
   })
 })
