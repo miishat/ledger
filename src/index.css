@@ -678,3 +678,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 :focus:not(:focus-visible) {
   outline: none;
 }
+
+/* Phone top bar (rule 1 of docs/mobile-layout-rules.md): while a page has
+   put its title into the slot, the Ledger mark and wordmark give way to it. */
+header:has(> [data-topbar-slot] > *) > [data-topbar-brand] {
+  display: none;
+}

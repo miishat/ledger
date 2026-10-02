@@ -2,7 +2,8 @@ import { describe, expect, it, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { setDemoActive } from '../utils/demoData'
-import { resetMatchMedia } from '../test-utils/matchMedia'
+import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
+import { PageHeader } from './ui/PageHeader'
 import { DISCLAIMER_ACK_KEY } from '../utils/disclaimer'
 import { useThemeStore } from '../store/useThemeStore'
 
@@ -229,5 +230,30 @@ describe('Layout route changes', () => {
     fireEvent.click(screen.getByText('to planner'))
     expect(screen.getByText('planner page')).toBeInTheDocument()
     expect(main.scrollTop).toBe(0)
+  })
+})
+
+describe('Layout top bar slot', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('carries the page title and main action on a phone, with the wordmark wrapper beside it', () => {
+    setMatchMedia(false)
+    const { container } = render(
+      <MemoryRouter initialEntries={['/budget']}>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route
+              path="budget"
+              element={<PageHeader title="Budgeting" phoneAction={<button type="button" aria-label="Add Transaction">+</button>} />}
+            />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+    const topbar = container.querySelector('[data-testid="mobile-topbar"]')!
+    expect(topbar.querySelector('[data-topbar-slot] [data-testid="topbar-title"]')).toHaveTextContent('Budgeting')
+    expect(topbar.querySelector('[data-topbar-slot] button[aria-label="Add Transaction"]')).not.toBeNull()
+    expect(topbar.querySelector('[data-topbar-brand]')).not.toBeNull()
+    expect(container.querySelector('main h1')).toHaveClass('sr-only')
   })
 })
