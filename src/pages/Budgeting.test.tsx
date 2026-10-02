@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { Budgeting } from './Budgeting'
+import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
 
 function renderBudget() {
   return render(<MemoryRouter><Budgeting /></MemoryRouter>)
@@ -14,14 +15,14 @@ describe('Budgeting header (mobile de-duplication)', () => {
     expect(screen.getByRole('button', { name: 'Time period' })).toBeInTheDocument()
   })
 
-  it('hides the range dropdown below md so only one month control shows on mobile', () => {
+  it('renders the range dropdown on desktop only so a phone shows one month control', () => {
     renderBudget()
-    const trigger = screen.getByRole('button', { name: 'Time period' })
-    // the dropdown wrapper is hidden on mobile, shown from md up
-    const wrapper = trigger.closest('[data-period-dropdown]') as HTMLElement
-    expect(wrapper).toBeTruthy()
-    expect(wrapper.className).toMatch(/hidden/)
-    expect(wrapper.className).toMatch(/md:block/)
+    expect(screen.getByRole('button', { name: 'Time period' }).closest('[data-period-dropdown]')).toBeTruthy()
+    cleanup()
+    setMatchMedia(false)
+    renderBudget()
+    expect(screen.queryByRole('button', { name: 'Time period' })).toBeNull()
+    resetMatchMedia()
   })
 
   // The arrows keep a 44px touch target at the mobile base width and shrink
@@ -44,5 +45,26 @@ describe('Budgeting header (mobile de-duplication)', () => {
     expect(screen.getByLabelText('Time period').className).toMatch(/\bh-10\b/)
     expect(screen.getByLabelText('Import CSV').className).toMatch(/\bh-10\b/)
     expect(screen.getByRole('button', { name: 'Add Transaction' }).className).toMatch(/\bh-10\b/)
+  })
+})
+
+describe('Budgeting header on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('moves Add Transaction to the top bar and the month and import controls into one row', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Budgeting /></MemoryRouter>)
+    expect(screen.getAllByRole('button', { name: 'Add Transaction' })).toHaveLength(1)
+    const row = screen.getByTestId('budget-phone-controls')
+    expect(row.querySelector('button[aria-label="Previous Month"]')).not.toBeNull()
+    expect(row.querySelector('button[aria-label="Import CSV"]')).not.toBeNull()
+    expect(screen.queryByText('Manage your income, track expenses, and view your cash flow.')).toBeNull()
+  })
+
+  it('keeps the desktop header as it was', () => {
+    render(<MemoryRouter><Budgeting /></MemoryRouter>)
+    expect(screen.queryByTestId('budget-phone-controls')).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Add Transaction' })).toHaveLength(1)
+    expect(screen.getByText('Manage your income, track expenses, and view your cash flow.')).toBeInTheDocument()
   })
 })

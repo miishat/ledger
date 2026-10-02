@@ -321,6 +321,7 @@ test('switching tabs starts the new page at the top', async ({ page }) => {
 // their own breadcrumb header and the brand stays in the bar.
 const TITLED_ROUTES = [
   ['dashboard', '', 'Dashboard'],
+  ['budgeting', '#/budget', 'Budgeting'],
   ['investments', '#/investments', 'Investments'],
   ['planner', '#/planner', 'Planner'],
   ['compensation', '#/compensation', 'Compensation'],

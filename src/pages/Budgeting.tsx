@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { monthKeyOf, rangeOf, shiftMonthKey, type Period, type PeriodPreset } from '../utils/budget/period';
 import { Tabs, type TabItem } from '../components/ui/Tabs';
 import { TabPanel } from '../components/ui/TabPanel';
@@ -25,6 +25,8 @@ import { ReallocationHistory } from '../components/budget/ReallocationHistory';
 import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
 import { SavingsRateWidget } from '../components/budget/SavingsRateWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
+import { PageHeader, TopBarAction } from '../components/ui/PageHeader';
+import { useIsDesktop } from '../hooks/useMediaQuery';
 
 type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
 
@@ -40,6 +42,7 @@ const isBudgetTab = (v: string | null): v is BudgetTab =>
 
 export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isDesktop = useIsDesktop();
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
 
@@ -74,75 +77,89 @@ export const Budgeting: React.FC = () => {
     }
   }, [categories, seedDefaults]);
 
+  const monthStepper = period.kind === 'month' && (
+    <div className="flex items-center gap-1 md:h-10 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
+      <button
+        onClick={() => shiftMonth(-1)}
+        className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+        aria-label="Previous Month"
+      >
+        <ChevronLeft size={16} />
+      </button>
+      <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
+      <button
+        onClick={() => shiftMonth(1)}
+        className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
+        aria-label="Next Month"
+      >
+        <ChevronRight size={16} />
+      </button>
+      {period.month !== currentMonth && (
+        <button
+          onClick={() => setPeriod({ kind: 'month', month: currentMonth })}
+          className="px-2 py-1 rounded-md text-[12px] font-medium text-accent hover:bg-bg-primary transition-all duration-200"
+        >
+          Today
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
-      <header className="flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Budgeting</h1>
-          <p className="text-[14px] text-text-secondary mt-1">
-            Manage your income, track expenses, and view your cash flow.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4 items-center">
-          <div data-period-dropdown className="hidden md:block">
-            <ThemedSelect
-              ariaLabel="Time period"
-              value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
-              onChange={(v) => {
-                if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
-                else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
-                else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
-              }}
-              className="h-10 text-[13px]"
-              options={[
-                ...(period.kind === 'month' && period.month !== currentMonth
-                  ? [{ value: 'pickedMonth', label: formattedMonth }]
-                  : []),
-                { value: 'thisMonth', label: 'This month' },
-                { value: 'lastMonth', label: 'Last month' },
-                { value: 'last3', label: 'Last 3 months' },
-                { value: 'last6', label: 'Last 6 months' },
-                { value: 'last12', label: 'Last 12 months' },
-                { value: 'ytd', label: 'Year to date' },
-              ]}
-            />
-          </div>
-          {period.kind === 'month' && (
-            <div className="flex items-center gap-1 md:h-10 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
-              <button
-                onClick={() => shiftMonth(-1)}
-                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
-                aria-label="Previous Month"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
-              <button
-                onClick={() => shiftMonth(1)}
-                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
-                aria-label="Next Month"
-              >
-                <ChevronRight size={16} />
-              </button>
-              {period.month !== currentMonth && (
-                <button
-                  onClick={() => setPeriod({ kind: 'month', month: currentMonth })}
-                  className="px-2 py-1 rounded-md text-[12px] font-medium text-accent hover:bg-bg-primary transition-all duration-200"
-                >
-                  Today
-                </button>
-              )}
+      <PageHeader
+        title="Budgeting"
+        subtitle="Manage your income, track expenses, and view your cash flow."
+        actions={
+          <>
+            {/* The preset dropdown was `hidden md:block`. It is now desktop
+                only by construction, so the 932x430 short-wide layout follows
+                the phone rules like every other phone-layout width. */}
+            <div data-period-dropdown>
+              <ThemedSelect
+                ariaLabel="Time period"
+                value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
+                onChange={(v) => {
+                  if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
+                  else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
+                  else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
+                }}
+                className="h-10 text-[13px]"
+                options={[
+                  ...(period.kind === 'month' && period.month !== currentMonth
+                    ? [{ value: 'pickedMonth', label: formattedMonth }]
+                    : []),
+                  { value: 'thisMonth', label: 'This month' },
+                  { value: 'lastMonth', label: 'Last month' },
+                  { value: 'last3', label: 'Last 3 months' },
+                  { value: 'last6', label: 'Last 6 months' },
+                  { value: 'last12', label: 'Last 12 months' },
+                  { value: 'ytd', label: 'Year to date' },
+                ]}
+              />
             </div>
-          )}
+            {monthStepper}
+            <CSVUploader />
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="h-10 px-4 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+            >
+              Add Transaction
+            </button>
+          </>
+        }
+        phoneAction={<TopBarAction icon={Plus} label="Add Transaction" onClick={() => setIsModalOpen(true)} />}
+      />
+
+      {/* Rule 1 of docs/mobile-layout-rules.md: secondary controls share one
+          row at the top of the page. Rendered here or in the desktop header,
+          never both, so CSVUploader's dialog exists once. */}
+      {!isDesktop && (
+        <div data-testid="budget-phone-controls" className="flex items-center justify-between gap-2">
+          {monthStepper}
           <CSVUploader />
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="h-10 px-4 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-          >
-            Add Transaction
-          </button>
         </div>
-      </header>
+      )}
 
       <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
 
