@@ -315,3 +315,32 @@ test('switching tabs starts the new page at the top', async ({ page }) => {
   // The URL changes before the lazy route renders, so poll for the reset.
   await expect.poll(() => page.evaluate(() => document.querySelector('main')!.scrollTop)).toBe(0)
 })
+
+// Rule 1 of docs/mobile-layout-rules.md: on a phone the top bar names the
+// page, and the page's h1 is still there for screen readers. Tool pages keep
+// their own breadcrumb header and the brand stays in the bar.
+const TITLED_ROUTES = [
+  ['dashboard', '', 'Dashboard'],
+  ['investments', '#/investments', 'Investments'],
+  ['planner', '#/planner', 'Planner'],
+  ['compensation', '#/compensation', 'Compensation'],
+] as const
+
+for (const [name, hash, title] of TITLED_ROUTES) {
+  test(`${name} names itself in the top bar`, async ({ page }) => {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const bar = page.getByTestId('mobile-topbar')
+    await expect(bar.getByTestId('topbar-title')).toHaveText(title)
+    await expect(bar.locator('[data-topbar-brand]')).toBeHidden()
+    await expect(page.getByRole('heading', { level: 1, name: title })).toHaveCount(1)
+  })
+}
+
+test('a planner tool keeps the brand in the top bar', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  const bar = page.getByTestId('mobile-topbar')
+  await expect(bar.locator('[data-topbar-brand]')).toBeVisible()
+  await expect(bar.getByTestId('topbar-title')).toHaveCount(0)
+})

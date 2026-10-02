@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { Pencil, Plus, RefreshCw } from 'lucide-react'
+import { PageHeader, TopBarAction } from '../components/ui/PageHeader'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
@@ -51,20 +52,25 @@ export const Compensation: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
-      <header className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Compensation</h1>
-          <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">
-            Analyze your base salary, bonuses, equity, and benefits to understand your true earning potential.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-        >
-          {isPopulated ? 'Edit Package' : 'Add Compensation Package'}
-        </button>
-      </header>
+      <PageHeader
+        title="Compensation"
+        subtitle="Analyze your base salary, bonuses, equity, and benefits to understand your true earning potential."
+        actions={
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+          >
+            {isPopulated ? 'Edit Package' : 'Add Compensation Package'}
+          </button>
+        }
+        phoneAction={
+          <TopBarAction
+            icon={isPopulated ? Pencil : Plus}
+            label={isPopulated ? 'Edit Package' : 'Add Compensation Package'}
+            onClick={() => setIsModalOpen(true)}
+          />
+        }
+      />
 
       {isPopulated && (
         <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
@@ -212,6 +218,13 @@ export const Compensation: React.FC = () => {
               <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
                 No compensation data added yet. Start by adding your current offer or current package.
               </p>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              >
+                Add Compensation Package
+              </button>
             </div>
           )}
         </div>

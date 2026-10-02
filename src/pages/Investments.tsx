@@ -12,6 +12,7 @@ import { usePortfolioStore } from '../store/usePortfolioStore'
 import { quoteKey } from '../services/marketData'
 import { currentValue, totalInvested } from '../utils/investments/analysisMetrics'
 import { formatMoney } from '../components/planner/format'
+import { PageHeader, TopBarAction } from '../components/ui/PageHeader'
 import { Stat } from '../components/ui/Stat'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs, type TabItem } from '../components/ui/Tabs'
@@ -75,35 +76,42 @@ export const Investments: React.FC = () => {
     0,
   )
 
+  // One action per tab, in the same slot on every tab, so the header never
+  // reads as changing shape as you move between tabs. Trades and Options have
+  // none. New Analysis and Import holdings share a size and fill for the same
+  // reason: a difference between them would read as the action changing shape.
+  const desktopAction =
+    tab === 'journal' ? (
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+      >
+        <Plus className="w-4 h-4" /> New Analysis
+      </button>
+    ) : tab === 'portfolio' ? (
+      <button
+        type="button"
+        onClick={() => setImportOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+      >
+        <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
+      </button>
+    ) : null
+  const phoneAction =
+    tab === 'journal' ? (
+      <TopBarAction icon={Plus} label="New Analysis" onClick={() => setIsModalOpen(true)} />
+    ) : tab === 'portfolio' ? (
+      <TopBarAction icon={Upload} label="Import holdings" onClick={() => setImportOpen(true)} />
+    ) : undefined
+
   return (
     <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
-      <header className="flex justify-between items-center flex-wrap gap-3">
-        <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Investments</h1>
-          <p className="text-[14px] text-text-secondary mt-1">{TAB_BLURBS[tab]}</p>
-        </div>
-        {tab === 'journal' && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-          >
-            <Plus className="w-4 h-4" /> New Analysis
-          </button>
-        )}
-        {/* Same slot and same treatment as New Analysis above. The two are
-            mutually exclusive, one per tab, so a difference in size or fill
-            between them would read as the header action changing shape as you
-            move between tabs. */}
-        {tab === 'portfolio' && (
-          <button
-            type="button"
-            onClick={() => setImportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-          >
-            <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
-          </button>
-        )}
-      </header>
+      <PageHeader
+        title="Investments"
+        subtitle={TAB_BLURBS[tab]}
+        actions={desktopAction}
+        phoneAction={phoneAction}
+      />
 
       <Tabs items={INVEST_TABS} value={tab} onChange={setTab} ariaLabel="Investments sections" />
 

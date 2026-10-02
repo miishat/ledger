@@ -1,4 +1,6 @@
 import React, { Suspense, useState } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
+import { PageHeader, TopBarAction } from '../components/ui/PageHeader';
 import { BentoGrid } from '../components/dashboard/BentoGrid';
 import { NetWorthWidget } from '../components/dashboard/widgets/NetWorthWidget';
 import { IncomeWidget } from '../components/budget/IncomeWidget';
@@ -92,32 +94,36 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-full w-full">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-[24px] font-semibold text-text-primary">Dashboard</h1>
-          <p className="text-[14px] text-text-secondary mt-1">All your accounts, balances, and trends in one place.</p>
-        </div>
-        {/* Sized to the page-header tier, matching New Analysis on
-            Investments and Add Compensation on Compensation: px-4 and 14px,
-            not px-3 and 13px. It stays an outline button rather than a filled
-            accent one on purpose. Those two create a record; this one only
-            changes a layout preference, and promoting it to the same weight
-            would put two competing primaries in the header language.
-            `control-border` is also deliberate over the more common
-            `border-border`: see the note above .control-border in
-            src/index.css. A control's own edge has to reach 3:1, and
-            e2e/desktop-guards.spec.ts enforces exactly that on this button. */}
-        <button
-          type="button"
-          onClick={() => setCustomizeOpen(true)}
-          /* shrink-0: at 320px the header's flex row squeezed this to a 76px
-             box for an 81px label, so it rendered against the screen edge with
-             its right padding eaten. The heading beside it wraps instead. */
-          className="shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-[14px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
-        >
-          Customize
-        </button>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="All your accounts, balances, and trends in one place."
+        className="mb-8"
+        actions={
+          /* Sized to the page-header tier, matching New Analysis on
+              Investments and Add Compensation on Compensation: px-4 and 14px,
+              not px-3 and 13px. It stays an outline button rather than a filled
+              accent one on purpose. Those two create a record; this one only
+              changes a layout preference, and promoting it to the same weight
+              would put two competing primaries in the header language.
+              `control-border` is also deliberate over the more common
+              `border-border`: see the note above .control-border in
+              src/index.css. A control's own edge has to reach 3:1, and
+              e2e/desktop-guards.spec.ts enforces exactly that on this button. */
+          <button
+            type="button"
+            onClick={() => setCustomizeOpen(true)}
+            /* shrink-0: at 320px the header's flex row squeezed this to a 76px
+               box for an 81px label, so it rendered against the screen edge with
+               its right padding eaten. The heading beside it wraps instead. */
+            className="shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-[14px] font-medium border control-border text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+          >
+            Customize
+          </button>
+        }
+        // Quiet, not primary: Customize changes a layout preference, it does
+        // not create anything, which is why the desktop button is an outline.
+        phoneAction={<TopBarAction icon={SlidersHorizontal} label="Customize" tone="quiet" onClick={() => setCustomizeOpen(true)} />}
+      />
 
       <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />
 

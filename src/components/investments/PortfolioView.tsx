@@ -137,7 +137,12 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
       {holdings.length === 0 ? (
         <div className="themed-card rounded-lg p-10">
-          <EmptyState icon={Landmark} message="No holdings yet" hint="Import a broker CSV to see your portfolio with live values." />
+          <EmptyState
+            icon={Landmark}
+            message="No holdings yet"
+            hint="Import a broker CSV to see your portfolio with live values."
+            action={{ label: 'Import holdings', onClick: () => setImportOpen(true) }}
+          />
         </div>
       ) : (
         <>
