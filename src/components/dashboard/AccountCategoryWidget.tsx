@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { WidgetWrapper } from './WidgetWrapper';
 import { useAccountsStore } from '../../store/useAccountsStore';
@@ -6,6 +6,9 @@ import type { AccountType } from '../../store/useAccountsStore';
 import { AddAccountModal } from './AddAccountModal';
 import { EmptyState } from '../ui/EmptyState';
 import { useUndoStore } from '../../store/useUndoStore';
+import { useIsDesktop } from '../../hooks/useMediaQuery';
+import { PHONE_LIST_LIMIT, useShowMore } from '../../hooks/useShowMore';
+import { ShowMoreButton } from '../ui/ShowMoreButton';
 
 interface AccountCategoryWidgetProps {
   title: string;
@@ -37,6 +40,11 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
   const accounts = getAccountsByType(type);
   const total = getTotalByType(type);
 
+  // Rule 4 of docs/mobile-layout-rules.md: see IncomeWidget.
+  const isDesktop = useIsDesktop();
+  const list = useShowMore(accounts, PHONE_LIST_LIMIT, !isDesktop);
+  const listId = useId();
+
   const handleAdd = () => {
     setEditingAccount(null);
     setIsModalOpen(true);
@@ -65,7 +73,10 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
             ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           
-          <div className="flex-1 overflow-y-auto max-h-[150px] pr-2 flex flex-col gap-2">
+          <div
+            id={listId}
+            className={`flex-1 flex flex-col gap-2 ${isDesktop ? 'overflow-y-auto max-h-[150px] pr-2' : ''}`}
+          >
             {accounts.length === 0 ? (
               <EmptyState
                 message="No accounts yet"
@@ -77,7 +88,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
               // real account names need 140px to 220px, so every name was
               // cut mid-word. Stacking name over value on mobile gives the
               // name the full card width; desktop keeps the single row.
-              accounts.map((acc) => (
+              list.visible.map((acc) => (
                 <div
                   key={acc.id}
                   data-testid={`account-row-${acc.id}`}
@@ -139,6 +150,9 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
               ))
             )}
           </div>
+          {list.truncates && (
+            <ShowMoreButton total={accounts.length} noun="accounts" expanded={list.expanded} onToggle={list.toggle} controls={listId} />
+          )}
         </div>
       </WidgetWrapper>
 

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { AccountCategoryWidget } from './AccountCategoryWidget'
 import { useAccountsStore } from '../../store/useAccountsStore'
 import { useUndoStore } from '../../store/useUndoStore'
+import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 
 const initialState = useAccountsStore.getState()
 
@@ -111,5 +112,21 @@ describe('AccountCategoryWidget account delete undo', () => {
     expect(restored).toHaveLength(1)
     expect(restored[0].name).toBe('Chequing')
     expect(restored[0].value).toBe(2500)
+  })
+})
+
+describe('AccountCategoryWidget list on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('shows five accounts and a Show all button instead of a scroll area', () => {
+    setMatchMedia(false)
+    useAccountsStore.setState({
+      accounts: Array.from({ length: 7 }, (_, i) => ({ id: `a${i}`, name: `Account ${i}`, value: 100 * (i + 1), type: 'bank' as const })),
+    })
+    const { container } = render(<AccountCategoryWidget title="Bank" type="bank" />)
+    expect(container.querySelectorAll('[data-testid^="account-row-"]')).toHaveLength(5)
+    expect(container.querySelector('.max-h-\\[150px\\]')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 7 accounts' }))
+    expect(container.querySelectorAll('[data-testid^="account-row-"]')).toHaveLength(7)
   })
 })

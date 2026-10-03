@@ -371,3 +371,25 @@ for (const [name, hash] of KEY_FIGURE_ROUTES) {
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 60)
   })
 }
+
+// Rule 4 of docs/mobile-layout-rules.md: on a phone no list scrolls inside
+// the page. seedApp's eight income sources and eight expense groups are what
+// made the Income and Expenses cards scroll inside the page before.
+for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as const) {
+  test(`${name} has no list that scrolls inside the page`, async ({ page }) => {
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const nested = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => {
+          const cs = getComputedStyle(el)
+          return /(auto|scroll)/.test(cs.overflowY) &&
+            el.getBoundingClientRect().height > 0 &&
+            el.scrollHeight > el.clientHeight + 1
+        })
+        .map((el) => (el.getAttribute('aria-label') || el.className.toString()).slice(0, 60)),
+    )
+    expect(nested).toEqual([])
+  })
+}
