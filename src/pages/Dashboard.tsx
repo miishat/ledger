@@ -92,6 +92,13 @@ export const Dashboard: React.FC = () => {
   // widget's position survives instead of being dropped from saved layout.
   const visibleWidgets = resolvedWidgets.filter((w) => !hidden.includes(w.id));
 
+  // Rule 3 of docs/mobile-layout-rules.md: on a phone the net worth figure
+  // leads, whatever the saved order says. The saved order still decides
+  // everything after it, and desktop is untouched.
+  const placedWidgets = isDesktop
+    ? visibleWidgets
+    : [...visibleWidgets.filter((w) => w.id === 'trend'), ...visibleWidgets.filter((w) => w.id !== 'trend')];
+
   return (
     <div className="min-h-full w-full">
       <PageHeader
@@ -128,10 +135,11 @@ export const Dashboard: React.FC = () => {
       <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />
 
       <BentoGrid>
-        {visibleWidgets.map(({ id, element }) => {
+        {placedWidgets.map(({ id, element }) => {
           return (
             <div
               key={id}
+              data-widget-id={id}
               draggable={isDesktop}
               onDragStart={isDesktop ? () => setDragId(id) : undefined}
               onDragOver={isDesktop ? (e) => e.preventDefault() : undefined}

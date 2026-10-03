@@ -81,7 +81,7 @@ export const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ rows, rates,
               already use for a large money headline; at 183px it leaves 24px
               of genuine headroom for eleven characters and still clears an
               unlikely twelve character figure ($123,384,200) by 8px. */}
-          <p className="text-[28px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
+          <p data-key-figure className="text-[28px] wide:text-[44px] font-semibold text-text-primary tabular-nums leading-none mt-2">
             {formatMoney(totals.valueCad)}
           </p>
           <p className={`text-[14px] font-medium tabular-nums mt-3 ${up ? 'text-accent' : 'text-error'}`}>

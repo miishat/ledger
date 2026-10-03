@@ -297,7 +297,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[24px] font-semibold text-[var(--color-text-primary)]">
+              <span data-key-figure className="text-[24px] font-semibold text-[var(--color-text-primary)]">
                 {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(showAfterTax ? takeHome.net : totalComp)}
               </span>
               <span className="text-[12px] text-[var(--color-text-secondary)]">

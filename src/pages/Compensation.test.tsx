@@ -95,3 +95,22 @@ describe('Compensation empty state', () => {
     expect(screen.getAllByRole('button', { name: 'Add Compensation Package' })).toHaveLength(2)
   })
 })
+
+describe('Compensation key figure on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('puts the price and currency toolbar after the total on a phone', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const refresh = screen.getByRole('button', { name: /refresh price/i })
+    expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('keeps the toolbar above the total on desktop', () => {
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const refresh = screen.getByRole('button', { name: /refresh price/i })
+    expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+  })
+})

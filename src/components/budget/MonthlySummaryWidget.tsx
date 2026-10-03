@@ -79,7 +79,7 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ rang
 
         <div className="flex justify-between items-end mt-auto">
           <span className="text-sm font-medium text-text-secondary">Net Change</span>
-          <span className={`text-[20px] font-bold ${isPositive ? 'text-accent' : 'text-error'}`}>
+          <span data-key-figure className={`text-[20px] font-bold ${isPositive ? 'text-accent' : 'text-error'}`}>
             {isPositive ? '+' : '-'}{formatMoney(Math.abs(netChange))}
           </span>
         </div>

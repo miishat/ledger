@@ -41,3 +41,20 @@ describe('Dashboard header on a phone', () => {
     expect(screen.queryByText('All your accounts, balances, and trends in one place.')).toBeNull()
   })
 })
+
+describe('Dashboard key figure on a phone', () => {
+  it('puts the net worth figure first on a phone, whatever the saved order', () => {
+    setMatchMedia(false)
+    useDashboardLayoutStore.setState({ order: [], hidden: [] })
+    const { container } = render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    const ids = [...container.querySelectorAll('[data-widget-id]')].map((el) => el.getAttribute('data-widget-id'))
+    expect(ids[0]).toBe('trend')
+  })
+
+  it('keeps the saved order on desktop', () => {
+    useDashboardLayoutStore.setState({ order: [], hidden: [] })
+    const { container } = render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    const ids = [...container.querySelectorAll('[data-widget-id]')].map((el) => el.getAttribute('data-widget-id'))
+    expect(ids[0]).toBe('net-worth')
+  })
+})

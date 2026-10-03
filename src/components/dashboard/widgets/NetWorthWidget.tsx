@@ -27,7 +27,7 @@ export const NetWorthWidget: React.FC = () => {
   return (
     <WidgetWrapper title="Net Worth" className="col-span-1 md:col-span-2 lg:col-span-1">
       <div className="flex flex-col justify-center h-full pt-4">
-        <div className="text-[36px] font-bold leading-[1.1] text-text-primary mb-2">
+        <div data-key-figure className="text-[36px] font-bold leading-[1.1] text-text-primary mb-2">
           <AnimatedNumber
             value={netWorth}
             format={(n) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}

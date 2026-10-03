@@ -170,7 +170,11 @@ export const Budgeting: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <IncomeWidget range={range} />
             <ExpenseWidget range={range} />
-            <MonthlySummaryWidget range={range} />
+            {/* Rule 3: on a phone the period's net change leads the page.
+                CSS order, so desktop keeps its three columns as they were. */}
+            <div className="order-first md:order-none min-w-0">
+              <MonthlySummaryWidget range={range} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

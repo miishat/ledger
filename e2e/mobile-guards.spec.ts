@@ -345,3 +345,29 @@ test('a planner tool keeps the brand in the top bar', async ({ page }) => {
   await expect(bar.locator('[data-topbar-brand]')).toBeVisible()
   await expect(bar.getByTestId('topbar-title')).toHaveCount(0)
 })
+
+// Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key
+// number, and on a portrait phone it is on the first screen without
+// scrolling. The bottom 60px are the tab bar and its margin. seedApp is the
+// realistic dataset the desktop guards use; its init script runs after this
+// file's beforeEach, so its stores win.
+const KEY_FIGURE_ROUTES = [
+  ['dashboard', ''],
+  ['budgeting', '#/budget'],
+  ['investments', '#/investments?tab=portfolio'],
+  ['compensation', '#/compensation'],
+] as const
+
+for (const [name, hash] of KEY_FIGURE_ROUTES) {
+  test(`${name} shows its key figure in the first screen`, async ({ page }) => {
+    const viewport = page.viewportSize()!
+    test.skip(viewport.height < 600, 'Landscape phones are scroll-first; rule 3 is for portrait.')
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const figure = page.locator('[data-key-figure]').first()
+    await expect(figure).toBeVisible()
+    const box = (await figure.boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 60)
+  })
+}
