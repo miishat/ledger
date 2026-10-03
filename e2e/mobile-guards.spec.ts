@@ -378,6 +378,14 @@ test('the search sheet has no esc hint, close button or scrollbar and keeps its 
   await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
   await expect(cue).toHaveCount(0)
   await expect(input).toBeInViewport()
+  // The header scrolls away now, so the input pins to the very top of the panel.
+  await expect
+    .poll(() =>
+      panel.evaluate((el) => {
+        const row = el.querySelector('input')!.parentElement!
+        return Math.round(row.getBoundingClientRect().top - el.getBoundingClientRect().top)
+      }))
+    .toBeLessThanOrEqual(1)
 
   await input.fill('budget')
   await expect(panel.getByRole('option').first()).toBeVisible()
@@ -510,6 +518,66 @@ test('the planner tool sheet has no close row or scrollbar and cues more below',
 
   await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
   await expect(panel).toBeHidden()
+})
+
+// Phone sheet headers are calm: no title row stays pinned while the content scrolls, the
+// Settings sheet has no visible title, and the first content sits 24px or more under the
+// drag handle (it was 4px).
+test('phone sheet headers scroll away and leave room under the handle', async ({ page }) => {
+  const gaps: Record<string, number> = {}
+  const handleGap = (panel: import('@playwright/test').Locator) =>
+    panel.evaluate((el) => {
+      const handle = el.querySelector('span.absolute')!.getBoundingClientRect()
+      const header = el.querySelector('[data-testid=sheet-header]')!
+      // Skip the desktop-only header that stays display:none on a phone.
+      const first = [...(header.nextElementSibling as HTMLElement).children].find((c) => c.getBoundingClientRect().height > 0)!
+      const firstTop = first.getBoundingClientRect().top
+      // A titled sheet's title is the first content under the handle.
+      const title = header.querySelector('h2')
+      const top = title ? title.getBoundingClientRect().top : firstTop
+      return Math.round(top - handle.bottom)
+    })
+
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByTestId('mobile-topbar').getByRole('button', { name: /Mortgage/ }).click()
+  let panel = page.getByTestId('sheet-panel')
+  await expect(panel.getByRole('menuitem').first()).toBeVisible()
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.toolSwitcher = await handleGap(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.aboutTool = await handleGap(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('heading', { name: 'Settings', exact: true })).toBeHidden()
+  await expect(panel).toHaveAttribute('aria-label', 'Settings')
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.settings = await handleGap(panel)
+  // Not pinned: after scrolling down, the header has left the top of the panel.
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect
+    .poll(() => panel.evaluate((el) => el.querySelector('[data-testid=sheet-header]')!.getBoundingClientRect().bottom <= el.getBoundingClientRect().top))
+    .toBe(true)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.keyboard.press('?')
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel.getByRole('heading', { name: 'Keyboard shortcuts' })).toBeVisible()
+  // Titled sheets gained 12px (4 to 16) so the title is clear of the handle.
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(16)
+  gaps.shortcuts = await handleGap(panel)
+  test.info().annotations.push({ type: 'handle-to-first-content-px', description: JSON.stringify(gaps) })
 })
 
 // Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key

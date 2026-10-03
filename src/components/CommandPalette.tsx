@@ -47,7 +47,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       scrollCue
       panelClassName="themed-card rounded-lg w-full max-w-lg mt-[-6vh]"
     >
-      <div className={`flex items-center gap-2 px-4 py-3 border-b border-border${isDesktop ? '' : ' sticky top-4 z-10 bg-[var(--dropdown-bg)]'}`}>
+      <div className={`flex items-center gap-2 px-4 py-3 border-b border-border${isDesktop ? '' : ' sticky top-0 z-10 bg-[var(--dropdown-bg)]'}`}>
         <Search className="w-4 h-4 text-text-secondary" />
         <input
           className="flex-1 bg-transparent text-text-primary text-[15px] placeholder:text-text-secondary"

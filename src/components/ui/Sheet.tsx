@@ -328,7 +328,10 @@ export const Sheet: React.FC<SheetProps> = ({
           onPointerUp={onPointerUp}
           onScroll={scrollCue ? updateMoreBelow : undefined}
         >
-          <div className={`sticky top-0 z-10 flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-4 pb-2' : 'pt-4 pb-0'}`}>
+          {/* Not sticky: a pinned title row costs phone screen height all the way down a long
+              sheet, so it scrolls away with the content. The extra padding keeps the first
+              content clear of the drag handle (about 24px handle-only). */}
+          <div data-testid="sheet-header" className={`relative flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-7 pb-2' : 'pt-4 pb-5'}`}>
             <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
             {title != null && (
               <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>

@@ -180,6 +180,33 @@ describe('Sheet mobile header ownership', () => {
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
     expect(screen.getByRole('heading', { name: 'Add account' })).toBeInTheDocument()
   })
+
+  it('does not pin the header row, so a long sheet scrolls it away', () => {
+    setMatchMedia(false)
+    render(
+      <Sheet open onClose={() => {}} title="Add account">
+        <div>body</div>
+      </Sheet>,
+    )
+    expect(screen.getByTestId('sheet-header').className).not.toMatch(/sticky/)
+  })
+
+  it('leaves room under the drag handle: more padding than the old 16px top / 0 bottom', () => {
+    setMatchMedia(false)
+    const { unmount } = render(
+      <Sheet open onClose={() => {}} ariaLabel="x">
+        <div>body</div>
+      </Sheet>,
+    )
+    expect(screen.getByTestId('sheet-header').className).toMatch(/pb-5/)
+    unmount()
+    render(
+      <Sheet open onClose={() => {}} title="T">
+        <div>body</div>
+      </Sheet>,
+    )
+    expect(screen.getByTestId('sheet-header').className).toMatch(/pt-7/)
+  })
 })
 
 describe('Sheet mobile panel isolation', () => {

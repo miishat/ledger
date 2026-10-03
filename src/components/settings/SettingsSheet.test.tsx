@@ -82,6 +82,13 @@ describe('SettingsSheet phone layout', () => {
     expect(save.className).toMatch(/disabled:opacity-70/)
   })
 
+  it('has no visible phone title but keeps its accessible name', () => {
+    render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
+    // The desktop-only heading stays in the DOM (hidden by CSS); the phone header has none.
+    expect(screen.getByTestId('sheet-header').querySelector('h2')).toBeNull()
+    expect(screen.getByRole('dialog', { name: 'Settings' })).toBeInTheDocument()
+  })
+
   it('every section leads with a one-line description on phones, none on desktop', () => {
     const { unmount } = render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     expect(screen.getByText('Pick a theme for the whole app.')).toBeInTheDocument()

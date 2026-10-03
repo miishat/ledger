@@ -127,7 +127,6 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
     onClose={onClose}
     desktop="modal"
     ariaLabel="Settings"
-    title={<><Settings className="w-5 h-5 text-accent" aria-hidden="true" /> Settings</>}
     panelClassName="themed-menu desktop:rounded-lg w-full max-w-md desktop:p-5 desktop:max-h-[85dvh] desktop:overflow-y-auto"
     contentClassName="flex flex-col gap-3"
   >
