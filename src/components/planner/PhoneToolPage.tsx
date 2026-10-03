@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Info } from 'lucide-react'
 import type { PlannerTool } from './toolRegistry'
 import { ToolInfoSheet } from './ToolInfoButton'
@@ -14,17 +14,31 @@ export const PhoneToolPage: React.FC<{ tool: PlannerTool; children: React.ReactN
   const [infoOpen, setInfoOpen] = useState(false)
   const [noticeVisible, setNoticeVisible] = useState(() => !hasSeenToolIntro(tool.id))
 
+  const aboutRef = useRef<HTMLButtonElement>(null)
+  // The notice's own buttons unmount when it goes, which would leave focus on <main> or
+  // <body>. The bottom button is always present, so focus moves there once the notice is gone.
+  const refocusAbout = useRef(false)
+  useEffect(() => {
+    if (refocusAbout.current && !noticeVisible && !infoOpen) {
+      refocusAbout.current = false
+      aboutRef.current?.focus()
+    }
+  }, [noticeVisible, infoOpen])
+
   const openInfo = () => {
     markToolIntroSeen(tool.id)
     setInfoOpen(true)
   }
-  // The notice leaves only once the sheet is gone, so focus returns to a live button.
+  // The notice leaves only once the sheet is gone, so the sheet's own focus restore never
+  // lands on a button that is about to unmount.
   const closeInfo = () => {
+    if (noticeVisible) refocusAbout.current = true
     setInfoOpen(false)
     setNoticeVisible(false)
   }
   const dismiss = () => {
     markToolIntroSeen(tool.id)
+    refocusAbout.current = true
     setNoticeVisible(false)
   }
 
@@ -57,6 +71,7 @@ export const PhoneToolPage: React.FC<{ tool: PlannerTool; children: React.ReactN
       {children}
       <div className="flex justify-center pt-4">
         <button
+          ref={aboutRef}
           type="button"
           onClick={openInfo}
           className={`mx-auto flex items-center justify-center gap-2 min-h-[44px] px-3 text-[14px] text-accent rounded ${FOCUS}`}

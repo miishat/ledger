@@ -5,6 +5,16 @@ import { setMatchMedia, resetMatchMedia } from '../../test-utils/matchMedia'
 
 beforeEach(() => resetMatchMedia())
 
+// Phone sheets carry no visible X. Every Close button left in the tree must be the screen
+// reader one, which is sr-only until focused. (jsdom has no stylesheet, so the class stands
+// in for the size check the e2e does for real.)
+function expectNoVisibleClose() {
+  for (const btn of screen.queryAllByRole('button', { name: 'Close' })) {
+    expect(btn).toHaveAttribute('data-sheet-hidden-close')
+    expect(btn.className.split(' ')).toContain('sr-only')
+  }
+}
+
 describe('Sheet', () => {
   it('renders nothing when closed', () => {
     const { queryByTestId } = render(
@@ -47,16 +57,116 @@ describe('Sheet', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('shows no Close button on mobile, and scrim and Escape still dismiss', () => {
+  it('shows no visible Close button on mobile, and scrim and Escape still dismiss', () => {
     setMatchMedia(false) // mobile
     const onClose = vi.fn()
     const { queryByLabelText, getByTestId } = render(
       <Sheet open onClose={onClose} ariaLabel="x">c</Sheet>
     )
-    expect(queryByLabelText('Close')).toBeNull()
+    // The only Close is the screen reader one: sr-only until focused. jsdom loads no
+    // stylesheet, so the class contract stands in for the e2e's real size check.
+    const hidden = queryByLabelText('Close')!
+    expect(hidden).toHaveAttribute('data-sheet-hidden-close')
+    expect(hidden.className.split(' ')).toContain('sr-only')
+    expect(hidden.className.split(' ')).toContain('focus:not-sr-only')
+    expect(hidden.className.split(' ')).toContain('focus:min-h-[44px]')
     fireEvent.click(getByTestId('sheet-scrim'))
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(2)
+  })
+
+  it('the hidden phone Close button is the first focusable, closes the sheet, and is not focused on open', () => {
+    setMatchMedia(false) // mobile
+    const onClose = vi.fn()
+    const { getByTestId, getByLabelText } = render(
+      <Sheet open onClose={onClose} ariaLabel="x">
+        <button>content</button>
+      </Sheet>
+    )
+    const panel = getByTestId('sheet-panel')
+    const close = getByLabelText('Close')
+    const first = panel.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    expect(first).toBe(close)
+    expect(document.activeElement).not.toBe(close)
+    expect(document.activeElement).toBe(screen.getByText('content'))
+    fireEvent.click(close)
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('renders the always-visible X, and not the hidden one, when showClose is true', () => {
+    setMatchMedia(false) // mobile
+    const { getAllByLabelText } = render(
+      <Sheet open onClose={() => {}} showClose ariaLabel="x">c</Sheet>
+    )
+    const closes = getAllByLabelText('Close')
+    expect(closes).toHaveLength(1)
+    expect(closes[0]).not.toHaveAttribute('data-sheet-hidden-close')
+    expect(closes[0].className).not.toMatch(/sr-only/)
+  })
+
+  it('focuses the first visible control on open, skipping display:none ones', () => {
+    setMatchMedia(false) // mobile
+    render(
+      <Sheet open onClose={() => {}} ariaLabel="x">
+        <button style={{ display: 'none' }}>desktop only</button>
+        <div style={{ display: 'none' }}>
+          <button>inside hidden parent</button>
+        </div>
+        <button>visible</button>
+      </Sheet>
+    )
+    expect(document.activeElement).toBe(screen.getByText('visible'))
+  })
+
+  it('moves focus into a sheet that was closed and then opened, once it has mounted', () => {
+    setMatchMedia(false) // mobile
+    const ui = (open: boolean) => (
+      <Sheet open={open} onClose={() => {}} ariaLabel="x">
+        <button>visible</button>
+      </Sheet>
+    )
+    const { rerender } = render(ui(false))
+    rerender(ui(true))
+    expect(document.activeElement).toBe(screen.getByText('visible'))
+  })
+
+  it('focuses the panel when no control is visible', () => {
+    setMatchMedia(false) // mobile
+    const { getByTestId } = render(
+      <Sheet open onClose={() => {}} dismissible={false} ariaLabel="x">
+        <button style={{ display: 'none' }}>desktop only</button>
+      </Sheet>
+    )
+    expect(document.activeElement).toBe(getByTestId('sheet-panel'))
+  })
+
+  it('does not focus a text field on open on a phone', () => {
+    setMatchMedia(false) // mobile
+    render(
+      <Sheet open onClose={() => {}} ariaLabel="x">
+        <input aria-label="amount" />
+        <button>save</button>
+      </Sheet>
+    )
+    expect(document.activeElement).toBe(screen.getByText('save'))
+  })
+
+  it('the Tab trap cycles over visible controls only', () => {
+    setMatchMedia(false) // mobile
+    const { getByTestId } = render(
+      <Sheet open onClose={() => {}} dismissible={false} ariaLabel="x">
+        <button>first</button>
+        <button>last</button>
+        <button style={{ display: 'none' }}>hidden tail</button>
+      </Sheet>
+    )
+    const panel = getByTestId('sheet-panel')
+    screen.getByText('last').focus()
+    fireEvent.keyDown(panel, { key: 'Tab' })
+    expect(document.activeElement).toBe(screen.getByText('first'))
+    screen.getByText('first').focus()
+    fireEvent.keyDown(panel, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(screen.getByText('last'))
   })
 
   it('locks body scroll while open', () => {
@@ -66,11 +176,11 @@ describe('Sheet', () => {
     expect(document.body.style.overflow).toBe('')
   })
 
-  it('does not render a mobile Close button when dismissible=false', () => {
+  it('does not render any mobile Close button when dismissible=false, even with showClose', () => {
     setMatchMedia(false) // mobile
     const onClose = vi.fn()
     const { queryByLabelText } = render(
-      <Sheet open onClose={onClose} dismissible={false} ariaLabel="x">c</Sheet>
+      <Sheet open onClose={onClose} dismissible={false} showClose ariaLabel="x">c</Sheet>
     )
     expect(queryByLabelText('Close')).toBeNull()
   })
@@ -177,7 +287,7 @@ describe('Sheet mobile header ownership', () => {
         <div>body</div>
       </Sheet>,
     )
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+    expectNoVisibleClose()
     expect(screen.getByRole('heading', { name: 'Add account' })).toBeInTheDocument()
   })
 
@@ -272,7 +382,7 @@ describe('Sheet mobile panel isolation', () => {
     it('drops the Close button by default on mobile', () => {
       setMatchMedia(false)
       render(<Sheet open onClose={() => {}} ariaLabel="x">c</Sheet>)
-      expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+      expectNoVisibleClose()
     })
 
     it('showClose is an explicit opt-in that renders the Close button', () => {
@@ -287,7 +397,7 @@ describe('Sheet mobile panel isolation', () => {
       setMatchMedia(false)
       const onClose = vi.fn()
       render(<Sheet open onClose={onClose} showClose={false} ariaLabel="x">c</Sheet>)
-      expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+      expectNoVisibleClose()
       fireEvent.click(screen.getByTestId('sheet-scrim'))
       fireEvent.keyDown(window, { key: 'Escape' })
       expect(onClose).toHaveBeenCalledTimes(2)
@@ -344,6 +454,21 @@ describe('Sheet mobile panel isolation', () => {
 
       setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 0 })
       fireEvent.scroll(panel)
+      expect(screen.queryByTestId('sheet-top-fade')).toBeNull()
+    })
+
+    it('a sheet closed while scrolled reopens without the stale top fade', () => {
+      setMatchMedia(false)
+      const ui = (open: boolean) => (
+        <Sheet open={open} onClose={() => {}} ariaLabel="x">c</Sheet>
+      )
+      const { rerender } = render(ui(true))
+      const panel = screen.getByTestId('sheet-panel')
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 120 })
+      fireEvent.scroll(panel)
+      expect(screen.getByTestId('sheet-top-fade')).toBeInTheDocument()
+      rerender(ui(false))
+      rerender(ui(true))
       expect(screen.queryByTestId('sheet-top-fade')).toBeNull()
     })
 

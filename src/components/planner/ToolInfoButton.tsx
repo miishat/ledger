@@ -33,7 +33,7 @@ export const ToolInfoSheet: React.FC<{
   </Sheet>
 )
 
-/** Desktop: the info icon beside the tool title. Phones use ToolIntro instead. */
+/** Desktop: the info icon beside the tool title. Phones use PhoneToolPage instead. */
 export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)

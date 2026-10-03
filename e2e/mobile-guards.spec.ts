@@ -73,6 +73,21 @@ for (const [name, hash] of ROUTES) {
 // 10 of 31 controls under that on the dashboard alone, and 21 of 34 on the
 // transaction list. Anything that genuinely must stay smaller opts out with
 // the .tap-exempt class, and the exemption is visible in this failure list.
+// Phone sheets carry no visible X. The only Close button left is the screen reader one, which
+// is clipped to a pixel until it takes keyboard focus.
+async function expectNoVisibleClose(panel: import('@playwright/test').Locator) {
+  await expect
+    .poll(() =>
+      panel.getByRole('button', { name: 'Close' }).evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return r.width <= 1 && r.height <= 1
+        })
+      )
+    )
+    .not.toContain(false)
+}
+
 const TAP_SELECTOR =
   'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="tab"], [role="switch"]'
 
@@ -299,9 +314,12 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
 
   const actions = ['Save client ID', 'Load demo data', 'Enable reminders', 'Export data', 'Import backup', 'Save']
   for (const name of actions) {
-    const target = panel.getByRole('button', { name, exact: true })
-    // Import backup is a label wrapping a file input, not a button.
-    if (name === 'Import backup') continue
+    // Import backup is a label wrapping a file input, not a button, and wraps to two lines
+    // at 320px, so measure the label's own box like the others.
+    const target =
+      name === 'Import backup'
+        ? panel.locator('label', { hasText: 'Import backup' })
+        : panel.getByRole('button', { name, exact: true })
     await expect(target).toBeVisible()
     const box = (await target.boundingBox())!
     expect(box.height, name + ' height').toBeGreaterThanOrEqual(44)
@@ -326,14 +344,72 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
   expect(overflow.clipped).toEqual([])
 })
 
-// Phone sheets carry no X: they dismiss by swipe, scrim tap and Escape.
-test('phone sheets show no Close button and still dismiss on Escape and scrim', async ({ page }) => {
+// Callers keep desktop-only header buttons in the DOM as display:none on a phone. Focus must
+// skip them: it enters the sheet on open and Tab and Shift+Tab never leave the panel.
+const insidePanel = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => !!document.activeElement?.closest('[data-testid="sheet-panel"]'))
+
+for (const [label, open] of [
+  ['Settings', async (page: import('@playwright/test').Page) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  }],
+  ['Add Transaction', async (page: import('@playwright/test').Page) => {
+    await seedApp(page)
+    await page.goto('/#/budget')
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  }],
+] as const) {
+  test(`phone focus: ${label} sheet takes focus on open and Tab stays inside it`, async ({ page }) => {
+    await open(page)
+    await expect(page.getByTestId('sheet-panel')).toBeVisible()
+    await expect.poll(() => insidePanel(page)).toBe(true)
+    // The hidden Close button must not be what opens focused, or it would flash into view.
+    await expect(page.getByTestId('sheet-panel').locator('[data-sheet-hidden-close]')).not.toBeFocused()
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press('Tab')
+      expect(await insidePanel(page), 'Tab ' + i).toBe(true)
+    }
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press('Shift+Tab')
+      expect(await insidePanel(page), 'Shift+Tab ' + i).toBe(true)
+    }
+  })
+}
+
+test('phone sheets give keyboard users a close button that shows on focus only', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  const close = panel.getByRole('button', { name: 'Close' })
+  await expect(close).toHaveCount(1)
+  await expectNoVisibleClose(panel)
+  await expect.poll(() => insidePanel(page)).toBe(true)
+  await expect(close).not.toBeFocused()
+  // Shift+Tab from the first control reaches it, since it is the first focusable in the sheet.
+  await page.keyboard.press('Shift+Tab')
+  await expect(close).toBeFocused()
+  await expect.poll(async () => (await close.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+  expect((await close.boundingBox())!.width).toBeGreaterThanOrEqual(44)
+  // The app's global :focus-visible rule draws the ring as a 2px outline.
+  await expect(close).toHaveCSS('outline-style', 'solid')
+  await expect(close).toHaveCSS('outline-width', '2px')
+  await page.keyboard.press('Enter')
+  await expect(panel).toHaveCount(0)
+})
+
+// Phone sheets carry no visible X: they dismiss by swipe, scrim tap and Escape.
+test('phone sheets show no visible Close button and still dismiss on Escape and scrim', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   const panel = page.getByTestId('sheet-panel')
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
   await expect(panel).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await expectNoVisibleClose(panel)
   await page.keyboard.press('Escape')
   await expect(panel).toHaveCount(0)
 
@@ -346,7 +422,7 @@ test('phone sheets show no Close button and still dismiss on Escape and scrim', 
   // First visit shows the notice and the bottom button; either opens the same sheet.
   await page.getByRole('button', { name: 'About this tool' }).first().click()
   await expect(panel).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await expectNoVisibleClose(panel)
   await page.keyboard.press('Escape')
   await expect(panel).toHaveCount(0)
 })
@@ -361,14 +437,14 @@ test('search is reachable without a keyboard', async ({ page }) => {
 // The search sheet spends its height on results: no esc hint, no Close button,
 // no scrollbar, a bottom fade while more results lie below, and the input stays
 // reachable while the list scrolls.
-test('the search sheet has no esc hint, close button or scrollbar and keeps its input', async ({ page }) => {
+test('the search sheet has no esc hint, visible close button or scrollbar and keeps its input', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
   const panel = page.getByTestId('sheet-panel')
   const input = page.getByPlaceholder('Jump to a page or tool…')
   await expect(input).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await expectNoVisibleClose(panel)
   await expect(panel.getByText('esc', { exact: true })).toHaveCount(0)
   await expect
     .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
@@ -509,6 +585,8 @@ test('about this tool: first-visit notice, then a centred button after the resul
   await expect(notice).toBeVisible()
   await page.getByRole('button', { name: 'Got it' }).click()
   await expect(notice).toHaveCount(0)
+  // The notice's own buttons are gone, so focus must land on the bottom button, not <body>.
+  await expect(page.getByRole('button', { name: 'About this tool' })).toBeFocused()
 
   await page.reload()
   await page.waitForLoadState('networkidle')
@@ -549,15 +627,30 @@ test('about this tool: first-visit notice, then a centred button after the resul
   await expect(panel).toHaveCount(0)
 })
 
+// Opening the info from the first-visit notice and closing it must not drop focus on <main>.
+test('about this tool: focus returns to the bottom button after the notice path closes', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  const bottom = page.getByRole('button', { name: 'About this tool' })
+  await expect(bottom).toHaveCount(1)
+  await expect(bottom).toBeFocused()
+})
+
 // The planner tool switcher sheet spends its height on tools: no Close row, no
 // scrollbar, and a bottom fade while more tools lie below.
-test('the planner tool sheet has no close row or scrollbar and cues more below', async ({ page }) => {
+test('the planner tool sheet has no visible close row or scrollbar and cues more below', async ({ page }) => {
   await page.goto('/#/planner/mortgage')
   await page.waitForLoadState('networkidle')
   await page.getByTestId('mobile-topbar').getByRole('button', { name: /Mortgage/ }).click()
   const panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await expectNoVisibleClose(panel)
 
   await expect
     .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))

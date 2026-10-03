@@ -168,6 +168,40 @@ describe('PlannerTool about-this-tool on a phone', () => {
   })
 })
 
+describe('PlannerTool about-this-tool focus on a phone', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetToolIntroMemory()
+    setMatchMedia(false)
+  })
+  afterEach(() => resetMatchMedia())
+
+  const bottomButton = () => {
+    const all = screen.getAllByRole('button', { name: 'About this tool' })
+    return all[all.length - 1]
+  }
+
+  it('moves focus to the bottom button after Got it', () => {
+    renderTool(null)
+    const gotIt = screen.getByRole('button', { name: 'Got it' })
+    gotIt.focus()
+    fireEvent.click(gotIt)
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
+    expect(document.activeElement).toBe(bottomButton())
+  })
+
+  it('moves focus to the bottom button after the info sheet opened from the notice closes', async () => {
+    renderTool(null)
+    const fromNotice = screen.getAllByRole('button', { name: 'About this tool' })[0]
+    fromNotice.focus()
+    fireEvent.click(fromNotice)
+    expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
+    expect(document.activeElement).toBe(bottomButton())
+  })
+})
+
 describe('PlannerTool about-this-tool on desktop', () => {
   it('has no notice and no bottom button', () => {
     localStorage.clear()

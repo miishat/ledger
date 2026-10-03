@@ -20,10 +20,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const results = filterActions(actions, query)
   const clampedSelected = Math.min(selected, Math.max(0, results.length - 1))
 
-  // Keep the active result visible while arrowing through a scrolling list.
+  // Keep the active result visible while arrowing through a scrolling list. Phone only: the
+  // desktop palette is left exactly as it was.
   useEffect(() => {
+    if (isDesktop) return
     listRef.current?.children[clampedSelected]?.scrollIntoView?.({ block: 'nearest' })
-  }, [clampedSelected])
+  }, [clampedSelected, isDesktop])
 
   const run = (path: string) => {
     navigate(path)
@@ -65,7 +67,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       <ul ref={listRef} className={isDesktop ? 'max-h-[40vh] overflow-y-auto py-1' : 'py-1'} role="listbox">
         {results.length === 0 && <li className="px-4 py-3 text-[13px] text-text-secondary">No matches.</li>}
         {results.map((a, i) => (
-          <li key={a.id} role="option" aria-selected={i === clampedSelected} className="scroll-mt-20 scroll-mb-12">
+          <li key={a.id} role="option" aria-selected={i === clampedSelected} className={isDesktop ? undefined : 'scroll-mt-20 scroll-mb-12'}>
             <button
               onClick={() => run(a.path)}
               onMouseEnter={() => setSelected(i)}

@@ -60,7 +60,7 @@ describe('ToolSwitcher', () => {
     await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
 
-  it('has no Close row in the phone sheet', () => {
+  it('has no visible Close row in the phone sheet', () => {
     setMatchMedia(false)
     const current = getTool('mortgage')!
     render(
@@ -70,6 +70,9 @@ describe('ToolSwitcher', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: /mortgage/i }))
     expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+    for (const btn of screen.queryAllByRole('button', { name: 'Close' })) {
+      expect(btn).toHaveAttribute('data-sheet-hidden-close')
+      expect(btn.className.split(' ')).toContain('sr-only')
+    }
   })
 })

@@ -89,7 +89,7 @@ describe('CompensationModal scrim dismissal', () => {
 describe('CompensationModal mobile header (no double close)', () => {
   afterEach(() => resetMatchMedia())
 
-  it('shows no sheet close control on mobile and hides its own header there', () => {
+  it('shows no visible sheet close control on mobile and hides its own header there', () => {
     setMatchMedia(false)
     render(<CompensationModal isOpen={true} onClose={() => {}} />)
     // The modal's own header row is desktop-only. Sheet renders via createPortal
@@ -105,6 +105,8 @@ describe('CompensationModal mobile header (no double close)', () => {
     const closeButtons = screen
       .getAllByRole('button', { name: 'Close' })
       .filter((btn) => !ownHeader?.contains(btn))
-    expect(closeButtons).toHaveLength(0)
+    expect(closeButtons).toHaveLength(1)
+    expect(closeButtons.every((btn) => btn.hasAttribute('data-sheet-hidden-close'))).toBe(true)
+    expect(closeButtons.every((btn) => btn.className.split(' ').includes('sr-only'))).toBe(true)
   })
 })

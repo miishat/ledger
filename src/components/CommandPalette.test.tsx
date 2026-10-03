@@ -15,11 +15,14 @@ function renderPalette(onClose = vi.fn()) {
 describe('CommandPalette', () => {
   afterEach(() => resetMatchMedia())
 
-  it('phone: no esc hint, no Close button, and the results list does not scroll itself', () => {
+  it('phone: no esc hint, no visible Close button, and the results list does not scroll itself', () => {
     setMatchMedia(false)
     renderPalette()
     expect(screen.queryByText('esc')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+    for (const btn of screen.queryAllByRole('button', { name: 'Close' })) {
+      expect(btn).toHaveAttribute('data-sheet-hidden-close')
+      expect(btn.className.split(' ')).toContain('sr-only')
+    }
     const list = screen.getByRole('listbox')
     expect(list.className).not.toContain('overflow-y-auto')
     expect(list.className).not.toContain('max-h-')
@@ -40,6 +43,18 @@ describe('CommandPalette', () => {
     renderPalette()
     expect(screen.getByText('esc')).toBeInTheDocument()
     expect(screen.getByRole('listbox').className).toContain('overflow-y-auto')
+  })
+
+  it('desktop: result rows carry no scroll-margin classes', () => {
+    setMatchMedia(true)
+    renderPalette()
+    for (const li of screen.getAllByRole('option')) expect(li.className).toBe('')
+  })
+
+  it('phone: result rows keep scroll margins clear of the pinned search row', () => {
+    setMatchMedia(false)
+    renderPalette()
+    for (const li of screen.getAllByRole('option')) expect(li.className).toContain('scroll-mt-20')
   })
 
   it('renders the search input, focused, when open', () => {
