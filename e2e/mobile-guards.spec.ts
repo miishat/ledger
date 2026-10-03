@@ -343,7 +343,8 @@ test('phone sheets show no Close button and still dismiss on Escape and scrim', 
   await expect(panel).toHaveCount(0)
 
   await page.goto('/#/planner/mortgage')
-  await page.getByRole('button', { name: 'About this tool' }).click()
+  // First visit shows the notice and the bottom button; either opens the same sheet.
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
   await expect(panel).toBeVisible()
   await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
   await page.keyboard.press('Escape')
@@ -465,17 +466,20 @@ test('a planner tool names itself in the top bar and frees the first screen', as
 
   // The in-page breadcrumb and big title are gone, so the form starts high.
   // The old header put the first field 236px below the bar at 375px wide. The
-  // mortgage form opens with two rows of mode toggles of its own (96px) and
-  // the page now leads with a 44px "About this tool" row, so 230px is the
-  // honest ceiling: it fails if the breadcrumb header ever comes back.
+  // mortgage form opens with two rows of mode toggles of its own (96px). The
+  // permanent 44px "About this tool" row is gone: the first visit shows a
+  // dismissible notice, which is measured separately below, and once it is
+  // dismissed the form is 230 minus that row's height or less below the bar.
   await expect(page.getByRole('link', { name: 'Back to Planner' })).toHaveCount(0)
   const barBox = (await bar.boundingBox())!
   const field = page.locator('main input').first()
   await expect(field).toBeVisible()
-  const fieldBox = (await field.boundingBox())!
-  const offset = fieldBox.y - (barBox.y + barBox.height)
-  test.info().annotations.push({ type: 'first-field-offset-below-bar', description: String(Math.round(offset)) })
-  expect(offset).toBeLessThan(230)
+  const withNotice = Math.round((await field.boundingBox())!.y - (barBox.y + barBox.height))
+  await page.getByRole('button', { name: 'Got it' }).click()
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  const offset = (await field.boundingBox())!.y - (barBox.y + barBox.height)
+  test.info().annotations.push({ type: 'first-field-offset-below-bar', description: `dismissed ${Math.round(offset)}, with notice ${withNotice}` })
+  expect(offset).toBeLessThan(190)
 
   await switcher.click()
   await expect(page.getByRole('menuitem', { name: /Debt/ }).first()).toBeVisible()
@@ -484,6 +488,55 @@ test('a planner tool names itself in the top bar and frees the first screen', as
 
   await bar.getByRole('button', { name: 'Back to Planner' }).click()
   await expect(page).toHaveURL(/#\/planner$/)
+})
+
+// "About this tool" shows once per tool as a dismissible notice, then lives after the
+// results: centred, 44px tall, the last interactive element of the page, same sheet.
+test('about this tool: first-visit notice, then a centred button after the results', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  const notice = page.getByText('You can find this again at the bottom of the page, after the results.')
+  await expect(notice).toBeVisible()
+  await page.getByRole('button', { name: 'Got it' }).click()
+  await expect(notice).toHaveCount(0)
+
+  await page.reload()
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('button', { name: 'About this tool' })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  await expect(notice).toHaveCount(0)
+
+  // Another tool still shows its own first-visit notice.
+  await page.goto('/#/planner/savings-goal')
+  await expect(page.getByRole('button', { name: 'Got it' })).toBeVisible()
+  await page.goto('/#/planner/mortgage')
+
+  const bottom = page.getByRole('button', { name: 'About this tool' })
+  await bottom.scrollIntoViewIfNeeded()
+  await expect(bottom).toBeInViewport()
+  const box = (await bottom.boundingBox())!
+  expect(box.height).toBeGreaterThanOrEqual(44)
+  const main = page.locator('main')
+  const mainBox = (await main.boundingBox())!
+  const viewportCentre = mainBox.x + mainBox.width / 2
+  expect(Math.abs(box.x + box.width / 2 - viewportCentre)).toBeLessThanOrEqual(2)
+  test.info().annotations.push({ type: 'bottom-button-centre-delta', description: String(Math.round((box.x + box.width / 2 - viewportCentre) * 10) / 10) })
+
+  // Last interactive element inside <main>.
+  const isLast = await main.evaluate((el) => {
+    const interactive = [...el.querySelectorAll('button, a[href], input, select, textarea, [role=button], [role=tab]')]
+      .filter((n) => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 })
+    const last = interactive[interactive.length - 1]
+    return (last?.textContent || '').trim()
+  })
+  expect(isLast).toBe('About this tool')
+
+  await bottom.click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel).toContainText('Mortgage')
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
 })
 
 // The planner tool switcher sheet spends its height on tools: no Close row, no

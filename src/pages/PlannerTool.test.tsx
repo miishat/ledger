@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PlannerTool } from './PlannerTool'
 import { getTool } from '../components/planner/toolRegistry'
 import { TopBarSlotContext } from '../components/topBarSlot'
 import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
+import { resetToolIntroMemory } from '../utils/toolIntroSeen'
 
 const tool = getTool('mortgage')!
 
@@ -23,6 +24,10 @@ function renderTool(slot: HTMLElement | null) {
 
 describe('PlannerTool header on a phone', () => {
   const slots: HTMLElement[] = []
+  beforeEach(() => {
+    localStorage.clear()
+    resetToolIntroMemory()
+  })
   afterEach(() => {
     resetMatchMedia()
     slots.forEach((el) => el.remove())
@@ -70,11 +75,11 @@ describe('PlannerTool header on a phone', () => {
     expect(within(container).queryByText('/')).toBeNull()
   })
 
-  it('keeps the info content reachable through a labelled row', () => {
+  it('keeps the info content reachable through the first-visit notice button', () => {
     setMatchMedia(false)
     const slot = mountSlot()
     const { container } = renderTool(slot)
-    const info = within(container).getByRole('button', { name: 'About this tool' })
+    const info = within(container).getAllByRole('button', { name: 'About this tool' })[0]
     expect(info.className).toMatch(/min-h-\[44px\]/)
     fireEvent.click(info)
     expect(screen.getByTestId('sheet-panel')).toHaveTextContent(tool.info.howTo)
@@ -100,5 +105,76 @@ describe('PlannerTool header on desktop', () => {
     expect(h1.className).not.toContain('sr-only')
     expect(container.querySelector('header')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'About this tool' })).toBeInTheDocument()
+  })
+})
+
+describe('PlannerTool about-this-tool on a phone', () => {
+  const sentence = 'You can find this again at the bottom of the page, after the results.'
+  beforeEach(() => {
+    localStorage.clear()
+    resetToolIntroMemory()
+    setMatchMedia(false)
+  })
+  afterEach(() => resetMatchMedia())
+
+  it('shows the first-visit notice with the bottom-of-page sentence and Got it', () => {
+    renderTool(null)
+    expect(screen.getByText(sentence)).toBeInTheDocument()
+    const gotIt = screen.getByRole('button', { name: 'Got it' })
+    expect(gotIt.className).toMatch(/min-h-\[44px\]/)
+    expect(screen.getAllByRole('button', { name: 'About this tool' })).toHaveLength(2)
+  })
+
+  it('does not return after Got it, on remount, but still shows for another tool', () => {
+    const first = renderTool(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.queryByText(sentence)).toBeNull()
+    first.unmount()
+    const second = renderTool(null)
+    expect(screen.queryByText(sentence)).toBeNull()
+    second.unmount()
+    render(
+      <MemoryRouter initialEntries={['/planner/savings-goal']}>
+        <Routes>
+          <Route path="/planner/:toolId" element={<PlannerTool />} />
+        </Routes>
+      </MemoryRouter>
+    )
+    expect(screen.getByText(sentence)).toBeInTheDocument()
+  })
+
+  it('opening the info marks the tool as seen', () => {
+    const first = renderTool(null)
+    fireEvent.click(screen.getAllByRole('button', { name: 'About this tool' })[0])
+    expect(screen.getByTestId('sheet-panel')).toHaveTextContent(tool.info.howTo)
+    first.unmount()
+    renderTool(null)
+    expect(screen.queryByText(sentence)).toBeNull()
+  })
+
+  it('always has one centred About this tool button after the results', () => {
+    renderTool(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
+    const buttons = screen.getAllByRole('button', { name: 'About this tool' })
+    expect(buttons).toHaveLength(1)
+    const bottom = buttons[0]
+    expect(bottom.className).toMatch(/min-h-\[44px\]/)
+    expect(bottom.className).toMatch(/text-accent/)
+    expect(bottom.parentElement!.className).toMatch(/justify-center/)
+    const all = Array.from(document.querySelectorAll('button'))
+    expect(all[all.length - 1]).toBe(bottom)
+    fireEvent.click(bottom)
+    expect(screen.getByTestId('sheet-panel')).toHaveTextContent(tool.info.howTo)
+  })
+})
+
+describe('PlannerTool about-this-tool on desktop', () => {
+  it('has no notice and no bottom button', () => {
+    localStorage.clear()
+    resetToolIntroMemory()
+    renderTool(null)
+    expect(screen.queryByText(/bottom of the page/)).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'About this tool' })).toHaveLength(1)
   })
 })

@@ -6,6 +6,7 @@ import { getTool } from '../components/planner/toolRegistry'
 import { PLANNER_TOOL_COMPONENTS } from '../components/planner/toolComponents'
 import { ToolSwitcher } from '../components/planner/ToolSwitcher'
 import { ToolInfoButton } from '../components/planner/ToolInfoButton'
+import { PhoneToolPage } from '../components/planner/PhoneToolPage'
 import { TopBarSlotContext } from '../components/topBarSlot'
 import { useIsDesktop } from '../hooks/useMediaQuery'
 
@@ -46,8 +47,9 @@ export const PlannerTool: React.FC = () => {
         ) : (
           <header className="flex items-center gap-2">{bar}</header>
         )}
-        <ToolInfoButton tool={tool} row />
-        <Component />
+        <PhoneToolPage key={tool.id} tool={tool}>
+          <Component />
+        </PhoneToolPage>
       </div>
     )
   }

@@ -134,7 +134,7 @@ test('a sheet actually animates in, not just out', async ({ page }) => {
   expect(sample.scrim?.running).toBe(true)
 })
 
-test('a sheet never renders its header twice', async ({ page }) => {
+test('a sheet never renders its header twice', async ({ page }, testInfo) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Settings' }).first().click()
@@ -146,7 +146,9 @@ test('a sheet never renders its header twice', async ({ page }) => {
       .filter((h) => h.getBoundingClientRect().width > 0)
       .map((h) => (h.textContent || '').trim())
   })
-  expect(visibleHeadings).toEqual(['Settings'])
+  // The phone Settings sheet (short-wide is phone layout) has no visible title at all; the
+  // desktop modal shows exactly one. Never two either way.
+  expect(visibleHeadings).toEqual(testInfo.project.name === 'short-wide' ? [] : ['Settings'])
 })
 
 const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
