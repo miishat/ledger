@@ -86,7 +86,7 @@ export const Budgeting: React.FC = () => {
       >
         <ChevronLeft size={16} />
       </button>
-      <span className="text-[14px] font-medium min-w-[120px] text-center">{formattedMonth}</span>
+      <span className="text-[14px] font-medium md:min-w-[120px] text-center">{formattedMonth}</span>
       <button
         onClick={() => shiftMonth(1)}
         className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-md hover:bg-bg-primary text-text-secondary hover:text-accent transition-all duration-200"
@@ -155,7 +155,7 @@ export const Budgeting: React.FC = () => {
           row at the top of the page. Rendered here or in the desktop header,
           never both, so CSVUploader's dialog exists once. */}
       {!isDesktop && (
-        <div data-testid="budget-phone-controls" className="flex items-center justify-between gap-2">
+        <div data-testid="budget-phone-controls" className="flex flex-wrap items-center justify-between gap-2">
           {monthStepper}
           <CSVUploader />
         </div>

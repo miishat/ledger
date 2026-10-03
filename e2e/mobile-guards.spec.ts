@@ -401,3 +401,35 @@ for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as con
     expect(nested).toEqual([])
   })
 }
+
+// Rule 1 of docs/mobile-layout-rules.md: the secondary controls share one row.
+// Stepping back a month adds the Today button, which widens the stepper. The
+// row must wrap rather than push Import CSV past the right edge of main,
+// where main's overflow-x-hidden would clip it silently.
+test('budgeting phone controls stay inside the page after stepping to another month', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  const controls = page.getByTestId('budget-phone-controls')
+  await expect(controls).toBeVisible()
+  await page.getByRole('button', { name: 'Previous Month' }).click()
+  await expect(controls.getByRole('button', { name: 'Today' })).toBeVisible()
+  const buttons = controls.getByRole('button')
+  await expect.poll(() => buttons.count()).toBeGreaterThanOrEqual(4)
+  // Poll until the whole row is inside main's content box: left edge no
+  // further left than main's, right edge no further right than main's.
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const main = document.querySelector('main')!.getBoundingClientRect()
+        const row = document.querySelector('[data-testid="budget-phone-controls"]')!
+        return [...row.querySelectorAll('button')]
+          .map((b) => {
+            const r = b.getBoundingClientRect()
+            return { label: (b.getAttribute('aria-label') || b.textContent || '').trim(), left: r.left, right: r.right }
+          })
+          .filter((b) => b.left < main.left - 0.5 || b.right > main.right + 0.5)
+      })
+    })
+    .toEqual([])
+})
