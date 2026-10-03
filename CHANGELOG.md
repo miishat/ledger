@@ -4,6 +4,25 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
+## [0.11.0] - 2026-10-02
+
+Ledger on a phone now follows one written set of layout rules
+(`docs/mobile-layout-rules.md`) instead of being the desktop layout stacked
+into a single column.
+
+### Changed
+- On a phone, the top bar shows the page you are on and its main action: Add Transaction, Import holdings, New Analysis, Edit Package, or Customize. Page descriptions are shown on larger screens only
+- Each page leads with its key number on a phone: net worth on the Dashboard, the period's net change on Budgeting, portfolio value on Investments, and total compensation on Compensation
+- Holdings on a phone are one compact row each. Tap a row for its currency, price, and cost. Each account shows its eight largest holdings first, with Show all for the rest
+- Income, Expenses, and account lists on a phone show their first five entries with Show all, instead of scrolling inside the page
+- Empty account groups on the phone Dashboard take one line instead of a full card
+- Cash Flow on a phone groups the smaller income sources and spending categories into Other, so every label is readable
+- Budgeting's month and import controls share one row on a phone
+
+### Fixed
+- Switching pages now opens the new page at the top instead of at the previous page's scroll position
+- The empty Portfolio and Compensation pages now include a button to add data
+
 ## [0.10.1] - 2026-09-27
 
 ### Changed
