@@ -374,19 +374,29 @@ test('the search sheet has no esc hint, close button or scrollbar and keeps its 
     .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
     .toBe(0)
 
+  // The input sits about 12px under the drag handle (it was 36px).
+  const handleToInput = await panel.evaluate((el) =>
+    Math.round(el.querySelector('input')!.getBoundingClientRect().top - el.querySelector('span.absolute')!.getBoundingClientRect().bottom))
+  test.info().annotations.push({ type: 'palette-handle-to-input-px', description: String(handleToInput) })
+  expect(handleToInput).toBeGreaterThanOrEqual(10)
+  expect(handleToInput).toBeLessThanOrEqual(14)
+  const restingRowTop = await panel.evaluate((el) =>
+    Math.round(el.querySelector('input')!.parentElement!.getBoundingClientRect().top - el.getBoundingClientRect().top))
+
   const cue = page.getByTestId('sheet-scroll-cue')
   await expect(cue).toBeVisible()
   await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
   await expect(cue).toHaveCount(0)
   await expect(input).toBeInViewport()
-  // The header scrolls away now, so the input pins to the very top of the panel.
+  // The row sticks at the offset it rests at, 12px under the panel top (just below the
+  // handle), so it does not jump when the list starts to scroll.
   await expect
     .poll(() =>
       panel.evaluate((el) => {
         const row = el.querySelector('input')!.parentElement!
         return Math.round(row.getBoundingClientRect().top - el.getBoundingClientRect().top)
       }))
-    .toBeLessThanOrEqual(1)
+    .toBe(restingRowTop)
 
   await input.fill('budget')
   await expect(panel.getByRole('option').first()).toBeVisible()
@@ -631,6 +641,50 @@ test('phone sheet headers scroll away and leave room under the handle', async ({
   await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(16)
   gaps.shortcuts = await handleGap(panel)
   test.info().annotations.push({ type: 'handle-to-first-content-px', description: JSON.stringify(gaps) })
+})
+
+// A scrolled phone sheet fades out under its top edge instead of cutting content hard, with
+// the drag handle still pinned above the fade.
+test('a scrolled phone sheet softens its top edge and keeps the handle pinned', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(page.getByTestId('sheet-top-fade')).toHaveCount(0)
+  await panel.evaluate((el) => { el.scrollTop = 200 })
+  const fade = page.getByTestId('sheet-top-fade')
+  await expect(fade).toBeVisible()
+  await expect
+    .poll(() => panel.evaluate((el) => {
+      const f = el.querySelector('[data-testid=sheet-top-fade]')!.getBoundingClientRect()
+      const h = el.querySelector('span.absolute')!.getBoundingClientRect()
+      const p = el.getBoundingClientRect()
+      return [Math.round(f.top - p.top), Math.round(f.height), Math.round(h.top - p.top)]
+    }))
+    .toEqual([1, 24, 9])
+  await expect(page.getByTestId('sheet-top-fade')).toHaveCSS('pointer-events', 'none')
+})
+
+// The Search and Settings icons sit 24px apart (they were 32px): the 44px hit areas touch
+// but never overlap. Checked with a page action present, at the narrowest width.
+test('top bar Search and Settings are close together with 44px non-overlapping targets', async ({ page }) => {
+  for (const hash of ['/', '/#/budget']) {
+    await page.goto(hash)
+    await page.waitForLoadState('networkidle')
+    const bar = page.getByTestId('mobile-topbar')
+    const search = (await bar.getByRole('button', { name: 'Search' }).boundingBox())!
+    const settings = (await bar.getByRole('button', { name: 'Settings' }).boundingBox())!
+    expect(search.width).toBeGreaterThanOrEqual(44)
+    expect(search.height).toBeGreaterThanOrEqual(44)
+    expect(settings.width).toBeGreaterThanOrEqual(44)
+    expect(settings.height).toBeGreaterThanOrEqual(44)
+    expect(settings.x - (search.x + search.width)).toBeGreaterThanOrEqual(-0.5)
+    const iconToIcon = settings.x + settings.width / 2 - (search.x + search.width / 2)
+    expect(iconToIcon).toBeLessThanOrEqual(46)
+    const clipped = await bar.evaluate((el) => el.scrollWidth > el.clientWidth + 1)
+    expect(clipped).toBe(false)
+  }
 })
 
 // Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key

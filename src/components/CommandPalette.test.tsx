@@ -25,6 +25,16 @@ describe('CommandPalette', () => {
     expect(list.className).not.toContain('max-h-')
   })
 
+  it('phone: the search row sits close under the handle and sticks at the same offset', () => {
+    setMatchMedia(false)
+    renderPalette()
+    // The header shrinks to the handle (12px), so the row's resting top is 12px and the sticky
+    // offset must be the same 12px (top-3) or the row jumps when the list scrolls.
+    expect(screen.getByTestId('sheet-header').className).toMatch(/pt-3/)
+    expect(screen.getByTestId('sheet-header').className).not.toMatch(/pb-5/)
+    expect(screen.getByLabelText('Search commands').parentElement!.className).toMatch(/sticky top-3/)
+  })
+
   it('desktop: keeps the esc hint and the self-scrolling results list', () => {
     setMatchMedia(true)
     renderPalette()

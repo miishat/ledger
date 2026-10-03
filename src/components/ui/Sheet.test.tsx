@@ -321,6 +321,32 @@ describe('Sheet mobile panel isolation', () => {
       expect(screen.queryByTestId('sheet-scroll-cue')).toBeNull()
     })
 
+    it('shows a top fade only while the panel is scrolled down, and the handle stays in the pinned strip', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} ariaLabel="x">c</Sheet>)
+      const panel = screen.getByTestId('sheet-panel')
+      const strip = screen.getByTestId('sheet-top-strip')
+      expect(strip.className).toMatch(/sticky/)
+      expect(strip.className).toMatch(/h-0/)
+      expect(strip.querySelector('span.absolute')).not.toBeNull()
+      expect(screen.getByTestId('sheet-header').querySelector('span.absolute')).toBeNull()
+      expect(screen.queryByTestId('sheet-top-fade')).toBeNull()
+
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 2 })
+      fireEvent.scroll(panel)
+      expect(screen.queryByTestId('sheet-top-fade')).toBeNull()
+
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 120 })
+      fireEvent.scroll(panel)
+      const fade = screen.getByTestId('sheet-top-fade')
+      expect(fade.className).toMatch(/pointer-events-none/)
+      expect(strip).toContainElement(fade)
+
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 0 })
+      fireEvent.scroll(panel)
+      expect(screen.queryByTestId('sheet-top-fade')).toBeNull()
+    })
+
     it('scrollCue shows no fade when the content fits', () => {
       setMatchMedia(false)
       render(<Sheet open onClose={() => {}} scrollCue ariaLabel="x">c</Sheet>)

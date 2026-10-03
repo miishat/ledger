@@ -32,6 +32,10 @@ interface SheetProps {
   /** Mobile bottom sheet only. Hides the panel scrollbar and shows a bottom fade while more
    *  content lies below, so the list still reads as scrollable. Default false. */
   scrollCue?: boolean
+  /** Mobile bottom sheet only. For an untitled sheet whose first content row is its own
+   *  sticky bar (the command palette): the header shrinks to the drag handle so that row
+   *  sits close under it. Default false. */
+  compactHeader?: boolean
   children: React.ReactNode
 }
 
@@ -57,6 +61,7 @@ export const Sheet: React.FC<SheetProps> = ({
   contentClassName = '',
   showClose = false,
   scrollCue = false,
+  compactHeader = false,
   children,
 }) => {
   const isDesktop = useIsDesktop()
@@ -167,10 +172,19 @@ export const Sheet: React.FC<SheetProps> = ({
 
   // Scroll cue: true while the panel has content below the visible area.
   const [moreBelow, setMoreBelow] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
   const updateMoreBelow = () => {
     const el = panelRef.current
     if (!el) return
     setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }
+  // Top fade: true once the panel has scrolled, so content does not end in a hard cut under
+  // the sheet's top edge. The mirror of the bottom cue, for every phone sheet.
+  const [scrolledDown, setScrolledDown] = useState(false)
+  const onPanelScroll = () => {
+    const el = panelRef.current
+    if (el) setScrolledDown(el.scrollTop > 4)
+    if (scrollCue) updateMoreBelow()
   }
   useEffect(() => {
     if (!open || !mounted || !scrollCue) return
@@ -179,7 +193,7 @@ export const Sheet: React.FC<SheetProps> = ({
     if (!el || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(updateMoreBelow)
     ro.observe(el)
-    if (el.children[1]) ro.observe(el.children[1])
+    if (contentRef.current) ro.observe(contentRef.current)
     return () => ro.disconnect()
   }, [open, mounted, scrollCue, children])
 
@@ -326,13 +340,25 @@ export const Sheet: React.FC<SheetProps> = ({
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onScroll={scrollCue ? updateMoreBelow : undefined}
+          onScroll={onPanelScroll}
         >
+          {/* A zero-height sticky strip holds the drag handle and the top fade, so the handle
+              stays pinned and the fade softens the edge where content scrolls away, without
+              taking any layout height. */}
+          <div data-testid="sheet-top-strip" className="sticky top-0 z-20 h-0">
+            {scrolledDown && (
+              <div
+                data-testid="sheet-top-fade"
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-[linear-gradient(to_bottom,var(--dropdown-bg)_50%,transparent)]"
+              />
+            )}
+            <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+          </div>
           {/* Not sticky: a pinned title row costs phone screen height all the way down a long
               sheet, so it scrolls away with the content. The extra padding keeps the first
               content clear of the drag handle (about 24px handle-only). */}
-          <div data-testid="sheet-header" className={`relative flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-7 pb-2' : 'pt-4 pb-5'}`}>
-            <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+          <div data-testid="sheet-header" className={`relative flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-7 pb-2' : compactHeader ? 'pt-3' : 'pt-4 pb-5'}`}>
             {title != null && (
               <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
             )}
@@ -347,7 +373,7 @@ export const Sheet: React.FC<SheetProps> = ({
               </button>
             )}
           </div>
-          <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
+          <div ref={contentRef} className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
           {scrollCue && moreBelow && (
             <div
               data-testid="sheet-scroll-cue"
