@@ -78,8 +78,10 @@ interface TopBarActionProps {
   tone?: 'primary' | 'quiet'
 }
 
-/** A 44px hit area around a 36px visual, so it clears the tap-target guard
- *  without outweighing the Search and Settings icons beside it. */
+/** A 44px hit area around a 34px visual, so it clears the tap-target guard
+ *  without outweighing the Search and Settings icons beside it. The primary
+ *  tone is a soft accent tint rather than a solid disc because a filled green
+ *  circle next to two plain icons read as a different kind of control. */
 export const TopBarAction: React.FC<TopBarActionProps> = ({ icon: Icon, label, onClick, tone = 'primary' }) => (
   <button
     type="button"
@@ -88,9 +90,9 @@ export const TopBarAction: React.FC<TopBarActionProps> = ({ icon: Icon, label, o
     className="shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
   >
     <span
-      className={`flex items-center justify-center w-9 h-9 rounded-full transition-opacity ${
+      className={`flex items-center justify-center w-[34px] h-[34px] rounded-full transition-colors ${
         tone === 'primary'
-          ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] hover:opacity-90'
+          ? 'bg-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-accent'
           : 'text-text-secondary hover:text-text-primary'
       }`}
     >

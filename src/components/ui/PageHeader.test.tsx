@@ -65,4 +65,25 @@ describe('TopBarAction', () => {
     fireEvent.click(button)
     expect(onClick).toHaveBeenCalledOnce()
   })
+
+  it('draws the primary tone as a soft accent tint with an accent icon, not a solid fill', () => {
+    render(<TopBarAction icon={Plus} label="Add Transaction" onClick={() => {}} />)
+    const button = screen.getByRole('button', { name: 'Add Transaction' })
+    const disc = button.querySelector('span')!
+    expect(disc.className).toMatch(/w-\[34px\]/)
+    expect(disc.className).toMatch(/h-\[34px\]/)
+    expect(disc.className).toContain('color-mix(in_srgb,var(--color-accent)_14%,transparent)')
+    expect(disc.className).toContain('hover:bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)]')
+    expect(disc.className).toMatch(/text-accent/)
+    expect(disc.className).not.toMatch(/bg-\[var\(--color-accent\)\]/)
+    expect(disc.className).not.toMatch(/--color-bg-primary/)
+    expect(button.querySelector('svg')).toHaveClass('w-5', 'h-5')
+  })
+
+  it('leaves the quiet tone as a plain icon with no tint', () => {
+    render(<TopBarAction icon={Plus} label="Customize" tone="quiet" onClick={() => {}} />)
+    const disc = screen.getByRole('button', { name: 'Customize' }).querySelector('span')!
+    expect(disc.className).toMatch(/text-text-secondary/)
+    expect(disc.className).not.toContain('color-mix')
+  })
 })
