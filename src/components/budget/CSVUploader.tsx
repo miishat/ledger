@@ -10,8 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 import type { TriageTransaction } from '../../types/triage';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { Sheet } from '../ui/Sheet';
+import { useIsDesktop } from '../../hooks/useMediaQuery';
 
 export const CSVUploader: React.FC = () => {
+  const isDesktop = useIsDesktop();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,15 +135,29 @@ export const CSVUploader: React.FC = () => {
         ref={fileInputRef}
         onChange={handleFileSelect}
       />
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isParsing}
-        aria-label="Import CSV"
-        className="flex items-center justify-center gap-2 h-10 px-4 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[14px] font-medium hover:border-[var(--color-accent)] transition-colors disabled:opacity-50"
-      >
-        <Upload size={16} />
-        <span className="hidden sm:inline">{isParsing ? 'Parsing...' : 'Import CSV'}</span>
-      </button>
+      {isDesktop ? (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isParsing}
+          aria-label="Import CSV"
+          className="flex items-center justify-center gap-2 h-10 px-4 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[14px] font-medium hover:border-[var(--color-accent)] transition-colors disabled:opacity-50"
+        >
+          <Upload size={16} />
+          <span className="hidden sm:inline">{isParsing ? 'Parsing...' : 'Import CSV'}</span>
+        </button>
+      ) : (
+        // A bare icon with a 44px hit area: the phone controls row is chrome,
+        // so the button carries no border or label.
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isParsing}
+          aria-label="Import CSV"
+          title="Import CSV"
+          className="h-11 w-11 flex items-center justify-center rounded-md text-text-secondary hover:text-accent transition-colors disabled:opacity-50"
+        >
+          <Upload size={20} />
+        </button>
+      )}
       {error && <span className="text-[12px] text-error text-center">{error}</span>}
 
       <Sheet

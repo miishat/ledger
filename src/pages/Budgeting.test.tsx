@@ -62,6 +62,49 @@ describe('Budgeting header on a phone', () => {
     expect(screen.queryByText('Manage your income, track expenses, and view your cash flow.')).toBeNull()
   })
 
+  it('renders the month stepper as a plain inline row with no card chrome', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Budgeting /></MemoryRouter>)
+    const row = screen.getByTestId('budget-phone-controls')
+    const prev = screen.getByLabelText('Previous Month')
+    const stepper = prev.parentElement!
+    expect(row.contains(stepper)).toBe(true)
+    const classes = stepper.className.split(/\s+/)
+    for (const card of ['bg-bg-secondary', 'border', 'shadow-sm', 'rounded-lg', 'p-1']) {
+      expect(classes).not.toContain(card)
+    }
+    // The chevrons keep a 44px hit area around a 20px icon.
+    for (const label of ['Previous Month', 'Next Month']) {
+      const classes = screen.getByLabelText(label).className.split(/\s+/)
+      expect(classes).toContain('h-11')
+      expect(classes).toContain('w-11')
+      expect(classes).not.toContain('md:h-8')
+    }
+    expect(prev.querySelector('svg')!.getAttribute('width')).toBe('20')
+    const label = stepper.querySelector('span')!
+    expect(label.className.split(/\s+/)).toContain('tabular-nums')
+    expect(label.className).not.toMatch(/min-w/)
+  })
+
+  it('shows Import CSV as an icon-only button on a phone', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Budgeting /></MemoryRouter>)
+    const btn = screen.getByRole('button', { name: 'Import CSV' })
+    expect(btn.getAttribute('title')).toBe('Import CSV')
+    expect(btn.textContent).toBe('')
+    expect(btn.className.split(/\s+/)).not.toContain('border')
+  })
+
+  it('keeps the desktop stepper card and labelled import button', () => {
+    render(<MemoryRouter><Budgeting /></MemoryRouter>)
+    const stepper = screen.getByLabelText('Previous Month').parentElement!
+    const classes = stepper.className.split(/\s+/)
+    for (const card of ['bg-bg-secondary', 'border', 'shadow-sm', 'rounded-lg', 'p-1']) {
+      expect(classes).toContain(card)
+    }
+    expect(screen.getByLabelText('Import CSV').textContent).toContain('Import CSV')
+  })
+
   it('keeps the desktop header as it was', () => {
     render(<MemoryRouter><Budgeting /></MemoryRouter>)
     expect(screen.queryByTestId('budget-phone-controls')).toBeNull()

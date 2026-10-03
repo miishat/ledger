@@ -77,6 +77,36 @@ export const Budgeting: React.FC = () => {
     }
   }, [categories, seedDefaults]);
 
+  // On a phone the stepper is page chrome, so it drops the card and keeps only
+  // the 44px hit areas. Desktop keeps the bordered card exactly as it was.
+  const phoneMonthStepper = period.kind === 'month' && (
+    <div className="flex items-center">
+      <button
+        onClick={() => shiftMonth(-1)}
+        className="h-11 w-11 flex items-center justify-center rounded-md text-text-secondary hover:text-accent transition-colors duration-200"
+        aria-label="Previous Month"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <span className="text-[15px] font-medium tabular-nums text-center">{formattedMonth}</span>
+      <button
+        onClick={() => shiftMonth(1)}
+        className="h-11 w-11 flex items-center justify-center rounded-md text-text-secondary hover:text-accent transition-colors duration-200"
+        aria-label="Next Month"
+      >
+        <ChevronRight size={20} />
+      </button>
+      {period.month !== currentMonth && (
+        <button
+          onClick={() => setPeriod({ kind: 'month', month: currentMonth })}
+          className="h-11 px-2 rounded-md text-[12px] font-medium text-accent hover:bg-bg-secondary transition-colors duration-200"
+        >
+          Today
+        </button>
+      )}
+    </div>
+  );
+
   const monthStepper = period.kind === 'month' && (
     <div className="flex items-center gap-1 md:h-10 bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
       <button
@@ -156,7 +186,7 @@ export const Budgeting: React.FC = () => {
           never both, so CSVUploader's dialog exists once. */}
       {!isDesktop && (
         <div data-testid="budget-phone-controls" className="flex flex-wrap items-center justify-between gap-2">
-          {monthStepper}
+          {phoneMonthStepper}
           <CSVUploader />
         </div>
       )}

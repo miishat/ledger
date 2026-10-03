@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { setMatchMedia } from '../../test-utils/matchMedia'
+import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 import { CSVUploader } from './CSVUploader'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useTriageStore } from '../../store/useTriageStore'
@@ -44,6 +44,24 @@ describe('CSVUploader import button (mobile de-duplication)', () => {
     expect(label).toBeTruthy()
     expect(label!.className.split(/\s+/)).toContain('hidden')
     expect(label!.className.split(/\s+/)).toContain('sm:inline')
+  })
+})
+
+describe('CSVUploader on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('is an icon-only ghost button that keeps its name and the mapping sheet', async () => {
+    setMatchMedia(false)
+    render(<CSVUploader />)
+    const button = screen.getByRole('button', { name: 'Import CSV' })
+    expect(button.getAttribute('title')).toBe('Import CSV')
+    expect(button.textContent).toBe('')
+    expect(button.querySelector('svg')!.getAttribute('width')).toBe('20')
+    const classes = button.className.split(/\s+/)
+    expect(classes).not.toContain('border')
+    expect(classes).toContain('h-11')
+    expect(classes).toContain('w-11')
+    expect(document.querySelectorAll('input[type="file"]')).toHaveLength(1)
   })
 })
 

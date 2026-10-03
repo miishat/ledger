@@ -438,6 +438,30 @@ test('budgeting phone controls stay inside the page after stepping to another mo
     .toEqual([])
 })
 
+// The controls row is chrome, not content: no card around the stepper and an
+// icon-only import button, so the row is one 44px tap-target line tall. The
+// visible chrome is small but every button keeps a 44x44 hit area.
+test('budgeting phone controls row is compact and keeps 44px tap targets', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  const controls = page.getByTestId('budget-phone-controls')
+  await expect(controls).toBeVisible()
+  await expect.poll(async () => (await controls.boundingBox())?.height ?? 999).toBeLessThanOrEqual(52)
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="budget-phone-controls"] button')]
+          .map((b) => {
+            const r = b.getBoundingClientRect()
+            return { label: b.getAttribute('aria-label') || b.textContent, w: r.width, h: r.height }
+          })
+          .filter((b) => b.w < 43.5 || b.h < 43.5),
+      ),
+    )
+    .toEqual([])
+})
+
 // Phone tab strips are underline tabs, not four bordered buttons that read as
 // actions. They share one row, keep the 44px tap target, and selecting a tab
 // must not make the document scroll sideways.
