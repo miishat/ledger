@@ -46,7 +46,6 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current, phone = fal
         desktop="popover"
         anchorRef={btnRef}
         ariaLabel="Switch tool"
-        showClose={false}
         scrollCue
         panelClassName="w-72 max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1"
       >

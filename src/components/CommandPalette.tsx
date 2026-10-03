@@ -44,7 +44,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       onClose={onClose}
       desktop="modal"
       ariaLabel="Command palette"
-      showClose={false}
       scrollCue
       panelClassName="themed-card rounded-lg w-full max-w-lg mt-[-6vh]"
     >

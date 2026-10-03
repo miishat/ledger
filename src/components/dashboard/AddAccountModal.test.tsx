@@ -17,7 +17,7 @@ describe('AddAccountModal', () => {
 describe('AddAccountModal mobile header (no double close)', () => {
   afterEach(() => resetMatchMedia())
 
-  it('shows one close control on mobile and hides its own header there', () => {
+  it('shows no sheet close control on mobile and hides its own header there', () => {
     setMatchMedia(false)
     render(<AddAccountModal isOpen onClose={() => {}} defaultType="bank" editingAccount={null} />)
     // the modal's own header row is desktop-only. Sheet renders via createPortal
@@ -33,7 +33,7 @@ describe('AddAccountModal mobile header (no double close)', () => {
     const closeButtons = screen
       .getAllByRole('button', { name: 'Close' })
       .filter((btn) => !ownHeader?.contains(btn))
-    expect(closeButtons).toHaveLength(1)
+    expect(closeButtons).toHaveLength(0)
   })
 })
 

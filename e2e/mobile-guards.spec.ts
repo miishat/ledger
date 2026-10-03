@@ -278,6 +278,30 @@ test('settings is reachable and inside the viewport', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible()
 })
 
+// Phone sheets carry no X: they dismiss by swipe, scrim tap and Escape.
+test('phone sheets show no Close button and still dismiss on Escape and scrim', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const panel = page.getByTestId('sheet-panel')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  await expect(panel).toBeVisible()
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toHaveCount(0)
+
+  await page.goto('/#/planner/mortgage')
+  await page.getByRole('button', { name: 'About this tool' }).click()
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+})
+
 test('search is reachable without a keyboard', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')

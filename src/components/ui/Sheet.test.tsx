@@ -47,14 +47,16 @@ describe('Sheet', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('shows a Close button on mobile that calls onClose', () => {
+  it('shows no Close button on mobile, and scrim and Escape still dismiss', () => {
     setMatchMedia(false) // mobile
     const onClose = vi.fn()
-    const { getByLabelText } = render(
+    const { queryByLabelText, getByTestId } = render(
       <Sheet open onClose={onClose} ariaLabel="x">c</Sheet>
     )
-    fireEvent.click(getByLabelText('Close'))
-    expect(onClose).toHaveBeenCalledOnce()
+    expect(queryByLabelText('Close')).toBeNull()
+    fireEvent.click(getByTestId('sheet-scrim'))
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(2)
   })
 
   it('locks body scroll while open', () => {
@@ -156,9 +158,9 @@ describe('Sheet', () => {
     expect(panel.style.maxHeight).toContain('--app-viewport-height')
   })
 
-  it('gives the close button a 44px hit area', () => {
+  it('gives an opted-in close button a 44px hit area', () => {
     setMatchMedia(false)
-    render(<Sheet open onClose={() => {}} ariaLabel="Test sheet"><p>body</p></Sheet>)
+    render(<Sheet open onClose={() => {}} showClose ariaLabel="Test sheet"><p>body</p></Sheet>)
     const close = screen.getByRole('button', { name: 'Close' })
     expect(close.className).toMatch(/min-h-\[44px\]/)
     expect(close.className).toMatch(/min-w-\[44px\]/)
@@ -168,14 +170,14 @@ describe('Sheet', () => {
 describe('Sheet mobile header ownership', () => {
   afterEach(() => resetMatchMedia())
 
-  it('renders exactly one close control and the title on mobile', () => {
+  it('renders the title and no close control on mobile', () => {
     setMatchMedia(false) // mobile => bottom sheet
     render(
       <Sheet open onClose={() => {}} title="Add account">
         <div>body</div>
       </Sheet>,
     )
-    expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
     expect(screen.getByRole('heading', { name: 'Add account' })).toBeInTheDocument()
   })
 })
@@ -240,13 +242,21 @@ describe('Sheet mobile panel isolation', () => {
       Object.defineProperty(panel, 'scrollTop', { configurable: true, writable: true, value: layout.scrollTop })
     }
 
-    it('keeps the Close button by default on mobile', () => {
+    it('drops the Close button by default on mobile', () => {
       setMatchMedia(false)
       render(<Sheet open onClose={() => {}} ariaLabel="x">c</Sheet>)
-      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
     })
 
-    it('showClose=false drops the Close button but scrim and Escape still dismiss', () => {
+    it('showClose is an explicit opt-in that renders the Close button', () => {
+      setMatchMedia(false)
+      const onClose = vi.fn()
+      render(<Sheet open onClose={onClose} showClose ariaLabel="x">c</Sheet>)
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      expect(onClose).toHaveBeenCalledOnce()
+    })
+
+    it('explicit showClose=false drops the Close button but scrim and Escape still dismiss', () => {
       setMatchMedia(false)
       const onClose = vi.fn()
       render(<Sheet open onClose={onClose} showClose={false} ariaLabel="x">c</Sheet>)

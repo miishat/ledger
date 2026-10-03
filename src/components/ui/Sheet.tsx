@@ -26,8 +26,8 @@ interface SheetProps {
   /** Classes for the content wrapper around children, applied in BOTH desktop and mobile
    *  (e.g. "flex flex-col gap-3"). This is where per-modal content spacing belongs. */
   contentClassName?: string
-  /** Mobile bottom sheet only. When false, no Close button is rendered and the header row
-   *  collapses to the drag handle (dismissal stays on scrim / swipe / Escape). Default true. */
+  /** Mobile bottom sheet only. Phone sheets dismiss by swipe, scrim tap and Escape and render
+   *  no X. Pass true only for a sheet with no other way out; nothing does today. Default false. */
   showClose?: boolean
   /** Mobile bottom sheet only. Hides the panel scrollbar and shows a bottom fade while more
    *  content lies below, so the list still reads as scrollable. Default false. */
@@ -55,7 +55,7 @@ export const Sheet: React.FC<SheetProps> = ({
   title,
   panelClassName = '',
   contentClassName = '',
-  showClose = true,
+  showClose = false,
   scrollCue = false,
   children,
 }) => {
