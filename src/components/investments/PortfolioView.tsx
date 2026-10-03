@@ -8,7 +8,7 @@ import { formatMoney } from '../planner/format'
 import { AllocationBars } from './AllocationBars'
 import { PortfolioSummary } from './PortfolioSummary'
 import { HoldingRow } from './HoldingRow'
-import { HoldingCard } from './HoldingCard'
+import { HoldingCardList } from './HoldingCardList'
 import { PortfolioImport } from './PortfolioImport'
 import { PortfolioReport } from './report/PortfolioReport'
 import { accountValue } from './report/reportMetrics'
@@ -225,11 +225,13 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                     </tbody>
                   </table>
                 </div>
-                <div data-testid={`portfolio-cards-${account}`} className="wide:hidden flex flex-col gap-3">
-                  {accountHoldings.map((h) => (
-                    <HoldingCard key={h.id} holding={h} rates={rates} totalValueCad={totals.valueCad} onPrice={onPrice} />
-                  ))}
-                </div>
+                <HoldingCardList
+                  account={account}
+                  holdings={accountHoldings}
+                  rates={rates}
+                  totalValueCad={totals.valueCad}
+                  onPrice={onPrice}
+                />
               </div>
             )
           })}

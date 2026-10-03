@@ -57,6 +57,7 @@ describe('HoldingCard', () => {
       <HoldingCard holding={buildHolding()} rates={{ USD: 1 }} totalValueCad={1000} onPrice={() => {}} />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Details for AAPL' }))
     expect(container.textContent).toContain('150.00')
     const skeletons = container.querySelectorAll('[aria-hidden="true"].animate-pulse')
     expect(skeletons.length).toBe(0)
@@ -134,6 +135,7 @@ describe('HoldingCard', () => {
     const { getByText, queryByText } = render(
       <HoldingCard holding={holding} rates={{ USD: 1.3869 }} totalValueCad={10000} onPrice={() => {}} />,
     )
+    fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
     expect(getByText('148.90')).toBeInTheDocument()
     expect(queryByText('206.51')).not.toBeInTheDocument()
   })
@@ -176,5 +178,24 @@ describe('card disclosure', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
     expect(screen.getByText('Avg Cost')).toBeInTheDocument()
     expect(screen.getByText('Book')).toBeInTheDocument()
+  })
+
+  it('is one row when collapsed: value and P/L visible, currency and price behind the disclosure', () => {
+    useCurrentPriceMock.mockReturnValue({
+      data: { value: { price: 150, currency: 'CAD' }, source: 'live', stale: false },
+      status: 'success',
+      refresh: () => {},
+      setManual: () => {},
+      clearManual: () => {},
+    })
+    render(<HoldingCard holding={holding} rates={{}} totalValueCad={10000} onPrice={() => {}} />)
+    expect(screen.getByTestId('value-cell')).toHaveTextContent(formatMoney(1500))
+    expect(screen.getByTestId('pl-cell')).toBeInTheDocument()
+    expect(screen.getByTestId('allocation-cell')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Currency for VFV')).toBeNull()
+    expect(screen.queryByText('150.00')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Details for VFV' }))
+    expect(screen.getByLabelText('Currency for VFV')).toBeInTheDocument()
+    expect(screen.getByText('150.00')).toBeInTheDocument()
   })
 })
