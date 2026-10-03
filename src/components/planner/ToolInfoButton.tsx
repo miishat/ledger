@@ -3,20 +3,34 @@ import { Info } from 'lucide-react'
 import type { PlannerTool } from './toolRegistry'
 import { Sheet } from '../ui/Sheet'
 
-export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
+/** row: the phone form, a one-line labelled button at the top of the page
+ *  content, since the top bar has no room for the icon. */
+export const ToolInfoButton: React.FC<{ tool: PlannerTool; row?: boolean }> = ({ tool, row = false }) => {
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   return (
     <div className="relative">
-      <button
-        ref={btnRef}
-        type="button"
-        aria-label="About this tool"
-        onClick={() => setOpen((v) => !v)}
-        className="p-1 rounded-full text-text-secondary hover:text-accent transition-colors min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
-      >
-        <Info className="w-4 h-4" />
-      </button>
+      {row ? (
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 min-h-[44px] text-[14px] text-text-secondary hover:text-accent transition-colors rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+        >
+          <Info className="w-4 h-4" aria-hidden="true" />
+          About this tool
+        </button>
+      ) : (
+        <button
+          ref={btnRef}
+          type="button"
+          aria-label="About this tool"
+          onClick={() => setOpen((v) => !v)}
+          className="p-1 rounded-full text-text-secondary hover:text-accent transition-colors min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
+        >
+          <Info className="w-4 h-4" />
+        </button>
+      )}
       <Sheet
         open={open}
         onClose={() => setOpen(false)}

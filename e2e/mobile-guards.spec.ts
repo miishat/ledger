@@ -321,8 +321,8 @@ test('switching tabs starts the new page at the top', async ({ page }) => {
 })
 
 // Rule 1 of docs/mobile-layout-rules.md: on a phone the top bar names the
-// page, and the page's h1 is still there for screen readers. Tool pages keep
-// their own breadcrumb header and the brand stays in the bar.
+// page, and the page's h1 is still there for screen readers. Tool pages put
+// the tool name and a back button there.
 const TITLED_ROUTES = [
   ['dashboard', '', 'Dashboard'],
   ['budgeting', '#/budget', 'Budgeting'],
@@ -342,12 +342,37 @@ for (const [name, hash, title] of TITLED_ROUTES) {
   })
 }
 
-test('a planner tool keeps the brand in the top bar', async ({ page }) => {
+test('a planner tool names itself in the top bar and frees the first screen', async ({ page }) => {
   await page.goto('/#/planner/mortgage')
   await page.waitForLoadState('networkidle')
   const bar = page.getByTestId('mobile-topbar')
-  await expect(bar.locator('[data-topbar-brand]')).toBeVisible()
-  await expect(bar.getByTestId('topbar-title')).toHaveCount(0)
+  await expect(bar.locator('[data-topbar-brand]')).toBeHidden()
+  const switcher = bar.getByRole('button', { name: /Mortgage/ })
+  await expect(switcher).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Mortgage/)
+
+  // The in-page breadcrumb and big title are gone, so the form starts high.
+  // The old header put the first field 236px below the bar at 375px wide. The
+  // mortgage form opens with two rows of mode toggles of its own (96px) and
+  // the page now leads with a 44px "About this tool" row, so 230px is the
+  // honest ceiling: it fails if the breadcrumb header ever comes back.
+  await expect(page.getByRole('link', { name: 'Back to Planner' })).toHaveCount(0)
+  const barBox = (await bar.boundingBox())!
+  const field = page.locator('main input').first()
+  await expect(field).toBeVisible()
+  const fieldBox = (await field.boundingBox())!
+  const offset = fieldBox.y - (barBox.y + barBox.height)
+  test.info().annotations.push({ type: 'first-field-offset-below-bar', description: String(Math.round(offset)) })
+  expect(offset).toBeLessThan(230)
+
+  await switcher.click()
+  await expect(page.getByRole('menuitem', { name: /Debt/ }).first()).toBeVisible()
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(page.getByRole('menuitem').first()).toBeHidden()
+
+  await bar.getByRole('button', { name: 'Back to Planner' }).click()
+  await expect(page).toHaveURL(/#\/planner$/)
 })
 
 // Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key
