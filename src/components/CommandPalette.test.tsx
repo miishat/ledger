@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { CommandPalette } from './CommandPalette'
-import { setMatchMedia } from '../test-utils/matchMedia'
+import { setMatchMedia, resetMatchMedia } from '../test-utils/matchMedia'
 
 function renderPalette(onClose = vi.fn()) {
   return { onClose, ...render(
@@ -13,6 +13,25 @@ function renderPalette(onClose = vi.fn()) {
 }
 
 describe('CommandPalette', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('phone: no esc hint, no Close button, and the results list does not scroll itself', () => {
+    setMatchMedia(false)
+    renderPalette()
+    expect(screen.queryByText('esc')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+    const list = screen.getByRole('listbox')
+    expect(list.className).not.toContain('overflow-y-auto')
+    expect(list.className).not.toContain('max-h-')
+  })
+
+  it('desktop: keeps the esc hint and the self-scrolling results list', () => {
+    setMatchMedia(true)
+    renderPalette()
+    expect(screen.getByText('esc')).toBeInTheDocument()
+    expect(screen.getByRole('listbox').className).toContain('overflow-y-auto')
+  })
+
   it('renders the search input, focused, when open', () => {
     renderPalette()
     const input = screen.getByLabelText('Search commands')

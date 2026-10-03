@@ -285,6 +285,37 @@ test('search is reachable without a keyboard', async ({ page }) => {
   await expect(page.getByPlaceholder('Jump to a page or tool…')).toBeVisible()
 })
 
+// The search sheet spends its height on results: no esc hint, no Close button,
+// no scrollbar, a bottom fade while more results lie below, and the input stays
+// reachable while the list scrolls.
+test('the search sheet has no esc hint, close button or scrollbar and keeps its input', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  const input = page.getByPlaceholder('Jump to a page or tool…')
+  await expect(input).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+  await expect(panel.getByText('esc', { exact: true })).toHaveCount(0)
+  await expect
+    .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
+    .toBe(0)
+
+  const cue = page.getByTestId('sheet-scroll-cue')
+  await expect(cue).toBeVisible()
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect(cue).toHaveCount(0)
+  await expect(input).toBeInViewport()
+
+  await input.fill('budget')
+  await expect(panel.getByRole('option').first()).toBeVisible()
+  expect(await panel.getByRole('option').count()).toBeGreaterThan(0)
+  expect(await panel.getByRole('option').count()).toBeLessThan(10)
+
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toBeHidden()
+})
+
 // 0.9.7 made the Dashboard's Customize button the same size as other header
 // buttons, which left it 5px too narrow for its own label at 320px: it
 // rendered a 76px box for an 81px label, hard against the screen edge with
