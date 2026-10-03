@@ -596,6 +596,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* The phone tab strip scrolls sideways when its labels do not fit. The
+   scrollbar is hidden because the fade on the right edge already says there
+   is more, and a visible bar would sit under the underline indicator. */
+.tabs-scroll {
+  scrollbar-width: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+.tabs-fade-end {
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+
+/* Phones show no scrollbar on the page scroller: touch scrolling needs no
+   handle, and the bar ate width from a 320px layout. The query is the exact
+   inverse of the `desktop` variant so desktop keeps its scrollbar. */
+@media not all and (min-width: 768px) and (min-height: 500px) {
+  .phone-no-scrollbar {
+    scrollbar-width: none;
+  }
+  .phone-no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Animations for specialized backgrounds */
 @keyframes float-slow-1 {
   0% { transform: translate(0px, 0px) scale(1); }

@@ -247,6 +247,10 @@ for (const [name, hash] of ROUTES) {
         .filter((el) => {
           const cs = getComputedStyle(el)
           if (cs.visibility === 'hidden' || cs.display === 'none') return false
+          // A phone tab strip scrolls sideways on purpose, so tabs past its
+          // right edge are clipped by it. The strip itself is still checked.
+          const strip = el.closest('[role="tablist"]')
+          if (strip && strip !== el && strip.getBoundingClientRect().right <= de.clientWidth + 1) return false
           const r = el.getBoundingClientRect()
           return r.width > 0 && r.height > 0 && r.right > de.clientWidth + 1
         })
@@ -432,4 +436,65 @@ test('budgeting phone controls stay inside the page after stepping to another mo
       })
     })
     .toEqual([])
+})
+
+// Phone tab strips are underline tabs, not four bordered buttons that read as
+// actions. They share one row, keep the 44px tap target, and selecting a tab
+// must not make the document scroll sideways.
+for (const [name, hash, labels, pick] of [
+  ['budgeting', '#/budget', ['Overview', 'Insights', 'Transactions', 'Setup'], 'Transactions'],
+  ['investments', '#/investments', ['Portfolio', 'Options', 'Trades', 'Plan vs Actual'], 'Trades'],
+] as const) {
+  test(`${name} tabs are one row of underline tabs`, async ({ page }) => {
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const tabs = page.getByRole('tab')
+    await expect(tabs).toHaveCount(labels.length)
+    for (const label of labels) {
+      await expect(page.getByRole('tab', { name: label })).toBeVisible()
+    }
+    const boxes = await Promise.all(
+      labels.map(async (label) => (await page.getByRole('tab', { name: label }).boundingBox())!),
+    )
+    for (const box of boxes) {
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(Math.abs(box.y - boxes[0].y)).toBeLessThanOrEqual(1)
+    }
+    // At 375px the labels fit, so the tabs share the strip with no scrolling
+    // and together span its full width.
+    await page.setViewportSize({ width: 375, height: 700 })
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => {
+          const strip = document.querySelector('[role="tablist"]')!
+          const r = [...strip.querySelectorAll('[role="tab"]')].map((t) => t.getBoundingClientRect())
+          const s = strip.getBoundingClientRect()
+          return {
+            gapLeft: Math.round(Math.abs(r[0].left - s.left)),
+            gapRight: Math.round(Math.abs(s.right - r[r.length - 1].right)),
+            scrolls: strip.scrollWidth > strip.clientWidth + 1,
+          }
+        })
+      })
+      .toEqual({ gapLeft: 0, gapRight: 0, scrolls: false })
+    await page.getByRole('tab', { name: pick }).click()
+    await expect(page.getByRole('tab', { name: pick })).toHaveAttribute('aria-selected', 'true')
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true)
+  })
+}
+
+// Phones hide the page scrollbar; scrolling itself still works.
+test('main has no visible scrollbar on a phone', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await expect
+    .poll(() => page.evaluate(() => {
+      const m = document.querySelector('main')!
+      return { bar: m.offsetWidth - m.clientWidth, scrollable: m.scrollHeight > m.clientHeight }
+    }))
+    .toEqual({ bar: 0, scrollable: true })
 })

@@ -322,7 +322,7 @@ export const Layout: React.FC = () => {
           id="main-content"
           ref={mainRef}
           tabIndex={-1}
-          className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
+          className="phone-no-scrollbar flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
           {/* Polite, not assertive: a route change should be announced after
               whatever the user was already hearing, not interrupt it. */}
