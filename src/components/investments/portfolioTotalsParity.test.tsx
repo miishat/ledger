@@ -122,3 +122,26 @@ describe('portfolio totals parity: manual override', () => {
     expect(cardValues, 'mobile card did not show the converted override price').toContain('$1,489')
   })
 })
+
+describe('portfolio totals: holdings beyond the phone cap', () => {
+  // Rule 4 caps the cards at 8 per account, but the headline must be computed
+  // from the store, not from the mounted cards. The 10th holding carries a
+  // manual override: 9 * $100 cost basis + $5,000 override = $5,900. A total
+  // that only counted the first 8 would read $800.
+  const holdings = Array.from({ length: 10 }, (_, i) => ({
+    id: `h${i + 1}`, ticker: `T${i + 1}`, quantity: 1, avgCost: 100, currency: 'CAD' as const, account: 'TFSA',
+  }))
+
+  beforeEach(() => {
+    installMatchMedia()
+    usePortfolioStore.setState({ holdings, importedAt: new Date().toISOString(), currencyReviewPending: false })
+    useMarketDataStore.setState({ quotes: {}, overrides: { [quoteKey('T10')]: 5000 } })
+    __resetMinInterval()
+  })
+
+  it('includes a holding past the cap, with its override price, in the headline total', async () => {
+    render(<MemoryRouter><PortfolioView /></MemoryRouter>)
+    const label = await screen.findByText('Holdings Value (CAD)')
+    expect(await within(label.parentElement as HTMLElement).findByText('$5,900')).toBeInTheDocument()
+  })
+})

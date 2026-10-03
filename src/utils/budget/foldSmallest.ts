@@ -1,9 +1,11 @@
 /** Keeps the `keep` largest entries and folds the rest into one entry named
  *  `otherLabel`, so a narrow chart draws a few readable bands instead of a
  *  label per category (rule 6 of docs/mobile-layout-rules.md). Returns a new
- *  array, largest first with the fold last. Nothing is folded when that would save at most one
- *  entry. If a kept entry already carries `otherLabel`, the fold merges into
- *  it rather than drawing two bands with the same name. */
+ *  array, largest first, with the fold last. Nothing is folded when that would
+ *  save at most one entry. If a kept entry already carries `otherLabel`, the
+ *  fold merges into it rather than drawing two bands with the same name; the
+ *  result is then re-sorted, so that merged entry sits wherever its new total
+ *  ranks instead of last. */
 export function foldSmallest(entries: [string, number][], keep: number, otherLabel: string): [string, number][] {
   const sorted = entries.map(([name, value]) => [name, value] as [string, number]).sort((a, b) => b[1] - a[1])
   if (sorted.length <= keep + 1) return sorted

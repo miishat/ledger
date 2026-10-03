@@ -11,13 +11,14 @@ describe('foldSmallest', () => {
   })
 
   it('merges into a kept entry that already has the fold label', () => {
-    const out = foldSmallest([['Other', 40], ['b', 50], ['c', 5], ['d', 2]], 2, 'Other')
-    expect(out).toEqual([['b', 50], ['Other', 47]])
+    // 'Other' (40 + 30 + 25 = 95) outgrows 'b' (50), so the re-sort moves it first.
+    const out = foldSmallest([['b', 50], ['Other', 40], ['c', 30], ['d', 25]], 2, 'Other')
+    expect(out).toEqual([['Other', 95], ['b', 50]])
   })
 
   it('does not mutate its input', () => {
-    const input: [string, number][] = [['a', 1], ['b', 2], ['c', 3], ['d', 4]]
-    foldSmallest(input, 1, 'Other')
-    expect(input).toEqual([['a', 1], ['b', 2], ['c', 3], ['d', 4]])
+    const input: [string, number][] = [['a', 1], ['Other', 2], ['c', 3], ['d', 4]]
+    foldSmallest(input, 2, 'Other')
+    expect(input).toEqual([['a', 1], ['Other', 2], ['c', 3], ['d', 4]])
   })
 })

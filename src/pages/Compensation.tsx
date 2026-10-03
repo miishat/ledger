@@ -142,7 +142,6 @@ export const Compensation: React.FC = () => {
         )}
       </div>
     </div>
-  
   )
 
   return (

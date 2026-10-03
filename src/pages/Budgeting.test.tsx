@@ -9,6 +9,8 @@ function renderBudget() {
 }
 
 describe('Budgeting header (mobile de-duplication)', () => {
+  afterEach(resetMatchMedia)
+
   it('labels the period dropdown for screen readers', () => {
     renderBudget()
     // ThemedSelect trigger exposes aria-label as its accessible name
@@ -22,7 +24,6 @@ describe('Budgeting header (mobile de-duplication)', () => {
     setMatchMedia(false)
     renderBudget()
     expect(screen.queryByRole('button', { name: 'Time period' })).toBeNull()
-    resetMatchMedia()
   })
 
   // The arrows keep a 44px touch target at the mobile base width and shrink

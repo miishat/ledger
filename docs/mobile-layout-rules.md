@@ -49,7 +49,8 @@ Guard: `e2e/mobile-guards.spec.ts`, "shows its key figure in the first screen".
 
 A scroll area inside a scrolling page traps the thumb. On a phone a list inside
 a card shows its first `PHONE_LIST_LIMIT` (5) items and a "Show all N" button.
-Holdings show `PHONE_HOLDINGS_LIMIT` (8) per account. A list only one item over
+Holdings show `PHONE_HOLDINGS_LIMIT` (8) per account. Here "phone" means
+below the `wide` breakpoint (912px), which includes tablet portrait. A list only one item over
 its cap is shown whole, because a button that reveals one row costs more space
 than the row. Use `useShowMore` (`src/hooks/useShowMore.ts`) and
 `ShowMoreButton` (`src/components/ui/ShowMoreButton.tsx`).
@@ -61,8 +62,11 @@ Guard: `e2e/mobile-guards.spec.ts`, "has no list that scrolls inside the page".
 
 ## 5. Empty cards take one line
 
-An empty card on a phone is its title, its add action, and one sentence. No
-illustration, no zero total, no second add button.
+An empty account-group card on the Dashboard, on a phone, is its title, its
+add action, and one sentence. No illustration, no zero total, no second add
+button. Page-level empty states are the exception: an empty Portfolio, an empty
+Package Details card on Compensation, and an empty Journal keep a labelled add
+button, because the top-bar action on a phone is only an icon.
 
 ## 6. Charts read at 375px
 
@@ -77,7 +81,8 @@ viewport" and "a chart reveals its values on tap".
 
 ## 7. Rows, not cards, for repeated records
 
-A repeated record on a phone (a holding) is one row: identity on the left, the
+A repeated record on a phone (a holding; below the `wide` breakpoint, 912px,
+so tablet portrait too) is one row: identity on the left, the
 number that matters on the right, everything else one tap away behind a
 disclosure. A record should cost about 56px, not 220px.
 

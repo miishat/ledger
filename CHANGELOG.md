@@ -13,7 +13,7 @@ into a single column.
 ### Changed
 - On a phone, the top bar shows the page you are on and its main action: Add Transaction, Import holdings, New Analysis, Edit Package, or Customize. Page descriptions are shown on larger screens only
 - Each page leads with its key number on a phone: net worth on the Dashboard, the period's net change on Budgeting, portfolio value on Investments, and total compensation on Compensation
-- Holdings on a phone are one compact row each. Tap a row for its currency, price, and cost. Each account shows its eight largest holdings first, with Show all for the rest
+- Holdings on a phone (any screen below 912px wide, tablet portrait included) are one compact row each. Tap a row for its currency, price, and cost. Each account shows its eight largest holdings first, with Show all for the rest
 - Income, Expenses, and account lists on a phone show their first five entries with Show all, instead of scrolling inside the page
 - Empty account groups on the phone Dashboard take one line instead of a full card
 - Cash Flow on a phone groups the smaller income sources and spending categories into Other, so every label is readable
