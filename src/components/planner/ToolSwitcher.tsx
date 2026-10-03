@@ -46,9 +46,11 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current, phone = fal
         desktop="popover"
         anchorRef={btnRef}
         ariaLabel="Switch tool"
+        showClose={false}
+        scrollCue
         panelClassName="w-72 max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1"
       >
-        <div role="menu" className="max-h-[70vh] overflow-y-auto flex flex-col gap-1">
+        <div role="menu" className="desktop:max-h-[70vh] desktop:overflow-y-auto flex flex-col gap-1">
           {PLANNER_GROUPS.map((group) => {
               const tools = PLANNER_TOOLS.filter((t) => t.group === group)
               if (tools.length === 0) return null

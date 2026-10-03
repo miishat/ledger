@@ -230,4 +230,67 @@ describe('Sheet mobile panel isolation', () => {
     expect(scroller.className).toMatch(/overflow-y-auto/)
     expect(scroller.className).not.toMatch(/items-center/)
   })
+
+  describe('mobile showClose / scrollCue', () => {
+    afterEach(() => resetMatchMedia())
+
+    const setLayout = (panel: HTMLElement, layout: { scrollHeight: number; clientHeight: number; scrollTop: number }) => {
+      Object.defineProperty(panel, 'scrollHeight', { configurable: true, value: layout.scrollHeight })
+      Object.defineProperty(panel, 'clientHeight', { configurable: true, value: layout.clientHeight })
+      Object.defineProperty(panel, 'scrollTop', { configurable: true, writable: true, value: layout.scrollTop })
+    }
+
+    it('keeps the Close button by default on mobile', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} ariaLabel="x">c</Sheet>)
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    })
+
+    it('showClose=false drops the Close button but scrim and Escape still dismiss', () => {
+      setMatchMedia(false)
+      const onClose = vi.fn()
+      render(<Sheet open onClose={onClose} showClose={false} ariaLabel="x">c</Sheet>)
+      expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+      fireEvent.click(screen.getByTestId('sheet-scrim'))
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(onClose).toHaveBeenCalledTimes(2)
+    })
+
+    it('showClose=false still renders a title', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} showClose={false} title="Pick one" ariaLabel="x">c</Sheet>)
+      expect(screen.getByRole('heading', { name: 'Pick one' })).toBeInTheDocument()
+    })
+
+    it('has no scroll cue or no-scrollbar class by default', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} ariaLabel="x">c</Sheet>)
+      expect(screen.getByTestId('sheet-panel').className).not.toContain('phone-no-scrollbar')
+      expect(screen.queryByTestId('sheet-scroll-cue')).toBeNull()
+    })
+
+    it('scrollCue hides the scrollbar and shows the fade only while more content is below', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} scrollCue ariaLabel="x">c</Sheet>)
+      const panel = screen.getByTestId('sheet-panel')
+      expect(panel.className).toContain('phone-no-scrollbar')
+
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 0 })
+      fireEvent.scroll(panel)
+      expect(screen.getByTestId('sheet-scroll-cue')).toBeInTheDocument()
+
+      setLayout(panel, { scrollHeight: 600, clientHeight: 300, scrollTop: 300 })
+      fireEvent.scroll(panel)
+      expect(screen.queryByTestId('sheet-scroll-cue')).toBeNull()
+    })
+
+    it('scrollCue shows no fade when the content fits', () => {
+      setMatchMedia(false)
+      render(<Sheet open onClose={() => {}} scrollCue ariaLabel="x">c</Sheet>)
+      const panel = screen.getByTestId('sheet-panel')
+      setLayout(panel, { scrollHeight: 300, clientHeight: 300, scrollTop: 0 })
+      fireEvent.scroll(panel)
+      expect(screen.queryByTestId('sheet-scroll-cue')).toBeNull()
+    })
+  })
 })

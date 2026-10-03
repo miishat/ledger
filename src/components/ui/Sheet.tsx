@@ -26,6 +26,12 @@ interface SheetProps {
   /** Classes for the content wrapper around children, applied in BOTH desktop and mobile
    *  (e.g. "flex flex-col gap-3"). This is where per-modal content spacing belongs. */
   contentClassName?: string
+  /** Mobile bottom sheet only. When false, no Close button is rendered and the header row
+   *  collapses to the drag handle (dismissal stays on scrim / swipe / Escape). Default true. */
+  showClose?: boolean
+  /** Mobile bottom sheet only. Hides the panel scrollbar and shows a bottom fade while more
+   *  content lies below, so the list still reads as scrollable. Default false. */
+  scrollCue?: boolean
   children: React.ReactNode
 }
 
@@ -49,6 +55,8 @@ export const Sheet: React.FC<SheetProps> = ({
   title,
   panelClassName = '',
   contentClassName = '',
+  showClose = true,
+  scrollCue = false,
   children,
 }) => {
   const isDesktop = useIsDesktop()
@@ -156,6 +164,24 @@ export const Sheet: React.FC<SheetProps> = ({
   const dragStart = useRef<{ y: number; t: number } | null>(null)
   const dragCaptured = useRef(false)
   const [dragY, setDragY] = useState(0)
+
+  // Scroll cue: true while the panel has content below the visible area.
+  const [moreBelow, setMoreBelow] = useState(false)
+  const updateMoreBelow = () => {
+    const el = panelRef.current
+    if (!el) return
+    setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }
+  useEffect(() => {
+    if (!open || !mounted || !scrollCue) return
+    updateMoreBelow()
+    const el = panelRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(updateMoreBelow)
+    ro.observe(el)
+    if (el.children[1]) ro.observe(el.children[1])
+    return () => ro.disconnect()
+  }, [open, mounted, scrollCue, children])
 
   if (typeof document === 'undefined') return null
 
@@ -287,7 +313,7 @@ export const Sheet: React.FC<SheetProps> = ({
           {...commonPanelProps}
           data-sheet="panel-mobile"
           data-state={state}
-          className="relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
+          className={`relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl${scrollCue ? ' phone-no-scrollbar' : ''}`}
           style={{
             paddingBottom: 'env(safe-area-inset-bottom)',
             // dvh does not shrink for the software keyboard, so a tall
@@ -300,13 +326,14 @@ export const Sheet: React.FC<SheetProps> = ({
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onScroll={scrollCue ? updateMoreBelow : undefined}
         >
-          <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
+          <div className={`sticky top-0 z-10 flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-4 pb-2' : 'pt-4 pb-0'}`}>
             <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
             {title != null && (
               <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
             )}
-            {dismissible && (
+            {dismissible && showClose && (
               <button
                 type="button"
                 aria-label="Close"
@@ -318,6 +345,13 @@ export const Sheet: React.FC<SheetProps> = ({
             )}
           </div>
           <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
+          {scrollCue && moreBelow && (
+            <div
+              data-testid="sheet-scroll-cue"
+              aria-hidden="true"
+              className="pointer-events-none sticky bottom-0 z-10 -mt-10 h-10 bg-gradient-to-t from-[var(--dropdown-bg)] to-transparent"
+            />
+          )}
         </div>
       </div>
     ),

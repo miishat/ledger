@@ -59,4 +59,17 @@ describe('ToolSwitcher', () => {
     fireEvent.click(getByTestId('sheet-scrim'))
     await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
+
+  it('has no Close row in the phone sheet', () => {
+    setMatchMedia(false)
+    const current = getTool('mortgage')!
+    render(
+      <MemoryRouter>
+        <ToolSwitcher current={current} phone />
+      </MemoryRouter>
+    )
+    fireEvent.click(screen.getByRole('button', { name: /mortgage/i }))
+    expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+  })
 })

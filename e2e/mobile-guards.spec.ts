@@ -375,6 +375,40 @@ test('a planner tool names itself in the top bar and frees the first screen', as
   await expect(page).toHaveURL(/#\/planner$/)
 })
 
+// The planner tool switcher sheet spends its height on tools: no Close row, no
+// scrollbar, and a bottom fade while more tools lie below.
+test('the planner tool sheet has no close row or scrollbar and cues more below', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByTestId('mobile-topbar').getByRole('button', { name: /Mortgage/ }).click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Close' })).toHaveCount(0)
+
+  await expect
+    .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
+    .toBe(0)
+
+  await expect(panel.getByRole('menuitem').first()).toBeVisible()
+  // Measure panel and first item in one frame, once the slide-in has settled
+  // (the panel's bottom edge reaches the viewport bottom).
+  await expect
+    .poll(() => panel.evaluate((el) => Math.round(innerHeight - el.getBoundingClientRect().bottom)))
+    .toBe(0)
+  const offset = await panel.evaluate((el) =>
+    Math.round(el.querySelector('[role=menuitem]')!.getBoundingClientRect().top - el.getBoundingClientRect().top))
+  test.info().annotations.push({ type: 'first-item-offset-in-sheet', description: String(offset) })
+  expect(offset).toBeLessThan(100)
+
+  const cue = page.getByTestId('sheet-scroll-cue')
+  await expect(cue).toBeVisible()
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect(cue).toHaveCount(0)
+
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toBeHidden()
+})
+
 // Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key
 // number, and on a portrait phone it is on the first screen without
 // scrolling. The bottom 60px are the tab bar and its margin. seedApp is the
