@@ -31,6 +31,14 @@ const SINGULAR_NOUN: Record<AccountType, string> = {
   other: 'other asset',
 };
 
+const PLURAL_NOUN: Record<AccountType, string> = {
+  bank: 'bank accounts',
+  investment: 'investment accounts',
+  debt: 'debts',
+  receivable: 'receivables',
+  other: 'other assets',
+};
+
 export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ title, type, className }) => {
   const { getAccountsByType, getTotalByType, removeAccount, addAccount } = useAccountsStore();
   const offerUndo = useUndoStore((s) => s.offerUndo);
@@ -64,6 +72,20 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
       Add
     </button>
   );
+
+  // Rule 5 of docs/mobile-layout-rules.md. An empty group on the phone
+  // Dashboard used to cost a 297px card (a zero total, an illustration and a
+  // second Add button) for each of up to five groups. The header's Add stays.
+  if (!isDesktop && accounts.length === 0) {
+    return (
+      <>
+        <WidgetWrapper title={title} action={ActionButton} className={className}>
+          <p className="text-[13px] text-text-secondary">No {PLURAL_NOUN[type]} yet.</p>
+        </WidgetWrapper>
+        <AddAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} defaultType={type} editingAccount={editingAccount} />
+      </>
+    );
+  }
 
   return (
     <>

@@ -130,3 +130,24 @@ describe('AccountCategoryWidget list on a phone', () => {
     expect(container.querySelectorAll('[data-testid^="account-row-"]')).toHaveLength(7)
   })
 })
+
+describe('AccountCategoryWidget empty on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('is one sentence under the title, with the header Add as its only action', () => {
+    setMatchMedia(false)
+    useAccountsStore.setState({ accounts: [] })
+    render(<AccountCategoryWidget title="Receivables" type="receivable" />)
+    expect(screen.getByText('No receivables yet.')).toBeInTheDocument()
+    expect(screen.queryByText('$0.00')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Add account' })).toBeNull()
+    expect(screen.getByRole('button', { name: /Add/ })).toBeInTheDocument()
+  })
+
+  it('keeps the full empty state on desktop', () => {
+    useAccountsStore.setState({ accounts: [] })
+    render(<AccountCategoryWidget title="Receivables" type="receivable" />)
+    expect(screen.getByText('$0.00')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add account' })).toBeInTheDocument()
+  })
+})
