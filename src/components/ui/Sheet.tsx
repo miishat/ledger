@@ -26,11 +26,42 @@ interface SheetProps {
   /** Classes for the content wrapper around children, applied in BOTH desktop and mobile
    *  (e.g. "flex flex-col gap-3"). This is where per-modal content spacing belongs. */
   contentClassName?: string
+  /** Mobile bottom sheet only. Phone sheets dismiss by swipe, scrim tap and Escape and render
+   *  no X. Pass true only for a sheet with no other way out; nothing does today. Default false. */
+  showClose?: boolean
+  /** Mobile bottom sheet only. Hides the panel scrollbar and shows a bottom fade while more
+   *  content lies below, so the list still reads as scrollable. Default false. */
+  scrollCue?: boolean
+  /** Mobile bottom sheet only. For an untitled sheet whose first content row is its own
+   *  sticky bar (the command palette): the header shrinks to the drag handle so that row
+   *  sits close under it. Default false. */
+  compactHeader?: boolean
   children: React.ReactNode
 }
 
 const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+// The hidden phone Close button (sr-only until focused). It is part of the Tab order but is
+// never the element focused on open, or it would flash into view for every sheet.
+const HIDDEN_CLOSE_ATTR = 'data-sheet-hidden-close'
+
+// True when the element and every ancestor up to the panel is actually rendered. Callers keep
+// desktop-only controls in the DOM as `hidden desktop:flex`; on a phone those are display:none
+// and cannot take focus, so both the open-focus and the Tab trap must skip them. Walking
+// computed styles (not getClientRects) keeps this working in jsdom, which has no layout.
+function isRendered(el: HTMLElement, root: HTMLElement): boolean {
+  for (let n: HTMLElement | null = el; n; n = n.parentElement) {
+    const cs = getComputedStyle(n)
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false
+    if (n === root) break
+  }
+  return true
+}
+
+function visibleFocusables(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((n) => isRendered(n, root))
+}
 
 // Module-level stack of currently-open Sheet instance ids, topmost last.
 // Mirrors useScrollLock's module-level ref-counting pattern so stacked
@@ -49,6 +80,9 @@ export const Sheet: React.FC<SheetProps> = ({
   title,
   panelClassName = '',
   contentClassName = '',
+  showClose = false,
+  scrollCue = false,
+  compactHeader = false,
   children,
 }) => {
   const isDesktop = useIsDesktop()
@@ -92,17 +126,46 @@ export const Sheet: React.FC<SheetProps> = ({
   }, [open, dismissible, onClose, instanceId])
 
   // Focus management: focus the panel on open, restore to trigger on close.
+  // Desktop keeps its original behaviour: it looks for the panel at the moment `open` flips,
+  // and when the sheet was closed (so not yet mounted) there is nothing to focus.
+  const phoneFocused = useRef(false)
   useEffect(() => {
     if (open) {
       lastFocused.current = document.activeElement as HTMLElement
-      // focus first focusable, else the panel
+      if (!isDesktop) return
       const el = panelRef.current
-      const focusable = el?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      const focusable = el ? visibleFocusables(el)[0] : undefined
       ;(focusable ?? el)?.focus()
     } else {
       lastFocused.current?.focus?.()
     }
+    // isDesktop is read only at the moment of opening; a breakpoint change must not refocus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // Phone: the panel only exists once `mounted` catches up with `open` (one render later for a
+  // sheet that was closed), so focus has to wait for it, or it never enters the sheet and the
+  // next Tab starts from <body>.
+  useEffect(() => {
+    if (!open) {
+      phoneFocused.current = false
+      return
+    }
+    const el = panelRef.current
+    if (isDesktop || !mounted || !el || phoneFocused.current) return
+    phoneFocused.current = true
+    // Something inside the sheet already took focus (the palette's search field), keep it.
+    if (el.contains(document.activeElement)) return
+    // Focus the first visible control, else the panel. The hidden Close button is skipped or it
+    // would flash into view for every sheet, and so are text fields, where focusing one raises
+    // the keyboard over a sheet the person has only just opened.
+    const focusable = visibleFocusables(el).find(
+      (n) =>
+        !n.hasAttribute(HIDDEN_CLOSE_ATTR) &&
+        !n.matches('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]), textarea')
+    )
+    ;(focusable ?? el).focus()
+  }, [open, mounted, isDesktop])
 
   // Focus trap: keep Tab/Shift+Tab cycling within the panel while open.
   useEffect(() => {
@@ -111,7 +174,7 @@ export const Sheet: React.FC<SheetProps> = ({
       if (e.key !== 'Tab') return
       const el = panelRef.current
       if (!el) return
-      const focusables = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+      const focusables = visibleFocusables(el)
       if (focusables.length === 0) return
       const first = focusables[0]
       const last = focusables[focusables.length - 1]
@@ -156,6 +219,43 @@ export const Sheet: React.FC<SheetProps> = ({
   const dragStart = useRef<{ y: number; t: number } | null>(null)
   const dragCaptured = useRef(false)
   const [dragY, setDragY] = useState(0)
+
+  // Scroll cue: true while the panel has content below the visible area.
+  const [moreBelow, setMoreBelow] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const updateMoreBelow = () => {
+    const el = panelRef.current
+    if (!el) return
+    setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }
+  // Top fade: true once the panel has scrolled, so content does not end in a hard cut under
+  // the sheet's top edge. The mirror of the bottom cue, for every phone sheet.
+  const [scrolledDown, setScrolledDown] = useState(false)
+  const onPanelScroll = () => {
+    const el = panelRef.current
+    if (el) setScrolledDown(el.scrollTop > 4)
+    if (scrollCue) updateMoreBelow()
+  }
+  // A sheet closed while scrolled would otherwise reopen with a stale top fade, so both cues
+  // reset the moment it opens (adjusting state during render, not in an effect).
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setScrolledDown(false)
+      setMoreBelow(false)
+    }
+  }
+  useEffect(() => {
+    if (!open || !mounted || !scrollCue || isDesktop) return
+    updateMoreBelow()
+    const el = panelRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(updateMoreBelow)
+    ro.observe(el)
+    if (contentRef.current) ro.observe(contentRef.current)
+    return () => ro.disconnect()
+  }, [open, mounted, scrollCue, isDesktop])
 
   if (typeof document === 'undefined') return null
 
@@ -287,7 +387,7 @@ export const Sheet: React.FC<SheetProps> = ({
           {...commonPanelProps}
           data-sheet="panel-mobile"
           data-state={state}
-          className="relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl"
+          className={`relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl${scrollCue ? ' phone-no-scrollbar' : ''}`}
           style={{
             paddingBottom: 'env(safe-area-inset-bottom)',
             // dvh does not shrink for the software keyboard, so a tall
@@ -300,13 +400,43 @@ export const Sheet: React.FC<SheetProps> = ({
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onScroll={onPanelScroll}
         >
-          <div className="sticky top-0 z-10 flex items-center gap-2 px-4 pt-4 pb-2 bg-[var(--dropdown-bg)]">
+          {/* A zero-height sticky strip holds the drag handle and the top fade, so the handle
+              stays pinned and the fade softens the edge where content scrolls away, without
+              taking any layout height. */}
+          <div data-testid="sheet-top-strip" className="sticky top-0 z-20 h-0">
+            {scrolledDown && (
+              <div
+                data-testid="sheet-top-fade"
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-[linear-gradient(to_bottom,var(--dropdown-bg)_50%,transparent)]"
+              />
+            )}
             <span className="absolute left-1/2 -translate-x-1/2 top-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
+          </div>
+          {/* Not sticky: a pinned title row costs phone screen height all the way down a long
+              sheet, so it scrolls away with the content. The extra padding keeps the first
+              content clear of the drag handle (about 24px handle-only). */}
+          <div data-testid="sheet-header" className={`relative flex items-center gap-2 px-4 bg-[var(--dropdown-bg)] ${showClose || title != null ? 'pt-7 pb-2' : compactHeader ? 'pt-3' : 'pt-4 pb-5'}`}>
+            {/* Sighted touch users never see this. It exists for screen readers and keyboards,
+                which have no swipe or scrim: sr-only until focused, then a normal 44px control.
+                It is the first focusable in the sheet so Tab reaches it at once. */}
+            {dismissible && !showClose && (
+              <button
+                type="button"
+                aria-label="Close"
+                data-sheet-hidden-close=""
+                onClick={onClose}
+                className="tap-exempt sr-only focus:not-sr-only focus:absolute! focus:right-2 focus:top-1 focus:z-30 focus:flex focus:items-center focus:justify-center focus:min-h-[44px] focus:min-w-[44px] focus:bg-[var(--dropdown-bg)] text-text-secondary hover:text-text-primary rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            )}
             {title != null && (
               <h2 className="flex items-center gap-2 text-[16px] font-semibold text-text-primary">{title}</h2>
             )}
-            {dismissible && (
+            {dismissible && showClose && (
               <button
                 type="button"
                 aria-label="Close"
@@ -317,7 +447,14 @@ export const Sheet: React.FC<SheetProps> = ({
               </button>
             )}
           </div>
-          <div className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
+          <div ref={contentRef} className={`px-4 pb-4 ${contentClassName}`}>{children}</div>
+          {scrollCue && moreBelow && (
+            <div
+              data-testid="sheet-scroll-cue"
+              aria-hidden="true"
+              className="pointer-events-none sticky bottom-0 z-10 -mt-10 h-10 bg-gradient-to-t from-[var(--dropdown-bg)] to-transparent"
+            />
+          )}
         </div>
       </div>
     ),

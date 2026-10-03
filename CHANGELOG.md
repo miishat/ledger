@@ -4,6 +4,38 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
+## [0.11.0] - 2026-10-03
+
+Ledger on a phone now follows one written set of layout rules
+(`docs/mobile-layout-rules.md`) instead of being the desktop layout stacked
+into a single column.
+
+### Added
+- Planner tools on a phone put a Back button and the tool name in the top bar. Tap the name to switch to another tool. The breadcrumb header is gone
+- About this tool on a phone appears once per tool as a dismissible notice above the tool. After that it is a centered button below the results. Which tools you have seen stays on the device and is not backed up or synced
+- Phone sheets give screen reader and keyboard users a Close button. It stays out of sight until it takes focus, and then shows as a normal 44px control
+
+### Changed
+- On a phone, the top bar shows the page you are on and its main action: Add Transaction, Import holdings, New Analysis, Edit Package, or Customize. The action is a soft tinted circle. Page descriptions are shown on larger screens only
+- Each page leads with its key number on a phone: net worth on the Dashboard, the period's net change on Budgeting, portfolio value on Investments, and total compensation on Compensation
+- Holdings on a phone (any screen below 912px wide, tablet portrait included) are one compact row each. Tap a row for its currency, price, and cost. Each account shows its eight largest holdings first, with Show all for the rest
+- Income, Expenses, and account lists on a phone show their first five entries with Show all, instead of scrolling inside the page
+- Empty account groups on the phone Dashboard take one line instead of a full card
+- Cash Flow on a phone groups the smaller income sources and spending categories into Other, so every label is readable
+- Budgeting's month stepper on a phone has no card around it, and Import CSV is an icon-only button. Both keep 44px tap targets
+- Budgeting and Investments tabs on a phone are underline tabs that fill the row. They scroll sideways with a fade at the edge only when the labels do not fit
+- Phone sheets no longer show an X. Close them by swiping down, tapping outside, or pressing Escape. The title now scrolls away with the content, the drag handle stays pinned, and the top edge fades once the sheet has scrolled
+- The tool switcher and search show a fade at the bottom instead of a scrollbar while more is below. Search drops the esc hint and keeps its field pinned while the results scroll
+- The Settings sheet on a phone is organized: each section has a one-line description, every action is a 44px button, Enable reminders is a real button, the footer wraps instead of clipping, and the title is no longer shown above the sections
+- The page scrollbar is hidden on phones. Scrolling works as before, and the desktop scrollbar and command palette are unchanged
+
+### Fixed
+- Switching pages now opens the new page at the top instead of at the previous page's scroll position
+- The empty Portfolio and Compensation pages now include a button to add data
+- Phone sheets now take keyboard focus when they open, and Tab stays inside the sheet. Before, focus stayed on the page behind it
+- Closing About this tool on a phone returns focus to the button below the results instead of dropping it
+- A phone sheet that was closed while scrolled no longer reopens with a stale fade at its top edge
+
 ## [0.10.1] - 2026-09-27
 
 ### Changed

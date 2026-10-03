@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { IncomeWidget } from './IncomeWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 
 const budgetInitial = useBudgetStore.getState()
 
@@ -52,5 +53,41 @@ describe('IncomeWidget', () => {
     })
     render(<IncomeWidget range={range} />)
     expect(screen.queryByText(/\$40/)).not.toBeInTheDocument()
+  })
+})
+
+describe('IncomeWidget on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  const eightSources = () => {
+    const categories: Record<string, { id: string; groupId: string; name: string; targetAmount: number }> = {}
+    const transactions: Record<string, { id: string; date: string; amount: number; description: string; type: 'income'; categoryId: string }> = {}
+    for (let i = 1; i <= 8; i++) {
+      categories[`c${i}`] = { id: `c${i}`, groupId: 'g', name: `Source ${i}`, targetAmount: 0 }
+      transactions[`t${i}`] = { id: `t${i}`, date: '2026-08-05', amount: 1000 - i * 10, description: 'x', type: 'income', categoryId: `c${i}` }
+    }
+    useBudgetStore.setState({ categories, transactions })
+  }
+
+  it('shows five sources and a Show all button instead of a scroll area', () => {
+    setMatchMedia(false)
+    eightSources()
+    render(<IncomeWidget range={range} />)
+    const group = screen.getByRole('group', { name: 'Income sources' })
+    expect(group.children).toHaveLength(5)
+    expect(group).not.toHaveAttribute('tabindex')
+    expect(group.className).not.toMatch(/overflow-y-auto/)
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 8 sources' }))
+    expect(group.children).toHaveLength(8)
+  })
+
+  it('keeps the fixed-height scroll list on desktop', () => {
+    eightSources()
+    render(<IncomeWidget range={range} />)
+    const group = screen.getByRole('group', { name: 'Income sources' })
+    expect(group.children).toHaveLength(8)
+    expect(group).toHaveAttribute('tabindex', '0')
+    expect(group.className).toMatch(/max-h-\[200px\]/)
+    expect(screen.queryByRole('button', { name: /Show all/ })).toBeNull()
   })
 })

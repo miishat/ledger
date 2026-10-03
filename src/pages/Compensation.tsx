@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { Pencil, Plus, RefreshCw } from 'lucide-react'
+import { PageHeader, TopBarAction } from '../components/ui/PageHeader'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
@@ -9,6 +10,7 @@ import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
 import { NumberInput } from '../components/ui/NumberInput'
 import { fxKey, todayKey } from '../services/marketData'
 import { useMarketDataStore } from '../store/useMarketDataStore'
+import { useIsDesktop } from '../hooks/useMediaQuery'
 
 export const Compensation: React.FC = () => {
   const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
@@ -38,6 +40,7 @@ export const Compensation: React.FC = () => {
   const setOverride = useMarketDataStore((s) => s.setOverride)
   const clearOverride = useMarketDataStore((s) => s.clearOverride)
 
+  const isDesktop = useIsDesktop()
   const totalComp = calcTotalComp(pkg, timeMode)
   const isPopulated = totalComp > 0
 
@@ -49,111 +52,121 @@ export const Compensation: React.FC = () => {
     }
   }
 
+  // Rule 3 of docs/mobile-layout-rules.md: on a phone the total leads and the
+  // price and currency controls follow it. One element, placed in one of two
+  // spots, so its inputs never exist twice.
+  const priceToolbar = isPopulated && (
+    <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-[13px] text-[var(--color-text-secondary)]">
+          Stock price (USD): <span className="font-medium text-[var(--color-text-primary)]">${rawPrice.toFixed(2)}</span>
+          {priceSource && <span className="ml-1 text-meta uppercase text-[var(--color-text-secondary)]">({priceSource}{priceStale ? ', stale' : ''})</span>}
+        </span>
+        <button
+          type="button"
+          onClick={() => priceSource === 'override' ? clearManualPrice() : refreshPrice(true)}
+          aria-label="Refresh price"
+          className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+        >
+          <RefreshCw size={14} className={priceStatus === 'loading' ? 'animate-spin' : ''} />
+          Refresh Price
+        </button>
+        {priceStatus === 'error' && (
+          <span role="alert" className="text-[12px] text-[var(--color-error)]">
+            Live price unavailable. Try again or enter a manual price.
+          </span>
+        )}
+        <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
+          <label htmlFor="comp-manual-price" className="sr-only">
+            Set stock price manually, in USD
+          </label>
+          <NumberInput
+            id="comp-manual-price"
+            value={manualPriceDraft}
+            onCommit={setManualPriceDraft}
+            placeholder="Manual price"
+            className="w-28 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] transition-colors"
+          />
+          <button
+            type="submit"
+            className="px-2 py-1 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
+          >
+            Set
+          </button>
+        </form>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          type="button"
+          onClick={toggleCadConversion}
+          aria-pressed={useCadConversion}
+          className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
+            useCadConversion
+              ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
+              : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] control-border hover:text-[var(--color-text-primary)]'
+          }`}
+        >
+          Convert to CAD
+          {useCadConversion && (
+            <span className="ml-1 font-normal">
+              {fxAvailable
+                ? `(1 USD = ${fxRate.toFixed(4)} CAD${
+                    fxSource === 'override' ? ', manual' : fxStale && fxDate ? `, as of ${fxDate}` : ''
+                  }${fxStatus === 'loading' ? ', updating' : ''})`
+                : '(rate unavailable, set a manual rate)'}
+            </span>
+          )}
+        </button>
+
+        {useCadConversion && (
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+              Manual rate
+              <NumberInput
+                value={fxOverride ?? 0}
+                placeholder={fxAvailable ? fxRate.toFixed(4) : '1.3700'}
+                onCommit={(v) => { if (v > 0) setOverride(fxOverrideKey, v) }}
+                className="w-24 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
+              />
+            </label>
+            {fxOverride !== undefined && (
+              <button
+                onClick={() => clearOverride(fxOverrideKey)}
+                className="text-[12px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+              >
+                Use live
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
-      <header className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Compensation</h1>
-          <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">
-            Analyze your base salary, bonuses, equity, and benefits to understand your true earning potential.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-        >
-          {isPopulated ? 'Edit Package' : 'Add Compensation Package'}
-        </button>
-      </header>
+      <PageHeader
+        title="Compensation"
+        subtitle="Analyze your base salary, bonuses, equity, and benefits to understand your true earning potential."
+        actions={
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+          >
+            {isPopulated ? 'Edit Package' : 'Add Compensation Package'}
+          </button>
+        }
+        phoneAction={
+          <TopBarAction
+            icon={isPopulated ? Pencil : Plus}
+            label={isPopulated ? 'Edit Package' : 'Add Compensation Package'}
+            onClick={() => setIsModalOpen(true)}
+          />
+        }
+      />
 
-      {isPopulated && (
-        <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[13px] text-[var(--color-text-secondary)]">
-              Stock price (USD): <span className="font-medium text-[var(--color-text-primary)]">${rawPrice.toFixed(2)}</span>
-              {priceSource && <span className="ml-1 text-meta uppercase text-[var(--color-text-secondary)]">({priceSource}{priceStale ? ', stale' : ''})</span>}
-            </span>
-            <button
-              type="button"
-              onClick={() => priceSource === 'override' ? clearManualPrice() : refreshPrice(true)}
-              aria-label="Refresh price"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
-            >
-              <RefreshCw size={14} className={priceStatus === 'loading' ? 'animate-spin' : ''} />
-              Refresh Price
-            </button>
-            {priceStatus === 'error' && (
-              <span role="alert" className="text-[12px] text-[var(--color-error)]">
-                Live price unavailable. Try again or enter a manual price.
-              </span>
-            )}
-            <form onSubmit={handleManualPriceSubmit} className="flex items-center gap-1">
-              <label htmlFor="comp-manual-price" className="sr-only">
-                Set stock price manually, in USD
-              </label>
-              <NumberInput
-                id="comp-manual-price"
-                value={manualPriceDraft}
-                onCommit={setManualPriceDraft}
-                placeholder="Manual price"
-                className="w-28 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-2 py-1 bg-[var(--color-bg-secondary)] border control-border rounded-md text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)] transition-colors"
-              >
-                Set
-              </button>
-            </form>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              type="button"
-              onClick={toggleCadConversion}
-              aria-pressed={useCadConversion}
-              className={`px-3 py-1.5 rounded-md text-[12px] font-medium border transition-colors ${
-                useCadConversion
-                  ? 'bg-[var(--color-accent)] text-[var(--color-bg-primary)] border-[var(--color-accent)]'
-                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] control-border hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              Convert to CAD
-              {useCadConversion && (
-                <span className="ml-1 font-normal">
-                  {fxAvailable
-                    ? `(1 USD = ${fxRate.toFixed(4)} CAD${
-                        fxSource === 'override' ? ', manual' : fxStale && fxDate ? `, as of ${fxDate}` : ''
-                      }${fxStatus === 'loading' ? ', updating' : ''})`
-                    : '(rate unavailable, set a manual rate)'}
-                </span>
-              )}
-            </button>
-
-            {useCadConversion && (
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
-                  Manual rate
-                  <NumberInput
-                    value={fxOverride ?? 0}
-                    placeholder={fxAvailable ? fxRate.toFixed(4) : '1.3700'}
-                    onCommit={(v) => { if (v > 0) setOverride(fxOverrideKey, v) }}
-                    className="w-24 bg-[var(--color-bg-secondary)] border control-border rounded-md px-2 py-1 text-[12px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
-                  />
-                </label>
-                {fxOverride !== undefined && (
-                  <button
-                    onClick={() => clearOverride(fxOverrideKey)}
-                    className="text-[12px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                  >
-                    Use live
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {isDesktop && priceToolbar}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -212,10 +225,19 @@ export const Compensation: React.FC = () => {
               <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
                 No compensation data added yet. Start by adding your current offer or current package.
               </p>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              >
+                Add Compensation Package
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {!isDesktop && priceToolbar}
 
       {isPopulated && (
         <>

@@ -32,3 +32,29 @@ describe('Dashboard widget drag gating', () => {
     expect(Object.keys(DASHBOARD_WIDGET_LABELS).sort()).toEqual([...DASHBOARD_WIDGET_IDS].sort())
   })
 })
+
+describe('Dashboard header on a phone', () => {
+  it('offers Customize as one labelled action and drops the subtitle', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    expect(screen.getAllByRole('button', { name: 'Customize' })).toHaveLength(1)
+    expect(screen.queryByText('All your accounts, balances, and trends in one place.')).toBeNull()
+  })
+})
+
+describe('Dashboard key figure on a phone', () => {
+  it('puts the net worth figure first on a phone, whatever the saved order', () => {
+    setMatchMedia(false)
+    useDashboardLayoutStore.setState({ order: [], hidden: [] })
+    const { container } = render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    const ids = [...container.querySelectorAll('[data-widget-id]')].map((el) => el.getAttribute('data-widget-id'))
+    expect(ids[0]).toBe('trend')
+  })
+
+  it('keeps the saved order on desktop', () => {
+    useDashboardLayoutStore.setState({ order: [], hidden: [] })
+    const { container } = render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    const ids = [...container.querySelectorAll('[data-widget-id]')].map((el) => el.getAttribute('data-widget-id'))
+    expect(ids[0]).toBe('net-worth')
+  })
+})

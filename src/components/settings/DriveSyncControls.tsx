@@ -6,6 +6,8 @@ import { previewPush, previewPull, performPush, performPull } from '../../utils/
 import type { SnapshotMeta } from '../../utils/syncDecision'
 import { isAutoSyncEnabled, setAutoSyncEnabled } from '../../utils/autoSync'
 import { Checkbox } from '../ui/Checkbox'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { PHONE_SECONDARY_ACTION } from './actionStyles'
 
 type Pending =
   | {
@@ -51,6 +53,7 @@ export const DriveSyncControls: React.FC = () => {
   const setDeviceName = useSyncStore((s) => s.setDeviceName)
   const consecutiveAutoFailures = useSyncStore((s) => s.consecutiveAutoFailures)
 
+  const isDesktop = useIsDesktop()
   const [nameDraft, setNameDraft] = useState(deviceName)
   const [clientIdDraft, setClientIdDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -168,13 +171,17 @@ export const DriveSyncControls: React.FC = () => {
             value={clientIdDraft}
             onChange={(e) => setClientIdDraft(e.target.value)}
             placeholder="xxxxx.apps.googleusercontent.com"
-            className="px-2 py-1.5 rounded-md border border-border bg-transparent text-[13px] text-text-primary"
+            className={isDesktop
+              ? 'px-2 py-1.5 rounded-md border border-border bg-transparent text-[13px] text-text-primary'
+              : 'min-h-[44px] px-2 py-2 rounded-md border border-border bg-transparent text-[13px] text-text-primary'}
           />
         </label>
         <button
           onClick={() => setClientId(clientIdDraft)}
           disabled={!clientIdDraft.trim()}
-          className="px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50"
+          className={isDesktop
+            ? 'px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50'
+            : `${PHONE_SECONDARY_ACTION} disabled:opacity-70 disabled:border-dashed disabled:cursor-not-allowed`}
         >
           Save client ID
         </button>

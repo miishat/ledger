@@ -9,6 +9,8 @@ import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 import { inRange, type MonthRange } from '../../utils/budget/period'
 import { splitParts } from '../../utils/budget/splits'
 import { ChartFigure } from '../ui/ChartFigure'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { foldSmallest } from '../../utils/budget/foldSmallest'
 
 type NodeKind = 'income' | 'pool' | 'expense' | 'savings'
 
@@ -74,6 +76,7 @@ function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
 }
 
 export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
+  const isDesktop = useIsDesktop()
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
@@ -119,16 +122,25 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
   const totalExpense = expenseNames.reduce((s, name) => s + (expenseByGroup.get(name) ?? 0), 0)
   const savings = Math.max(0, totalIncome - totalExpense)
 
-  const poolIdx = incomeNames.length
+  // Rule 6 of docs/mobile-layout-rules.md. At 375px this Sankey drew nine
+  // income labels and nine expense labels down a 240px chart. A phone keeps
+  // the three largest sources and four largest spending groups and folds the
+  // rest; the accessible label below still reports the real counts.
+  const incomeEntries: [string, number][] = [...incomeByCat.entries()]
+  const expenseEntries: [string, number][] = expenseNames.map((name) => [name, expenseByGroup.get(name)!])
+  const drawnIncome = isDesktop ? incomeEntries : foldSmallest(incomeEntries, 3, 'Other sources')
+  const drawnExpense = isDesktop ? expenseEntries : foldSmallest(expenseEntries, 4, 'Other spending')
+
+  const poolIdx = drawnIncome.length
   const nodes = [
-    ...incomeNames.map((name) => ({ name, kind: 'income' as const })),
+    ...drawnIncome.map(([name]) => ({ name, kind: 'income' as const })),
     { name: 'Income', kind: 'pool' as const },
-    ...expenseNames.map((name) => ({ name, kind: 'expense' as const })),
+    ...drawnExpense.map(([name]) => ({ name, kind: 'expense' as const })),
     ...(savings > 0 ? [{ name: 'Savings', kind: 'savings' as const }] : []),
   ]
 
-  const incomeLinks = incomeNames.map((name, i) => ({ source: i, target: poolIdx, value: incomeByCat.get(name)! }))
-  const expenseLinks = expenseNames.map((name, i) => ({ source: poolIdx, target: poolIdx + 1 + i, value: expenseByGroup.get(name)! }))
+  const incomeLinks = drawnIncome.map(([, value], i) => ({ source: i, target: poolIdx, value }))
+  const expenseLinks = drawnExpense.map(([, value], i) => ({ source: poolIdx, target: poolIdx + 1 + i, value }))
   const savingsLinks = savings > 0 ? [{ source: poolIdx, target: nodes.length - 1, value: savings }] : []
   const links = [...incomeLinks, ...expenseLinks, ...savingsLinks].filter((l) => l.value > 0)
 

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { seedApp } from './seed'
 
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
 const BUDGET_KEY = 'ledger-budget'
@@ -72,6 +73,21 @@ for (const [name, hash] of ROUTES) {
 // 10 of 31 controls under that on the dashboard alone, and 21 of 34 on the
 // transaction list. Anything that genuinely must stay smaller opts out with
 // the .tap-exempt class, and the exemption is visible in this failure list.
+// Phone sheets carry no visible X. The only Close button left is the screen reader one, which
+// is clipped to a pixel until it takes keyboard focus.
+async function expectNoVisibleClose(panel: import('@playwright/test').Locator) {
+  await expect
+    .poll(() =>
+      panel.getByRole('button', { name: 'Close' }).evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return r.width <= 1 && r.height <= 1
+        })
+      )
+    )
+    .not.toContain(false)
+}
+
 const TAP_SELECTOR =
   'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="tab"], [role="switch"]'
 
@@ -246,6 +262,10 @@ for (const [name, hash] of ROUTES) {
         .filter((el) => {
           const cs = getComputedStyle(el)
           if (cs.visibility === 'hidden' || cs.display === 'none') return false
+          // A phone tab strip scrolls sideways on purpose, so tabs past its
+          // right edge are clipped by it. The strip itself is still checked.
+          const strip = el.closest('[role="tablist"]')
+          if (strip && strip !== el && strip.getBoundingClientRect().right <= de.clientWidth + 1) return false
           const r = el.getBoundingClientRect()
           return r.width > 0 && r.height > 0 && r.right > de.clientWidth + 1
         })
@@ -273,11 +293,194 @@ test('settings is reachable and inside the viewport', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible()
 })
 
+// The phone Settings sheet is organized: every section has one anatomy, every action is
+// a 44px button, and the Reminders row centres its text and action on each other.
+test('the Settings sheet is organized: 44px actions, centred Reminders row, nothing clipped', async ({ page }) => {
+  await page.addInitScript(() => {
+    // Some engines have no Notification and headless Chromium reports 'denied'; either
+    // hides the Enable reminders action, so stand in a not-yet-asked Notification.
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: { permission: 'default', requestPermission: () => Promise.resolve('default') },
+    })
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  const row = panel.getByTestId('reminders-row')
+  await expect(row).toBeVisible()
+
+  const actions = ['Save client ID', 'Load demo data', 'Enable reminders', 'Export data', 'Import backup', 'Save']
+  for (const name of actions) {
+    // Import backup is a label wrapping a file input, not a button, and wraps to two lines
+    // at 320px, so measure the label's own box like the others.
+    const target =
+      name === 'Import backup'
+        ? panel.locator('label', { hasText: 'Import backup' })
+        : panel.getByRole('button', { name, exact: true })
+    await expect(target).toBeVisible()
+    const box = (await target.boundingBox())!
+    expect(box.height, name + ' height').toBeGreaterThanOrEqual(44)
+  }
+
+  const text = (await row.locator('p').boundingBox())!
+  const action = (await row.getByRole('button', { name: 'Enable reminders' }).boundingBox())!
+  expect(Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))).toBeLessThanOrEqual(2)
+
+  const overflow = await panel.evaluate((el) => {
+    const p = el.getBoundingClientRect()
+    const clipped = [...el.querySelectorAll('section, section button, section input, section p, footer, h3')]
+      .filter((n) => {
+        const r = n.getBoundingClientRect()
+        return r.width > 0 && (r.left < p.left - 0.5 || r.right > p.right + 0.5)
+      })
+      .map((n) => (n.textContent || n.tagName).trim().slice(0, 30))
+    return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, clipped, doc: document.documentElement.scrollWidth, win: window.innerWidth }
+  })
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth)
+  expect(overflow.doc).toBeLessThanOrEqual(overflow.win)
+  expect(overflow.clipped).toEqual([])
+})
+
+// Callers keep desktop-only header buttons in the DOM as display:none on a phone. Focus must
+// skip them: it enters the sheet on open and Tab and Shift+Tab never leave the panel.
+const insidePanel = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => !!document.activeElement?.closest('[data-testid="sheet-panel"]'))
+
+for (const [label, open] of [
+  ['Settings', async (page: import('@playwright/test').Page) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  }],
+  ['Add Transaction', async (page: import('@playwright/test').Page) => {
+    await seedApp(page)
+    await page.goto('/#/budget')
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('button', { name: 'Add Transaction' }).first().click()
+  }],
+] as const) {
+  test(`phone focus: ${label} sheet takes focus on open and Tab stays inside it`, async ({ page }) => {
+    await open(page)
+    await expect(page.getByTestId('sheet-panel')).toBeVisible()
+    await expect.poll(() => insidePanel(page)).toBe(true)
+    // The hidden Close button must not be what opens focused, or it would flash into view.
+    await expect(page.getByTestId('sheet-panel').locator('[data-sheet-hidden-close]')).not.toBeFocused()
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press('Tab')
+      expect(await insidePanel(page), 'Tab ' + i).toBe(true)
+    }
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press('Shift+Tab')
+      expect(await insidePanel(page), 'Shift+Tab ' + i).toBe(true)
+    }
+  })
+}
+
+test('phone sheets give keyboard users a close button that shows on focus only', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  const close = panel.getByRole('button', { name: 'Close' })
+  await expect(close).toHaveCount(1)
+  await expectNoVisibleClose(panel)
+  await expect.poll(() => insidePanel(page)).toBe(true)
+  await expect(close).not.toBeFocused()
+  // Shift+Tab from the first control reaches it, since it is the first focusable in the sheet.
+  await page.keyboard.press('Shift+Tab')
+  await expect(close).toBeFocused()
+  await expect.poll(async () => (await close.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+  expect((await close.boundingBox())!.width).toBeGreaterThanOrEqual(44)
+  // The app's global :focus-visible rule draws the ring as a 2px outline.
+  await expect(close).toHaveCSS('outline-style', 'solid')
+  await expect(close).toHaveCSS('outline-width', '2px')
+  await page.keyboard.press('Enter')
+  await expect(panel).toHaveCount(0)
+})
+
+// Phone sheets carry no visible X: they dismiss by swipe, scrim tap and Escape.
+test('phone sheets show no visible Close button and still dismiss on Escape and scrim', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const panel = page.getByTestId('sheet-panel')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  await expect(panel).toBeVisible()
+  await expectNoVisibleClose(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  await expect(panel).toBeVisible()
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toHaveCount(0)
+
+  await page.goto('/#/planner/mortgage')
+  // First visit shows the notice and the bottom button; either opens the same sheet.
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  await expect(panel).toBeVisible()
+  await expectNoVisibleClose(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+})
+
 test('search is reachable without a keyboard', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
   await expect(page.getByPlaceholder('Jump to a page or tool…')).toBeVisible()
+})
+
+// The search sheet spends its height on results: no esc hint, no Close button,
+// no scrollbar, a bottom fade while more results lie below, and the input stays
+// reachable while the list scrolls.
+test('the search sheet has no esc hint, visible close button or scrollbar and keeps its input', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Search"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  const input = page.getByPlaceholder('Jump to a page or tool…')
+  await expect(input).toBeVisible()
+  await expectNoVisibleClose(panel)
+  await expect(panel.getByText('esc', { exact: true })).toHaveCount(0)
+  await expect
+    .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
+    .toBe(0)
+
+  // The input sits about 12px under the drag handle (it was 36px).
+  const handleToInput = await panel.evaluate((el) =>
+    Math.round(el.querySelector('input')!.getBoundingClientRect().top - el.querySelector('span.absolute')!.getBoundingClientRect().bottom))
+  test.info().annotations.push({ type: 'palette-handle-to-input-px', description: String(handleToInput) })
+  expect(handleToInput).toBeGreaterThanOrEqual(10)
+  expect(handleToInput).toBeLessThanOrEqual(14)
+  const restingRowTop = await panel.evaluate((el) =>
+    Math.round(el.querySelector('input')!.parentElement!.getBoundingClientRect().top - el.getBoundingClientRect().top))
+
+  const cue = page.getByTestId('sheet-scroll-cue')
+  await expect(cue).toBeVisible()
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect(cue).toHaveCount(0)
+  await expect(input).toBeInViewport()
+  // The row sticks at the offset it rests at, 12px under the panel top (just below the
+  // handle), so it does not jump when the list starts to scroll.
+  await expect
+    .poll(() =>
+      panel.evaluate((el) => {
+        const row = el.querySelector('input')!.parentElement!
+        return Math.round(row.getBoundingClientRect().top - el.getBoundingClientRect().top)
+      }))
+    .toBe(restingRowTop)
+
+  await input.fill('budget')
+  await expect(panel.getByRole('option').first()).toBeVisible()
+  expect(await panel.getByRole('option').count()).toBeGreaterThan(0)
+  expect(await panel.getByRole('option').count()).toBeLessThan(10)
+
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toBeHidden()
 })
 
 // 0.9.7 made the Dashboard's Customize button the same size as other header
@@ -294,4 +497,458 @@ test('no header button is squeezed below its own label', async ({ page }) => {
       .map((b) => ({ text: (b.textContent || '').trim(), shown: b.clientWidth, needs: b.scrollWidth })),
   )
   expect(squeezed).toEqual([])
+})
+
+// Rule 2 of docs/mobile-layout-rules.md. <main> is the scroll container, so
+// nothing reset it between routes and the next page opened partway down.
+test('switching tabs starts the new page at the top', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  // While the next route mounts, <main> briefly holds almost no content and
+  // the browser clamps scrollTop to 0 by itself, which would make this guard
+  // pass with no reset in place. A tall pseudo-element keeps the scroll range
+  // alive through that window, so only a real reset can bring it back to 0.
+  await page.addStyleTag({ content: 'main::after { content: ""; display: block; height: 3000px; }' })
+  await page.evaluate(() => { document.querySelector('main')!.scrollTop = 600 })
+  expect(await page.evaluate(() => document.querySelector('main')!.scrollTop)).toBe(600)
+  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Planner' }).click()
+  await expect(page).toHaveURL(/#\/planner$/)
+  // The URL changes before the lazy route renders, so poll for the reset.
+  await expect.poll(() => page.evaluate(() => document.querySelector('main')!.scrollTop)).toBe(0)
+})
+
+// Rule 1 of docs/mobile-layout-rules.md: on a phone the top bar names the
+// page, and the page's h1 is still there for screen readers. Tool pages put
+// the tool name and a back button there.
+const TITLED_ROUTES = [
+  ['dashboard', '', 'Dashboard'],
+  ['budgeting', '#/budget', 'Budgeting'],
+  ['investments', '#/investments', 'Investments'],
+  ['planner', '#/planner', 'Planner'],
+  ['compensation', '#/compensation', 'Compensation'],
+] as const
+
+for (const [name, hash, title] of TITLED_ROUTES) {
+  test(`${name} names itself in the top bar`, async ({ page }) => {
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const bar = page.getByTestId('mobile-topbar')
+    await expect(bar.getByTestId('topbar-title')).toHaveText(title)
+    await expect(bar.locator('[data-topbar-brand]')).toBeHidden()
+    await expect(page.getByRole('heading', { level: 1, name: title })).toHaveCount(1)
+  })
+}
+
+test('a planner tool names itself in the top bar and frees the first screen', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  const bar = page.getByTestId('mobile-topbar')
+  await expect(bar.locator('[data-topbar-brand]')).toBeHidden()
+  const switcher = bar.getByRole('button', { name: /Mortgage/ })
+  await expect(switcher).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Mortgage/)
+
+  // The in-page breadcrumb and big title are gone, so the form starts high.
+  // The old header put the first field 236px below the bar at 375px wide. The
+  // mortgage form opens with two rows of mode toggles of its own (96px). The
+  // permanent 44px "About this tool" row is gone: the first visit shows a
+  // dismissible notice, which is measured separately below, and once it is
+  // dismissed the form is 230 minus that row's height or less below the bar.
+  await expect(page.getByRole('link', { name: 'Back to Planner' })).toHaveCount(0)
+  const barBox = (await bar.boundingBox())!
+  const field = page.locator('main input').first()
+  await expect(field).toBeVisible()
+  const withNotice = Math.round((await field.boundingBox())!.y - (barBox.y + barBox.height))
+  await page.getByRole('button', { name: 'Got it' }).click()
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  const offset = (await field.boundingBox())!.y - (barBox.y + barBox.height)
+  test.info().annotations.push({ type: 'first-field-offset-below-bar', description: `dismissed ${Math.round(offset)}, with notice ${withNotice}` })
+  expect(offset).toBeLessThan(190)
+
+  await switcher.click()
+  await expect(page.getByRole('menuitem', { name: /Debt/ }).first()).toBeVisible()
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(page.getByRole('menuitem').first()).toBeHidden()
+
+  await bar.getByRole('button', { name: 'Back to Planner' }).click()
+  await expect(page).toHaveURL(/#\/planner$/)
+})
+
+// "About this tool" shows once per tool as a dismissible notice, then lives after the
+// results: centred, 44px tall, the last interactive element of the page, same sheet.
+test('about this tool: first-visit notice, then a centred button after the results', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  const notice = page.getByText('You can find this again at the bottom of the page, after the results.')
+  await expect(notice).toBeVisible()
+  await page.getByRole('button', { name: 'Got it' }).click()
+  await expect(notice).toHaveCount(0)
+  // The notice's own buttons are gone, so focus must land on the bottom button, not <body>.
+  await expect(page.getByRole('button', { name: 'About this tool' })).toBeFocused()
+
+  await page.reload()
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('button', { name: 'About this tool' })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  await expect(notice).toHaveCount(0)
+
+  // Another tool still shows its own first-visit notice.
+  await page.goto('/#/planner/savings-goal')
+  await expect(page.getByRole('button', { name: 'Got it' })).toBeVisible()
+  await page.goto('/#/planner/mortgage')
+
+  const bottom = page.getByRole('button', { name: 'About this tool' })
+  await bottom.scrollIntoViewIfNeeded()
+  await expect(bottom).toBeInViewport()
+  const box = (await bottom.boundingBox())!
+  expect(box.height).toBeGreaterThanOrEqual(44)
+  const main = page.locator('main')
+  const mainBox = (await main.boundingBox())!
+  const viewportCentre = mainBox.x + mainBox.width / 2
+  expect(Math.abs(box.x + box.width / 2 - viewportCentre)).toBeLessThanOrEqual(2)
+  test.info().annotations.push({ type: 'bottom-button-centre-delta', description: String(Math.round((box.x + box.width / 2 - viewportCentre) * 10) / 10) })
+
+  // Last interactive element inside <main>.
+  const isLast = await main.evaluate((el) => {
+    const interactive = [...el.querySelectorAll('button, a[href], input, select, textarea, [role=button], [role=tab]')]
+      .filter((n) => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 })
+    const last = interactive[interactive.length - 1]
+    return (last?.textContent || '').trim()
+  })
+  expect(isLast).toBe('About this tool')
+
+  await bottom.click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel).toContainText('Mortgage')
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+})
+
+// Opening the info from the first-visit notice and closing it must not drop focus on <main>.
+test('about this tool: focus returns to the bottom button after the notice path closes', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(panel).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  const bottom = page.getByRole('button', { name: 'About this tool' })
+  await expect(bottom).toHaveCount(1)
+  await expect(bottom).toBeFocused()
+})
+
+// The planner tool switcher sheet spends its height on tools: no Close row, no
+// scrollbar, and a bottom fade while more tools lie below.
+test('the planner tool sheet has no visible close row or scrollbar and cues more below', async ({ page }) => {
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByTestId('mobile-topbar').getByRole('button', { name: /Mortgage/ }).click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expectNoVisibleClose(panel)
+
+  await expect
+    .poll(() => panel.evaluate((el) => el.offsetWidth - el.clientWidth))
+    .toBe(0)
+
+  await expect(panel.getByRole('menuitem').first()).toBeVisible()
+  // Measure panel and first item in one frame, once the slide-in has settled
+  // (the panel's bottom edge reaches the viewport bottom).
+  await expect
+    .poll(() => panel.evaluate((el) => Math.round(innerHeight - el.getBoundingClientRect().bottom)))
+    .toBe(0)
+  const offset = await panel.evaluate((el) =>
+    Math.round(el.querySelector('[role=menuitem]')!.getBoundingClientRect().top - el.getBoundingClientRect().top))
+  test.info().annotations.push({ type: 'first-item-offset-in-sheet', description: String(offset) })
+  expect(offset).toBeLessThan(100)
+
+  const cue = page.getByTestId('sheet-scroll-cue')
+  await expect(cue).toBeVisible()
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect(cue).toHaveCount(0)
+
+  await page.getByTestId('sheet-scrim').click({ position: { x: 5, y: 5 } })
+  await expect(panel).toBeHidden()
+})
+
+// Phone sheet headers are calm: no title row stays pinned while the content scrolls, the
+// Settings sheet has no visible title, and the first content sits 24px or more under the
+// drag handle (it was 4px).
+test('phone sheet headers scroll away and leave room under the handle', async ({ page }) => {
+  const gaps: Record<string, number> = {}
+  const handleGap = (panel: import('@playwright/test').Locator) =>
+    panel.evaluate((el) => {
+      const handle = el.querySelector('span.absolute')!.getBoundingClientRect()
+      const header = el.querySelector('[data-testid=sheet-header]')!
+      // Skip the desktop-only header that stays display:none on a phone.
+      const first = [...(header.nextElementSibling as HTMLElement).children].find((c) => c.getBoundingClientRect().height > 0)!
+      const firstTop = first.getBoundingClientRect().top
+      // A titled sheet's title is the first content under the handle.
+      const title = header.querySelector('h2')
+      const top = title ? title.getBoundingClientRect().top : firstTop
+      return Math.round(top - handle.bottom)
+    })
+
+  await page.goto('/#/planner/mortgage')
+  await page.waitForLoadState('networkidle')
+  await page.getByTestId('mobile-topbar').getByRole('button', { name: /Mortgage/ }).click()
+  let panel = page.getByTestId('sheet-panel')
+  await expect(panel.getByRole('menuitem').first()).toBeVisible()
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.toolSwitcher = await handleGap(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.aboutTool = await handleGap(panel)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('heading', { name: 'Settings', exact: true })).toBeHidden()
+  await expect(panel).toHaveAttribute('aria-label', 'Settings')
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
+  gaps.settings = await handleGap(panel)
+  // Not pinned: after scrolling down, the header has left the top of the panel.
+  await panel.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect
+    .poll(() => panel.evaluate((el) => el.querySelector('[data-testid=sheet-header]')!.getBoundingClientRect().bottom <= el.getBoundingClientRect().top))
+    .toBe(true)
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+
+  await page.keyboard.press('?')
+  panel = page.getByTestId('sheet-panel')
+  await expect(panel.getByRole('heading', { name: 'Keyboard shortcuts' })).toBeVisible()
+  // Titled sheets gained 12px (4 to 16) so the title is clear of the handle.
+  await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(16)
+  gaps.shortcuts = await handleGap(panel)
+  test.info().annotations.push({ type: 'handle-to-first-content-px', description: JSON.stringify(gaps) })
+})
+
+// A scrolled phone sheet fades out under its top edge instead of cutting content hard, with
+// the drag handle still pinned above the fade.
+test('a scrolled phone sheet softens its top edge and keeps the handle pinned', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  await expect(page.getByTestId('sheet-top-fade')).toHaveCount(0)
+  await panel.evaluate((el) => { el.scrollTop = 200 })
+  const fade = page.getByTestId('sheet-top-fade')
+  await expect(fade).toBeVisible()
+  await expect
+    .poll(() => panel.evaluate((el) => {
+      const f = el.querySelector('[data-testid=sheet-top-fade]')!.getBoundingClientRect()
+      const h = el.querySelector('span.absolute')!.getBoundingClientRect()
+      const p = el.getBoundingClientRect()
+      return [Math.round(f.top - p.top), Math.round(f.height), Math.round(h.top - p.top)]
+    }))
+    .toEqual([1, 24, 9])
+  await expect(page.getByTestId('sheet-top-fade')).toHaveCSS('pointer-events', 'none')
+})
+
+// The Search and Settings icons sit 24px apart (they were 32px): the 44px hit areas touch
+// but never overlap. Checked with a page action present, at the narrowest width.
+test('top bar Search and Settings are close together with 44px non-overlapping targets', async ({ page }) => {
+  for (const hash of ['/', '/#/budget']) {
+    await page.goto(hash)
+    await page.waitForLoadState('networkidle')
+    const bar = page.getByTestId('mobile-topbar')
+    const search = (await bar.getByRole('button', { name: 'Search' }).boundingBox())!
+    const settings = (await bar.getByRole('button', { name: 'Settings' }).boundingBox())!
+    expect(search.width).toBeGreaterThanOrEqual(44)
+    expect(search.height).toBeGreaterThanOrEqual(44)
+    expect(settings.width).toBeGreaterThanOrEqual(44)
+    expect(settings.height).toBeGreaterThanOrEqual(44)
+    expect(settings.x - (search.x + search.width)).toBeGreaterThanOrEqual(-0.5)
+    const iconToIcon = settings.x + settings.width / 2 - (search.x + search.width / 2)
+    expect(iconToIcon).toBeLessThanOrEqual(46)
+    const clipped = await bar.evaluate((el) => el.scrollWidth > el.clientWidth + 1)
+    expect(clipped).toBe(false)
+  }
+})
+
+// Rule 3 of docs/mobile-layout-rules.md: each page leads with its one key
+// number, and on a portrait phone it is on the first screen without
+// scrolling. The bottom 60px are the tab bar and its margin. seedApp is the
+// realistic dataset the desktop guards use; its init script runs after this
+// file's beforeEach, so its stores win.
+const KEY_FIGURE_ROUTES = [
+  ['dashboard', ''],
+  ['budgeting', '#/budget'],
+  ['investments', '#/investments?tab=portfolio'],
+  ['compensation', '#/compensation'],
+] as const
+
+for (const [name, hash] of KEY_FIGURE_ROUTES) {
+  test(`${name} shows its key figure in the first screen`, async ({ page }) => {
+    const viewport = page.viewportSize()!
+    test.skip(viewport.height < 600, 'Landscape phones are scroll-first; rule 3 is for portrait.')
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const figure = page.locator('[data-key-figure]').first()
+    await expect(figure).toBeVisible()
+    const box = (await figure.boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 60)
+  })
+}
+
+// Rule 4 of docs/mobile-layout-rules.md: on a phone no list scrolls inside
+// the page. seedApp's eight income sources and eight expense groups are what
+// made the Income and Expenses cards scroll inside the page before.
+for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as const) {
+  test(`${name} has no list that scrolls inside the page`, async ({ page }) => {
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    // Prove the guard inspects real lists: wait for the cards it polices so
+    // an empty or still-loading main cannot pass vacuously.
+    if (name === 'budgeting') {
+      await expect(page.getByRole('group', { name: 'Income sources' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Expense categories' })).toBeVisible()
+    } else {
+      await expect(page.locator('[data-testid^="account-row-"]').first()).toBeVisible()
+    }
+    const nested = await page.evaluate(() =>
+      [...document.querySelectorAll('main *')]
+        .filter((el) => {
+          const cs = getComputedStyle(el)
+          return /(auto|scroll)/.test(cs.overflowY) &&
+            el.getBoundingClientRect().height > 0 &&
+            el.scrollHeight > el.clientHeight + 1
+        })
+        .map((el) => (el.getAttribute('aria-label') || el.className.toString()).slice(0, 60)),
+    )
+    expect(nested).toEqual([])
+  })
+}
+
+// Rule 1 of docs/mobile-layout-rules.md: the secondary controls share one row.
+// Stepping back a month adds the Today button, which widens the stepper. The
+// row must wrap rather than push Import CSV past the right edge of main,
+// where main's overflow-x-hidden would clip it silently.
+test('budgeting phone controls stay inside the page after stepping to another month', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  const controls = page.getByTestId('budget-phone-controls')
+  await expect(controls).toBeVisible()
+  await page.getByRole('button', { name: 'Previous Month' }).click()
+  await expect(controls.getByRole('button', { name: 'Today' })).toBeVisible()
+  const buttons = controls.getByRole('button')
+  await expect.poll(() => buttons.count()).toBeGreaterThanOrEqual(4)
+  // Poll until the whole row is inside main's content box: left edge no
+  // further left than main's, right edge no further right than main's.
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const main = document.querySelector('main')!.getBoundingClientRect()
+        const row = document.querySelector('[data-testid="budget-phone-controls"]')!
+        return [...row.querySelectorAll('button')]
+          .map((b) => {
+            const r = b.getBoundingClientRect()
+            return { label: (b.getAttribute('aria-label') || b.textContent || '').trim(), left: r.left, right: r.right }
+          })
+          .filter((b) => b.left < main.left - 0.5 || b.right > main.right + 0.5)
+      })
+    })
+    .toEqual([])
+})
+
+// The controls row is chrome, not content: no card around the stepper and an
+// icon-only import button, so the row is one 44px tap-target line tall. The
+// visible chrome is small but every button keeps a 44x44 hit area.
+test('budgeting phone controls row is compact and keeps 44px tap targets', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  const controls = page.getByTestId('budget-phone-controls')
+  await expect(controls).toBeVisible()
+  await expect.poll(async () => (await controls.boundingBox())?.height ?? 999).toBeLessThanOrEqual(52)
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="budget-phone-controls"] button')]
+          .map((b) => {
+            const r = b.getBoundingClientRect()
+            return { label: b.getAttribute('aria-label') || b.textContent, w: r.width, h: r.height }
+          })
+          .filter((b) => b.w < 43.5 || b.h < 43.5),
+      ),
+    )
+    .toEqual([])
+})
+
+// Phone tab strips are underline tabs, not four bordered buttons that read as
+// actions. They share one row, keep the 44px tap target, and selecting a tab
+// must not make the document scroll sideways.
+for (const [name, hash, labels, pick] of [
+  ['budgeting', '#/budget', ['Overview', 'Insights', 'Transactions', 'Setup'], 'Transactions'],
+  ['investments', '#/investments', ['Portfolio', 'Options', 'Trades', 'Plan vs Actual'], 'Trades'],
+] as const) {
+  test(`${name} tabs are one row of underline tabs`, async ({ page }) => {
+    await seedApp(page)
+    await page.goto(`/${hash}`)
+    await page.waitForLoadState('networkidle')
+    const tabs = page.getByRole('tab')
+    await expect(tabs).toHaveCount(labels.length)
+    for (const label of labels) {
+      await expect(page.getByRole('tab', { name: label })).toBeVisible()
+    }
+    const boxes = await Promise.all(
+      labels.map(async (label) => (await page.getByRole('tab', { name: label }).boundingBox())!),
+    )
+    for (const box of boxes) {
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(Math.abs(box.y - boxes[0].y)).toBeLessThanOrEqual(1)
+    }
+    // At 375px the labels fit, so the tabs share the strip with no scrolling
+    // and together span its full width.
+    await page.setViewportSize({ width: 375, height: 700 })
+    await expect
+      .poll(async () => {
+        return page.evaluate(() => {
+          const strip = document.querySelector('[role="tablist"]')!
+          const r = [...strip.querySelectorAll('[role="tab"]')].map((t) => t.getBoundingClientRect())
+          const s = strip.getBoundingClientRect()
+          return {
+            gapLeft: Math.round(Math.abs(r[0].left - s.left)),
+            gapRight: Math.round(Math.abs(s.right - r[r.length - 1].right)),
+            scrolls: strip.scrollWidth > strip.clientWidth + 1,
+          }
+        })
+      })
+      .toEqual({ gapLeft: 0, gapRight: 0, scrolls: false })
+    await page.getByRole('tab', { name: pick }).click()
+    await expect(page.getByRole('tab', { name: pick })).toHaveAttribute('aria-selected', 'true')
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true)
+  })
+}
+
+// Phones hide the page scrollbar; scrolling itself still works.
+test('main has no visible scrollbar on a phone', async ({ page }) => {
+  await seedApp(page)
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  await expect
+    .poll(() => page.evaluate(() => {
+      const m = document.querySelector('main')!
+      return { bar: m.offsetWidth - m.clientWidth, scrollable: m.scrollHeight > m.clientHeight }
+    }))
+    .toEqual({ bar: 0, scrollable: true })
 })

@@ -23,7 +23,7 @@ describe('DisclaimerModal', () => {
 describe('DisclaimerModal mobile header (no double close)', () => {
   afterEach(() => resetMatchMedia())
 
-  it('shows one close control on mobile when requireAck is false', () => {
+  it('shows no visible sheet close control on mobile when requireAck is false', () => {
     setMatchMedia(false)
     render(<DisclaimerModal isOpen requireAck={false} onClose={() => {}} />)
     // The modal's own header row is desktop-only. Sheet renders via createPortal
@@ -44,5 +44,7 @@ describe('DisclaimerModal mobile header (no double close)', () => {
       .filter((btn) => btn.getAttribute('aria-label') === 'Close')
     const closeButtons = closeIcons.filter((btn) => !ownHeader?.contains(btn))
     expect(closeButtons).toHaveLength(1)
+    expect(closeButtons.every((btn) => btn.hasAttribute('data-sheet-hidden-close'))).toBe(true)
+    expect(closeButtons.every((btn) => btn.className.split(' ').includes('sr-only'))).toBe(true)
   })
 })

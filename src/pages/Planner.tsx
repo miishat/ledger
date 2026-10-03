@@ -1,15 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/ui/PageHeader'
 import { PLANNER_GROUPS, PLANNER_TOOLS } from '../components/planner/toolRegistry'
 
 export const Planner: React.FC = () => (
   <div className="flex flex-col gap-8 w-full min-h-full animate-fade-in">
-    <header>
-      <h1 className="text-[24px] font-semibold text-text-primary">Planner</h1>
-      <p className="text-[14px] text-text-secondary mt-1">
-        Financial tools and calculators. Every input is saved automatically.
-      </p>
-    </header>
+    <PageHeader
+      title="Planner"
+      subtitle="Financial tools and calculators. Every input is saved automatically."
+    />
     {PLANNER_GROUPS.map((group) => {
       const tools = PLANNER_TOOLS.filter((t) => t.group === group)
       if (tools.length === 0) return null

@@ -134,7 +134,7 @@ test('a sheet actually animates in, not just out', async ({ page }) => {
   expect(sample.scrim?.running).toBe(true)
 })
 
-test('a sheet never renders its header twice', async ({ page }) => {
+test('a sheet never renders its header twice', async ({ page }, testInfo) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Settings' }).first().click()
@@ -146,7 +146,9 @@ test('a sheet never renders its header twice', async ({ page }) => {
       .filter((h) => h.getBoundingClientRect().width > 0)
       .map((h) => (h.textContent || '').trim())
   })
-  expect(visibleHeadings).toEqual(['Settings'])
+  // The phone Settings sheet (short-wide is phone layout) has no visible title at all; the
+  // desktop modal shows exactly one. Never two either way.
+  expect(visibleHeadings).toEqual(testInfo.project.name === 'short-wide' ? [] : ['Settings'])
 })
 
 const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
@@ -881,4 +883,24 @@ test('the savings split chart on #/budget, once selected, name their series in t
   await page.getByRole('button', { name: 'Split' }).click()
   await page.waitForTimeout(900)
   expect(await countLegends(page)).toBeGreaterThanOrEqual(1)
+})
+
+// The phone rule that hides the page scrollbar is scoped to phones; a real
+// desktop viewport must keep its scrollbar.
+test('main keeps its scrollbar on desktop', async ({ page }) => {
+  const vp = page.viewportSize()!
+  test.skip(vp.width < 768 || vp.height < 500, 'Phone layout hides the scrollbar by design.')
+  await page.goto('/#/budget')
+  await page.waitForLoadState('networkidle')
+  // Headless Chromium can use overlay scrollbars that take no layout width,
+  // so assert the styles that would hide the bar rather than its pixel width.
+  await expect
+    .poll(() => page.evaluate(() => {
+      const m = document.querySelector('main')!
+      return {
+        scrollbarWidth: getComputedStyle(m).scrollbarWidth,
+        webkitDisplay: getComputedStyle(m, '::-webkit-scrollbar').display,
+      }
+    }))
+    .toEqual({ scrollbarWidth: 'auto', webkitDisplay: 'inline' })
 })

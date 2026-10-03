@@ -6,27 +6,38 @@ import { Sheet } from '../ui/Sheet'
 
 interface ToolSwitcherProps {
   current: PlannerTool
+  /** Phone top bar variant: one truncating line, no <h1> (the page keeps its
+   *  own visually hidden one). */
+  phone?: boolean
 }
 
 /** Page title that doubles as a grouped tool-switch dropdown, so moving
  *  between planner tools never requires a round-trip through the hub. */
-export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
+export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current, phone = false }) => {
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
 
   return (
-    <div className="relative">
+    <div className={phone ? 'relative flex-1 min-w-0' : 'relative'}>
       <button
         ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+        className={
+          phone
+            ? 'flex items-center gap-1 w-full min-h-[44px] min-w-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded'
+            : 'flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded'
+        }
       >
-        <h1 className="text-[24px] font-semibold text-text-primary">{current.name}</h1>
-        <ChevronDown className={`w-5 h-5 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
+        {phone ? (
+          <span className="min-w-0 flex-1 truncate text-left text-[17px] font-semibold text-text-primary">{current.name}</span>
+        ) : (
+          <h1 className="text-[24px] font-semibold text-text-primary">{current.name}</h1>
+        )}
+        <ChevronDown className={`w-5 h-5 shrink-0 text-text-secondary transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <Sheet
@@ -35,9 +46,10 @@ export const ToolSwitcher: React.FC<ToolSwitcherProps> = ({ current }) => {
         desktop="popover"
         anchorRef={btnRef}
         ariaLabel="Switch tool"
+        scrollCue
         panelClassName="w-72 max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-2 flex flex-col gap-1"
       >
-        <div role="menu" className="max-h-[70vh] overflow-y-auto flex flex-col gap-1">
+        <div role="menu" className="desktop:max-h-[70vh] desktop:overflow-y-auto flex flex-col gap-1">
           {PLANNER_GROUPS.map((group) => {
               const tools = PLANNER_TOOLS.filter((t) => t.group === group)
               if (tools.length === 0) return null

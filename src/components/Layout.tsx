@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import React, { Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
@@ -11,6 +11,7 @@ import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ShortcutsHelp } from './ui/ShortcutsHelp'
 import { ErrorBoundary } from './ErrorBoundary'
+import { TopBarSlotContext } from './topBarSlot'
 import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search } from 'lucide-react'
 import { LedgerMark } from './ui/LedgerMark'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
@@ -33,6 +34,19 @@ export const Layout: React.FC = () => {
   useViewportHeight()
   const routeName = useDocumentTitle()
 
+  // <main> is the scroll container, not the document, so the browser has no
+  // reason to reset it between routes: switching from a long page used to
+  // land the next page partway down. A layout effect, so the old offset is
+  // never painted. Keyed on pathname only: a ?tab= switch inside a page
+  // keeps the user where they are.
+  const mainRef = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0
+  }, [location.pathname])
+
+  // PageHeader portals the page title and main action into this element on
+  // a phone. State, not a ref, so pages re-render once it exists.
+  const [topBarSlot, setTopBarSlot] = useState<HTMLElement | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -268,13 +282,20 @@ export const Layout: React.FC = () => {
           data-testid="mobile-topbar"
           className="desktop:hidden shrink-0 flex items-center gap-2 px-4 h-12 border-b border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)]"
         >
-          <LedgerMark size={20} className="text-accent shrink-0" />
-          <span className="text-[17px] font-bold tracking-tighter text-accent font-display">Ledger</span>
+          {/* Hidden by the rule in src/index.css while a page fills the slot:
+              the page title takes the brand's place, and at 320px the mark,
+              a title like "Compensation" and three 44px buttons do not fit
+              on one line together. */}
+          <span data-topbar-brand className="flex items-center gap-2 shrink-0">
+            <LedgerMark size={20} className="text-accent shrink-0" />
+            <span className="text-[17px] font-bold tracking-tighter text-accent font-display">Ledger</span>
+          </span>
+          <div ref={setTopBarSlot} data-topbar-slot className="flex-1 min-w-0 flex items-center gap-2" />
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             aria-label="Search"
-            className="ml-auto flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -282,7 +303,7 @@ export const Layout: React.FC = () => {
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
-            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="-ml-2 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -299,12 +320,14 @@ export const Layout: React.FC = () => {
 
         <main
           id="main-content"
+          ref={mainRef}
           tabIndex={-1}
-          className="flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
+          className="phone-no-scrollbar flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
         >
           {/* Polite, not assertive: a route change should be announced after
               whatever the user was already hearing, not interrupt it. */}
           <p aria-live="polite" className="sr-only">{routeName}</p>
+          <TopBarSlotContext.Provider value={topBarSlot}>
           <ErrorBoundary key={location.pathname}>
             <Suspense
               fallback={
@@ -322,6 +345,7 @@ export const Layout: React.FC = () => {
               </PageTransition>
             </Suspense>
           </ErrorBoundary>
+          </TopBarSlotContext.Provider>
         </main>
       </div>
 

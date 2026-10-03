@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
 import { MemoryRouter } from 'react-router-dom'
 import { Compensation } from './Compensation'
 import { useCompensationStore } from '../store/useCompensationStore'
@@ -73,5 +74,43 @@ describe('Compensation page gutter (no double padding)', () => {
     const { container } = render(<MemoryRouter><Compensation /></MemoryRouter>)
     const root = container.firstChild as HTMLElement
     expect(root.className.split(/\s+/)).not.toContain('p-6')
+  })
+})
+
+describe('Compensation header on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('offers Edit Package as the phone action', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    expect(screen.getAllByRole('button', { name: 'Edit Package' })).toHaveLength(1)
+  })
+})
+
+describe('Compensation empty state', () => {
+  it('puts an add button in the empty Package Details card', () => {
+    useCompensationStore.setState(initialCompState, true)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    // One in the header, one in the empty card.
+    expect(screen.getAllByRole('button', { name: 'Add Compensation Package' })).toHaveLength(2)
+  })
+})
+
+describe('Compensation key figure on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('puts the price and currency toolbar after the total on a phone', () => {
+    setMatchMedia(false)
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const refresh = screen.getByRole('button', { name: /refresh price/i })
+    expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('keeps the toolbar above the total on desktop', () => {
+    render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const refresh = screen.getByRole('button', { name: /refresh price/i })
+    expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
   })
 })
