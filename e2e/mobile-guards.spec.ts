@@ -278,6 +278,54 @@ test('settings is reachable and inside the viewport', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible()
 })
 
+// The phone Settings sheet is organized: every section has one anatomy, every action is
+// a 44px button, and the Reminders row centres its text and action on each other.
+test('the Settings sheet is organized: 44px actions, centred Reminders row, nothing clipped', async ({ page }) => {
+  await page.addInitScript(() => {
+    // Some engines have no Notification and headless Chromium reports 'denied'; either
+    // hides the Enable reminders action, so stand in a not-yet-asked Notification.
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: { permission: 'default', requestPermission: () => Promise.resolve('default') },
+    })
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
+  const panel = page.getByTestId('sheet-panel')
+  await expect(panel).toBeVisible()
+  const row = panel.getByTestId('reminders-row')
+  await expect(row).toBeVisible()
+
+  const actions = ['Save client ID', 'Load demo data', 'Enable reminders', 'Export data', 'Import backup', 'Save']
+  for (const name of actions) {
+    const target = panel.getByRole('button', { name, exact: true })
+    // Import backup is a label wrapping a file input, not a button.
+    if (name === 'Import backup') continue
+    await expect(target).toBeVisible()
+    const box = (await target.boundingBox())!
+    expect(box.height, name + ' height').toBeGreaterThanOrEqual(44)
+  }
+
+  const text = (await row.locator('p').boundingBox())!
+  const action = (await row.getByRole('button', { name: 'Enable reminders' }).boundingBox())!
+  expect(Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))).toBeLessThanOrEqual(2)
+
+  const overflow = await panel.evaluate((el) => {
+    const p = el.getBoundingClientRect()
+    const clipped = [...el.querySelectorAll('section, section button, section input, section p, footer, h3')]
+      .filter((n) => {
+        const r = n.getBoundingClientRect()
+        return r.width > 0 && (r.left < p.left - 0.5 || r.right > p.right + 0.5)
+      })
+      .map((n) => (n.textContent || n.tagName).trim().slice(0, 30))
+    return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, clipped, doc: document.documentElement.scrollWidth, win: window.innerWidth }
+  })
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth)
+  expect(overflow.doc).toBeLessThanOrEqual(overflow.win)
+  expect(overflow.clipped).toEqual([])
+})
+
 // Phone sheets carry no X: they dismiss by swipe, scrim tap and Escape.
 test('phone sheets show no Close button and still dismiss on Escape and scrim', async ({ page }) => {
   await page.goto('/')

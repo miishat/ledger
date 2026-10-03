@@ -7,6 +7,8 @@ import { BackupControls } from './BackupControls'
 import { DriveSyncControls } from './DriveSyncControls'
 import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSupport } from '../../utils/reminders'
 import { Checkbox } from '../ui/Checkbox'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { PHONE_SECONDARY_ACTION } from './actionStyles'
 
 interface SettingsSheetProps {
   open: boolean
@@ -15,23 +17,31 @@ interface SettingsSheetProps {
   onOpenDisclaimer: () => void
 }
 
-const SectionCard: React.FC<{ icon: React.ReactNode; title: string; badge?: React.ReactNode; children: React.ReactNode }> = ({
-  icon,
-  title,
-  badge,
-  children,
-}) => (
-  <section className="border border-border rounded-lg p-3">
-    <div className="flex items-center justify-between gap-2 mb-2.5">
-      <h3 className="flex items-center gap-1.5 text-[13px] font-medium text-text-primary">
-        <span className="text-text-secondary" aria-hidden="true">{icon}</span>
-        {title}
-      </h3>
-      {badge}
-    </div>
-    {children}
-  </section>
-)
+// Phone anatomy, identical for every section: heading row (icon + title), one muted
+// description line, then the control. All sections share this card padding. Desktop keeps
+// its original markup, so the description is only rendered on a phone.
+const SectionCard: React.FC<{
+  icon: React.ReactNode
+  title: string
+  badge?: React.ReactNode
+  description?: string
+  children: React.ReactNode
+}> = ({ icon, title, badge, description, children }) => {
+  const isDesktop = useIsDesktop()
+  return (
+    <section className="border border-border rounded-lg p-3">
+      <div className={`flex items-center justify-between gap-2 ${isDesktop ? 'mb-2.5' : 'mb-1.5'}`}>
+        <h3 className="flex items-center gap-1.5 text-[13px] font-medium text-text-primary">
+          <span className="text-text-secondary" aria-hidden="true">{icon}</span>
+          {title}
+        </h3>
+        {badge}
+      </div>
+      {!isDesktop && description && <p className="text-[12px] text-text-secondary mb-2.5">{description}</p>}
+      {children}
+    </section>
+  )
+}
 
 /** Opt-in control for recurring-bill reminders. Notification.requestPermission()
  *  is only ever called from this button's click handler, never on mount or in
@@ -40,6 +50,7 @@ const SectionCard: React.FC<{ icon: React.ReactNode; title: string; badge?: Reac
 const ReminderSettings: React.FC = () => {
   const [support, setSupport] = useState<ReminderSupport>(() => reminderSupport())
   const [enabled, setEnabled] = useState(() => remindersEnabled())
+  const isDesktop = useIsDesktop()
 
   const handleEnable = () => {
     void Notification.requestPermission().then((result) => {
@@ -52,12 +63,12 @@ const ReminderSettings: React.FC = () => {
   }
 
   if (support === 'unsupported') {
-    return <p className="text-[13px] text-text-secondary">Notifications aren't supported in this browser.</p>
+    return <p className={`${isDesktop ? 'text-[13px]' : 'text-[12px]'} text-text-secondary`}>Notifications aren't supported in this browser.</p>
   }
 
   if (support === 'denied') {
     return (
-      <p className="text-[13px] text-text-secondary">
+      <p className={`${isDesktop ? 'text-[13px]' : 'text-[12px]'} text-text-secondary`}>
         Notifications are blocked for this site. Allow them in your browser's site settings to get bill reminders.
       </p>
     )
@@ -79,6 +90,20 @@ const ReminderSettings: React.FC = () => {
     )
   }
 
+  // Phone: text block left, one real button right, centered on the whole block. The
+  // action used to be a bare 12px link that the tap-target floor stretched to 44px, which
+  // left it floating off the text's centre line.
+  if (!isDesktop) {
+    return (
+      <div data-testid="reminders-row" className="flex items-center gap-3">
+        <p className="flex-1 min-w-0 text-[12px] text-text-secondary">Get a reminder a few days before recurring bills are due.</p>
+        <button onClick={handleEnable} className={`shrink-0 whitespace-nowrap ${PHONE_SECONDARY_ACTION}`}>
+          Enable reminders
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex items-center justify-between gap-2">
       <p className="text-[13px] text-text-secondary">Get a reminder a few days before recurring bills are due.</p>
@@ -94,7 +119,9 @@ const ReminderSettings: React.FC = () => {
 
 /** Single settings hub: Appearance, Market data, Backup as section cards,
  *  About as a footer row. Modal on desktop, bottom sheet on mobile. */
-export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onOpenWhatsNew, onOpenDisclaimer }) => (
+export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onOpenWhatsNew, onOpenDisclaimer }) => {
+  const isDesktop = useIsDesktop()
+  return (
   <Sheet
     open={open}
     onClose={onClose}
@@ -117,15 +144,15 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       </button>
     </div>
 
-    <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance">
+    <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance" description="Pick a theme for the whole app.">
       <ThemeSwatchGrid />
     </SectionCard>
 
-    <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market data" badge={<MarketDataStatusBadge />}>
+    <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market data" badge={<MarketDataStatusBadge />} description="Your key is stored only on this device.">
       <MarketDataSection />
     </SectionCard>
 
-    <SectionCard icon={<Database className="w-4 h-4" />} title="Backup">
+    <SectionCard icon={<Database className="w-4 h-4" />} title="Backup" description="Save, restore or try sample data.">
       <BackupControls />
     </SectionCard>
 
@@ -137,7 +164,9 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       <ReminderSettings />
     </SectionCard>
 
-    <div className="flex items-center justify-between pt-2 border-t border-border">
+    {/* Phone: the two links wrap onto separate lines instead of colliding at 320px, and
+        both keep the same text size so their baselines match when they share a line. */}
+    <div className={isDesktop ? 'flex items-center justify-between pt-2 border-t border-border' : 'flex flex-wrap items-center justify-between gap-x-4 pt-2 border-t border-border'}>
       <button
         onClick={() => { onClose(); onOpenWhatsNew() }}
         className="text-[12px] text-text-secondary hover:text-accent transition-colors"
@@ -152,4 +181,5 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       </button>
     </div>
   </Sheet>
-)
+  )
+}

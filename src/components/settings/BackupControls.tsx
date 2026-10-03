@@ -5,6 +5,8 @@ import { buildDemoData, buildDemoCategoryGroups, isDemoActive, setDemoActive as 
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useUndoStore } from '../../store/useUndoStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { PHONE_SECONDARY_ACTION } from './actionStyles'
 
 /** Same id-prefix scheme the backup scrub in utils/backup.ts relies on to
  *  keep demo rows out of backups and Drive sync. Reusing the prefix here
@@ -23,6 +25,12 @@ export const BackupControls: React.FC = () => {
   const [demoActive, setDemoActive] = useState(() => isDemoActive())
   const [confirmLoadOpen, setConfirmLoadOpen] = useState(false)
   const offerUndo = useUndoStore((s) => s.offerUndo)
+  const isDesktop = useIsDesktop()
+  // Phone: the demo action shares the one secondary-action look with the other
+  // full-width actions in this sheet (same height, radius and border).
+  const demoActionClass = isDesktop
+    ? 'flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors'
+    : `flex items-center justify-center gap-1.5 ${PHONE_SECONDARY_ACTION}`
 
   const applyDemoData = () => {
     const previous = useBudgetStore.getState()
@@ -132,7 +140,7 @@ export const BackupControls: React.FC = () => {
       ) : (
         <button
           onClick={handleLoadDemo}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors"
+          className={demoActionClass}
         >
           <Sparkles className="w-4 h-4" /> Load demo data
         </button>

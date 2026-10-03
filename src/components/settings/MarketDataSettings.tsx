@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
 
 /** Compact key-status pill, rendered by SettingsSheet in the card header. */
 export const MarketDataStatusBadge: React.FC = () => {
@@ -20,6 +21,7 @@ export const MarketDataStatusBadge: React.FC = () => {
 export const MarketDataSection: React.FC = () => {
   const { apiKey, setApiKey, clearApiKey } = useMarketDataStore()
   const [input, setInput] = useState('')
+  const isDesktop = useIsDesktop()
 
   const handleSave = () => {
     setApiKey(input)
@@ -83,7 +85,7 @@ export const MarketDataSection: React.FC = () => {
         </ol>
       </details>
 
-      <p className="text-[12px] text-text-secondary/80">Your key is stored only on this device.</p>
+      {isDesktop && <p className="text-[12px] text-text-secondary/80">Your key is stored only on this device.</p>}
     </div>
   )
 }
