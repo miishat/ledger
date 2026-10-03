@@ -380,6 +380,14 @@ for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as con
     await seedApp(page)
     await page.goto(`/${hash}`)
     await page.waitForLoadState('networkidle')
+    // Prove the guard inspects real lists: wait for the cards it polices so
+    // an empty or still-loading main cannot pass vacuously.
+    if (name === 'budgeting') {
+      await expect(page.getByRole('group', { name: 'Income sources' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Expense categories' })).toBeVisible()
+    } else {
+      await expect(page.locator('[data-testid^="account-row-"]').first()).toBeVisible()
+    }
     const nested = await page.evaluate(() =>
       [...document.querySelectorAll('main *')]
         .filter((el) => {
