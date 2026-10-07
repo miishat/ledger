@@ -53,6 +53,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   const [isShared, setIsShared] = useState(!!initialTransaction?.shared);
   const [totalPaid, setTotalPaid] = useState<number>(initialTransaction?.shared?.totalAmount ?? 0);
   const [sharedWith, setSharedWith] = useState<string>(initialTransaction?.shared?.sharedWith ?? '');
+  const [sharedError, setSharedError] = useState<string | null>(null);
   const [isReimbursement, setIsReimbursement] = useState(!!initialTransaction?.reimbursement);
   const [reimbursementFrom, setReimbursementFrom] = useState<string>(initialTransaction?.reimbursement?.from ?? '');
 
@@ -97,6 +98,20 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
       return;
     }
     setAmountError(null);
+
+    if (type === 'expense' && amount > 0 && isShared) {
+      if (totalPaid < amount) {
+        setSharedError('Total I paid must be at least your share.');
+        document.getElementById('tx-total-paid')?.focus();
+        return;
+      }
+      if (totalPaid > amount && !sharedWith.trim()) {
+        setSharedError('Enter who owes you the rest of this bill.');
+        document.getElementById('tx-shared-with')?.focus();
+        return;
+      }
+    }
+    setSharedError(null);
 
     // The slice editor already says "Slices exceed the amount by X", but it
     // only warned: submit validated the amount and nothing else, so an
@@ -224,7 +239,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
           <div className="flex flex-col gap-2">
             <label htmlFor="tx-amount" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
-              Amount
+              {type === 'expense' && isShared ? 'Your share' : 'Amount'}
             </label>
             <NumberInput
               id="tx-amount"
@@ -249,15 +264,22 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
           {type === 'expense' && (
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
-                <Checkbox checked={isShared} onChange={setIsShared} ariaLabel="Shared bill" />
+                <Checkbox checked={isShared} onChange={(checked) => {
+                  setIsShared(checked);
+                  setSharedError(null);
+                  if (checked && totalPaid === 0 && amount > 0) setTotalPaid(amount);
+                }} ariaLabel="Shared bill" />
                 Shared bill (I paid for others too)
               </label>
               {isShared && (
                 <div className="flex flex-col gap-2 pl-1 border-l-2 border-[var(--color-border)] ml-1">
-                  <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Total I paid</label>
+                  <label htmlFor="tx-total-paid" className="text-[12px] font-medium text-[var(--color-text-secondary)]">Total I paid</label>
                   <NumberInput
+                    id="tx-total-paid"
                     value={totalPaid}
                     onCommit={setTotalPaid}
+                    min={0}
+                    aria-describedby={sharedError ? 'tx-shared-error' : undefined}
                     className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
                     placeholder="0.00"
                   />
@@ -266,8 +288,9 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                       <button
                         key={i}
                         type="button"
+                        disabled={totalPaid <= 0}
                         onClick={() => setAmount(Math.round(totalPaid * f * 100) / 100)}
-                        className="px-2 py-1 rounded-md text-[12px] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] transition-colors"
+                        className="px-2 py-1 rounded-md text-[12px] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         My share {['50%', '33%', '25%'][i]}
                       </button>
@@ -276,15 +299,18 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   <p className="text-meta text-[var(--color-text-secondary)]">
                     Amount above is your share; the rest ({formatMoney(Math.max(0, totalPaid - amount))}) is owed to you.
                   </p>
-                  <label className="text-[12px] font-medium text-[var(--color-text-secondary)]">Shared with</label>
+                  <label htmlFor="tx-shared-with" className="text-[12px] font-medium text-[var(--color-text-secondary)]">Shared with</label>
                   <input
+                    id="tx-shared-with"
                     type="text"
                     list="shared-people"
                     value={sharedWith}
                     onChange={(e) => setSharedWith(e.target.value)}
                     className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors"
                     placeholder="e.g. Alex, roommates"
+                    aria-describedby={sharedError ? 'tx-shared-error' : undefined}
                   />
+                  {sharedError && <p id="tx-shared-error" role="alert" className="text-[12px] text-error">{sharedError}</p>}
                 </div>
               )}
             </div>
