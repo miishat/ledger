@@ -4,7 +4,14 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
-## [0.11.0] - 2026-10-03
+## [0.11.1-beta] - Unreleased
+
+### Fixed
+- Shared bill percentage buttons now use the transaction amount as the paid total when sharing is enabled, instead of calculating a zero share
+- Shared bills label the editable amount as Your share and retain the paid total when a percentage or manual share is saved and reopened
+- Shared bills now explain missing paid totals or people before saving, instead of silently dropping incomplete sharing details
+
+## [0.11.0-beta] - 2026-10-03
 
 Ledger on a phone now follows one written set of layout rules
 (`docs/mobile-layout-rules.md`) instead of being the desktop layout stacked
@@ -36,7 +43,7 @@ into a single column.
 - Closing About this tool on a phone returns focus to the button below the results instead of dropping it
 - A phone sheet that was closed while scrolled no longer reopens with a stale fade at its top edge
 
-## [0.10.1] - 2026-09-27
+## [0.10.1-beta] - 2026-09-27
 
 ### Changed
 - Aurora Gradient cards now have a subtle emerald-to-sky-to-violet gradient
@@ -51,7 +58,7 @@ into a single column.
 - The Compensation package editor can scroll to all of its content on shorter desktop windows instead of clipping it inside the dialog
 - Refresh Price in Compensation now clears a manual stock price override and fetches a live price. If the live price is unavailable, the old override label disappears and the page explains what happened
 
-## [0.10.0] - 2026-08-31
+## [0.10.0-beta] - 2026-08-31
 
 The remediation of a full engineering audit, plus the portfolio redesign that
 preceded it. The headline is a sync bug that could destroy data: pulling from a

@@ -2,7 +2,7 @@
 
 Original audit: 2026-09-26. Updated: 2026-09-27. Scope: annual employee salary estimates in `src/utils/finance/canadaTax.ts`, the Salary & Tax planner, and users of the shared calculator. The dollar effects below describe the original code. They are isolated historical examples, not discrepancies in the updated branch or estimates of a filed return.
 
-**Current state:** F01 through F09 were implemented and reviewed on `codex/salary-tax-p1` at `749f2c9` and are included in Ledger 0.10.1. V01 is resolved in favor of the existing Manitoba brackets, with no code change.
+**Current state:** F01 through F09 were implemented and reviewed on `codex/salary-tax-p1` at `749f2c9` and are included in Ledger 0.10.1-beta. V01 is resolved in favor of the existing Manitoba brackets, with no code change.
 
 ## Original priority scale
 
@@ -32,13 +32,13 @@ The original audit held the Manitoba thresholds because [CRA's general 2026 rate
 
 ## Verification and release state
 
-- P1 and P2 task reviews and final branch reviews found no remaining findings within the implementation scope. The combined 0.10.1 release passed `npm run verify`: lint, 1,494 unit tests, TypeScript/Vite build, bundle budget, eager graph, type-scale checks, and all 188 Playwright tests. `git diff --check` also passed for the salary-tax branch.
+- P1 and P2 task reviews and final branch reviews found no remaining findings within the implementation scope. The combined 0.10.1-beta release passed `npm run verify`: lint, 1,494 unit tests, TypeScript/Vite build, bundle budget, eager graph, type-scale checks, and all 188 Playwright tests. `git diff --check` also passed for the salary-tax branch.
 - P2 browser spot checks passed for PEI at $250,000, NL at $100,000, Manitoba at $300,000 and $405,000, Yukon at $220,000, and Ontario at $100,000 with RRSP/FHSA and an entered CRA limit. Federal and provincial rows reconciled to total tax; gross pay reconciled to net pay plus tax and employee contributions. Unknown, remaining, exhausted, and excess RRSP-limit states displayed as intended.
-- The two unrelated transaction-list browser tests that failed on the salary-tax branch pass in 0.10.1 after `297ba6d` seeds transactions in the current month.
-- The salary-tax work is included in the local 0.10.1 release. This audit is tracked with the release; the two implementation plans remain untracked working documents. No remote push or deployment is part of this audit.
+- The two unrelated transaction-list browser tests that failed on the salary-tax branch pass in 0.10.1-beta after `297ba6d` seeds transactions in the current month.
+- The salary-tax work is included in the local 0.10.1-beta release. This audit is tracked with the release; the two implementation plans remain untracked working documents. No remote push or deployment is part of this audit.
 
 ## Scope of the updated result
 
 The calculator remains a full-year employee **estimate** using modeled standard credits and contributions, not a filed personal return or payroll withholding calculation. It does not infer spouse or dependant credits, other personal deductions, RRSP carryforward or pension adjustments, contribution-room legality, or overcontribution tax. An entered CRA deduction limit is accepted as supplied; without one, RRSP tax savings assume deductibility. Monthly and biweekly figures divide annual modeled net by 12 and 26.
 
-The shared calculator also feeds compensation take-home estimates (`src/hooks/useTakeHomeEstimate.ts`) and automated compensation tax rates (`src/utils/finance/compTax.ts`). The 0.10.1 tests cover those consumers.
+The shared calculator also feeds compensation take-home estimates (`src/hooks/useTakeHomeEstimate.ts`) and automated compensation tax rates (`src/utils/finance/compTax.ts`). The 0.10.1-beta tests cover those consumers.
