@@ -331,9 +331,14 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
     expect(box.height, name + ' height').toBeGreaterThanOrEqual(44)
   }
 
-  const text = (await row.locator('p').boundingBox())!
-  const action = (await row.getByRole('button', { name: 'Enable reminders' }).boundingBox())!
-  expect(Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))).toBeLessThanOrEqual(2)
+  // Measure both centres in one frame so the sheet's entrance animation cannot
+  // move the row between two separate browser calls.
+  const centreDifference = await row.evaluate((el) => {
+    const text = el.querySelector('p')!.getBoundingClientRect()
+    const action = el.querySelector('button')!.getBoundingClientRect()
+    return Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))
+  })
+  expect(centreDifference).toBeLessThanOrEqual(2)
 
   const overflow = await panel.evaluate((el) => {
     const p = el.getBoundingClientRect()
