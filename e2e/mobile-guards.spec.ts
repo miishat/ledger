@@ -29,10 +29,13 @@ test.beforeEach(async ({ page }) => {
     window.localStorage.setItem('accounts-storage', JSON.stringify({
       state: {
         accounts: [
-          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
-          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank', currency: 'CAD' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt', currency: 'CAD' },
         ],
         history: [],
+        pendingCurrencyReviewIds: [],
+        currencySupportStartedAt: new Date().toISOString().slice(0, 10),
+        pendingEditSnapshotDate: null,
       },
     }))
   })
@@ -164,10 +167,13 @@ test('no dashboard text is clipped by its own container', async ({ page }) => {
     window.localStorage.setItem('accounts-storage', JSON.stringify({
       state: {
         accounts: [
-          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
-          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank', currency: 'CAD' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt', currency: 'CAD' },
         ],
         history: [],
+        pendingCurrencyReviewIds: [],
+        currencySupportStartedAt: new Date().toISOString().slice(0, 10),
+        pendingEditSnapshotDate: null,
       },
     }))
   })

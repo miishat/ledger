@@ -6,10 +6,18 @@ pre-1.0 beta.
 
 ## [0.11.1-beta] - Unreleased
 
+### Added
+- Accounts can hold native CAD or USD balances while category totals and net worth remain in CAD. USD account rows show the native balance and an approximate CAD value.
+- Existing accounts without a saved currency have a one-time review. USD/CAD rates can be refreshed or entered manually.
+- A Currencies control beside Customize opens exchange rates in a compact dialog, with a bottom sheet on phones. CAD balances use the dollar symbol; Account rows use compact separators, USD badges beside account names, and subtle conversion amounts beneath balances.
+
 ### Fixed
 - Shared bill percentage buttons now use the transaction amount as the paid total when sharing is enabled, instead of calculating a zero share
 - Shared bills label the editable amount as Your share and retain the paid total when a percentage or manual share is saved and reopened
 - Shared bills now explain missing paid totals or people before saving, instead of silently dropping incomplete sharing details
+
+### Note
+- Saved net worth history remains in CAD as originally recorded. Earlier points may have treated foreign balances as CAD and are not recalculated.
 
 ## [0.11.0-beta] - 2026-10-03
 

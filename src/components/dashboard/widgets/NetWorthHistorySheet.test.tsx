@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { NetWorthHistorySheet } from './NetWorthHistorySheet'
 import { useAccountsStore } from '../../../store/useAccountsStore'
+import { STORAGE_KEYS } from '../../../store/storageKeys'
 
 const initialState = useAccountsStore.getState()
 
@@ -45,5 +46,15 @@ describe('NetWorthHistorySheet', () => {
     render(<NetWorthHistorySheet open onClose={() => {}} />)
     fireEvent.click(screen.getByLabelText('Delete snapshot for 2026-08-01'))
     expect(useAccountsStore.getState().history).toEqual([])
+  })
+
+  it('explains the persisted currency marker for earlier totals and keeps CAD implicit for manual entry', () => {
+    useAccountsStore.setState({ currencySupportStartedAt: '2026-10-06', history: [{ date: '2026-09-01', value: 100 }] })
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts) ?? '{}') as { state?: { currencySupportStartedAt?: string } }
+    expect(saved.state?.currencySupportStartedAt).toBe('2026-10-06')
+    render(<NetWorthHistorySheet open onClose={() => {}} />)
+    expect(screen.getByText(/Currency support began on 2026-10-06/)).toBeTruthy()
+    expect(screen.getByText(/Earlier totals may have treated foreign balances as CAD/)).toBeTruthy()
+    expect(screen.getByLabelText('Snapshot value')).toBeTruthy()
   })
 })

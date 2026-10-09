@@ -2,25 +2,23 @@ import React, { useId, useState } from 'react';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { WidgetWrapper } from './WidgetWrapper';
 import { useAccountsStore } from '../../store/useAccountsStore';
-import type { AccountType } from '../../store/useAccountsStore';
-import { AddAccountModal } from './AddAccountModal';
+import type { Account, AccountType } from '../../store/useAccountsStore';
 import { EmptyState } from '../ui/EmptyState';
 import { useUndoStore } from '../../store/useUndoStore';
 import { useIsDesktop } from '../../hooks/useMediaQuery';
 import { PHONE_LIST_LIMIT, useShowMore } from '../../hooks/useShowMore';
 import { ShowMoreButton } from '../ui/ShowMoreButton';
+import { useAccountValuation } from '../../hooks/useAccountValuation';
+import type { AccountCurrency } from '../../store/useAccountsStore';
+
+const format = (amount: number, currency: AccountCurrency) => new Intl.NumberFormat('en-CA', {
+  style: 'currency', currency, currencyDisplay: currency === 'USD' ? 'code' : 'narrowSymbol', minimumFractionDigits: 2, maximumFractionDigits: 2,
+}).format(amount);
 
 interface AccountCategoryWidgetProps {
   title: string;
   type: AccountType;
   className?: string;
-}
-
-interface Account {
-  id: string;
-  name: string;
-  value: number;
-  type: AccountType;
 }
 
 const SINGULAR_NOUN: Record<AccountType, string> = {
@@ -39,14 +37,20 @@ const PLURAL_NOUN: Record<AccountType, string> = {
   other: 'other assets',
 };
 
+const AddAccountModal = React.lazy(() =>
+  import('./AddAccountModal').then((module) => ({ default: module.AddAccountModal }))
+);
+
 export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ title, type, className }) => {
-  const { getAccountsByType, getTotalByType, removeAccount, addAccount } = useAccountsStore();
+  const { getAccountsByType, removeAccount, addAccount } = useAccountsStore();
+  const valuation = useAccountValuation();
   const offerUndo = useUndoStore((s) => s.offerUndo);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpenedBefore, setModalOpenedBefore] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   const accounts = getAccountsByType(type);
-  const total = getTotalByType(type);
+  const total = valuation.totals[type];
 
   // Rule 4 of docs/mobile-layout-rules.md: see IncomeWidget.
   const isDesktop = useIsDesktop();
@@ -55,11 +59,13 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
 
   const handleAdd = () => {
     setEditingAccount(null);
+    setModalOpenedBefore(true);
     setIsModalOpen(true);
   };
 
   const handleEdit = (acc: Account) => {
     setEditingAccount(acc);
+    setModalOpenedBefore(true);
     setIsModalOpen(true);
   };
 
@@ -82,7 +88,9 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
         <WidgetWrapper title={title} action={ActionButton} className={className}>
           <p className="text-[13px] text-text-secondary">No {PLURAL_NOUN[type]} yet.</p>
         </WidgetWrapper>
-        <AddAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} defaultType={type} editingAccount={editingAccount} />
+        {modalOpenedBefore && <React.Suspense fallback={null}>
+          <AddAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} defaultType={type} editingAccount={editingAccount} />
+        </React.Suspense>}
       </>
     );
   }
@@ -92,12 +100,12 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
       <WidgetWrapper title={title} action={ActionButton} className={className}>
         <div className="flex flex-col h-full pt-2">
           <div className="text-[24px] font-bold text-text-primary mb-4 border-b border-border pb-3">
-            ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {total === null ? 'Conversion Needed' : format(total, 'CAD')}
           </div>
           
           <div
             id={listId}
-            className={`flex-1 flex flex-col gap-2 ${isDesktop ? 'overflow-y-auto max-h-[150px] pr-2' : ''}`}
+            className={`flex-1 flex flex-col divide-y divide-border ${isDesktop ? 'overflow-y-auto max-h-[150px] pr-2' : ''}`}
           >
             {accounts.length === 0 ? (
               <EmptyState
@@ -123,7 +131,7 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                   // wrap lets the value block drop to its own line instead,
                   // the same stacked look mobile already uses, only reached
                   // here by the content not fitting rather than by viewport.
-                  className="flex flex-col items-start gap-0.5 desktop:flex-row desktop:flex-wrap desktop:justify-between desktop:items-baseline desktop:gap-2 group"
+                  className="flex flex-col items-start gap-0.5 desktop:flex-row desktop:flex-wrap desktop:justify-between desktop:items-baseline desktop:gap-3 group py-3 first:pt-0"
                 >
                   <span
                     data-testid={`account-name-${acc.id}`}
@@ -137,17 +145,20 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                     // block alone is nearly the full row width, which is what
                     // makes desktop:flex-wrap actually trigger instead of
                     // silently shrinking the name to 0.
-                    className="text-sm text-text-secondary min-w-0 desktop:min-w-[70px] flex-1 break-words"
+                    className="text-sm text-text-primary min-w-0 desktop:min-w-[70px] flex-1 break-words"
                   >
                     {acc.name}
+                    {acc.currency === 'USD' && <span className="ml-2 inline-block rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-micro font-medium text-text-secondary align-middle">USD</span>}
                   </span>
-                  <div className="flex items-center gap-1 shrink-0 self-stretch justify-between desktop:self-auto desktop:justify-normal">
-                    <span className="text-sm font-medium text-text-primary">
-                      ${acc.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                  <div className="flex flex-wrap max-w-full items-center gap-1 shrink-0 self-stretch justify-between desktop:self-auto desktop:justify-end">
+                    <div className="flex flex-col items-start desktop:items-end">
+                      <span className="text-sm font-medium tabular-nums text-text-primary" aria-label={acc.currency === 'USD' ? format(acc.value, 'USD') : undefined}>{format(acc.value, 'CAD')}</span>
+                      {acc.currency === 'USD' && <span className="text-xs tabular-nums text-text-secondary">{valuation.cadById[acc.id] === null ? 'Conversion Needed' : `≈ ${format(valuation.cadById[acc.id]!, 'CAD')}`}</span>}
+                    </div>
+                    <div className="account-row-actions flex shrink-0">
                     <button
                       onClick={() => handleEdit(acc)}
-                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-accent reveal-on-hover transition-all rounded-md"
+                      className="shrink-0 p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-accent reveal-on-hover transition-all rounded-md"
                       aria-label="Edit account"
                     >
                       <Edit2 size={16} />
@@ -159,14 +170,15 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
                         // one; that is acceptable since nothing else references an
                         // account id today.
                         offerUndo(`Deleted account "${acc.name}"`, () =>
-                          addAccount({ name: acc.name, value: acc.value, type: acc.type }),
+                          addAccount({ name: acc.name, value: acc.value, type: acc.type, currency: acc.currency }),
                         );
                       }}
-                      className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-error reveal-on-hover transition-all rounded-md"
+                      className="shrink-0 p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-text-secondary hover:text-error reveal-on-hover transition-all rounded-md"
                       aria-label={`Delete ${acc.name}`}
                     >
                       <Trash2 size={16} />
                     </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -178,12 +190,14 @@ export const AccountCategoryWidget: React.FC<AccountCategoryWidgetProps> = ({ ti
         </div>
       </WidgetWrapper>
 
-      <AddAccountModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        defaultType={type} 
-        editingAccount={editingAccount}
-      />
+      {modalOpenedBefore && <React.Suspense fallback={null}>
+        <AddAccountModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          defaultType={type}
+          editingAccount={editingAccount}
+        />
+      </React.Suspense>}
     </>
   );
 };

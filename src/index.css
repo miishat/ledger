@@ -709,3 +709,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 header:has(> [data-topbar-slot] > *) > [data-topbar-brand] {
   display: none;
 }
+
+/* Compact balances reach the card edge until row actions are needed.
+   Touch controls remain visible; keyboard focus expands the action area instantly. */
+@media (min-width: 768px) and (min-height: 500px) and (hover: hover) and (pointer: fine) {
+  .account-row-actions { width: 0; overflow: hidden; }
+  .group:hover .account-row-actions,
+  .group:focus-within .account-row-actions { width: 64px; overflow: visible; }
+}

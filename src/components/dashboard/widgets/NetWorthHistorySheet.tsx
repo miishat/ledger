@@ -18,6 +18,7 @@ export const NetWorthHistorySheet: React.FC<NetWorthHistorySheetProps> = ({ open
   const history = useAccountsStore((s) => s.history)
   const setSnapshot = useAccountsStore((s) => s.setSnapshot)
   const removeSnapshot = useAccountsStore((s) => s.removeSnapshot)
+  const currencySupportStartedAt = useAccountsStore((s) => s.currencySupportStartedAt)
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [value, setValue] = useState(0)
@@ -38,6 +39,9 @@ export const NetWorthHistorySheet: React.FC<NetWorthHistorySheetProps> = ({ open
         The trend is drawn from these points. One is recorded each day you open the app and each
         time you change an account. Add earlier figures here to backfill the chart.
       </p>
+      {currencySupportStartedAt && <p className="rounded-md border border-border p-3 text-[12px] text-text-secondary">
+        Currency support began on {currencySupportStartedAt}. Earlier totals may have treated foreign balances as CAD.
+      </p>}
 
       <div className="flex flex-col gap-2 p-3 rounded-lg border border-border">
         <label htmlFor="snapshot-date" className="text-[12px] font-medium text-text-secondary">Date</label>
@@ -48,8 +52,9 @@ export const NetWorthHistorySheet: React.FC<NetWorthHistorySheetProps> = ({ open
           onChange={setDate}
           className="bg-bg-secondary border-border rounded-md text-[14px]"
         />
-        <label className="text-[12px] font-medium text-text-secondary">Net worth on that date</label>
+        <label htmlFor="snapshot-value" className="text-[12px] font-medium text-text-secondary">Net worth on that date</label>
         <NumberInput
+          id="snapshot-value"
           value={value}
           onCommit={setValue}
           ariaLabel="Snapshot value"

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 import { setMatchMedia, resetMatchMedia } from '../test-utils/matchMedia'
@@ -40,6 +40,14 @@ describe('Dashboard header on a phone', () => {
     expect(screen.getAllByRole('button', { name: 'Customize' })).toHaveLength(1)
     expect(screen.queryByText('All your accounts, balances, and trends in one place.')).toBeNull()
   })
+})
+
+it('opens the deferred Customize panel from its visible header action', async () => {
+  setMatchMedia(true)
+  render(<MemoryRouter><Dashboard /></MemoryRouter>)
+  fireEvent.click(screen.getByRole('button', { name: 'Customize' }))
+  expect(await screen.findByRole('dialog', { name: 'Customize dashboard' })).toBeInTheDocument()
+  expect(screen.getByRole('checkbox', { name: 'Show Net Worth Over Time' })).toBeInTheDocument()
 })
 
 describe('Dashboard key figure on a phone', () => {

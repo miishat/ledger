@@ -3,12 +3,37 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ForecasterTool } from './ForecasterTool'
 import { usePlannerStore } from '../../../store/usePlannerStore'
+import { useAccountsStore } from '../../../store/useAccountsStore'
+import { useAccountFxStore } from '../../../store/useAccountFxStore'
 
 // The forecaster reads/writes usePlannerStore, a persisted module singleton.
 // Reset its inputs after each test so goal/setting changes don't leak into
 // the next test in this file.
 afterEach(() => {
   usePlannerStore.getState().resetTool('forecaster')
+  useAccountsStore.setState({ accounts: [], history: [] })
+  useAccountFxStore.setState({ resolved: undefined, loading: false, error: undefined })
+})
+
+describe('ForecasterTool account valuation', () => {
+  it('uses the converted CAD value as the automatic starting balance', () => {
+    useAccountsStore.setState({ accounts: [{ id: 'usd', name: 'US bank', value: 100, type: 'bank', currency: 'USD' }] })
+    useAccountFxStore.setState({ resolved: { value: { from: 'USD', to: 'CAD', rate: 1.35, date: '2026-10-06', asOf: '2026-10-06T00:00:00Z' }, source: 'live', status: 'success', asOf: '2026-10-06T00:00:00Z', stale: false } })
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    expect(screen.getByText('$135')).toBeInTheDocument()
+    expect(screen.getByText(/you have \$135/)).toBeInTheDocument()
+  })
+
+  it('withholds projection when automatic conversion is unavailable and restores results on manual selection', () => {
+    useAccountsStore.setState({ accounts: [{ id: 'usd', name: 'US bank', value: 100, type: 'bank', currency: 'USD' }] })
+    render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    expect(screen.getByText('Conversion Needed')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Review accounts' })).toHaveAttribute('href', '/')
+    expect(screen.queryByText('Projected FI Date')).not.toBeInTheDocument()
+    expect(screen.getByText('Monthly Savings')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard Net Worth' }))
+    expect(screen.getByText('Projected FI Date')).toBeInTheDocument()
+  })
 })
 
 describe('ForecasterTool source labels', () => {

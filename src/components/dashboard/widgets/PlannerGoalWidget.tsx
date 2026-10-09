@@ -2,7 +2,7 @@ import React from 'react'
 import { Target } from 'lucide-react'
 import { WidgetWrapper } from '../WidgetWrapper'
 import { usePlannerStore } from '../../../store/usePlannerStore'
-import { useAccountsStore } from '../../../store/useAccountsStore'
+import { useAccountValuation } from '../../../hooks/useAccountValuation'
 import { formatMoney } from '../../planner/format'
 import { EmptyState } from '../../ui/EmptyState'
 
@@ -10,7 +10,7 @@ interface Goal { id: string; label: string; amount: number }
 
 export const PlannerGoalWidget: React.FC = () => {
   const goalsJson = usePlannerStore((s) => s.inputs['forecaster']?.goalsJson)
-  const netWorth = useAccountsStore((s) => s.getNetWorth())
+  const { netWorth } = useAccountValuation()
 
   let goals: Goal[] = []
   try {
@@ -31,6 +31,15 @@ export const PlannerGoalWidget: React.FC = () => {
       </WidgetWrapper>
     )
   }
+  if (netWorth === null) return (
+    <WidgetWrapper title="Top Goal">
+      <div className="flex flex-col gap-2 mt-2">
+        <span className="text-[15px] text-text-primary font-medium">{top.label}</span>
+        <span className="text-[13px] text-text-secondary">Target {formatMoney(top.amount)}</span>
+        <span className="text-[13px] text-text-secondary">Conversion Needed to show progress</span>
+      </div>
+    </WidgetWrapper>
+  )
   const progress = top.amount > 0 ? Math.min(1, netWorth / top.amount) : 0
 
   return (

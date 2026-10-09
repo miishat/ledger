@@ -11,12 +11,15 @@ export async function seedApp(page: Page): Promise<void> {
     ls.setItem('accounts-storage', JSON.stringify({
       state: {
         accounts: [
-          { id: 'a1', name: 'Main Checking', value: 15230.44, type: 'bank' },
-          { id: 'a2', name: 'EQ Bank High Interest Savings', value: 48210, type: 'bank' },
-          { id: 'a3', name: 'Questrade TFSA', value: 96430.12, type: 'investment' },
-          { id: 'a4', name: 'Mortgage - 12 Maplewood Crescent', value: 412500, type: 'debt' },
+          { id: 'a1', name: 'Main Checking', value: 15230.44, type: 'bank', currency: 'CAD' },
+          { id: 'a2', name: 'EQ Bank High Interest Savings', value: 48210, type: 'bank', currency: 'CAD' },
+          { id: 'a3', name: 'Questrade TFSA', value: 96430.12, type: 'investment', currency: 'CAD' },
+          { id: 'a4', name: 'Mortgage - 12 Maplewood Crescent', value: 412500, type: 'debt', currency: 'CAD' },
         ],
         history: [],
+        pendingCurrencyReviewIds: [],
+        currencySupportStartedAt: new Date().toISOString().slice(0, 10),
+        pendingEditSnapshotDate: null,
       },
     }))
 
