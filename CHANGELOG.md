@@ -4,7 +4,7 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
-## [0.11.1-beta] - Unreleased
+## [0.11.1-beta] - 2026-10-08
 
 ### Added
 - Accounts can hold native CAD or USD balances while category totals and net worth remain in CAD. USD account rows show the native balance and an approximate CAD value.
