@@ -4,6 +4,11 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
+## [0.11.1-beta] - Unreleased
+
+### Added
+- CIBC credit card transaction CSV imports recognize the headerless export automatically, including the first transaction and descriptions containing commas. Purchases count as expenses, refunds reduce spending, and recognized card payments are held for review. Invalid rows report an error instead of importing a partial file
+
 ## [0.11.0] - 2026-10-03
 
 Ledger on a phone now follows one written set of layout rules

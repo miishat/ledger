@@ -120,3 +120,25 @@ describe('CSVUploader Chase category fallback', () => {
     })
   })
 })
+
+it('imports CIBC rows directly into categorized triage with refund, payment and duplicate semantics', async () => {
+  useBudgetStore.setState({
+    categories: { cg: { id: 'cg', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
+    transactions: { e1: { id: 'e1', date: '2026-10-06', amount: 15.99,
+      description: 'SHOP, OTTAWA ON', type: 'expense' } },
+  })
+  useTriageStore.setState({ pendingTransactions: {}, categoryRules: { shop: 'cg' } })
+  render(<CSVUploader />)
+  const csv = '2026-10-06,"SHOP, OTTAWA ON",15.99,,1234********5678\n' +
+    '2026-10-06,"SHOP, OTTAWA ON",,27.11,1234********5678\n' +
+    '2026-10-06,PAYMENT THANK YOU/PAIEMEN T MERCI,,100.00,1234********5678\n'
+  fireEvent.change(document.querySelector('input[type="file"]')!, {
+    target: { files: [new File([csv], 'cibc.csv', { type: 'text/csv' })] },
+  })
+  await waitFor(() => expect(Object.values(useTriageStore.getState().pendingTransactions)).toHaveLength(3))
+  const rows = Object.values(useTriageStore.getState().pendingTransactions)
+  expect(rows.find(r => r.amount === 15.99)).toMatchObject({ type: 'expense', categoryId: 'cg', duplicate: 'exact' })
+  expect(rows.find(r => r.amount === -27.11)).toMatchObject({ type: 'expense', categoryId: 'cg' })
+  expect(rows.find(r => r.amount === 100)).toMatchObject({ flag: 'card-payment' })
+  expect(screen.queryByRole('dialog', { name: 'Map CSV Columns' })).not.toBeInTheDocument()
+})

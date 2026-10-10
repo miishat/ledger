@@ -33,6 +33,32 @@ export interface BankParserConfig {
 
 export const PARSERS: BankParserConfig[] = [
   {
+    name: 'CIBC Credit Card (Headerless)',
+    // Date, Description, Debit, Credit, Masked Card Number (no header row).
+    detect: (_headers, firstRow) => Array.isArray(firstRow) && firstRow.length === 5 &&
+      /^\d{4}-\d{2}-\d{2}$/.test(firstRow[0].trim()) && /^\d{4}\*+\d{4}$/.test(firstRow[4].trim()),
+    parse: (row) => {
+      if (!Array.isArray(row) || row.length !== 5) throw new Error('Expected five columns');
+      const [date, description, debit, credit, card] = row.map(value => value.trim());
+      const parsedDate = new Date(`${date}T00:00:00Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsedDate.getTime()) ||
+          parsedDate.toISOString().slice(0, 10) !== date) throw new Error('Invalid date');
+      if (!description || !/^\d{4}\*+\d{4}$/.test(card)) throw new Error('Invalid description or masked card number');
+      if (Boolean(debit) === Boolean(credit)) throw new Error('Expected exactly one debit or credit amount');
+      const amountText = debit || credit;
+      const amount = Number(amountText);
+      if (!/^\d+(?:\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount)) throw new Error('Invalid amount');
+      const originalRowData = Object.fromEntries(row.map((value, i) => [String(i), value]));
+      // Card payments are transfers; other credits return money to spending.
+      const isPayment = /^(?:PAYMENT THANK YOU(?:\/.*)?|PRE AUTHORIZED PAYMENT - THANK YOU)$/i
+        .test(description.replace(/\s+/g, ' '));
+      if (credit && isPayment) {
+        return { date, description, amount, type: 'income', flag: 'card-payment', originalRowData };
+      }
+      return { date, description, amount: debit ? amount : -amount, type: 'expense', originalRowData };
+    },
+  },
+  {
     name: 'Preferred Package',
     // Headers: Filter,Date,Description,Sub-description,Type of Transaction,Amount,Balance
     detect: (headers) => headers.includes('Sub-description') && headers.includes('Type of Transaction'),
@@ -186,14 +212,14 @@ export const PARSERS: BankParserConfig[] = [
 ];
 
 export async function parseCSV(file: File): Promise<TriageTransaction[] | UnrecognizedCSVResult> {
-  const text = await file.text();
+  const text = (await file.text()).replace(/^\uFEFF/, '');
   const firstLine = text.split('\n')[0].trim();
   
-  // Detect headerless format: starts with MM/DD/YYYY
-  const isHeaderless = /^\d{2}\/\d{2}\/\d{4},/.test(firstLine);
+  // Bank exports may start with either MM/DD/YYYY or an ISO date.
+  const isHeaderless = /^(?:\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2}),/.test(firstLine);
 
   return new Promise((resolve, reject) => {
-    Papa.parse<CsvRow | CsvHeaderlessRow>(file, {
+    Papa.parse<CsvRow | CsvHeaderlessRow>(text, {
       header: !isHeaderless,
       skipEmptyLines: true,
       complete: (results) => {
@@ -211,14 +237,20 @@ export async function parseCSV(file: File): Promise<TriageTransaction[] | Unreco
           return;
         }
 
+        if (parser.name === 'CIBC Credit Card (Headerless)' && results.errors.length) {
+          reject(new Error('Invalid CIBC CSV: check the quoted fields and column separators.'));
+          return;
+        }
         const transactions: TriageTransaction[] = [];
-        for (const row of results.data) {
-          const parsed = parser.parse(row);
-          if (parsed) {
-            transactions.push({
-              ...parsed,
-              id: uuidv4()
-            });
+        for (const [index, row] of results.data.entries()) {
+          try {
+            const parsed = parser.parse(row);
+            if (parsed) {
+              transactions.push({ ...parsed, id: uuidv4() });
+            }
+          } catch (error) {
+            reject(new Error(`Invalid ${parser.name} row ${index + 1}: ${error instanceof Error ? error.message : 'Unable to parse transaction'}`));
+            return;
           }
         }
         
