@@ -13,8 +13,8 @@ import { PlannerGoalWidget } from '../components/dashboard/widgets/PlannerGoalWi
 import { UpcomingVestsWidget } from '../components/dashboard/widgets/UpcomingVestsWidget';
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore';
 import { useIsDesktop } from '../hooks/useMediaQuery';
-import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
 import { FirstRunChecklist } from '../components/dashboard/FirstRunChecklist';
+import { AccountCurrencyReview } from '../components/accounts/AccountCurrencyReview';
 import { useAccountsStore } from '../store/useAccountsStore';
 import { useBudgetStore } from '../store/useBudgetStore';
 import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './dashboardWidgets';
@@ -33,6 +33,16 @@ const NetWorthTrendWidget = React.lazy(() =>
   import('../components/dashboard/widgets/NetWorthTrendWidget').then((m) => ({ default: m.NetWorthTrendWidget }))
 );
 
+// The rate editor and its NumberInput are only needed when USD accounts exist.
+// Keep that editor out of the initial Dashboard graph while the review notice
+// and global rate coordinator remain available immediately.
+const AccountFxControls = React.lazy(() =>
+  import('../components/accounts/AccountFxControls').then((m) => ({ default: m.AccountFxControls }))
+);
+const CustomizeDashboard = React.lazy(() =>
+  import('../components/dashboard/CustomizeDashboard').then((m) => ({ default: m.CustomizeDashboard }))
+);
+
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -41,8 +51,11 @@ export const Dashboard: React.FC = () => {
   const setOrder = useDashboardLayoutStore((s) => s.setOrder);
   const hidden = useDashboardLayoutStore((s) => s.hidden);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [customizeOpenedBefore, setCustomizeOpenedBefore] = useState(false);
+  const openCustomize = () => { setCustomizeOpenedBefore(true); setCustomizeOpen(true); };
   const isDesktop = useIsDesktop();
   const accountCount = useAccountsStore((s) => s.accounts.length);
+  const hasUsdAccount = useAccountsStore((s) => s.accounts.some((account) => account.currency === 'USD'));
   const transactionCount = useBudgetStore((s) => Object.keys(s.transactions).length);
 
   // id -> element pairing stays render-scoped: most widgets depend on `currentMonth`
@@ -116,9 +129,11 @@ export const Dashboard: React.FC = () => {
               `border-border`: see the note above .control-border in
               src/index.css. A control's own edge has to reach 3:1, and
               e2e/desktop-guards.spec.ts enforces exactly that on this button. */
+          <div className="flex flex-wrap items-center justify-end gap-2">
+          {hasUsdAccount && <Suspense fallback={null}><AccountFxControls /></Suspense>}
           <button
             type="button"
-            onClick={() => setCustomizeOpen(true)}
+            onClick={openCustomize}
             /* shrink-0: at 320px the header's flex row squeezed this to a 76px
                box for an 81px label, so it rendered against the screen edge with
                its right padding eaten. The heading beside it wraps instead. */
@@ -126,12 +141,14 @@ export const Dashboard: React.FC = () => {
           >
             Customize
           </button>
+          </div>
         }
         // Quiet, not primary: Customize changes a layout preference, it does
         // not create anything, which is why the desktop button is an outline.
-        phoneAction={<TopBarAction icon={SlidersHorizontal} label="Customize" tone="quiet" onClick={() => setCustomizeOpen(true)} />}
+        phoneAction={<div className="flex items-center">{hasUsdAccount && <Suspense fallback={null}><AccountFxControls phone /></Suspense>}<TopBarAction icon={SlidersHorizontal} label="Customize" tone="quiet" onClick={openCustomize} /></div>}
       />
 
+      <AccountCurrencyReview />
       <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />
 
       <BentoGrid>
@@ -159,7 +176,9 @@ export const Dashboard: React.FC = () => {
         })}
       </BentoGrid>
 
-      <CustomizeDashboard open={customizeOpen} onClose={() => setCustomizeOpen(false)} orderedIds={orderedIds} />
+      {customizeOpenedBefore && <Suspense fallback={null}>
+        <CustomizeDashboard open={customizeOpen} onClose={() => setCustomizeOpen(false)} orderedIds={orderedIds} />
+      </Suspense>}
     </div>
   );
 };

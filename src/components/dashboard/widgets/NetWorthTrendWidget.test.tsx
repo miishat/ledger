@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { NetWorthTrendWidget } from './NetWorthTrendWidget'
+import { useAccountsStore } from '../../../store/useAccountsStore'
 import { trendDomain } from './trendDomain'
 
 describe('trendDomain', () => {
@@ -18,5 +21,19 @@ describe('trendDomain', () => {
   it('handles an all-zero series without collapsing', () => {
     const [lo, hi] = trendDomain([0, 0])
     expect(hi).toBeGreaterThan(lo)
+  })
+})
+
+describe('currency history marker', () => {
+  it('explains earlier history beside the trend', () => {
+    useAccountsStore.setState({ currencySupportStartedAt: '2026-10-06', history: [{ date: '2026-09-01', value: 100 }] })
+    render(<NetWorthTrendWidget />)
+    expect(screen.getByText(/Earlier totals may have treated foreign balances as CAD/)).toBeTruthy()
+  })
+
+  it('omits the explanation when history begins after currency support', () => {
+    useAccountsStore.setState({ currencySupportStartedAt: '2026-10-06', history: [{ date: '2026-10-07', value: 100 }] })
+    render(<NetWorthTrendWidget />)
+    expect(screen.queryByText(/Earlier totals may have treated foreign balances as CAD/)).toBeNull()
   })
 })

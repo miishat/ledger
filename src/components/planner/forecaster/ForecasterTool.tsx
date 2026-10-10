@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Settings2 } from 'lucide-react'
-import { useAccountsStore } from '../../../store/useAccountsStore'
+import { useAccountsStore, type NetWorthSnapshot } from '../../../store/useAccountsStore'
 import { buildForecast, type LumpSum } from '../../../utils/finance/forecast'
 import { coastFiNumber, fiNumber, monthsToReach } from '../../../utils/finance/fire'
 import { CalculatorField } from '../CalculatorField'
@@ -25,7 +26,7 @@ function formatMonthsOut(m: number | null): string {
 const AutoField: React.FC<{
   label: string
   auto: boolean
-  autoValue: number
+  autoValue: number | null
   autoHint: string
   manualValue: number
   onToggle: (auto: boolean) => void
@@ -45,7 +46,7 @@ const AutoField: React.FC<{
     </div>
     {auto ? (
       <div className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-text-primary text-[15px]">
-        {formatMoney(autoValue)}
+        {autoValue === null ? 'Conversion Needed' : formatMoney(autoValue)}
       </div>
     ) : (
       <CalculatorField label="" value={manualValue} onChange={onManual} step={100} prefix="$" />
@@ -58,30 +59,6 @@ export const ForecasterTool: React.FC = () => {
   const history = useAccountsStore((s) => s.history)
   const gearRef = useRef<HTMLButtonElement>(null)
   const [taxOpen, setTaxOpen] = useState(false)
-
-  const eventLumps: LumpSum[] = events.map((e) => ({
-    month: Math.max(1, Math.round(e.yearsFromNow * 12)),
-    amount: e.amount,
-    label: e.label,
-  }))
-  const lumps = [...autoFeed.compLumps, ...eventLumps]
-
-  const points = buildForecast({
-    startBalance: resolved.startBalance,
-    monthlySavings: resolved.monthlySavings,
-    annualReturnPct: settings.annualReturnPct,
-    annualInflationPct: settings.inflationPct,
-    contributionStepUpPct: settings.stepUpPct,
-    years: settings.years,
-    lumpSums: lumps,
-    scenarioSpreadPct: settings.spreadPct,
-    monthlyDrag: autoFeed.debtDrag ?? undefined,
-  })
-
-  const fi = fiNumber(settings.annualSpending, settings.withdrawalRatePct)
-  const fiMonth = monthsToReach(points, fi)
-  const coast = coastFiNumber(fi, settings.annualReturnPct, settings.years)
-  const goalMarkers = goals.map((g) => ({ label: g.label, month: monthsToReach(points, g.amount), amount: g.amount }))
 
   return (
     <div className="flex flex-col gap-6">
@@ -208,6 +185,44 @@ export const ForecasterTool: React.FC = () => {
         </button>
       </div>
 
+      {resolved.startBalance === null ? (
+        <p className="text-sm text-text-secondary">Conversion Needed to calculate a forecast from dashboard net worth. <Link to="/" className="text-accent underline">Review accounts</Link></p>
+      ) : (
+        <ForecasterResults data={{ settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax }} history={history} startBalance={resolved.startBalance} />
+      )}
+    </div>
+  )
+}
+
+type ForecasterData = ReturnType<typeof useForecasterSettings>
+
+const ForecasterResults: React.FC<{ data: ForecasterData; history: NetWorthSnapshot[]; startBalance: number }> = ({ data, history, startBalance }) => {
+  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved } = data
+  const eventLumps: LumpSum[] = events.map((e) => ({
+    month: Math.max(1, Math.round(e.yearsFromNow * 12)),
+    amount: e.amount,
+    label: e.label,
+  }))
+  const lumps = [...autoFeed.compLumps, ...eventLumps]
+
+  const points = buildForecast({
+    startBalance,
+    monthlySavings: resolved.monthlySavings,
+    annualReturnPct: settings.annualReturnPct,
+    annualInflationPct: settings.inflationPct,
+    contributionStepUpPct: settings.stepUpPct,
+    years: settings.years,
+    lumpSums: lumps,
+    scenarioSpreadPct: settings.spreadPct,
+    monthlyDrag: autoFeed.debtDrag ?? undefined,
+  })
+
+  const fi = fiNumber(settings.annualSpending, settings.withdrawalRatePct)
+  const fiMonth = monthsToReach(points, fi)
+  const coast = coastFiNumber(fi, settings.annualReturnPct, settings.years)
+  const goalMarkers = goals.map((g) => ({ label: g.label, month: monthsToReach(points, g.amount), amount: g.amount }))
+
+  return <>
       <ForecastChart
         points={points}
         history={history}
@@ -233,7 +248,7 @@ export const ForecasterTool: React.FC = () => {
       </div>
       <ResultCard
         label={`Coast-FI (Needed Today to Coast for ${settings.years}y)`}
-        value={`${formatMoney(coast)}, you have ${formatMoney(resolved.startBalance)} (${resolved.startBalance >= coast ? 'coasting ✓' : 'not yet'})`}
+        value={`${formatMoney(coast)}, you have ${formatMoney(startBalance)} (${startBalance >= coast ? 'coasting ✓' : 'not yet'})`}
       />
 
       {/* Goals + life events */}
@@ -274,7 +289,7 @@ export const ForecasterTool: React.FC = () => {
       </div>
 
       <MonteCarloSection
-        startBalance={resolved.startBalance}
+        startBalance={startBalance}
         monthlySavings={resolved.monthlySavings}
         years={settings.years}
         meanReturnPct={settings.annualReturnPct}
@@ -284,6 +299,5 @@ export const ForecasterTool: React.FC = () => {
         target={fi}
         onStdDevChange={(v) => setSetting('mcStdDevPct', v)}
       />
-    </div>
-  )
+  </>
 }

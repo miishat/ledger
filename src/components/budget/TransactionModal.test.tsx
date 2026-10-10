@@ -37,6 +37,42 @@ describe('TransactionModal category filtering', () => {
 })
 
 describe('TransactionModal shared bill and reimbursement controls', () => {
+  it.each([['50%', 60], ['33%', 40], ['25%', 30]])('uses the entered transaction total for My share %s and preserves it after reopening', (label, share) => {
+    seed()
+    const view = render(<TransactionModal isOpen onClose={() => {}} />)
+    const amount = screen.getByLabelText('Amount')
+    fireEvent.change(amount, { target: { value: '120' } })
+    fireEvent.blur(amount)
+    fireEvent.click(screen.getByLabelText(/shared bill/i))
+    fireEvent.click(screen.getByRole('button', { name: `My share ${label}` }))
+    expect(amount).toHaveValue(String(share))
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. alex, roommates/i), { target: { value: 'Alex' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add Transaction' }))
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.amount).toBe(share)
+    expect(saved.shared).toEqual({ totalAmount: 120, sharedWith: 'Alex' })
+    view.unmount()
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={saved} />)
+    expect(screen.getByLabelText('Your share')).toHaveValue(String(share))
+    expect(screen.getByLabelText('Total I paid')).toHaveValue('120')
+  })
+
+  it('saves a manually entered share when sharing an existing full amount', () => {
+    seed()
+    const initial = { id: 'bill', type: 'expense' as const, amount: 120, date: '2026-10-06', description: 'Dinner' }
+    useBudgetStore.setState({ transactions: { bill: initial } })
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+    fireEvent.click(screen.getByLabelText(/shared bill/i))
+    const amount = document.getElementById('tx-amount')!
+    fireEvent.change(amount, { target: { value: '45' } })
+    fireEvent.blur(amount)
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. alex, roommates/i), { target: { value: 'Alex' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    expect(useBudgetStore.getState().transactions.bill).toMatchObject({
+      amount: 45, shared: { totalAmount: 120, sharedWith: 'Alex' },
+    })
+  })
+
   it('adds a shared expense with the user share as amount and the remainder owed', () => {
     seed()
     const onClose = vi.fn()
@@ -60,7 +96,7 @@ describe('TransactionModal shared bill and reimbursement controls', () => {
     expect(saved.shared).toEqual({ totalAmount: 120, sharedWith: 'Alex' })
   })
 
-  it('does not attach shared field when sharedWith is empty', () => {
+  it('requires a person before saving a shared remainder', () => {
     seed()
     render(<TransactionModal isOpen onClose={() => {}} />)
 
@@ -72,8 +108,19 @@ describe('TransactionModal shared bill and reimbursement controls', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /add transaction/i }))
 
-    const saved = Object.values(useBudgetStore.getState().transactions)[0]
-    expect(saved.shared).toBeUndefined()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter who owes you the rest of this bill.')
+  })
+
+  it('does not erase the amount with a percentage when no total has been entered', () => {
+    seed()
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByLabelText(/shared bill/i))
+    expect(screen.getByRole('button', { name: 'My share 50%' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Your share'), { target: { value: '60' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add Transaction' }))
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+    expect(screen.getByRole('alert')).toHaveTextContent('Total I paid must be at least your share.')
   })
 
   it('adds a reimbursement income with the from field set', () => {

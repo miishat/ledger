@@ -12,7 +12,12 @@ import { EmptyState } from '../../ui/EmptyState'
 
 export const NetWorthTrendWidget: React.FC = () => {
   const history = useAccountsStore((s) => s.history)
+  const currencySupportStartedAt = useAccountsStore((s) => s.currencySupportStartedAt)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const hasEarlierHistory = currencySupportStartedAt && history.some((point) => point.date < currencySupportStartedAt)
+  const historyCaveat = hasEarlierHistory && <p className="mt-2 text-[12px] text-text-secondary">
+    Currency support began on {currencySupportStartedAt}. Earlier totals may have treated foreign balances as CAD.
+  </p>
 
   const editHistoryAction = (
     <button
@@ -33,6 +38,7 @@ export const NetWorthTrendWidget: React.FC = () => {
           hint="Add a couple of dated figures, or update your accounts over time, and the trend draws itself."
           action={{ label: 'Add history', onClick: () => setHistoryOpen(true) }}
         />
+        {historyCaveat}
         <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
       </WidgetWrapper>
     )
@@ -76,6 +82,7 @@ export const NetWorthTrendWidget: React.FC = () => {
           </AreaChart>
         </ResponsiveContainer>
       </ChartFigure>
+      {historyCaveat}
       <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </WidgetWrapper>
   )

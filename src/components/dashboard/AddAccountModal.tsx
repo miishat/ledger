@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAccountsStore } from '../../store/useAccountsStore';
-import type { AccountType } from '../../store/useAccountsStore';
+import type { Account, AccountCurrency, AccountType } from '../../store/useAccountsStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
 import { Sheet } from '../ui/Sheet';
-
-interface Account {
-  id: string;
-  name: string;
-  value: number;
-  type: AccountType;
-}
+import { CurrencyChangeConfirmation } from '../accounts/CurrencyChangeConfirmation';
 
 interface AddAccountModalProps {
   isOpen: boolean;
@@ -33,6 +27,8 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
   const [name, setName] = useState(initial?.name ?? '');
   const [value, setValue] = useState(initial?.value ?? 0);
   const [type, setType] = useState<AccountType>(initial?.type ?? defaultType);
+  const [currency, setCurrency] = useState<AccountCurrency>(initial?.currency ?? 'CAD');
+  const [confirming, setConfirming] = useState(false);
 
   const { addAccount, updateAccount } = useAccountsStore();
 
@@ -40,12 +36,22 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
     e.preventDefault();
     if (!name) return;
     if (initial) {
-      updateAccount(initial.id, { name, value, type });
+      if (currency !== initial.currency) {
+        setConfirming(true);
+        return;
+      }
+      updateAccount(initial.id, { name, value, type, currency });
     } else {
-      addAccount({ name, value, type });
+      addAccount({ name, value, type, currency });
     }
     onDone();
   };
+
+  if (initial && confirming) return <CurrencyChangeConfirmation
+    changes={[{ id: initial.id, name, value, from: initial.currency, to: currency }]}
+    onCancel={() => setConfirming(false)}
+    onConfirm={() => { updateAccount(initial.id, { name, value, type, currency }); onDone(); }}
+  />;
 
   return (
     <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
@@ -65,8 +71,9 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-text-secondary">Name / Description</label>
+        <label htmlFor="account-name" className="text-sm font-medium text-text-secondary">Name / Description</label>
         <input
+          id="account-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -76,14 +83,17 @@ const AccountForm: React.FC<AccountFormProps> = ({ initial, defaultType, onDone 
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-text-secondary">Value / Balance</label>
-        <NumberInput
-          value={value}
-          onCommit={setValue}
-          placeholder="0.00"
-          className="bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
-        />
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-col gap-1 flex-[2_1_170px] min-w-0">
+          <label htmlFor="account-balance" className="text-sm font-medium text-text-secondary">{currency === 'USD' ? 'Balance (USD)' : 'Balance'}</label>
+          <NumberInput id="account-balance" value={value} onCommit={setValue} placeholder="0.00"
+            className="w-full bg-bg-secondary border border-border rounded-md px-3 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent" />
+        </div>
+        <div className="flex flex-col gap-1 flex-[1_1_100px] min-w-[100px]">
+          <label className="text-sm font-medium text-text-secondary">Currency</label>
+          <ThemedSelect ariaLabel="Currency" value={currency} onChange={(next) => setCurrency(next as AccountCurrency)}
+            options={[{ value: 'CAD', label: 'CAD' }, { value: 'USD', label: 'USD' }]} />
+        </div>
       </div>
 
       <div className="mt-4 flex justify-end gap-3">

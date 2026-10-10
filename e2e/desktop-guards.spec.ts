@@ -104,34 +104,25 @@ test('no focusable control is invisible while focused', async ({ page }) => {
 test('a sheet actually animates in, not just out', async ({ page }) => {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
+  await page.evaluate(() => {
+    const started: string[] = []
+    document.addEventListener('animationstart', (event) => {
+      if (event.target instanceof Element) {
+        const id = event.target.getAttribute('data-testid')
+        if (id === 'sheet-panel' || id === 'sheet-scrim') started.push(id)
+      }
+    })
+    Object.assign(window, { __sheetAnimationStarts: started })
+  })
   await page.getByRole('button', { name: 'Settings' }).first().click()
-  // waitFor('attached') resolves on the same DOM mutation that adds the
-  // panel, whatever mounts it, so this samples right at insertion rather
-  // than guessing a delay. That timing matters: past the animation's own
-  // 150-220ms, a working entrance and a missing one both settle at the same
-  // resting transform/opacity, so waiting past it would make the assertion
-  // pass either way.
   const panel = page.locator('[data-testid=sheet-panel]')
   await panel.waitFor({ state: 'attached' })
-  const sample = await page.evaluate(() => {
-    const read = (el: Element | null) =>
-      el && {
-        animationName: getComputedStyle(el).animationName,
-        running: el.getAnimations().some((a) => a.playState === 'running'),
-      }
-    return {
-      panel: read(document.querySelector('[data-testid=sheet-panel]')),
-      scrim: read(document.querySelector('[data-testid=sheet-scrim]')),
-    }
-  })
-  // Insertion, not a style change on an already-painted element, is what a
-  // freshly opened sheet is: a CSS transition does not run on insertion, so
-  // this can only be a keyframe animation. If the panel or scrim comes back
-  // already resting at its open state, the entrance never played.
-  expect(sample.panel?.animationName).not.toBe('none')
-  expect(sample.panel?.running).toBe(true)
-  expect(sample.scrim?.animationName).not.toBe('none')
-  expect(sample.scrim?.running).toBe(true)
+  // Animation start events prove both keyframes ran on insertion. Recording
+  // them before the click avoids racing the scrim's 150ms lifetime under a
+  // busy parallel suite, when a later active-animation sample can miss it.
+  await expect.poll(() => page.evaluate(() =>
+    (window as Window & { __sheetAnimationStarts: string[] }).__sheetAnimationStarts,
+  )).toEqual(expect.arrayContaining(['sheet-panel', 'sheet-scrim']))
 })
 
 test('a sheet never renders its header twice', async ({ page }, testInfo) => {

@@ -1,5 +1,5 @@
 import { usePlannerStore, useToolInputs } from '../../../store/usePlannerStore'
-import { useAccountsStore } from '../../../store/useAccountsStore'
+import { useAccountValuation } from '../../../hooks/useAccountValuation'
 import { useBudgetStore } from '../../../store/useBudgetStore'
 import { useCompensationStore } from '../../../store/useCompensationStore'
 import { averageMonthlyNetSavings } from '../../../store/budgetSelectors'
@@ -62,7 +62,7 @@ export function useForecasterSettings() {
   const setInput = usePlannerStore((s) => s.setInput)
   const debtInputs = usePlannerStore((s) => s.inputs['debt-payoff'])
   const transactions = useBudgetStore((s) => s.transactions)
-  const getNetWorth = useAccountsStore((s) => s.getNetWorth)
+  const { netWorth } = useAccountValuation()
   const primaryPackage = useCompensationStore((s) => s.primaryPackage)
   const salaryTaxInputs = usePlannerStore((s) => s.inputs['salary-tax'])
   const provRaw = String(salaryTaxInputs?.province ?? 'ON')
@@ -81,7 +81,7 @@ export function useForecasterSettings() {
 
   const budgetAvg = averageMonthlyNetSavings(transactions, 3)
   const autoFeed = {
-    startBalance: getNetWorth(),
+    startBalance: netWorth,
     monthlySavings: budgetAvg,
     compLumps: settings.autoComp
       ? applyLumpTax(compLumpSums(primaryPackage, primaryPackage.companyCurrentPrice, horizonMonths), compTaxRate)

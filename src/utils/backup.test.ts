@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backupToBlob, backupFilename, parseBackupText, BACKUP_KEYS } from './backup'
 import { STORAGE_KEYS } from '../store/storageKeys'
+import { useAccountsStore } from '../store/useAccountsStore'
+import { useMarketDataStore } from '../store/useMarketDataStore'
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())
@@ -243,5 +245,84 @@ describe('appVersion stamping', () => {
     }
     expect(() => parseBackupText(JSON.stringify(legacy))).not.toThrow()
     expect(parseBackupText(JSON.stringify(legacy)).appVersion).toBeUndefined()
+  })
+})
+
+describe('account currency backup restoration', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('round-trips review state, currency, history, pending edit, and market override through real rehydration', async () => {
+    localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify({ state: {
+      accounts: [{ id: 'usd', name: 'USD savings', value: 100, type: 'bank', currency: 'USD' }],
+      history: [{ date: '2026-09-01', value: 120 }],
+      pendingCurrencyReviewIds: ['usd'], currencySupportStartedAt: '2026-10-01',
+      pendingEditSnapshotDate: '2026-10-06',
+    } }))
+    localStorage.setItem(STORAGE_KEYS.marketData, JSON.stringify({ state: {
+      quotes: {}, historical: {}, fx: {}, overrides: { 'USD/CAD': 1.35 },
+    }, version: 1 }))
+    const backup = buildBackup()
+    expect(backup.version).toBe(BACKUP_VERSION)
+    localStorage.clear()
+    restoreBackup(backup)
+    await useAccountsStore.persist.rehydrate()
+    await useMarketDataStore.persist.rehydrate()
+    expect(useAccountsStore.getState()).toMatchObject({
+      accounts: [{ id: 'usd', currency: 'USD', value: 100 }],
+      history: [{ date: '2026-09-01', value: 120 }],
+      pendingCurrencyReviewIds: ['usd'], currencySupportStartedAt: '2026-10-01',
+      pendingEditSnapshotDate: '2026-10-06',
+    })
+    expect(useMarketDataStore.getState().overrides).toEqual({ 'USD/CAD': 1.35 })
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts)!).version).toBeUndefined()
+  })
+
+  it('reopens review when a legacy raw-envelope backup is restored', async () => {
+    const legacy = {
+      app: 'ledger' as const, version: BACKUP_VERSION, exportedAt: '2026-09-01T00:00:00Z',
+      data: { [STORAGE_KEYS.accounts]: { state: {
+        accounts: [{ id: 'old', name: 'Old savings', type: 'bank', value: 500 }],
+        history: [{ date: '2026-09-01', value: 500 }],
+      } } },
+    }
+    restoreBackup(legacy)
+    await useAccountsStore.persist.rehydrate()
+    expect(useAccountsStore.getState()).toMatchObject({
+      accounts: [{ id: 'old', currency: 'CAD', value: 500 }],
+      pendingCurrencyReviewIds: ['old'],
+      history: [{ date: '2026-09-01', value: 500 }],
+    })
+    expect(useAccountsStore.getState().currencySupportStartedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    const persisted = JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts)!)
+    expect(persisted.version).toBeUndefined()
+    expect(persisted.state.currencySupportStartedAt).toBe(useAccountsStore.getState().currencySupportStartedAt)
+    expect(persisted.state.pendingCurrencyReviewIds).toEqual(['old'])
+  })
+
+  it('leaves an unsupported saved currency untouched when rehydration rejects it', async () => {
+    const raw = JSON.stringify({ state: {
+      accounts: [{ id: 'euro', name: 'Euro', type: 'bank', value: 50, currency: 'EUR' }],
+      history: [{ date: '2026-09-01', value: 50 }],
+    } })
+    localStorage.setItem(STORAGE_KEYS.accounts, raw)
+    await expect(useAccountsStore.persist.rehydrate()).rejects.toThrow(/unsupported account currency: EUR/i)
+    expect(localStorage.getItem(STORAGE_KEYS.accounts)).toBe(raw)
+
+    const beforeEdit = useAccountsStore.getState()
+    expect(() => useAccountsStore.getState().addAccount({ name: 'New', type: 'bank', value: 100 })).toThrow(/account data could not be loaded/i)
+    expect(() => useAccountsStore.setState({ history: [] })).toThrow(/account data could not be loaded/i)
+    expect(useAccountsStore.getState()).toEqual(beforeEdit)
+    expect(localStorage.getItem(STORAGE_KEYS.accounts)).toBe(raw)
+
+    const corrected = JSON.stringify({ state: {
+      accounts: [{ id: 'euro', name: 'Euro', type: 'bank', value: 50, currency: 'USD' }],
+      history: [{ date: '2026-09-01', value: 50 }],
+    } })
+    localStorage.setItem(STORAGE_KEYS.accounts, corrected)
+    await useAccountsStore.persist.rehydrate()
+    expect(useAccountsStore.getState().accounts).toEqual([{ id: 'euro', name: 'Euro', type: 'bank', value: 50, currency: 'USD' }])
+    expect(useAccountsStore.getState().history).toEqual([{ date: '2026-09-01', value: 50 }])
+    useAccountsStore.getState().updateAccount('euro', { value: 60 })
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts)!).state.accounts[0].value).toBe(60)
   })
 })

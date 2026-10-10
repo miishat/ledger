@@ -29,10 +29,13 @@ test.beforeEach(async ({ page }) => {
     window.localStorage.setItem('accounts-storage', JSON.stringify({
       state: {
         accounts: [
-          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
-          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank', currency: 'CAD' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt', currency: 'CAD' },
         ],
         history: [],
+        pendingCurrencyReviewIds: [],
+        currencySupportStartedAt: new Date().toISOString().slice(0, 10),
+        pendingEditSnapshotDate: null,
       },
     }))
   })
@@ -164,10 +167,13 @@ test('no dashboard text is clipped by its own container', async ({ page }) => {
     window.localStorage.setItem('accounts-storage', JSON.stringify({
       state: {
         accounts: [
-          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank' },
-          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt' },
+          { id: 'a1', name: 'EQ Bank High Interest Savings', value: 32150, type: 'bank', currency: 'CAD' },
+          { id: 'a2', name: 'Mortgage - 12 Maplewood Crescent', value: 412000, type: 'debt', currency: 'CAD' },
         ],
         history: [],
+        pendingCurrencyReviewIds: [],
+        currencySupportStartedAt: new Date().toISOString().slice(0, 10),
+        pendingEditSnapshotDate: null,
       },
     }))
   })
@@ -325,9 +331,14 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
     expect(box.height, name + ' height').toBeGreaterThanOrEqual(44)
   }
 
-  const text = (await row.locator('p').boundingBox())!
-  const action = (await row.getByRole('button', { name: 'Enable reminders' }).boundingBox())!
-  expect(Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))).toBeLessThanOrEqual(2)
+  // Measure both centres in one frame so the sheet's entrance animation cannot
+  // move the row between two separate browser calls.
+  const centreDifference = await row.evaluate((el) => {
+    const text = el.querySelector('p')!.getBoundingClientRect()
+    const action = el.querySelector('button')!.getBoundingClientRect()
+    return Math.abs(text.y + text.height / 2 - (action.y + action.height / 2))
+  })
+  expect(centreDifference).toBeLessThanOrEqual(2)
 
   const overflow = await panel.evaluate((el) => {
     const p = el.getBoundingClientRect()

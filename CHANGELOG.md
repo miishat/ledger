@@ -4,12 +4,23 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
-## [0.11.1-beta] - Unreleased
+## [0.11.1-beta] - 2026-10-08
 
 ### Added
-- CIBC credit card transaction CSV imports recognize the headerless export automatically, including the first transaction and descriptions containing commas. Purchases count as expenses, refunds reduce spending, and recognized card payments are held for review. Invalid rows report an error instead of importing a partial file
+- Import CIBC credit card CSVs directly, with no column mapping. Purchases count as expenses, refunds reduce spending, and recognized card payments are held for review. Invalid rows report an error instead of importing a partial file.
+- Accounts can hold native CAD or USD balances while category totals and net worth remain in CAD. USD account rows show the native balance and an approximate CAD value.
+- Existing accounts without a saved currency have a one-time review. USD/CAD rates can be refreshed or entered manually.
+- A Currencies control beside Customize opens exchange rates in a compact dialog, with a bottom sheet on phones. CAD balances use the dollar symbol; Account rows use compact separators, USD badges beside account names, and subtle conversion amounts beneath balances.
 
-## [0.11.0] - 2026-10-03
+### Fixed
+- Shared bill percentage buttons now use the transaction amount as the paid total when sharing is enabled, instead of calculating a zero share
+- Shared bills label the editable amount as Your share and retain the paid total when a percentage or manual share is saved and reopened
+- Shared bills now explain missing paid totals or people before saving, instead of silently dropping incomplete sharing details
+
+### Note
+- Saved net worth history remains in CAD as originally recorded. Earlier points may have treated foreign balances as CAD and are not recalculated.
+
+## [0.11.0-beta] - 2026-10-03
 
 Ledger on a phone now follows one written set of layout rules
 (`docs/mobile-layout-rules.md`) instead of being the desktop layout stacked
@@ -41,7 +52,7 @@ into a single column.
 - Closing About this tool on a phone returns focus to the button below the results instead of dropping it
 - A phone sheet that was closed while scrolled no longer reopens with a stale fade at its top edge
 
-## [0.10.1] - 2026-09-27
+## [0.10.1-beta] - 2026-09-27
 
 ### Changed
 - Aurora Gradient cards now have a subtle emerald-to-sky-to-violet gradient
@@ -56,7 +67,7 @@ into a single column.
 - The Compensation package editor can scroll to all of its content on shorter desktop windows instead of clipping it inside the dialog
 - Refresh Price in Compensation now clears a manual stock price override and fetches a live price. If the live price is unavailable, the old override label disappears and the page explains what happened
 
-## [0.10.0] - 2026-08-31
+## [0.10.0-beta] - 2026-08-31
 
 The remediation of a full engineering audit, plus the portfolio redesign that
 preceded it. The headline is a sync bug that could destroy data: pulling from a
