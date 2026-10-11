@@ -353,13 +353,34 @@ function quebecWorkerDeduction(gross: number): number {
 export function annualSalaryTax(
   gross: number, province: Province, rrsp = 0, fhsa = 0,
 ): AnnualSalaryTax {
-  const c = employeeContributions(gross, province)
-  const taxableIncome = Math.max(0, gross - Math.max(0, rrsp) - Math.max(0, fhsa) - c.pensionAdditional)
+  return annualClassifiedTax({ cashEmploymentIncome: gross, employmentIncome: gross, pensionableEarnings: gross,
+    eiEarnings: gross, qpipEarnings: gross, employmentCreditIncome: gross, workerDeductionIncome: gross,
+    deduction: Math.max(0, rrsp) + Math.max(0, fhsa) }, province)
+}
+
+export interface ClassifiedTaxContext {
+  cashEmploymentIncome: number
+  employmentIncome: number
+  pensionableEarnings: number
+  eiEarnings: number
+  qpipEarnings: number
+  employmentCreditIncome: number
+  workerDeductionIncome: number
+  deduction: number
+}
+
+/** Independent earnings and credit bases, with cash excluding noncash employer funding. */
+export function annualClassifiedTax(context: ClassifiedTaxContext, province: Province): AnnualSalaryTax {
+  const gross = context.cashEmploymentIncome
+  const c = employeeContributions(context.pensionableEarnings, province)
+  c.ei = employeeContributions(context.eiEarnings, province).ei
+  c.qpip = employeeContributions(context.qpipEarnings, province).qpip
+  const taxableIncome = Math.max(0, context.employmentIncome - Math.max(0, context.deduction) - c.pensionAdditional)
   const provincialTaxableIncome = province === 'QC'
-    ? Math.max(0, taxableIncome - quebecWorkerDeduction(gross))
+    ? Math.max(0, taxableIncome - quebecWorkerDeduction(context.workerDeductionIncome))
     : taxableIncome
-  const federal = annualFederalTax(taxableIncome, gross, province, c)
-  const provincialBase = annualProvincialBase(provincialTaxableIncome, gross, province, c)
+  const federal = annualFederalTax(taxableIncome, context.employmentCreditIncome, province, c)
+  const provincialBase = annualProvincialBase(provincialTaxableIncome, context.employmentCreditIncome, province, c)
   const [surtaxLow, surtaxHigh] = ON_SURTAX_THRESHOLDS
   const surtax = province === 'ON'
     ? Math.max(0, provincialBase - surtaxLow) * 0.2 + Math.max(0, provincialBase - surtaxHigh) * 0.36
@@ -492,13 +513,13 @@ export function taxWithShelter(gross: number, province: Province, sheltered: num
 }
 
 /** Split remaining shelterable income while gross salary and payroll contributions stay fixed. */
-export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa = 0): MarginalSlice[] {
-  const at = annualSalaryTax(gross, province, rrsp, fhsa)
+export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa = 0, context?: ClassifiedTaxContext): MarginalSlice[] {
+  const at = context ? annualClassifiedTax(context, province) : annualSalaryTax(gross, province, rrsp, fhsa)
   const taxableIncome = at.taxableIncome
   if (taxableIncome <= 0) return []
-  const annualAt = (taxable: number) => annualSalaryTax(
-    gross, province, rrsp + taxableIncome - taxable, fhsa,
-  )
+  const annualAt = (taxable: number) => context
+    ? annualClassifiedTax({ ...context, deduction: context.deduction + taxableIncome - taxable }, province)
+    : annualSalaryTax(gross, province, rrsp + taxableIncome - taxable, fhsa)
   const taxAt = (taxable: number) => {
     const t = annualAt(taxable)
     return t.federal + t.provincial
@@ -528,18 +549,18 @@ export function marginalSlices(gross: number, province: Province, rrsp = 0, fhsa
       if (cut < taxableIncome) cuts.add(cut)
     }
     for (const threshold of ON_SURTAX_THRESHOLDS) {
-      const cut = incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
+      const cut = context ? incomeAtFirstPositiveTax(taxableIncome, taxable => Math.max(0, annualAt(taxable).provincialBase - threshold)) : incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
       if (cut > 0 && cut < taxableIncome) cuts.add(cut)
     }
     // The low-income tax reduction changes slope at $300 and ends at $600 basic tax.
     for (const threshold of [300, 600]) {
-      const cut = incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
+      const cut = context ? incomeAtFirstPositiveTax(taxableIncome, taxable => Math.max(0, annualAt(taxable).provincialBase - threshold)) : incomeAtProvincialBase(threshold, gross, province, rrsp, fhsa, taxableIncome)
       if (cut > 0 && cut < taxableIncome) cuts.add(cut)
     }
   }
   if (province === 'BC') {
     for (const cut of [25_570, 44_952]) if (cut < taxableIncome) cuts.add(cut)
-    const crossover = incomeAtBcReductionCrossover(gross, rrsp, fhsa, taxableIncome)
+    const crossover = context ? incomeAtFirstPositiveTax(Math.min(taxableIncome, 44_952), taxable => Math.max(0, annualAt(taxable).provincialBase - (690 - Math.max(0, taxable - 25_570) * 0.0356))) : incomeAtBcReductionCrossover(gross, rrsp, fhsa, taxableIncome)
     if (crossover > 0 && crossover < taxableIncome) cuts.add(crossover)
   }
   const points = [...cuts].sort((a, b) => a - b)

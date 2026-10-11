@@ -1,5 +1,6 @@
 import {
   annualSalaryTax,
+  annualClassifiedTax,
   cppContribution,
   employeeContributions,
   effectiveRate,
@@ -19,6 +20,18 @@ import {
   TAX_YEAR,
   totalIncomeTax,
 } from './canadaTax'
+
+describe('classified retirement earnings', () => {
+  it('keeps pensionable benefits separate from restricted insurance earnings', () => {
+    const t = annualClassifiedTax({ cashEmploymentIncome: 50000, employmentIncome: 52500, pensionableEarnings: 52500,
+      eiEarnings: 50000, qpipEarnings: 50000, employmentCreditIncome: 52500, workerDeductionIncome: 52500, deduction: 2500 }, 'QC')
+    expect(t.pension).toBeCloseTo((52500 - 3500) * .063, 8)
+    expect(t.ei).toBe(650)
+    expect(t.qpip).toBe(215)
+    expect(t.taxableIncome).toBe(49510)
+    expect(t.provincialTaxableIncome).toBe(48060)
+  })
+})
 
 describe('annual employee income tax', () => {
   it('deducts additional CPP and credits base CPP, EI, and employment', () => {
