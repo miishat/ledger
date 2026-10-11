@@ -168,7 +168,7 @@ test('unknown restriction branches survive transfer and employer/restriction edi
  expect(saved.workplacePlans[0].employerContribution).toBe(3000)
  expect(saved.workplacePlans[0].withdrawalRestriction).toBe('restricted')
 })
-test('mixed CAD salary, USD RSU and ESPP transfer retains realized cash once with both personal selections', async ({ page }) => {
+test('mixed CAD salary, USD RSU and ESPP cancel and keep preserve full saved data before exact replacement with both personal selections', async ({ page }) => {
  const mixed: CompensationPackage = { ...pkg, cashBonusPercent: 10, companyCurrentPrice: 100, esppContributionPercent: 5, esppLockedInPrice: 80, rsuGrants: [{ id: 'grant', grantName: 'Annual', grantShares: 120, grantPrice: 90, grantStartDate: '2026-01-01', vestingSchedule: { preset: 'custom', totalVestMonths: 12, cliffMonths: 0, frequency: 'monthly' } }] }
  await seed(page, 'luxury', mixed, true); await page.goto('./#/compensation')
  await page.getByRole('button', { name: 'After-Tax', exact: true }).click()
@@ -176,10 +176,34 @@ test('mixed CAD salary, USD RSU and ESPP transfer retains realized cash once wit
   await page.getByLabel('Include Personal Deductions', { exact: true }).setChecked(include)
   const summary = await page.locator('section[data-key-figure]').innerText()
   const expectedCash = summary.match(/Cash After Contributions\s*(\$[\d,]+)/)![1]
-  await page.getByRole('button', { name: 'Full breakdown in Salary & Tax' }).click()
+  const plannerBefore = await stored(page, 'ledger-planner')
+  const compensationBefore = await stored(page, 'ledger-compensation')
+  const transfer = page.getByRole('button', { name: 'Full breakdown in Salary & Tax' })
+  await transfer.click()
   const review = page.getByRole('dialog', { name: 'Replace Salary & Tax Scenario' })
   await expect(review).toContainText('CAD Per USD Stock Unit: 1.35')
   await expect(review).toContainText('Realized RSU Cash:')
+  // Reopening creates a fresh timestamp; every financial term, classification,
+  // assumption and saved/shared detail must otherwise remain identical.
+  const proposalDetails = review.locator('h2,h3,h4,p').filter({ hasNotText: 'Snapshot Time:' })
+  const proposal = await proposalDetails.allInnerTexts()
+  expect(await stored(page, 'ledger-planner')).toEqual(plannerBefore)
+  expect(await stored(page, 'ledger-compensation')).toEqual(compensationBefore)
+  await review.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(review).toBeHidden()
+  await expect(page).toHaveURL(/#\/compensation$/)
+  expect(await stored(page, 'ledger-planner')).toEqual(plannerBefore)
+  expect(await stored(page, 'ledger-compensation')).toEqual(compensationBefore)
+  await transfer.click()
+  await expect(proposalDetails).toHaveText(proposal, { useInnerText: true })
+  await review.getByRole('button', { name: 'Keep Existing', exact: true }).click()
+  await expect(page.getByLabel('Gross Annual Income', { exact: true })).toHaveValue(String(plannerBefore.salaryRetirementScenario.cashEmploymentIncome))
+  expect(await stored(page, 'ledger-planner')).toEqual(plannerBefore)
+  expect(await stored(page, 'ledger-compensation')).toEqual(compensationBefore)
+  await page.goto('./#/compensation')
+  await expect(page.locator('section[data-key-figure]')).toHaveText(summary, { useInnerText: true })
+  await transfer.click()
+  await expect(proposalDetails).toHaveText(proposal, { useInnerText: true })
   await page.getByRole('button', { name: 'Replace Scenario', exact: true }).click()
   await expect(page.locator('section[data-key-figure] .retirement-summary-value')).toHaveText(expectedCash)
   const saved = (await stored(page, 'ledger-planner')).salaryRetirementScenario
