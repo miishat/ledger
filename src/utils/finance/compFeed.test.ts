@@ -1,5 +1,5 @@
 import type { CompensationPackage } from '../../store/useCompensationStore'
-import { compLumpSums } from './compFeed'
+import { compLumpSums, compLumpSumsCad } from './compFeed'
 
 const basePkg: CompensationPackage = {
   id: 'p', name: 'Test', companyCurrentPrice: 100, baseSalary: 120_000,
@@ -74,5 +74,23 @@ describe('compLumpSums', () => {
     const bonuses = lumps.filter((l) => l.label === 'Bonus')
     expect(bonuses.map((b) => b.month)).toEqual([1, 13])
     expect(bonuses[0].amount).toBeCloseTo(12_000, 6)
+  })
+})
+
+// The input price is native USD. Only RSU cash needs conversion; bonus and ESPP gains are CAD.
+describe('CAD compensation feed', () => {
+  const pkg = { ...basePkg, esppContributionPercent: 5, rsuGrants: [{ id: 'g', grantName: 'G', grantShares: 480, grantPrice: 50, grantStartDate: '2026-01-02', vestingSchedule: { preset: 'custom' as const, totalVestMonths: 48, cliffMonths: 12, frequency: 'monthly' as const } }] }
+  it('converts stock exactly once while retaining CAD bonus and ESPP and excluding retirement funding', () => {
+    const raw = compLumpSums(pkg, 100, 24, now)
+    const result = compLumpSumsCad({ ...pkg, rrspMatchPercent: 20, rrspMatchCap: 50000 }, { stockCurrency: 'USD', cadPerStockUnit: 1.4 }, 24, now)
+    expect(result.lumps).toEqual(raw.map(lump => ({ ...lump, amount: lump.label?.startsWith('RSU ') ? lump.amount * 1.4 : lump.amount })))
+    expect(result.stockWithheld).toBe(false)
+  })
+  it('withholds USD stock when FX is absent, retaining known CAD bonus and ESPP', () => {
+    const result = compLumpSumsCad(pkg, { stockCurrency: 'USD', cadPerStockUnit: null }, 24, now)
+    expect(result.stockWithheld).toBe(true)
+    expect(result.lumps.some(lump => lump.label?.startsWith('RSU '))).toBe(false)
+    expect(result.lumps.map(lump => lump.label)).toContain('Bonus')
+    expect(result.lumps.map(lump => lump.label)).toContain('ESPP')
   })
 })

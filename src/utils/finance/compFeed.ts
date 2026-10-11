@@ -75,3 +75,14 @@ export function compLumpSums(
 
   return lumps.sort((a, b) => a.month - b.month)
 }
+
+export function compLumpSumsCad(pkg: CompensationPackage, fx: { stockCurrency: 'CAD' | 'USD'; cadPerStockUnit: number | null }, horizonMonths: number, now = new Date()) {
+  const raw = compLumpSums(pkg, pkg.companyCurrentPrice, horizonMonths, now)
+  const rate = fx.stockCurrency === 'CAD' ? 1 : fx.cadPerStockUnit
+  const available = typeof rate === 'number' && Number.isFinite(rate) && rate > 0
+  const stockWithheld = !available && raw.some(lump => lump.label?.startsWith('RSU '))
+  const lumps = raw.flatMap(lump => lump.label?.startsWith('RSU ')
+    ? available ? [{ ...lump, amount: lump.amount * rate! }] : []
+    : [lump])
+  return { lumps, stockWithheld }
+}

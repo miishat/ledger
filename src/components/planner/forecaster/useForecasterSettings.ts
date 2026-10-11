@@ -1,13 +1,12 @@
 import { usePlannerStore, useToolInputs } from '../../../store/usePlannerStore'
 import { useAccountValuation } from '../../../hooks/useAccountValuation'
 import { useBudgetStore } from '../../../store/useBudgetStore'
-import { useCompensationStore } from '../../../store/useCompensationStore'
+import { useCompensationDisplay } from '../../../hooks/useCompensationDisplay'
 import { averageMonthlyNetSavings } from '../../../store/budgetSelectors'
-import { compLumpSums } from '../../../utils/finance/compFeed'
+import { compLumpSumsCad } from '../../../utils/finance/compFeed'
 import { minPaymentFor, simulatePayoff, type Debt, type PayoffStrategy } from '../../../utils/finance/debtPayoff'
 import type { LumpSum } from '../../../utils/finance/forecast'
-import { applyLumpTax, resolveCompTaxRate } from '../../../utils/finance/compTax'
-import { PROVINCIAL_TAX, type Province } from '../../../utils/finance/canadaTax'
+import { applyLumpTax, resolveForecasterCompTax } from '../../../utils/finance/compTax'
 
 export const TOOL_ID = 'forecaster'
 
@@ -63,28 +62,24 @@ export function useForecasterSettings() {
   const debtInputs = usePlannerStore((s) => s.inputs['debt-payoff'])
   const transactions = useBudgetStore((s) => s.transactions)
   const { netWorth } = useAccountValuation()
-  const primaryPackage = useCompensationStore((s) => s.primaryPackage)
-  const salaryTaxInputs = usePlannerStore((s) => s.inputs['salary-tax'])
-  const provRaw = String(salaryTaxInputs?.province ?? 'ON')
-  const taxProvince = (provRaw in PROVINCIAL_TAX ? provRaw : 'ON') as Province
-  const taxIncome = Number(salaryTaxInputs?.income ?? 0) || primaryPackage.baseSalary || 0
-
+  const { rawPkg, retirementOptions } = useCompensationDisplay()
+  const savedScenario = usePlannerStore((s) => s.salaryRetirementScenario)
   const horizonMonths = Math.max(12, Math.round(settings.years * 12))
-
-  const compTaxRate = resolveCompTaxRate({
-    enabled: settings.compTaxEnabled as boolean,
-    auto: settings.compTaxAuto as boolean,
-    manualPct: settings.compTaxManualPct as number,
-    income: taxIncome,
-    province: taxProvince,
+  const compTax = resolveForecasterCompTax({
+    enabled: settings.compTaxEnabled,
+    auto: settings.compTaxAuto,
+    manualPct: settings.compTaxManualPct,
+    savedScenario,
+    primaryPackage: rawPkg,
+    options: retirementOptions,
   })
-
+  const liquidFeed = compLumpSumsCad(rawPkg, retirementOptions.fx, horizonMonths)
   const budgetAvg = averageMonthlyNetSavings(transactions, 3)
   const autoFeed = {
     startBalance: netWorth,
     monthlySavings: budgetAvg,
-    compLumps: settings.autoComp
-      ? applyLumpTax(compLumpSums(primaryPackage, primaryPackage.companyCurrentPrice, horizonMonths), compTaxRate)
+    compLumps: settings.autoComp && compTax.rate !== null
+      ? applyLumpTax(liquidFeed.lumps, compTax.rate)
       : ([] as LumpSum[]),
     debtDrag: null as { amount: number; untilMonth: number } | null,
   }
@@ -116,6 +111,6 @@ export function useForecasterSettings() {
     saveGoals: (next: Goal[]) => setInput(TOOL_ID, 'goalsJson', JSON.stringify(next)),
     autoFeed,
     resolved,
-    compTax: { ratePct: compTaxRate * 100, province: taxProvince },
+    compTax: { ...compTax, stockWithheld: liquidFeed.stockWithheld },
   }
 }

@@ -118,3 +118,19 @@ describe('ForecasterTool goal dates in card', () => {
     expect(card.textContent).toContain('Projected')
   })
 })
+
+describe('Forecaster retirement baseline notice', () => {
+  it('shows the selected complete source, unavailable choice and 2026 fixed-dollar assumption', () => {
+    const original = usePlannerStore.getState().salaryRetirementScenario
+    usePlannerStore.setState({ salaryRetirementScenario: { cashEmploymentIncome: -1, personalRrsp: 0, personalFhsa: 0, includePersonalDeductions: true, taxYear: 2026, workplacePlans: [] } })
+    const view = render(<MemoryRouter><ForecasterTool /></MemoryRouter>)
+    expect(screen.getByText(/Tax Baseline: Saved Salary & Tax/)).toBeInTheDocument()
+    expect(screen.getByText(/2026 tax tables; annual approximation/)).toBeInTheDocument()
+    expect(screen.getByText(/Automatic comp events withheld.*manual rate/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Comp event tax settings' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Marginal/ }))
+    expect(screen.queryByText(/Automatic comp events withheld/)).not.toBeInTheDocument()
+    view.unmount()
+    usePlannerStore.setState({ salaryRetirementScenario: original })
+  })
+})

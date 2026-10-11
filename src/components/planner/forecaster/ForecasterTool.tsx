@@ -140,7 +140,7 @@ export const ForecasterTool: React.FC = () => {
                   settings.compTaxAuto ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'
                 }`}
               >
-                {settings.compTaxAuto ? `Marginal ${compTax.ratePct.toFixed(0)}% (${compTax.province})` : 'Manual Rate'}
+                {settings.compTaxAuto ? (compTax.ratePct === null ? 'Marginal Unavailable' : `Marginal ${compTax.ratePct.toFixed(0)}% (${compTax.province})`) : 'Manual Rate'}
               </button>
             ) : null}
             {settings.compTaxEnabled && !settings.compTaxAuto ? (
@@ -157,6 +157,16 @@ export const ForecasterTool: React.FC = () => {
           </Sheet>
         </div>
       </div>
+
+      {settings.autoComp && settings.compTaxEnabled && settings.compTaxAuto ? (
+        <div className="text-meta text-text-secondary space-y-1">
+          <p>Tax Baseline: {compTax.source} ({compTax.province})</p>
+          {compTax.assumptions.map((assumption, index) => <p key={index}>{assumption}</p>)}
+          {compTax.notices.map((notice, index) => <p key={index}>{notice}</p>)}
+          {compTax.ratePct === null ? <p>Automatic comp events withheld. Choose a manual rate in Comp Event Tax Settings or disable tax to use gross events.{compTax.rangePct ? ` Marginal range: ${compTax.rangePct[0].toFixed(1)}% to ${compTax.rangePct[1].toFixed(1)}%.` : ''}</p> : null}
+        </div>
+      ) : null}
+      {settings.autoComp && compTax.stockWithheld ? <p className="text-meta text-text-secondary">Conversion Needed: USD stock events withheld. Only known CAD bonus and ESPP events can be included when a tax rate is available.</p> : null}
 
       {/* What-if sliders */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
