@@ -1,6 +1,9 @@
 import React from 'react'
 import { marginalSlices, type MarginalSlice, type Province } from '../../utils/finance/canadaTax'
 import { formatMoney } from './format'
+import { retirementEfficiencySlices } from '../../utils/finance/retirementEstimate'
+import type { RetirementScenario, SharedTaxProfile } from '../../utils/finance/retirementTypes'
+import { retirementRange } from '../retirement/retirementPresentation'
 
 const Rung: React.FC<{ slice: MarginalSlice; hot?: boolean }> = ({ slice, hot = false }) => (
   <div
@@ -28,7 +31,7 @@ const Rung: React.FC<{ slice: MarginalSlice; hot?: boolean }> = ({ slice, hot = 
 /** How much income sits in each marginal band, and what an RRSP contribution
  *  that clears the top band is worth. Savings come from the tax functions
  *  themselves, so surtax and credit phase-outs are already accounted for. */
-export const RrspEfficiencyCard: React.FC<{
+const LegacyRrspEfficiencyCard: React.FC<{
   gross: number
   taxableIncome: number
   rrsp: number
@@ -121,4 +124,21 @@ export const RrspEfficiencyCard: React.FC<{
       </p>
     </div>
   )
+}
+
+type LegacyProps = React.ComponentProps<typeof LegacyRrspEfficiencyCard>
+export function RrspEfficiencyCard(props: LegacyProps | { scenario: RetirementScenario; profile: SharedTaxProfile; blocked?: boolean }) {
+  if (!('scenario' in props)) return <LegacyRrspEfficiencyCard {...props} />
+  const efficiency = retirementEfficiencySlices(props.scenario, props.profile)
+  const blocked = props.blocked || efficiency.status === 'invalid'
+  const capacity = efficiency.additionalContributionCapacity
+  const precise = efficiency.branches.length === 1 ? efficiency.branches[0] : null
+  return <div className="themed-card rounded-lg p-4 flex flex-col gap-3 h-full min-w-0"><p className="text-[12px] uppercase tracking-wide text-text-secondary">RRSP Efficiency</p>
+    <p className="text-[13px] text-text-primary">{blocked ? 'Needs Review' : efficiency.status === 'uncertain' ? 'Earnings Treatment Needed for precise tax-saving bands.' : !precise?.[0] || precise[0].rate <= 0 ? 'No income tax to shelter with an additional deduction.' : `${precise[0].rate.toFixed(1)}% potential tax saved per additional deductible RRSP dollar`}</p>
+    <p className="text-[12px] text-text-secondary">Hypothetical tax-saving bands hold current RPP/FHSA deductions, employer benefits, earnings and credit bases fixed. They may exceed known capacity.</p>
+    {!blocked && precise?.slice(0, 2).map((slice, i) => <Rung key={slice.from} slice={slice} hot={i === 0} />)}
+    {!blocked && !precise && <p className="text-[12px] text-text-secondary">Potential top-band rate: {retirementRange(efficiency.branches.map(s => s[0]?.rate ?? 0), n => `${n.toFixed(1)}%`)}. All withdrawal-treatment branches remain unresolved.</p>}
+    <div className="border-t border-border pt-3"><p className="text-[13px] text-text-primary">Additional New Contribution Capacity: {blocked ? 'Needs Review' : capacity === null ? 'Unknown' : formatMoney(capacity)}</p><p className="text-[12px] text-text-secondary">{capacity === null ? 'Supply confirmed deduction capacity and new contribution room for this tax year before a bounded new-deposit suggestion. Unknown or provisional values do not establish permission.' : `Bounded by both confirmed remaining capacities. Any additional new-deposit suggestion is at most ${formatMoney(capacity)}.`}</p>{!blocked && capacity !== null && precise?.[0] && precise[0].rate > 0 && <p className="text-[12px] text-text-secondary">Within those entered bounds, up to {formatMoney(Math.min(capacity, precise[0].amount))} reaches the highest current hypothetical band.</p>}</div>
+    <p className="text-[12px] text-text-secondary">CRA opening values remain independent; pension adjustment affects the following year. This is an annual estimate with standard credits.</p>
+  </div>
 }

@@ -127,6 +127,7 @@ describe('SalaryTaxTool layout', () => {
     expect(annualNote?.textContent).toBe('Included in annual Provincial Tax: Annual Ontario Health Premium $600')
     expect(screen.queryByText(/Filled portion = income inside each bracket/)).not.toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: /5Review/ }))
     fireEvent.click(screen.getByRole('button', { name: 'About brackets and marginal rates' }))
     expect(screen.getByRole('dialog', { name: 'Brackets and marginal rates help' })).toHaveTextContent(
       'Federal brackets use $57,973 taxable income after deductions',
@@ -150,6 +151,7 @@ describe('SalaryTaxTool layout', () => {
     expect(screen.getByText('Federal 19.37%')).toBeInTheDocument()
     expect(screen.getByText('+ Provincial 7.39%')).toBeInTheDocument()
     expect(screen.queryByText(/Provincial adjustments 0.00%/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /5Review/ }))
     fireEvent.click(screen.getByRole('button', { name: 'About brackets and marginal rates' }))
     expect(screen.getByRole('dialog', { name: 'Brackets and marginal rates help' })).toHaveTextContent(
       'Federal brackets use $59,435 taxable income',
@@ -190,8 +192,8 @@ describe('SalaryTaxTool layout', () => {
     const t = annualSalaryTax(100_000, 'ON')
     expect(t.provincialAdjustments).toBe(750)
     expect(screen.getByText('Total Income Tax').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.federal + t.provincial))
-    expect(screen.getByText('Net Monthly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 12))
-    expect(screen.getByText('Net Biweekly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 26))
+    expect(screen.getByText('Cash After Contributions Monthly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 12))
+    expect(screen.getByText('Cash After Contributions Biweekly').parentElement?.lastElementChild).toHaveTextContent(formatMoney(t.net / 26))
   })
 
   it('explains the annual employee estimate in the tool help', () => {
@@ -204,8 +206,8 @@ describe('SalaryTaxTool layout', () => {
     usePlannerStore.getState().setInput('salary-tax', 'fhsa', 8_000)
     render(<SalaryTaxTool />)
     const taxCard = screen.getByText('Total Income Tax').parentElement?.lastElementChild?.textContent
-    const federalRow = screen.getByText('Federal Tax').parentElement?.lastElementChild?.textContent
-    const provincialRow = screen.getByText('Provincial Tax').parentElement?.lastElementChild?.textContent
+    const federalRow = screen.getAllByText('Federal Tax')[0].parentElement?.lastElementChild?.textContent
+    const provincialRow = screen.getAllByText('Provincial Tax')[0].parentElement?.lastElementChild?.textContent
     const money = (value: string | null | undefined) => Number(value?.replace(/[$,]/g, ''))
     // Each displayed component is independently rounded to the nearest dollar.
     expect(Math.abs(money(taxCard) - money(federalRow) - money(provincialRow))).toBeLessThanOrEqual(1)
@@ -216,8 +218,10 @@ describe('SalaryTaxTool layout', () => {
 
   it('offers an optional CRA RRSP deduction limit field', () => {
     render(<SalaryTaxTool />)
-    expect(screen.getByLabelText('CRA RRSP Deduction Limit')).toBeInTheDocument()
-    expect(screen.getByText(/Leave it at \$0 if unknown/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /CRA Limits/ }))
+    expect(screen.getByLabelText('Deduction Limit State')).toHaveValue('unknown')
+    fireEvent.change(screen.getByLabelText('Deduction Limit State'), { target: { value: 'known' } })
+    expect(screen.getByLabelText('CRA RRSP Deduction Limit')).toHaveValue('0')
   })
 
   it('renders the deductions block and the RRSP efficiency block side by side', () => {
@@ -238,8 +242,8 @@ describe('SalaryTaxTool layout', () => {
 
   it('shows no invented RRSP room when no CRA limit was entered', () => {
     render(<SalaryTaxTool />)
-    expect(screen.getByLabelText('CRA RRSP Deduction Limit')).toBeInTheDocument()
-    expect(screen.getByText(/Enter your CRA RRSP deduction limit to compare with available room/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Deduction Limit State')).toHaveValue('unknown')
+    expect(screen.getByText(/Supply confirmed deduction capacity and new contribution room/i)).toBeInTheDocument()
     expect(screen.queryByText(/estimated remaining room/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('progressbar', { name: /remaining room used/i })).not.toBeInTheDocument()
   })
@@ -254,8 +258,9 @@ describe('SalaryTaxTool layout', () => {
     const savings = noRrsp.federal + noRrsp.provincial - capped.federal - capped.provincial
     expect(screen.getByText('Taxable Income').parentElement?.lastElementChild).toHaveTextContent(formatMoney(capped.taxableIncome))
     expect(screen.getByText('Tax Savings From Contributions').parentElement?.lastElementChild).toHaveTextContent(formatMoney(savings))
-    expect(screen.getByText('Net After Contributions').parentElement?.lastElementChild).toHaveTextContent(formatMoney(capped.net - 10_000))
-    expect(screen.getByText(/exceeds the CRA limit entered by \$4,000/i)).toBeInTheDocument()
+    expect(screen.getByText('Cash After Contributions').parentElement?.querySelector('.retirement-summary-value')).toHaveTextContent(formatMoney(capped.net - 10_000))
+    expect(screen.getByText(/Modeled nondeductible receipts: \$4000/i)).toBeInTheDocument()
+    expect(screen.getByText('Unverified Legacy Limit')).toBeInTheDocument()
   })
 
   it('uses gross pay for effective rate after RRSP and FHSA deductions', () => {

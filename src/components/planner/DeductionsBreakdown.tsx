@@ -8,21 +8,25 @@ const NET_COLOR = 'color-mix(in srgb, var(--text-secondary) 30%, transparent)'
 
 /** Where gross income goes: one stacked bar of the whole salary, then the
  *  deductions as bars scaled to gross so they stay comparable to each other. */
-export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
+export const DeductionsBreakdown: React.FC<{ t: TakeHome; employeeContributions?: number; cashGross?: number }> = ({ t, employeeContributions, cashGross }) => {
+  const gross = cashGross ?? t.gross
+  const net = t.net - (employeeContributions ?? 0)
+  const netLabel = employeeContributions !== undefined ? 'Cash After Contributions' : 'Net Pay'
   const rows = [
     { label: 'Federal Tax', value: t.federal, color: 'var(--chart-1)' },
     { label: 'Provincial Tax', value: t.provincial, color: 'var(--chart-2)' },
     { label: `${t.plan} (incl. ${t.plan}2)`, value: t.pension, color: 'var(--chart-3)' },
     { label: 'EI', value: t.ei, color: 'var(--chart-4)' },
     ...(t.plan === 'QPP' ? [{ label: 'QPIP', value: t.qpip, color: 'var(--chart-5)' }] : []),
+    ...(employeeContributions !== undefined ? [{ label: 'Employee Contributions', value: employeeContributions, color: 'var(--chart-5)' }] : []),
   ]
   const total = rows.reduce((sum, r) => sum + r.value, 0)
-  const denominator = t.gross > 0 ? t.gross : 1
+  const denominator = gross > 0 ? gross : 1
   const pct = (v: number) => (v / denominator) * 100
-  const legend = [...rows, { label: 'Net Pay', value: t.net, color: NET_COLOR }]
+  const legend = [...rows, { label: netLabel, value: net, color: NET_COLOR }]
   const description = [
     ...rows.map((r, index) => `${index === 0 ? 'Federal tax' : index === 1 ? 'provincial tax' : r.label} ${formatMoney(r.value)}`),
-    `net pay ${formatMoney(t.net)}`,
+    `${employeeContributions !== undefined ? 'cash after contributions' : 'net pay'} ${formatMoney(net)}`,
   ].join(', ')
 
   const totalPct = pct(total)
@@ -31,13 +35,13 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
   return (
     <div className="themed-card rounded-lg p-4 flex flex-col gap-3 h-full">
       <p className="text-[12px] uppercase tracking-wide text-text-secondary">
-        Where {formatMoney(t.gross)} Goes
+        Where {formatMoney(gross)} Goes
       </p>
 
       <div
         className="flex h-7 rounded-md overflow-hidden bg-bg-primary/50"
         role="img"
-        aria-label={`${description}, of ${formatMoney(t.gross)} gross income`}
+        aria-label={`${description}, of ${formatMoney(gross)} gross income`}
       >
         {rows.map((r) => (
           <div
@@ -48,11 +52,11 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
         ))}
         <div
           className="flex items-center justify-center min-w-0"
-          style={{ width: `${pct(t.net)}%`, background: NET_COLOR }}
-          title={`Net Pay ${formatMoney(t.net)}`}
+          style={{ width: `${Math.max(0, pct(net))}%`, background: NET_COLOR }}
+          title={`${netLabel} ${formatMoney(net)}`}
         >
           <span className="text-meta font-medium text-text-primary truncate px-2">
-            Net {formatMoney(t.net)}
+            {employeeContributions !== undefined ? 'Cash' : 'Net'} {formatMoney(net)}
           </span>
         </div>
       </div>
@@ -72,33 +76,32 @@ export const DeductionsBreakdown: React.FC<{ t: TakeHome }> = ({ t }) => {
 
       <div className="flex flex-1 flex-col justify-between gap-2 py-3">
         {rows.map((r) => (
-          <div key={r.label} className="flex items-center gap-3">
-            <span className="text-[13px] text-text-secondary w-36 shrink-0">{r.label}</span>
-            <div className="flex-1 h-2 rounded bg-bg-primary/50 overflow-hidden">
+          <div key={r.label} className="grid grid-cols-[minmax(0,1fr)_auto] desktop:grid-cols-[minmax(0,1fr)_minmax(30px,1fr)_35px_90px] gap-2 items-center">
+            <span className="text-[13px] text-text-secondary min-w-0">{r.label}</span>
+            <div className="hidden desktop:block h-2 rounded bg-bg-primary/50 overflow-hidden min-w-0">
               <div className="h-full rounded" style={{ width: `${pct(r.value)}%`, background: r.color }} />
             </div>
-            <span className="text-[12px] text-text-secondary w-10 text-right">
+            <span className="hidden desktop:block text-[12px] text-text-secondary text-right">
               {pct(r.value).toFixed(0)}%
             </span>
-            <span className="text-[13px] text-text-primary w-24 text-right">{formatMoney(r.value)}</span>
+            <span className="text-[13px] text-text-primary text-right">{formatMoney(r.value)}</span>
           </div>
         ))}
       </div>
 
-      <div className="border-t border-border pt-3 flex items-center gap-3">
-        <span className="text-[13px] text-text-primary w-36 shrink-0">Total Deductions</span>
-        <div className="flex-1 h-2 rounded bg-bg-primary/50 overflow-hidden flex">
+      <div className="border-t border-border pt-3 grid grid-cols-[minmax(0,1fr)_auto] desktop:grid-cols-[minmax(0,1fr)_minmax(30px,1fr)_35px_90px] gap-2 items-center">
+        <span className="text-[13px] text-text-primary min-w-0">Total Deductions</span>
+        <div className="hidden desktop:flex h-2 rounded bg-bg-primary/50 overflow-hidden min-w-0">
           {rows.map((r) => (
             <div key={r.label} style={{ width: `${pct(r.value)}%`, background: r.color }} />
           ))}
         </div>
-        <span className="text-[12px] text-text-secondary w-10 text-right">{totalPctRounded}%</span>
-        <span className="text-[13px] text-text-primary font-semibold w-24 text-right">{formatMoney(total)}</span>
+        <span className="hidden desktop:block text-[12px] text-text-secondary text-right">{totalPctRounded}%</span>
+        <span className="text-[13px] text-text-primary font-semibold text-right">{formatMoney(total)}</span>
       </div>
 
       <p className="text-[12px] text-text-secondary">
-        Bars are each deduction's share of gross income. Net pay here still includes any RRSP or
-        FHSA contribution you entered.
+        Bars are each deduction's share of gross income. {employeeContributions !== undefined ? 'Cash after contributions subtracts all included employee workplace and personal contributions.' : 'Net pay here still includes any RRSP or FHSA contribution you entered.'}
       </p>
       <p className="text-[12px] text-text-secondary">
         2026 rates for a full-year employee. Includes standard employee credits: basic personal,

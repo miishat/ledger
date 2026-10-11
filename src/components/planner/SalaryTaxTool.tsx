@@ -3,19 +3,21 @@ import { Info } from 'lucide-react'
 import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   FEDERAL_BRACKETS,
-  marginalRateBreakdown,
   ontarioHealthPremium,
-  salaryMarginalRate,
   PROVINCES,
   PROVINCIAL_TAX,
-  takeHomeWithDeductions,
   type Bracket,
   type Province,
 } from '../../utils/finance/canadaTax'
-import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney, formatMoneyCompact } from './format'
+import { createRetirementScenario } from '../../utils/finance/retirementTypes'
+import { estimateRetirement, retirementMarginalBreakdown } from '../../utils/finance/retirementEstimate'
+import { RetirementEditor } from '../retirement/RetirementEditor'
+import { RetirementNumericField } from '../retirement/RetirementNumericField'
+import { RetirementResults, RetirementSummary } from '../retirement/RetirementResults'
+import { retirementRange } from '../retirement/retirementPresentation'
 import { DeductionsBreakdown } from './DeductionsBreakdown'
 import { RrspEfficiencyCard } from './RrspEfficiencyCard'
 import { TaxYearNotice } from '../ui/TaxYearNotice'
@@ -88,161 +90,58 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
 export const SalaryTaxTool: React.FC = () => {
   const [bracketInfoOpen, setBracketInfoOpen] = useState(false)
   const bracketInfoButtonRef = useRef<HTMLButtonElement>(null)
+  const [invalidDraft, setInvalidDraft] = useState(false)
+  const [resetNotice, setResetNotice] = useState(false)
+  const [editorEpoch, setEditorEpoch] = useState(0)
   const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const province = inputs.province as Province
-  const income = inputs.income
-
-  // One-time seed from the legacy income-tax / take-home-pay saved inputs so
-  // nobody loses their numbers. Legacy entries are read, never deleted.
+  const saved = usePlannerStore(s => s.salaryRetirementScenario)
+  const profile = usePlannerStore(s => s.sharedTaxProfile)
+  const profileReview = usePlannerStore(s => s.sharedTaxReview)
+  const scenarioReview = usePlannerStore(s => s.salaryRetirementReview)
+  const update = usePlannerStore(s => s.updateSalaryRetirementScenario)
+  const setProfile = usePlannerStore(s => s.setSharedTaxProfile)
+  const clearLimits = usePlannerStore(s => s.clearCraLimits)
+  const reset = usePlannerStore(s => s.resetSalaryRetirementScenario)
+  const scenario = saved ?? { ...createRetirementScenario(), cashEmploymentIncome: inputs.income, personalRrsp: inputs.rrsp, personalFhsa: inputs.fhsa }
+  const province = profile.province
   useEffect(() => {
-    const { inputs: all, setInput: set } = usePlannerStore.getState()
-    if (all[TOOL_ID] !== undefined) return
-    const oldTax = all['income-tax']
-    const oldPay = all['take-home-pay']
-    if (oldTax) {
-      if (typeof oldTax.income === 'number') set(TOOL_ID, 'income', oldTax.income)
-      if (typeof oldTax.province === 'string') set(TOOL_ID, 'province', oldTax.province)
-    } else if (oldPay) {
-      if (typeof oldPay.gross === 'number') set(TOOL_ID, 'income', oldPay.gross)
-      if (typeof oldPay.province === 'string') set(TOOL_ID, 'province', oldPay.province)
-    }
+    const state = usePlannerStore.getState()
+    if (state.salaryRetirementScenario !== null) return
+    const old = state.inputs['salary-tax'] ?? state.inputs['income-tax'] ?? state.inputs['take-home-pay']
+    state.updateSalaryRetirementScenario({ ...createRetirementScenario(), cashEmploymentIncome: typeof old?.income === 'number' ? old.income : typeof old?.gross === 'number' ? old.gross : 100000, personalRrsp: typeof old?.rrsp === 'number' ? old.rrsp : 0, personalFhsa: typeof old?.fhsa === 'number' ? old.fhsa : 0 })
+    if (old?.province && !state.inputs['salary-tax']) state.setSharedTaxProfile({ province: old.province as Province })
   }, [])
-
-  const enteredRoom = inputs.rrspRoom > 0 ? inputs.rrspRoom : null
-  const deductibleRrsp = enteredRoom === null ? inputs.rrsp : Math.min(inputs.rrsp, enteredRoom)
-  const t = takeHomeWithDeductions(income, province, deductibleRrsp, inputs.fhsa)
-  const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
-  const adjustmentPercent = Math.abs(breakdown.adjustments).toFixed(2)
-  const incomeTax = t.federal + t.provincial
-  const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
-  const annualOntarioPremium = province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
-  const annualOntarioReduction = province === 'ON' ? Math.max(0, annualOntarioPremium - t.provincialAdjustments) : 0
-  const annualReductionLabel = province === 'BC' ? 'Annual BC tax reduction'
-    : province === 'AB' ? 'Annual Alberta supplemental credit' : null
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-        <CalculatorField label="Gross Annual Income" prefix="$" step={1000} value={income} onChange={(v) => setInput(TOOL_ID, 'income', v)} />
-        <SelectField
-          label="Province"
-          value={province}
-          onChange={(v) => setInput(TOOL_ID, 'province', v)}
-          options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
-        />
-        <CalculatorField label="RRSP Contribution" prefix="$" step={500} value={inputs.rrsp} onChange={(v) => setInput(TOOL_ID, 'rrsp', v)} />
-        <CalculatorField label="FHSA Contribution" prefix="$" step={500} value={inputs.fhsa} onChange={(v) => setInput(TOOL_ID, 'fhsa', v)} />
-        <CalculatorField label="CRA RRSP Deduction Limit" prefix="$" step={500} value={inputs.rrspRoom} onChange={(v) => setInput(TOOL_ID, 'rrspRoom', v)} />
-      </div>
-      <p className="text-[12px] text-text-secondary">
-        CRA RRSP Deduction Limit is optional. Leave it at $0 if unknown; $0 is not
-        treated as a verified limit, and no room is estimated from current salary.
-      </p>
-
-      <TaxYearNotice showYearLabel />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Total Income Tax" value={formatMoney(incomeTax)} highlight />
-        <ResultCard label="Marginal Rate" value={`${salaryMarginalRate(income, province, deductibleRrsp, inputs.fhsa).toFixed(2)}%`} />
-        <ResultCard label="Effective Rate" value={`${(income > 0 ? incomeTax / income * 100 : 0).toFixed(2)}%`} />
-      </div>
-
-      {inputs.rrsp + inputs.fhsa > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ResultCard label="Taxable Income" value={formatMoney(t.taxableIncome)} />
-            <ResultCard label="Tax Savings From Contributions" value={formatMoney(t.taxSavings)} highlight />
-            <ResultCard label="Net After Contributions" value={formatMoney(t.net - inputs.rrsp - inputs.fhsa)} />
-          </div>
-          <p className="text-[12px] text-text-secondary">
-            Enter your 2026 RRSP deduction limit from your CRA notice of assessment if known.
-            Leave the limit at $0 if unknown; no room is estimated. Without a limit,
-            tax savings assume your entered RRSP contribution is deductible. With a limit,
-            only the amount within it is treated as deductible. FHSA contributions are
-            assumed deductible within the applicable rules.
-          </p>
-          {enteredRoom !== null && inputs.rrsp > enteredRoom && (
-            <p className="text-[12px] text-text-secondary" role="status">
-              Your RRSP contribution exceeds the CRA limit entered by {formatMoney(inputs.rrsp - enteredRoom)}.
-              The excess is included in your cash outflow but receives no current-year tax deduction here.
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="themed-card rounded-lg p-4 flex flex-col gap-4">
-        <BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={t.taxableIncome} />
-        <BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.provincialTaxableIncome} />
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
-            <button
-              ref={bracketInfoButtonRef}
-              type="button"
-              aria-label="About brackets and marginal rates"
-              aria-expanded={bracketInfoOpen}
-              aria-haspopup="dialog"
-              onClick={() => setBracketInfoOpen((open) => !open)}
-              className="rounded-full p-1 text-text-secondary hover:text-accent min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
-            >
-              <Info className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <Sheet
-              open={bracketInfoOpen}
-              onClose={() => setBracketInfoOpen(false)}
-              desktop="popover"
-              anchorRef={bracketInfoButtonRef}
-              ariaLabel="Brackets and marginal rates help"
-              title="Brackets and marginal rates"
-              panelClassName="w-[26rem] max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-4"
-              contentClassName="flex flex-col gap-2"
-            >
-              <h3 className="text-[14px] font-semibold text-text-primary">How to read these rates</h3>
-              <p className="text-[13px] text-text-secondary">
-                Filled portion = income inside each bracket. Federal brackets use {formatMoney(t.taxableIncome)}
-                {' '}taxable income after deductions{province === 'QC' ? `; Quebec brackets use ${formatMoney(t.provincialTaxableIncome)}` : ''}.
-              </p>
-              <p className="text-[13px] text-text-secondary">
-                Marginal percentages also reflect changes in pension deductions and tax credits, so they can differ from bracket rates.
-              </p>
-            </Sheet>
-          </div>
-          <div className="text-[13px] leading-relaxed text-text-primary">
-            <span className="whitespace-nowrap mr-1">Federal {breakdown.federal.toFixed(2)}%</span>{' '}
-            <span className="whitespace-nowrap mr-1">+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>
-            {breakdown.surtax > 0 && <>{' '}<span className="whitespace-nowrap mr-1">+ ON surtax {breakdown.surtax.toFixed(2)}%</span></>}
-            {adjustmentPercent !== '0.00' && <>{' '}<span className="whitespace-nowrap mr-1">{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {adjustmentPercent}%</span></>}
-            {' '}<span className="font-semibold whitespace-nowrap">= {breakdown.total.toFixed(2)}%</span>
-          </div>
-          {(annualOntarioPremium > 0 || annualOntarioReduction > 0 || (annualReductionLabel && t.provincialAdjustments < 0)) && (
-            <div className="text-[12px] leading-relaxed text-text-secondary">
-              <span className="mr-1">Included in annual Provincial Tax:</span>{' '}
-              {annualOntarioPremium > 0 && <span>Annual Ontario Health Premium <strong className="font-medium text-text-primary">{formatMoney(annualOntarioPremium)}</strong></span>}
-              {annualOntarioReduction > 0 && <>{annualOntarioPremium > 0 ? '; ' : ''}<span>Ontario tax reduction <strong className="font-medium text-text-primary">{formatMoney(-annualOntarioReduction)}</strong></span></>}
-              {annualReductionLabel && t.provincialAdjustments < 0 && <span>{annualReductionLabel} <strong className="font-medium text-text-primary">{formatMoney(t.provincialAdjustments)}</strong></span>}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ResultCard label="Net Annual" value={formatMoney(t.net)} highlight />
-        <ResultCard label="Net Monthly" value={formatMoney(t.net / 12)} />
-        <ResultCard label="Net Biweekly" value={formatMoney(t.net / 26)} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4">
-        <DeductionsBreakdown t={t} />
-        <RrspEfficiencyCard
-          gross={income}
-          taxableIncome={t.taxableIncome}
-          rrsp={deductibleRrsp}
-          fhsa={inputs.fhsa}
-          province={province}
-          room={room}
-        />
+  const estimate = estimateRetirement(scenario, profile)
+  const marginal = retirementMarginalBreakdown(scenario, profile)
+  const blocked = invalidDraft || estimate.status === 'invalid' || profileReview.status === 'invalid' || scenarioReview.status === 'invalid'
+  const ranged = (select: (branch: (typeof estimate.branches)[number]) => number, formatter = formatMoney) => blocked ? 'Needs Review' : retirementRange(estimate.branches.map(select), formatter)
+  const percentages = (n: number) => `${n.toFixed(2)}%`
+  const t = estimate.branches.length === 1 && !blocked ? estimate.branches[0].tax : null
+  const breakdown = marginal.branches.length === 1 && !blocked ? marginal.branches[0] : null
+  const premium = t && province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
+  const reduction = t && province === 'ON' ? Math.max(0, premium - t.provincialAdjustments) : 0
+  const reductionLabel = province === 'BC' ? 'Annual BC tax reduction' : province === 'AB' ? 'Annual Alberta supplemental credit' : null
+  const review = <div className="retirement-results">
+    <div className="retirement-results-grid"><ResultCard label="Total Income Tax" value={ranged(b => b.tax.federal + b.tax.provincial)} highlight /><ResultCard label="Marginal Rate" value={blocked ? 'Needs Review' : retirementRange(marginal.branches.map(b => b.total), percentages)} /><ResultCard label="Effective Rate" value={ranged(b => scenario.cashEmploymentIncome > 0 ? (b.tax.federal + b.tax.provincial) / scenario.cashEmploymentIncome * 100 : 0, percentages)} /></div>
+    <div className="retirement-results-grid"><ResultCard label="Taxable Income" value={ranged(b => b.tax.taxableIncome)} /><ResultCard label="Tax Savings From Contributions" value={ranged(b => b.taxSavings)} highlight /></div>
+    <p className="retirement-help">Tax savings retain the same earnings, employer funding and statutory bases with employee/member deductions removed. Employer RRSP deduction and employer PRPP capacity reduction remain in the baseline; no refund is added twice.</p>
+    <div className="themed-card rounded-lg p-4 flex flex-col gap-4 min-w-0">
+      {t ? <><BracketBar title="Federal Brackets" brackets={FEDERAL_BRACKETS} income={t.taxableIncome} /><BracketBar title={`${PROVINCIAL_TAX[province].name} Brackets`} brackets={PROVINCIAL_TAX[province].brackets} income={t.provincialTaxableIncome} /></> : <p className="retirement-help">{blocked ? 'Tax brackets need reviewed inputs.' : 'Earnings Treatment Needed for precise bracket fills.'}</p>}
+      <div className="flex flex-col gap-1"><div className="flex items-center gap-1"><span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span><button ref={bracketInfoButtonRef} type="button" aria-label="About brackets and marginal rates" aria-expanded={bracketInfoOpen} aria-haspopup="dialog" onClick={() => setBracketInfoOpen(open => !open)} className="rounded-full p-1 text-text-secondary hover:text-accent min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"><Info className="h-4 w-4" aria-hidden="true" /></button>
+        <Sheet open={bracketInfoOpen} onClose={() => setBracketInfoOpen(false)} desktop="popover" anchorRef={bracketInfoButtonRef} ariaLabel="Brackets and marginal rates help" title="Brackets and marginal rates" panelClassName="w-[26rem] max-w-[calc(100vw-1rem)] themed-menu rounded-lg shadow-xl p-4" contentClassName="flex flex-col gap-2"><h3 className="text-[14px] font-semibold text-text-primary">How to read these rates</h3><p className="text-[13px] text-text-secondary">Filled portion = income inside each bracket. Federal brackets use {ranged(b => b.tax.taxableIncome)} taxable income after deductions{province === 'QC' ? `; Quebec brackets use ${ranged(b => b.tax.provincialTaxableIncome)}` : ''}.</p><p className="text-[13px] text-text-secondary">Marginal percentages measure income-tax change for an additional $100 of cash pay with entered retirement dollars fixed. Credit and provincial adjustments can differ from bracket rates. This is not a cash change or recalculated salary-linked match.</p></Sheet></div>
+        {breakdown ? <div className="text-[13px] leading-relaxed text-text-primary"><span className="whitespace-nowrap mr-1">Federal {breakdown.federal.toFixed(2)}%</span>{' '}<span className="whitespace-nowrap mr-1">+ Provincial {breakdown.provincialBase.toFixed(2)}%</span>{breakdown.surtax > 0 && <>{' '}<span className="whitespace-nowrap mr-1">+ ON surtax {breakdown.surtax.toFixed(2)}%</span></>}{Math.abs(breakdown.adjustments).toFixed(2) !== '0.00' && <>{' '}<span className="whitespace-nowrap mr-1">{breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments {Math.abs(breakdown.adjustments).toFixed(2)}%</span></>}{' '}<span className="font-semibold whitespace-nowrap">= {breakdown.total.toFixed(2)}%</span></div> : <p className="retirement-help">{blocked ? 'Marginal breakdown needs reviewed inputs.' : 'Earnings Treatment Needed for component breakdown; total marginal range is shown above.'}</p>}
+        {t && (premium > 0 || reduction > 0 || (reductionLabel && t.provincialAdjustments < 0)) && <div className="text-[12px] leading-relaxed text-text-secondary"><span className="mr-1">Included in annual Provincial Tax:</span>{' '}{premium > 0 && <span>Annual Ontario Health Premium <strong className="font-medium text-text-primary">{formatMoney(premium)}</strong></span>}{reduction > 0 && <>{premium > 0 ? '; ' : ''}<span>Ontario tax reduction <strong className="font-medium text-text-primary">{formatMoney(-reduction)}</strong></span></>}{reductionLabel && t.provincialAdjustments < 0 && <span>{reductionLabel} <strong className="font-medium text-text-primary">{formatMoney(t.provincialAdjustments)}</strong></span>}</div>}
       </div>
     </div>
-  )
+    <RetirementResults estimate={estimate} blocked={blocked} />
+    <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 min-w-0">{t ? <DeductionsBreakdown t={t} employeeContributions={estimate.employeeCashOutflow ?? 0} cashGross={scenario.cashEmploymentIncome} /> : <section className="themed-card rounded-lg p-4"><p className="retirement-help">{blocked ? 'Cash breakdown needs reviewed inputs.' : 'Earnings Treatment Needed for a precise stacked chart. Reconciliation ranges include every branch.'}</p></section>}<RrspEfficiencyCard scenario={scenario} profile={profile} blocked={blocked} /></div>
+    {scenario.provenance?.source === 'compensation' && <div className="retirement-notice"><strong>{scenario.provenance.editedAfterTransfer ? 'Edited After Transfer' : 'Transferred From Compensation'}</strong><p>{scenario.provenance.sourceTimeMode === 'next-one-year' ? 'Annualized Using 2026 Rules.' : 'Current-year annual scenario.'} Original source details are provenance; realized equity and ESPP are already included once in cash pay. Shared CRA values remain live inputs.</p>{Array.isArray(scenario.provenance.assumptions) && scenario.provenance.assumptions.every(a => typeof a === 'string') ? scenario.provenance.assumptions.map((assumption, i) => <p key={i}>{assumption}</p>) : <p>Saved source assumptions need review: {JSON.stringify(scenario.provenance.assumptions)}</p>}</div>}
+    {(scenarioReview.status === 'invalid' || profileReview.status === 'invalid') && <div className="retirement-notice" role="alert"><strong>Saved Inputs Need Review</strong>{[...scenarioReview.issues, ...profileReview.issues].map((issue, i) => <p key={i}>{issue.message}</p>)}<details><summary>Preserved Saved Values</summary><pre className="retirement-raw">{JSON.stringify({ salary: scenarioReview.raw, profile: profileReview.raw }, null, 2)}</pre></details></div>}
+    <p className="retirement-help">Resetting this scenario also resets shared Personal RRSP and FHSA amounts used by Compensation when included. Province and CRA limits are retained.</p><button type="button" className="retirement-button" onClick={() => { reset(); setInvalidDraft(false); setEditorEpoch(n => n + 1); setResetNotice(true) }}>Reset Salary Scenario</button>
+  </div>
+  return <div className="flex flex-col gap-4 min-w-0"><TaxYearNotice showYearLabel />{resetNotice && <p className="retirement-notice" role="status">Personal RRSP and FHSA amounts also reset; Compensation changes when it includes those personal deductions. Shared province and CRA limits were retained.</p>}
+    <RetirementEditor key={editorEpoch} mode="annual" plans={Array.isArray(scenario.workplacePlans) ? scenario.workplacePlans : []} onPlansChange={workplacePlans => update({ workplacePlans })} profile={profile} onProfileChange={setProfile} onClearCraLimits={clearLimits} taxYear={scenario.taxYear} onValidityChange={setInvalidDraft}
+      payContent={<div className="retirement-fields"><fieldset className="retirement-group"><legend>Pay & Province</legend><RetirementNumericField label="Gross Annual Income" value={scenario.cashEmploymentIncome} onChange={n => update({ cashEmploymentIncome: n ?? 0 })} help="Annual cash employment pay excludes employer retirement funding entered separately." /><SelectField label="Province" value={province} onChange={v => setProfile({ province: v as Province })} options={PROVINCES.map(p => ({ value: p.code, label: p.name }))} /></fieldset><fieldset className="retirement-group"><legend>Personal Contributions</legend><RetirementNumericField label="Personal RRSP Contribution" value={scenario.personalRrsp} onChange={n => update({ personalRrsp: n ?? 0 })} /><RetirementNumericField label="FHSA Contribution" value={scenario.personalFhsa} onChange={n => update({ personalFhsa: n ?? 0 })} /><label className="retirement-check"><input type="checkbox" checked={scenario.includePersonalDeductions} onChange={e => update({ includePersonalDeductions: e.target.checked })} />Include Personal Deductions</label>{!scenario.includePersonalDeductions && <p>Excluded From This Scenario</p>}<p className="retirement-help">Saved personal values stay visible when excluded. Workplace RRSP belongs in its own plan row; do not enter it again here.</p></fieldset></div>}
+      reviewContent={review} summary={<RetirementSummary estimate={estimate} profile={profile} blocked={blocked} />} />
+  </div>
 }
