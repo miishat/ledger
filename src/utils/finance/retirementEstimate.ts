@@ -91,7 +91,8 @@ export function estimateRetirement(scenario: RetirementScenario, profile: Shared
   result.remainingDeductionCapacity = limit === null ? null : available
   result.currentRoomUsage = eligible + prppEmployer
   result.remainingContributionRoom = room === null ? null : room - result.currentRoomUsage
-  result.additionalContributionCapacity = result.remainingDeductionCapacity === null || result.remainingContributionRoom === null ? null : Math.max(0, Math.min(result.remainingDeductionCapacity,result.remainingContributionRoom))
+  const verifiedBounds = [profile.rrspDeductionLimit, profile.rrspContributionRoom].every(bound => bound.state === 'known' && bound.sourceYear === scenario.taxYear)
+  result.additionalContributionCapacity = !verifiedBounds || result.remainingDeductionCapacity === null || result.remainingContributionRoom === null ? null : Math.max(0, Math.min(result.remainingDeductionCapacity,result.remainingContributionRoom))
   if (result.remainingContributionRoom !== null && result.remainingContributionRoom < 0) issues.push({ code: 'contribution-room-excess', message: `Modeled contribution-room excess: $${-result.remainingContributionRoom}.` })
   if (rrspDeduction < eligible) issues.push({ code: 'nondeductible-contributions', message: `Modeled nondeductible receipts: $${eligible-rrspDeduction}. Actual funding retained.` })
   result.employeeCashOutflow = sum(() => true,'employeeContribution') + personal + fhsa

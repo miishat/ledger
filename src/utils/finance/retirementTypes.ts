@@ -71,6 +71,7 @@ export function validateWorkplacePlan(plan: WorkplacePlan): RetirementIssue[] {
   if (!['restricted','withdrawable','unknown'].includes(plan.withdrawalRestriction)) invalid('Withdrawal restrictions need review.')
   for (const value of [plan.administratorPa, plan.registeredPlanCompensation]) if (value !== null && !validMoney(value)) invalid('Administrator PA and registered compensation must be nonnegative finite dollars or unknown.')
   if (typeof plan.memberDirection !== 'boolean') invalid('Member direction needs review.')
+  if (plan.ordinaryAggregate !== undefined && typeof plan.ordinaryAggregate !== 'boolean') invalid('Ordinary aggregate marker must be boolean when supplied.')
   return issues
 }
 

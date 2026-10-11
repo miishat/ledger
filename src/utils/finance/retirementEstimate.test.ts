@@ -75,6 +75,18 @@ describe('retirement annual estimate', () => {
     p.rrspContributionRoom = { state: 'unknown' }
     expect(estimateRetirement(scenario(), p).additionalContributionCapacity).toBeNull()
   })
+  it.each(['legacy', 'known'] as const)('uses a %s source-year-unknown cap provisionally without actionable additional room', state => {
+    const s = scenario(); s.workplacePlans[0].employeeContribution = 1000; s.workplacePlans[0].employerContribution = 0
+    const p = profile(); p.rrspDeductionLimit = { state, value: 6000 }
+    p.rrspContributionRoom = { state: 'known', value: 11000, sourceYear: 2026 }
+    const r = estimateRetirement(s, p)
+    expect(r.branches[0].rrspDeduction).toBe(1000); expect(r.remainingDeductionCapacity).toBe(5000)
+    expect(r.additionalContributionCapacity).toBeNull()
+  })
+  it('rejects a supplied nonboolean ordinary aggregate marker', () => {
+    const s = scenario('dc-rpp'); Object.assign(s.workplacePlans[0], { ordinaryAggregate: 'false' })
+    expect(estimateRetirement(s, profile()).status).toBe('invalid')
+  })
   it('checks ordinary dollar, earnings and combined limits preserving amounts', () => {
     const s = scenario('dc-rpp'); s.workplacePlans[0].registeredPlanCompensation = 50000
     s.workplacePlans[0].employeeContribution = 4000; s.workplacePlans[0].employerContribution = 5000
