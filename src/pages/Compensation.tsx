@@ -44,7 +44,10 @@ export const Compensation: React.FC = () => {
   const clearOverride = useMarketDataStore((s) => s.clearOverride)
 
   const isDesktop = useIsDesktop()
-  const isPopulated = retirement.primary.breakdown.salary + retirement.primary.breakdown.cashBonus + retirement.primary.breakdown.rsuNative + retirement.primary.breakdown.esppGain > 0
+  const hasCompensation = retirement.primary.breakdown.salary + retirement.primary.breakdown.cashBonus
+    + retirement.primary.breakdown.rsuNative + retirement.primary.breakdown.esppGain
+    + (retirement.primary.knownEmployerFunding ?? retirement.primary.legacyEmployerEstimate ?? 0) > 0
+  const isPopulated = hasCompensation || (pkg.retirement?.contracts?.length ?? 0) > 0
 
   const handleManualPriceSubmit = (e: React.FormEvent) => {
     e.preventDefault()

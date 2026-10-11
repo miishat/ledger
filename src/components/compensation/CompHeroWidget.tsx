@@ -328,7 +328,13 @@ export function CompHeroWidget({ className = '', blocked = false }: CompHeroWidg
 
       {result.employerFunding === null && result.estimate && <p>Employer Pension Funding Unknown. Pension Value Not Estimated.</p>}
       {result.status !== 'ready' && <p role="alert">{result.status === 'conversion-needed' ? 'Conversion Needed. CAD salary and bonus remain known; combined results are unavailable.' : 'Benefits Need Review. Complete the workplace terms before using precise results.'}</p>}
-      {result.status !== 'ready' && <dl><dt>Salary (CAD)</dt><dd>{cad(baseValue)}</dd><dt>Bonus (CAD)</dt><dd>{cad(bonusValue)}</dd><dt>RSU Vest Value (USD)</dt><dd>{cad(result.breakdown.rsuNative)}</dd></dl>}
+      {result.status !== 'ready' && (
+        <dl>
+          <dt>Salary (CAD)</dt><dd>{blocked ? 'Needs Review' : cad(baseValue)}</dd>
+          <dt>Bonus (CAD)</dt><dd>{blocked ? 'Needs Review' : cad(bonusValue)}</dd>
+          <dt>RSU Vest Value (USD)</dt><dd>{blocked ? 'Needs Review' : cad(result.breakdown.rsuNative)}</dd>
+        </dl>
+      )}
       {result.estimate && <p className="mt-3 text-[13px] text-[var(--color-text-secondary)]">Employee Cash Outflow: {blocked ? 'Needs Review' : cad(result.estimate.employeeCashOutflow ?? 0)}</p>}
       {view === 'monthly' && <p className="text-[12px] text-[var(--color-text-secondary)]">Employer retirement funding is an annual average, separate from employee cash outflow.</p>}
       {showAfterTax && <div className="mt-4 flex flex-col gap-2">

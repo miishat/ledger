@@ -3,9 +3,26 @@ import { CompensationRetirementWorkspace } from './CompensationRetirementWorkspa
 import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { createMatchingContract, createSharedTaxProfile, createWorkplacePlan } from '../../utils/finance/retirementTypes'
+import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { __setProviders, __resetProviders } from '../../services/marketData/marketDataService'
 beforeEach(() => {
+  useMarketDataStore.setState({ quotes: {}, historical: {}, fx: {}, overrides: {} })
+  __setProviders({ fetchFxRate: async () => { throw new Error('FX unavailable') } })
   useCompensationStore.setState({ primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100000, cashBonusPercent: 0, esppContributionPercent: 0, rsuGrants: [], retirement: { schemaVersion: 1, contracts: [], review: { status: 'ready', issues: [] } } }, includePersonalDeductions: false })
   usePlannerStore.setState({ sharedTaxProfile: createSharedTaxProfile(), salaryRetirementScenario: null, inputs: {} })
+})
+afterEach(() => __resetProviders())
+it.each(['conversion-needed', 'legacy'])('withholds fallback figures after invalid pay drafts during %s', async status => {
+  useCompensationStore.getState().setPrimaryPackage(status === 'legacy'
+    ? { rrspMatchPercent: 5, rrspMatchCap: 4000, retirement: undefined }
+    : { esppContributionPercent: 10, esppDiscountPercent: 15, companyCurrentPrice: 100, esppLockedInPrice: 85 })
+  render(<CompensationRetirementWorkspace />)
+  const summary = document.querySelector('[data-key-figure]')!
+  expect(summary).toHaveTextContent('Cash Salary (CAD): $100,000')
+  fireEvent.change(screen.getByLabelText('Annual Base Salary (CAD)'), { target: { value: '-5' } })
+  await waitFor(() => expect(summary).toHaveTextContent('Cash Salary (CAD): Needs Review'))
+  expect(summary).not.toHaveTextContent('$100,000')
+  expect(summary).not.toHaveTextContent('$4,000')
 })
 it('puts the five-step benefits editor in the workspace and saves independent primary contracts', () => {
   render(<CompensationRetirementWorkspace />)

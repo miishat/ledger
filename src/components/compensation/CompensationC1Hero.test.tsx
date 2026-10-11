@@ -30,6 +30,12 @@ it('withholds chart amounts while a live draft is invalid', () => {
   expect(screen.queryByRole('img', { name: /total annual compensation/i })).not.toBeInTheDocument()
   expect(screen.queryByText('$100,000')).not.toBeInTheDocument()
 })
+it('withholds fallback details when a draft is invalid and benefits need review', () => {
+  useCompensationStore.getState().setPrimaryPackage({ rrspMatchPercent: 5, rrspMatchCap: 4000, retirement: undefined })
+  render(<MemoryRouter><CompHeroWidget blocked /></MemoryRouter>)
+  expect(screen.queryByText('$100,000')).not.toBeInTheDocument()
+  expect(screen.getAllByText('Needs Review')).toHaveLength(3)
+})
 it.each([[0, 3000, null, 3000], [5000, 3000, 0, 0], [5000, 3000, 6000, 6000]])('counts employer funding once with employee %s, unconditional %s and cap %s', (employee, unconditional, cap, expected) => {
   const contract = createMatchingContract(createWorkplacePlan('dc-rpp'))
   contract.employee.value = employee
