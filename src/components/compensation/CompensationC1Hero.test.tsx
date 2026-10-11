@@ -8,7 +8,7 @@ beforeEach(() => {
   useCompensationStore.setState({ primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100000, cashBonusPercent: 0, esppContributionPercent: 0, rsuGrants: [], retirement: { schemaVersion: 1, contracts: [], review: { status: 'ready', issues: [] } } }, showAfterTax: false, timeMode: 'current-year' })
   usePlannerStore.setState({ sharedTaxProfile: createSharedTaxProfile(), salaryRetirementScenario: null, inputs: {} })
 })
-it('uses cash after actual contributions and withholds the old scalar transfer', () => {
+it('uses cash after actual contributions and enables reviewed snapshot transfer', () => {
   const contract = createMatchingContract({ ...createWorkplacePlan('dc-rpp'), employerContribution: 3000 })
   contract.employee.value = 5000
   contract.unconditionalEmployer.value = 3000
@@ -17,7 +17,7 @@ it('uses cash after actual contributions and withholds the old scalar transfer',
   fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
   expect(screen.getByText('Cash After Contributions')).toBeInTheDocument()
   expect(screen.getByText('Employee Cash Outflow: $5,000')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /full breakdown/i })).toBeDisabled()
+  expect(screen.getByRole('button', { name: /full breakdown/i })).toBeEnabled()
 })
 it('labels known compensation while employer DB funding is unknown', () => {
   useCompensationStore.getState().setRetirementContracts('primary', [createMatchingContract(createWorkplacePlan('db-rpp'))])

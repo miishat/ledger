@@ -78,10 +78,10 @@ describe('CompHeroWidget after-tax toggle', () => {
     expect(screen.queryByText(/monthly bars are shown gross/i)).toBeNull()
   })
 
-  it('holds scalar-only transfer disabled pending reviewed snapshot integration', () => {
+  it('opens a complete snapshot transfer instead of copying a scalar gross total', () => {
     renderWidget()
     fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
-    expect(screen.getByRole('button', { name: /full breakdown/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /full breakdown/i })).toBeEnabled()
     expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBeUndefined()
   })
 })

@@ -1,51 +1,49 @@
 import { useState } from 'react'
 import { WidgetWrapper } from '../dashboard/WidgetWrapper'
-import {
-  useCompensationStore,
-  calcTotalComp,
-  calcAnnualBaseSalary,
-  calcAnnualBonus,
-  calcAnnualESPP,
-  calcAnnualRRSP,
-  calcAnnualRSU
-} from '../../store/useCompensationStore'
+import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
 import type { RSUGrant, VestingSchedule, VestingPreset, VestingFrequency } from '../../store/useCompensationStore'
+import { usePlannerStore } from '../../store/usePlannerStore'
+import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
+import { resolveCompensationRetirement, type CompensationRetirementResult } from '../../utils/finance/compensationRetirement'
+import { normalizeOfferRetirement } from '../../store/retirementPersistence'
+import { createMatchingContract, createWorkplacePlan } from '../../utils/finance/retirementTypes'
+import { RetirementEditor } from '../retirement/RetirementEditor'
+import { RetirementNumericField } from '../retirement/RetirementNumericField'
+import { RetirementResults } from '../retirement/RetirementResults'
+import { retirementRange } from '../retirement/retirementPresentation'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
+import { formatMoney } from '../planner/format'
 
-const MONTH_OPTIONS = [
-  { value: '1', label: 'Jan' },
-  { value: '2', label: 'Feb' },
-  { value: '3', label: 'Mar' },
-  { value: '4', label: 'Apr' },
-  { value: '5', label: 'May' },
-  { value: '6', label: 'Jun' },
-  { value: '7', label: 'Jul' },
-  { value: '8', label: 'Aug' },
-  { value: '9', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-]
+function OfferResults({ title, result, blocked, afterTax }: { title: string; result: CompensationRetirementResult; blocked: boolean; afterTax: boolean }) {
+  const unavailable = result.status === 'conversion-needed' ? 'Conversion Needed' : 'Benefits Need Review'
+  const amount = (n: number | null) => blocked ? 'Needs Review' : n === null ? unavailable : formatMoney(n)
+  return <section className="retirement-summary-card">
+    <h3>{title}</h3>
+    <dl>
+      <div className="retirement-result-row"><dt>Known Compensation</dt><dd>{amount(result.knownCompensation)}</dd></div>
+      <div className="retirement-result-row"><dt>Employer Retirement Funding</dt><dd>{blocked ? 'Needs Review' : result.status !== 'ready' ? unavailable : result.employerFunding === null ? 'Funding Unknown' : formatMoney(result.employerFunding)}</dd></div>
+      <div className="retirement-result-row"><dt>Employee Cash Outflow</dt><dd>{amount(result.estimate?.employeeCashOutflow ?? null)}</dd></div>
+      {afterTax && <div className="retirement-result-row"><dt>Cash After Contributions</dt><dd>{blocked ? 'Needs Review' : result.estimate ? retirementRange(result.estimate.branches.map(b => b.cashAfterContributions)) : unavailable}</dd></div>}
+    </dl>
+    {result.employerFunding === null && result.estimate && <p>Pension Value Not Estimated.</p>}
+  </section>
+}
 
-export function CompareView() {
-  const { primaryPackage, comparePackage, setComparePackage, timeMode } = useCompensationStore()
-
-  const [compareName] = useState('Compare Offer')
-  const [compareBaseSalary, setCompareBaseSalary] = useState(0)
-  const [compareCompanyCurrentPrice, setCompareCompanyCurrentPrice] = useState(100)
-  const [compareCashBonusPercent, setCompareCashBonusPercent] = useState(0)
-  const [compareCashBonusMonth, setCompareCashBonusMonth] = useState('12')
-  const [compareEsppContributionPercent, setCompareEsppContributionPercent] = useState(0)
-  const [compareEsppDiscountPercent, setCompareEsppDiscountPercent] = useState(15)
-  const [compareEsppLockedInPrice, setCompareEsppLockedInPrice] = useState(100)
-  const [compareEsppLockInEndDate, setCompareEsppLockInEndDate] = useState('')
-  const [compareRrspMatchPercent, setCompareRrspMatchPercent] = useState(0)
-  const [compareRrspMatchCap, setCompareRrspMatchCap] = useState(0)
-
-  // RSU / Equity grants for the compare offer
-  const [compareRsuGrants, setCompareRsuGrants] = useState<RSUGrant[]>([])
+export function CompareView({ blocked = false }: { blocked?: boolean }) {
+  const { comparePackage, setComparePackage, showAfterTax, toggleAfterTax, includePersonalDeductions, setIncludePersonalDeductions } = useCompensationStore()
+  const { rawComparePkg, retirementOptions, retirement } = useCompensationDisplay()
+  const { setSharedTaxProfile, clearCraLimits } = usePlannerStore()
+  const [draft, setDraft] = useState(() => structuredClone(rawComparePkg ?? {
+    ...defaultPrimaryPackage, id: 'compare', name: 'Compare Offer', baseSalary: 0,
+    pastSalaryChanges: [], rsuGrants: [],
+    retirement: { schemaVersion: 1 as const, contracts: [], review: { status: 'ready' as const, issues: [] } },
+  }))
+  const [invalid, setInvalid] = useState(false)
+  const compareRsuGrants = draft.rsuGrants
+  const setCompareRsuGrants = (update: (grants: RSUGrant[]) => RSUGrant[]) => setDraft(current => ({ ...current, rsuGrants: update(current.rsuGrants) }))
   const [rsuGrantName, setRsuGrantName] = useState('')
   const [rsuGrantShares, setRsuGrantShares] = useState(0)
   const [rsuGrantPrice, setRsuGrantPrice] = useState(100)
@@ -82,274 +80,164 @@ export function CompareView() {
     setCompareRsuGrants(prev => prev.filter(g => g.id !== id))
   }
 
-  const handleCalculate = () => {
-    setComparePackage({
-      id: 'compare',
-      name: compareName,
-      companyCurrentPrice: compareCompanyCurrentPrice,
-      baseSalary: compareBaseSalary,
-      pastSalaryChanges: [],
-      cashBonusPercent: compareCashBonusPercent,
-      cashBonusMonth: Number(compareCashBonusMonth) || 12,
-      esppContributionPercent: compareEsppContributionPercent,
-      esppDiscountPercent: compareEsppDiscountPercent,
-      esppLockedInPrice: compareEsppLockedInPrice,
-      esppLockInEndDate: compareEsppLockInEndDate,
-      rrspMatchPercent: compareRrspMatchPercent,
-      rrspMatchCap: compareRrspMatchCap,
-      rsuGrants: compareRsuGrants
-    })
+  const result = resolveCompensationRetirement(draft, retirementOptions)
+  const normalized = normalizeOfferRetirement(draft).retirement
+  const patch = (field: keyof typeof draft, value: number | string) => setDraft(current => ({ ...current, [field]: value }))
+  const unavailable = (r: CompensationRetirementResult) => r.status === 'conversion-needed' ? 'Conversion Needed' : 'Benefits Need Review'
+  const delta = (left: number[] | null, right: number[] | null) => {
+    if (invalid || blocked) return 'Needs Review'
+    if (!left || !right) return 'Unknown'
+    return retirementRange(right.flatMap(r => left.map(l => r - l)), n => n === 0 ? 'Equivalent' : `${n > 0 ? '+' : '-'}${formatMoney(Math.abs(n))} ${n > 0 ? 'more' : 'less'}`)
   }
+  const preciseDelta = (field: 'knownCompensation' | 'employerFunding') => {
+    if (invalid || blocked) return 'Needs Review'
+    if (retirement.primary.status !== 'ready') return unavailable(retirement.primary)
+    if (result.status !== 'ready') return unavailable(result)
+    return delta(retirement.primary[field] === null ? null : [retirement.primary[field]!], result[field] === null ? null : [result[field]!])
+  }
+  const estimateDelta = (cash: boolean) => {
+    if (invalid || blocked) return 'Needs Review'
+    const left = retirement.primary.estimate
+    const right = result.estimate
+    if (!left || !right) return unavailable(!left ? retirement.primary : result)
+    return cash
+      ? delta(left.branches.map(b => b.cashAfterContributions), right.branches.map(b => b.cashAfterContributions))
+      : delta([left.employeeCashOutflow!], [right.employeeCashOutflow!])
+  }
+  const inputClass = 'w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)]'
+  const labelClass = 'text-[12px] text-[var(--color-text-secondary)]'
+  const known = (n: number) => invalid || blocked ? 'Needs Review' : formatMoney(n)
+  const summary = <section className="retirement-summary-card">
+    <h3>{result.totalCompensation === null ? 'Known Compensation' : 'Total Compensation'}</h3>
+    <strong>{invalid || blocked ? 'Needs Review' : result.knownCompensation === null ? unavailable(result) : formatMoney(result.knownCompensation)}</strong>
+    <p>Cash Salary (CAD): {known(result.breakdown.salary)}</p>
+    <p>Cash Bonus (CAD): {known(result.breakdown.cashBonus)}</p>
+    <p>RSU Vest Value (USD): {known(result.breakdown.rsuNative)}</p>
+    {result.legacyEmployerEstimate !== null && <p>Legacy RRSP Estimate: {known(result.legacyEmployerEstimate)}</p>}
+    {result.employerFunding === null && result.estimate && <p>Pension Funding Unknown. Pension Value Not Estimated.</p>}
+  </section>
+  const payContent = <>
+    <label className="retirement-field">Offer Name<input value={draft.name} onChange={e => patch('name', e.target.value)} /></label>
+    <RetirementNumericField label="Company Stock Price ($)" value={draft.companyCurrentPrice} onChange={v => patch('companyCurrentPrice', v ?? 0)} />
+    <RetirementNumericField label="Base Salary ($)" value={draft.baseSalary} onChange={v => patch('baseSalary', v ?? 0)} />
+    <RetirementNumericField label="Cash Bonus (%)" value={draft.cashBonusPercent} onChange={v => patch('cashBonusPercent', v ?? 0)} />
+    <label className="retirement-field">Bonus Month<select value={draft.cashBonusMonth} onChange={e => patch('cashBonusMonth', Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2026, i).toLocaleString('en', { month: 'short' })}</option>)}</select></label>
+    <RetirementNumericField label="ESPP (%)" value={draft.esppContributionPercent} max={100} onChange={v => patch('esppContributionPercent', v ?? 0)} />
+    <RetirementNumericField label="Discount (%)" value={draft.esppDiscountPercent} max={100} onChange={v => patch('esppDiscountPercent', v ?? 0)} />
+    <RetirementNumericField label="Lock-In Price ($)" value={draft.esppLockedInPrice} onChange={v => patch('esppLockedInPrice', v ?? 0)} />
+    <label className="retirement-field">Lock-In End Date<input type="date" value={draft.esppLockInEndDate} onChange={e => patch('esppLockInEndDate', e.target.value)} /></label>
+    <label className="retirement-check"><input type="checkbox" checked={includePersonalDeductions} onChange={e => setIncludePersonalDeductions(e.target.checked)} />Include Personal Deductions</label>
+    <p>Shared personal deductions are {includePersonalDeductions ? 'included' : 'excluded'}. Saved amounts and shared CRA settings are retained for both offers.</p>
+    {/* RSU / Equity Grant */}
+    <div className="flex flex-col gap-2 pt-3 mt-1 border-t border-[var(--color-border)]">
+      <label className={labelClass}>RSU / Equity Grant</label>
 
-  const inputClass = "w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
-  const labelClass = "text-[12px] font-medium leading-none text-[var(--color-text-secondary)]"
-
-
-
-
-  return (
-    <WidgetWrapper title="Offer Comparison">
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* Input Form */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-4">
-          <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Compare Another Offer</h3>
-          
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-3 mb-1">
-              <label className={labelClass}>Company Stock Price ($)</label>
-              <NumberInput value={compareCompanyCurrentPrice} onCommit={setCompareCompanyCurrentPrice} maxDecimals={3} className={inputClass} />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Base Salary ($)</label>
-              <NumberInput value={compareBaseSalary} onCommit={setCompareBaseSalary} className={inputClass} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Cash Bonus (%)</label>
-                <NumberInput value={compareCashBonusPercent} onCommit={setCompareCashBonusPercent} className={inputClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Bonus Month</label>
-                <ThemedSelect value={compareCashBonusMonth} onChange={setCompareCashBonusMonth} options={MONTH_OPTIONS} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>ESPP (%)</label>
-                <NumberInput value={compareEsppContributionPercent} onCommit={setCompareEsppContributionPercent} className={inputClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Discount (%)</label>
-                <NumberInput value={compareEsppDiscountPercent} onCommit={setCompareEsppDiscountPercent} className={inputClass} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Lock-In Price ($)</label>
-                <NumberInput value={compareEsppLockedInPrice} onCommit={setCompareEsppLockedInPrice} maxDecimals={3} className={inputClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Lock-In End Date</label>
-                <ThemedDatePicker value={compareEsppLockInEndDate} onChange={setCompareEsppLockInEndDate} className={inputClass} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>RRSP Match (%)</label>
-                <NumberInput value={compareRrspMatchPercent} onCommit={setCompareRrspMatchPercent} className={inputClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Match Cap ($)</label>
-                <NumberInput value={compareRrspMatchCap} onCommit={setCompareRrspMatchCap} className={inputClass} />
-              </div>
-            </div>
-
-            {/* RSU / Equity Grant */}
-            <div className="flex flex-col gap-2 pt-3 mt-1 border-t border-[var(--color-border)]">
-              <label className={labelClass}>RSU / Equity Grant</label>
-
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Grant Name</label>
-                <input type="text" value={rsuGrantName} onChange={(e) => setRsuGrantName(e.target.value)} className={inputClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className={labelClass}>Number of Shares</label>
-                <NumberInput value={rsuGrantShares} onCommit={setRsuGrantShares} className={inputClass} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Grant Price ($)</label>
-                  <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} maxDecimals={3} className={inputClass} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Grant Start Date</label>
-                  <ThemedDatePicker value={rsuStartDate} onChange={setRsuStartDate} className={inputClass} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Vesting</label>
-                  <ThemedSelect
-                    value={rsuPreset}
-                    onChange={(v) => setRsuPreset(v as VestingPreset)}
-                    options={[
-                      { value: '4yr-1yr-cliff', label: '4yr / 1yr Cliff' },
-                      { value: '3yr-no-cliff', label: '3yr / No Cliff' },
-                      { value: 'custom', label: 'Custom' },
-                    ]}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className={labelClass}>Frequency</label>
-                  <ThemedSelect
-                    value={rsuFrequency}
-                    onChange={(v) => setRsuFrequency(v as VestingFrequency)}
-                    options={[
-                      { value: 'monthly', label: 'Monthly' },
-                      { value: 'quarterly', label: 'Quarterly' },
-                    ]}
-                  />
-                </div>
-              </div>
-              {rsuPreset === 'custom' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <label className={labelClass}>Total Vest (months)</label>
-                    <NumberInput value={rsuTotalMonths} onCommit={setRsuTotalMonths} className={inputClass} />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className={labelClass}>Cliff (months)</label>
-                    <NumberInput value={rsuCliffMonths} onCommit={setRsuCliffMonths} className={inputClass} />
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={addCompareRsuGrant}
-                className="w-full py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md text-[14px] font-medium hover:bg-[var(--color-bg-primary)] transition-colors"
-              >
-                Add Grant
-              </button>
-
-              {compareRsuGrants.length > 0 && (
-                <div className="flex flex-col gap-2 mt-1">
-                  {compareRsuGrants.map(grant => (
-                    <div key={grant.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
-                      <span className="text-[14px] text-[var(--color-text-primary)]">{grant.grantName} ({grant.grantShares.toLocaleString()} shares)</span>
-                      <button
-                        type="button"
-                        onClick={() => removeCompareRsuGrant(grant.id)}
-                        className="text-[12px] text-error hover:opacity-80 transition-opacity"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handleCalculate}
-              className="mt-2 w-full py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-            >
-              Calculate Comparison
-            </button>
+      <div className="flex flex-col gap-1">
+        <label className={labelClass}>Grant Name</label>
+        <input type="text" value={rsuGrantName} onChange={(e) => setRsuGrantName(e.target.value)} className={inputClass} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className={labelClass}>Number of Shares</label>
+        <NumberInput value={rsuGrantShares} onCommit={setRsuGrantShares} className={inputClass} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1">
+          <label className={labelClass}>Grant Price ($)</label>
+          <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} maxDecimals={3} className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className={labelClass}>Grant Start Date</label>
+          <ThemedDatePicker value={rsuStartDate} onChange={setRsuStartDate} className={inputClass} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1">
+          <label className={labelClass}>Vesting</label>
+          <ThemedSelect
+            value={rsuPreset}
+            onChange={(v) => setRsuPreset(v as VestingPreset)}
+            options={[
+              { value: '4yr-1yr-cliff', label: '4yr / 1yr Cliff' },
+              { value: '3yr-no-cliff', label: '3yr / No Cliff' },
+              { value: 'custom', label: 'Custom' },
+            ]}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className={labelClass}>Frequency</label>
+          <ThemedSelect
+            value={rsuFrequency}
+            onChange={(v) => setRsuFrequency(v as VestingFrequency)}
+            options={[
+              { value: 'monthly', label: 'Monthly' },
+              { value: 'quarterly', label: 'Quarterly' },
+            ]}
+          />
+        </div>
+      </div>
+      {rsuPreset === 'custom' && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className={labelClass}>Total Vest (months)</label>
+            <NumberInput value={rsuTotalMonths} onCommit={setRsuTotalMonths} className={inputClass} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass}>Cliff (months)</label>
+            <NumberInput value={rsuCliffMonths} onCommit={setRsuCliffMonths} className={inputClass} />
           </div>
         </div>
+      )}
 
-        {/* Delta List */}
-        {comparePackage && (
-          <div className="w-full lg:w-2/3 flex flex-col gap-4 border-t lg:border-t-0 lg:border-l border-[var(--color-border)] pt-4 lg:pt-0 lg:pl-8">
-            <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Offer Comparison</h3>
-            
-            <div className="flex flex-col w-full">
-              <div className="flex justify-between items-center py-2 border-b-2 border-[var(--color-border)] mb-2">
-                <div className="w-1/4"></div>
-                <div className="w-1/4 text-center">
-                  <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">Current Offer</span>
-                </div>
-                <div className="w-1/4 text-center">
-                  <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">Compare Offer</span>
-                </div>
-                <div className="w-1/4 text-right">
-                  <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">Delta</span>
-                </div>
-              </div>
+      <button
+        type="button"
+        onClick={addCompareRsuGrant}
+        className="w-full py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-md text-[14px] font-medium hover:bg-[var(--color-bg-primary)] transition-colors"
+      >
+        Add Grant
+      </button>
 
-              <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
-                <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">Base Salary</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBaseSalary(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBaseSalary(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualBaseSalary(comparePackage, timeMode) - calcAnnualBaseSalary(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
-                <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">Annual Bonus</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualBonus(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualBonus(comparePackage, timeMode) - calcAnnualBonus(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
-                <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">ESPP Benefit</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualESPP(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualESPP(comparePackage, timeMode) - calcAnnualESPP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
-                <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">RRSP Match</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRRSP(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualRRSP(comparePackage, timeMode) - calcAnnualRRSP(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3 border-b border-[var(--color-border)]">
-                <div className="w-1/4"><span className="text-[14px] text-[var(--color-text-secondary)]">RSU (Annual)</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] text-[var(--color-text-primary)]">${calcAnnualRSU(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcAnnualRSU(comparePackage, timeMode) - calcAnnualRSU(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-3">
-                <div className="w-1/4"><span className="text-[14px] font-semibold text-[var(--color-text-primary)]">Total Compensation</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(primaryPackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 text-center"><span className="text-[14px] font-bold text-[var(--color-text-primary)]">${calcTotalComp(comparePackage, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                <div className="w-1/4 flex justify-end">
-                  <span className={calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) > 0 ? "text-accent bg-accent/10 px-2 py-0.5 rounded text-[12px] font-medium" : calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) < 0 ? "text-error bg-error/10 px-2 py-0.5 rounded text-[12px] font-medium" : "text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] px-2 py-0.5 rounded text-[12px] font-medium"}>
-                    {calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) > 0 ? `+$${Math.abs(calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more` : calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode) < 0 ? `−$${Math.abs(calcTotalComp(comparePackage, timeMode) - calcTotalComp(primaryPackage, timeMode)).toLocaleString(undefined, { maximumFractionDigits: 0 })} less` : "Equivalent"}
-                  </span>
-                </div>
-              </div>
-
+      {compareRsuGrants.length > 0 && (
+        <div className="flex flex-col gap-2 mt-1">
+          {compareRsuGrants.map(grant => (
+            <div key={grant.id} className="flex justify-between items-center p-2 bg-[var(--color-bg-secondary)] rounded-md border border-[var(--color-border)]">
+              <span className="text-[14px] text-[var(--color-text-primary)]">{grant.grantName} ({grant.grantShares.toLocaleString()} shares)</span>
+              <button
+                type="button"
+                onClick={() => removeCompareRsuGrant(grant.id)}
+                className="text-[12px] text-error hover:opacity-80 transition-opacity"
+              >
+                Remove
+              </button>
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
+    </div>
+
+  </>
+  return <WidgetWrapper title="Offer Comparison">
+    {normalized.review.status !== 'ready' && <div role="alert" className="retirement-notice">
+      <p>Comparison Benefits Need Review. Enter actual plan terms; old match percentages do not establish participation or withdrawal restrictions.</p>
+      {normalized.review.issues.map((issue, i) => <p key={i}>{issue.message}</p>)}
+      {normalized.review.raw !== undefined && <pre className="retirement-raw">{JSON.stringify(normalized.review.raw)}</pre>}
+      <button type="button" className="retirement-button" onClick={() => setDraft(current => ({ ...current, retirement: { schemaVersion: 1, contracts: [createMatchingContract(createWorkplacePlan('group-rrsp', crypto.randomUUID()))], review: { status: 'ready', issues: [] } } }))}>Enter Actual Plan Terms</button>
+    </div>}
+    <RetirementEditor mode="contract" contracts={normalized.contracts}
+      onContractsChange={contracts => setDraft(current => ({ ...current, retirement: { schemaVersion: 1, contracts, review: { status: 'ready', issues: [] } } }))}
+      profile={retirementOptions.profile} onProfileChange={setSharedTaxProfile} onClearCraLimits={clearCraLimits}
+      onValidityChange={setInvalid} summary={summary} payContent={payContent}
+      reviewContent={<>{result.assumptions.map((a, i) => <p key={i}>{a}</p>)}{result.estimate ? <><RetirementResults estimate={result.estimate} blocked={invalid || blocked} />{result.estimate.status === 'uncertain' && <p>All {result.estimate.branches.length} comparison earnings combinations are included in ranges.</p>}</> : <p>{unavailable(result)}</p>}</>} />
+    <button type="button" className="retirement-button retirement-primary" disabled={invalid} onClick={() => setComparePackage(draft)}>Calculate Comparison</button>
+    {comparePackage && <section aria-label="Offer Comparison Results" className="retirement-group">
+      <div className="grid grid-cols-1 desktop:grid-cols-2 gap-3">
+        <OfferResults title="Current Offer" result={retirement.primary} blocked={invalid || blocked} afterTax={showAfterTax} />
+        <OfferResults title="Compare Offer" result={result} blocked={invalid || blocked} afterTax={showAfterTax} />
       </div>
-    </WidgetWrapper>
-  )
+      <div className="flex flex-wrap gap-2"><button type="button" className="retirement-button" onClick={() => showAfterTax && toggleAfterTax()}>Gross</button><button type="button" className="retirement-button" onClick={() => !showAfterTax && toggleAfterTax()}>After-Tax</button></div>
+      <p><span>Known Compensation Delta</span>: <strong>{preciseDelta('knownCompensation')}</strong></p>
+      <p><span>Employer Retirement Funding Delta</span>: <strong>{preciseDelta('employerFunding')}</strong></p>
+      <p><span>Employee Cash Outflow Delta</span>: <strong>{estimateDelta(false)}</strong></p>
+      {showAfterTax && <><p><span>Cash After Contributions Delta</span>: <strong>{estimateDelta(true)}</strong></p><TaxYearNotice />{(result.estimate?.status === 'uncertain' || retirement.primary.estimate?.status === 'uncertain') && <p>Earnings Treatment Needed. All earnings combinations are included in ranges.</p>}</>}
+    </section>}
+  </WidgetWrapper>
 }

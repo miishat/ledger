@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { ExternalLink } from 'lucide-react'
+import { SalaryScenarioTransfer } from './SalaryScenarioTransfer'
 import { useCompensationStore, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
@@ -345,8 +345,7 @@ export function CompHeroWidget({ className = '', blocked = false }: CompHeroWidg
         <TaxYearNotice />
         {result.estimate?.status === 'uncertain' && <p>Earnings Treatment Needed. All {result.estimate.branches.length} earnings combinations are included in ranges.</p>}
         {result.assumptions.map((assumption, i) => <p key={i} className="text-[12px] text-[var(--color-text-secondary)]">{assumption}</p>)}
-        <button type="button" disabled className="self-start flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)]"><ExternalLink size={14} />Full breakdown in Salary &amp; Tax</button>
-        <p className="text-[12px] text-[var(--color-text-secondary)]">Full breakdown transfer needs review.</p>
+        <SalaryScenarioTransfer result={result} blocked={blocked} />
       </div>}
     </div>
   )

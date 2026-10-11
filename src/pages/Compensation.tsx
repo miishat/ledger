@@ -259,7 +259,7 @@ export const Compensation: React.FC = () => {
             </button>
           </div>
 
-          {compareMode && <CompareView />}
+          {compareMode && <CompareView blocked={retirementDraftInvalid} />}
         </>
       )}
 
