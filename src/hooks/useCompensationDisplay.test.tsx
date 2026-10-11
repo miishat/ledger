@@ -4,6 +4,8 @@ import { useCompensationStore } from '../store/useCompensationStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
 import { __setProviders, __resetProviders } from '../services/marketData/marketDataService'
 import { __resetMinInterval } from '../services/marketData/throttle'
+import { usePlannerStore } from '../store/usePlannerStore'
+import { createMatchingContract, createSharedTaxProfile, createWorkplacePlan } from '../utils/finance/retirementTypes'
 
 const initialCompState = useCompensationStore.getState()
 
@@ -16,6 +18,24 @@ beforeEach(() => {
 afterEach(() => __resetProviders())
 
 describe('useCompensationDisplay', () => {
+  it('values both independent offers in CAD regardless of display preference and preserves comparison price', async () => {
+    usePlannerStore.setState({ sharedTaxProfile: createSharedTaxProfile(), salaryRetirementScenario: null, inputs: {} })
+    const contract = createMatchingContract(createWorkplacePlan('dc-rpp'))
+    contract.employee = { mode: 'percent', value: 5 }
+    contract.tiers = [{ lowerPercent: 0, upperPercent: 5, matchRatio: 1 }]
+    const primary = { ...initialCompState.primaryPackage, baseSalary: 100000, companyCurrentPrice: 100, retirement: { schemaVersion: 1 as const, contracts: [contract], review: { status: 'ready' as const, issues: [] } } }
+    useCompensationStore.setState({ primaryPackage: primary, comparePackage: { ...primary, companyCurrentPrice: 75 }, includePersonalDeductions: false, useCadConversion: false })
+    __setProviders({ fetchFxRate: async () => ({ from: 'USD', to: 'CAD', rate: 1.5, date: '2026-07-01', asOf: '2026-07-01T00:00:00Z' }) })
+    const { result } = renderHook(() => useCompensationDisplay())
+    await waitFor(() => expect(result.current.fxAvailable).toBe(true))
+    const before = result.current.retirement
+    expect(before.primary.employerFunding).toBe(5000)
+    expect(result.current.rawComparePkg?.companyCurrentPrice).toBe(75)
+    act(() => useCompensationStore.getState().toggleCadConversion())
+    expect(result.current.retirement).toEqual(before)
+    expect(result.current.retirementOptions.fx.cadPerStockUnit).toBe(1.5)
+    expect(result.current.rawPkg.baseSalary).toBe(100000)
+  })
   it('falls back to the manual companyCurrentPrice when no live price is available and conversion is off', async () => {
     useCompensationStore.getState().setPrimaryPackage({ companyTicker: 'AAPL', companyCurrentPrice: 100 })
     __setProviders({

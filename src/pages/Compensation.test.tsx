@@ -102,14 +102,14 @@ describe('Compensation key figure on a phone', () => {
   it('puts the price and currency toolbar after the total on a phone', () => {
     setMatchMedia(false)
     render(<MemoryRouter><Compensation /></MemoryRouter>)
-    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const hero = screen.getByRole('heading', { name: 'Total Compensation', level: 2 })
     const refresh = screen.getByRole('button', { name: /refresh price/i })
     expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('keeps the toolbar above the total on desktop', () => {
     render(<MemoryRouter><Compensation /></MemoryRouter>)
-    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const hero = screen.getByRole('heading', { name: 'Total Compensation', level: 2 })
     const refresh = screen.getByRole('button', { name: /refresh price/i })
     expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
   })

@@ -3,9 +3,10 @@ import { Pencil, Plus, RefreshCw } from 'lucide-react'
 import { PageHeader, TopBarAction } from '../components/ui/PageHeader'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
+import { CompensationRetirementWorkspace } from '../components/compensation/CompensationRetirementWorkspace'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
 import { CompareView } from '../components/compensation/CompareView'
-import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
+import { useCompensationStore, calcAnnualBaseSalary } from '../store/useCompensationStore'
 import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
 import { NumberInput } from '../components/ui/NumberInput'
 import { fxKey, todayKey } from '../services/marketData'
@@ -16,10 +17,12 @@ export const Compensation: React.FC = () => {
   const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
     useCompensationStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [retirementDraftInvalid, setRetirementDraftInvalid] = useState(false)
   const [manualPriceDraft, setManualPriceDraft] = useState(0)
 
   const {
     pkg,
+    retirement,
     rawPrice,
     fxRate,
     fxStatus,
@@ -41,8 +44,7 @@ export const Compensation: React.FC = () => {
   const clearOverride = useMarketDataStore((s) => s.clearOverride)
 
   const isDesktop = useIsDesktop()
-  const totalComp = calcTotalComp(pkg, timeMode)
-  const isPopulated = totalComp > 0
+  const isPopulated = retirement.primary.breakdown.salary + retirement.primary.breakdown.cashBonus + retirement.primary.breakdown.rsuNative + retirement.primary.breakdown.esppGain > 0
 
   const handleManualPriceSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -166,11 +168,12 @@ export const Compensation: React.FC = () => {
         }
       />
 
+      <CompensationRetirementWorkspace onValidityChange={setRetirementDraftInvalid} />
       {isDesktop && priceToolbar}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <CompHeroWidget className="h-full" />
+          <CompHeroWidget className="h-full" blocked={retirementDraftInvalid} />
         </div>
 
         <div className="themed-card rounded-xl p-6 flex flex-col gap-4">
@@ -214,9 +217,9 @@ export const Compensation: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Benefits Match</span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">Benefits</span>
                 <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {pkg.rrspMatchPercent}% RRSP, {pkg.esppContributionPercent}% ESPP
+                  {pkg.retirement?.contracts.length ?? 0} Workplace Plans, {pkg.esppContributionPercent}% ESPP
                 </span>
               </div>
             </div>

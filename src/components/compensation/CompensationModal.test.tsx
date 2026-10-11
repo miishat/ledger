@@ -23,6 +23,21 @@ function inputAfterLabel(text: string | RegExp): HTMLInputElement {
 }
 
 describe('CompensationModal ticker field', () => {
+  it('keeps ESPP terms and sends retirement editing to the main Benefits workspace', () => {
+    const onClose = vi.fn()
+    render(<CompensationModal isOpen onClose={onClose} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Benefits' }))
+    expect(screen.getByLabelText('ESPP Contribution (%)')).toBeInTheDocument()
+    expect(screen.queryByLabelText('RRSP Match (%)')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Open Benefits Workspace' }))
+    expect(onClose).toHaveBeenCalled()
+  })
+  it('reseeds package cash fields when reopened after workspace edits', () => {
+    const { rerender } = render(<CompensationModal isOpen={false} onClose={() => {}} />)
+    useCompensationStore.getState().setPrimaryPackage({ baseSalary: 123456.78 })
+    rerender(<CompensationModal isOpen={true} onClose={() => {}} />)
+    expect(screen.getByLabelText('Current Base Salary ($)')).toHaveValue('123456.78')
+  })
   it('saves an uppercased, trimmed ticker on submit', () => {
     render(<CompensationModal isOpen={true} onClose={() => {}} />)
     const tickerInput = screen.getByLabelText(/ticker/i)

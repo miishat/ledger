@@ -57,9 +57,9 @@ describe('CompHeroWidget after-tax toggle', () => {
     renderWidget()
     expect(screen.getByText('Total Annual Compensation')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
-    expect(screen.getByText('Est. After-Tax Compensation')).toBeInTheDocument()
-    expect(screen.getByText(/Net Monthly/)).toBeInTheDocument()
-    expect(screen.getByText(/RRSP match is actually tax-sheltered/)).toBeInTheDocument()
+    expect(screen.getByText('Cash After Contributions')).toBeInTheDocument()
+    expect(screen.getByText(/Cash Monthly/)).toBeInTheDocument()
+    expect(screen.getByText(/employment income assumed realized as cash/)).toBeInTheDocument()
   })
 
   it('persists the toggle in the store', () => {
@@ -78,36 +78,13 @@ describe('CompHeroWidget after-tax toggle', () => {
     expect(screen.queryByText(/monthly bars are shown gross/i)).toBeNull()
   })
 
-  describe('CompHeroWidget salary-tax deep link', () => {
-    it('writes income and navigates without confirm when no saved income', () => {
-      renderWidget()
-      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
-      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
-      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
-    })
-
-    it('asks before overwriting a different saved income and respects Keep Saved', () => {
-      usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000, province: 'BC' } } })
-      renderWidget()
-      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
-      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
-      expect(screen.getByText('Replace saved income?')).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: 'Keep Saved' }))
-      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(55_000) // untouched
-      expect(usePlannerStore.getState().inputs['salary-tax']?.province).toBe('BC') // never touched
-    })
-
-    it('overwrites on Replace', () => {
-      usePlannerStore.setState({ inputs: { 'salary-tax': { income: 55_000 } } })
-      renderWidget()
-      fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
-      fireEvent.click(screen.getByRole('button', { name: /full breakdown in salary & tax/i }))
-      fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
-      expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBe(100_000)
-    })
+  it('holds scalar-only transfer disabled pending reviewed snapshot integration', () => {
+    renderWidget()
+    fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
+    expect(screen.getByRole('button', { name: /full breakdown/i })).toBeDisabled()
+    expect(usePlannerStore.getState().inputs['salary-tax']?.income).toBeUndefined()
   })
 })
-
 describe('CompHeroWidget stale tax year notice', () => {
   beforeEach(() => {
     usePlannerStore.setState({ inputs: {} })
@@ -171,7 +148,7 @@ describe('CompHeroWidget annualized legend', () => {
     })
   })
 
-  it('names every compensation component in a legend rather than in chart labels', () => {
+  it('names every compensation component in a legend rather than in chart labels', async () => {
     // Outside labels only fitted at 1440px. Below that they were positioned
     // past the chart surface and clipped or ran off-screen entirely.
     render(
@@ -179,6 +156,7 @@ describe('CompHeroWidget annualized legend', () => {
         <CompHeroWidget />
       </MemoryRouter>,
     )
+    await waitFor(() => expect(screen.getByText('Equity (RSU)')).toBeInTheDocument())
     for (const name of ['Base Salary', 'Bonus', 'Equity (RSU)']) {
       expect(screen.getByText(name)).toBeInTheDocument()
     }

@@ -11,23 +11,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { useNavigate } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
-import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary, calcAnnualBonus, calcAnnualESPP, calcAnnualRRSP, calcAnnualRSU, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
+import { useCompensationStore, generateVestEvents, getBaseSalaryForMonth } from '../../store/useCompensationStore'
 import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import type { ChartTooltipProps } from '../../utils/chartTheme'
-import { useTakeHomeEstimate } from '../../hooks/useTakeHomeEstimate'
-import { PROVINCIAL_TAX } from '../../utils/finance/canadaTax'
-import { usePlannerStore } from '../../store/usePlannerStore'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { retirementRange, PLAN_NAMES } from '../retirement/retirementPresentation'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 import { TaxYearNotice } from '../ui/TaxYearNotice'
 
 interface CompHeroWidgetProps {
   className?: string
+  blocked?: boolean
 }
 
 const COMP_COLORS = {
@@ -72,40 +69,15 @@ const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   return null;
 };
 
-export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
-  const navigate = useNavigate()
-  const { timeMode, setTimeMode, showAfterTax, toggleAfterTax, useCadConversion } = useCompensationStore()
-  const { pkg: primaryPackage } = useCompensationDisplay()
+export function CompHeroWidget({ className = '', blocked = false }: CompHeroWidgetProps) {
+  const { timeMode, setTimeMode, showAfterTax, toggleAfterTax } = useCompensationStore()
+  const { rawPkg, retirement: { primary: result }, retirementOptions } = useCompensationDisplay()
+  const primaryPackage = { ...rawPkg, companyCurrentPrice: rawPkg.companyCurrentPrice * (retirementOptions.fx.cadPerStockUnit ?? 1) }
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
-  const [replacePrompt, setReplacePrompt] = useState<{ saved: number; total: number } | null>(null)
-  const fmtCad = (n: number) =>
-    n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })
+  const totalComp = result.totalCompensation ?? result.knownCompensation ?? 0
+  const cashRange = (divisor = 1) => blocked || !result.estimate ? 'Needs Review' : retirementRange(result.estimate.branches.map(b => b.cashAfterContributions / divisor))
 
-  const totalComp = calcTotalComp(primaryPackage, timeMode)
-  const { takeHome, province, deductionPct } = useTakeHomeEstimate(totalComp)
-  const hasStockComp = primaryPackage.rsuGrants.length > 0 || primaryPackage.esppContributionPercent > 0
-
-  const openSalaryTax = () => {
-    const { inputs, setInput } = usePlannerStore.getState()
-    const saved = inputs['salary-tax']?.income
-    const total = Math.round(totalComp)
-    if (typeof saved === 'number' && Math.round(saved) !== total) {
-      setReplacePrompt({ saved, total })
-      return
-    }
-    setInput('salary-tax', 'income', total)
-    navigate('/planner/salary-tax')
-  }
-
-  const finishSalaryTax = (replace: boolean) => {
-    if (replace && replacePrompt) {
-      usePlannerStore.getState().setInput('salary-tax', 'income', replacePrompt.total)
-    }
-    setReplacePrompt(null)
-    navigate('/planner/salary-tax')
-  }
-
-  if (totalComp === 0) {
+  if (totalComp === 0 && result.status === 'ready') {
     return (
       <div className={`flex flex-col items-center justify-center h-[320px] themed-card rounded-lg p-6 ${className}`}>
         <p className="text-[18px] font-semibold text-[var(--color-text-primary)]">No Compensation Data Yet</p>
@@ -116,18 +88,18 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     )
   }
 
-  const baseValue = calcAnnualBaseSalary(primaryPackage, timeMode)
-  const bonusValue = calcAnnualBonus(primaryPackage, timeMode)
-  const esppValue = calcAnnualESPP(primaryPackage, timeMode)
-  const rrspValue = calcAnnualRRSP(primaryPackage, timeMode)
-  const rsuValue = calcAnnualRSU(primaryPackage, timeMode)
+  const baseValue = result.breakdown.salary
+  const bonusValue = result.breakdown.cashBonus
+  const esppValue = result.breakdown.esppGain
+  const rsuValue = result.breakdown.realizedEquity ?? 0
+  const funding = result.scenario?.workplacePlans.map((plan, i) => ({ name: `Employer ${plan.kind === 'rrsp-dpsp' ? 'DPSP' : PLAN_NAMES[plan.kind]} ${i + 1}`, value: plan.employerContribution ?? 0, color: COMP_COLORS.rrsp, key: `funding${i}` })) ?? []
 
   const pieData = [
     { name: 'Base Salary', value: baseValue, color: COMP_COLORS.baseSalary },
     { name: 'Bonus', value: bonusValue, color: COMP_COLORS.cashBonus },
     { name: 'Equity (RSU)', value: rsuValue, color: COMP_COLORS.rsu },
     { name: 'ESPP Profit', value: esppValue, color: COMP_COLORS.espp },
-    { name: 'RRSP', value: rrspValue, color: COMP_COLORS.rrsp },
+    ...funding,
   ].filter(d => d.value > 0)
 
   const today = new Date();
@@ -168,7 +140,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
       baseSalary: timeMode === 'current-year' ? getBaseSalaryForMonth(primaryPackage, dm.year, dm.monthIndex) / 12 : primaryPackage.baseSalary / 12,
       bonus: dm.monthIndex === ((primaryPackage.cashBonusMonth || 12) - 1) ? bonusValue : 0,
       espp: esppValue / 12,
-      rrsp: rrspValue / 12,
+      ...Object.fromEntries(funding.map(f => [f.key, f.value / 12])),
       rsu: rsuThisMonth,
     }
   })
@@ -184,9 +156,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
     'Bonus': 'bonus',
     'Equity (RSU)': 'rsu',
     'ESPP Profit': 'espp',
-    'RRSP': 'rrsp',
   }
   const avgMonthlyValue = (name: string) => {
+    const destination = funding.find(f => f.name === name)
+    if (destination) return destination.value / 12
     const key = monthlyBarKeyByName[name]
     if (!key || monthlyData.length === 0) return 0
     const total = monthlyData.reduce((sum, m) => sum + (m[key] as number), 0)
@@ -260,7 +233,7 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
         </div>
       </div>
 
-      {view === 'annualized' ? (
+      {!blocked && result.status === 'ready' && (view === 'annualized' ? (
         <div className="flex flex-col desktop:flex-row desktop:items-center gap-4">
           <ChartFigure
             label={`Total annual compensation ${cad(totalComp)}, split as ${pieData
@@ -298,10 +271,10 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span data-key-figure className="text-[24px] font-semibold text-[var(--color-text-primary)]">
-                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(showAfterTax ? takeHome.net : totalComp)}
+                {showAfterTax ? cashRange() : cad(totalComp)}
               </span>
               <span className="text-[12px] text-[var(--color-text-secondary)]">
-                {showAfterTax ? 'Est. After-Tax Compensation' : 'Total Annual Compensation'}
+                {showAfterTax ? 'Cash After Contributions' : result.totalCompensation === null ? 'Known Annual Compensation' : 'Total Annual Compensation'}
               </span>
             </div>
           </ChartFigure>
@@ -337,14 +310,14 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
                 <Bar dataKey="baseSalary" stackId="a" fill={COMP_COLORS.baseSalary} name="Base Salary" />
                 <Bar dataKey="bonus" stackId="a" fill={COMP_COLORS.cashBonus} name="Bonus" />
                 <Bar dataKey="espp" stackId="a" fill={COMP_COLORS.espp} name="ESPP Profit" />
-                <Bar dataKey="rrsp" stackId="a" fill={COMP_COLORS.rrsp} name="RRSP" />
+                {funding.map(f => <Bar key={f.key} dataKey={f.key} stackId="a" fill={f.color} name={f.name} />)}
                 <Bar dataKey="rsu" stackId="a" fill={COMP_COLORS.rsu} name="RSU" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartFigure>
           <ChartLegend items={monthlyLegendItems} />
         </>
-      )}
+      ))}
 
       {view === 'monthly' && showAfterTax && (
         <p className="mt-2 text-[12px] text-[var(--color-text-secondary)]">
@@ -353,58 +326,22 @@ export function CompHeroWidget({ className = '' }: CompHeroWidgetProps) {
         </p>
       )}
 
-      {showAfterTax && (
-        <div className="mt-4 flex flex-col gap-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-            <div className="rounded-lg border border-[var(--color-border)] p-3">
-              <p className="text-[12px] text-[var(--color-text-secondary)]">Effective Deductions</p>
-              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">{deductionPct.toFixed(1)}%</p>
-            </div>
-            <div className="rounded-lg border border-[var(--color-border)] p-3">
-              <p className="text-[12px] text-[var(--color-text-secondary)]">Net Monthly</p>
-              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">
-                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(takeHome.net / 12)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-[var(--color-border)] p-3">
-              <p className="text-[12px] text-[var(--color-text-secondary)]">Net Biweekly</p>
-              <p className="text-[16px] font-semibold text-[var(--color-text-primary)]">
-                {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(takeHome.net / 26)}
-              </p>
-            </div>
-          </div>
-          {/* Only relevant here, in After-Tax mode: this is the one place on
-              this widget a figure derived from the tax tables reaches the
-              screen. Gross mode never shows one, so it never needs the notice. */}
-          <TaxYearNotice />
-          <p className="text-[12px] text-[var(--color-text-secondary)]">
-            Estimate. Treats all compensation as {PROVINCIAL_TAX[province].name} employment income for the
-            year. RRSP match is actually tax-sheltered; ESPP and RSU values assume sale at vest.
-            {!useCadConversion && hasStockComp && ' Stock components are in USD; brackets assume CAD.'}
-          </p>
-          <button
-            type="button"
-            onClick={openSalaryTax}
-            className="self-start flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:underline"
-          >
-            <ExternalLink size={14} />
-            Full breakdown in Salary & Tax
-          </button>
+      {result.employerFunding === null && result.estimate && <p>Employer Pension Funding Unknown. Pension Value Not Estimated.</p>}
+      {result.status !== 'ready' && <p role="alert">{result.status === 'conversion-needed' ? 'Conversion Needed. CAD salary and bonus remain known; combined results are unavailable.' : 'Benefits Need Review. Complete the workplace terms before using precise results.'}</p>}
+      {result.status !== 'ready' && <dl><dt>Salary (CAD)</dt><dd>{cad(baseValue)}</dd><dt>Bonus (CAD)</dt><dd>{cad(bonusValue)}</dd><dt>RSU Vest Value (USD)</dt><dd>{cad(result.breakdown.rsuNative)}</dd></dl>}
+      {result.estimate && <p className="mt-3 text-[13px] text-[var(--color-text-secondary)]">Employee Cash Outflow: {blocked ? 'Needs Review' : cad(result.estimate.employeeCashOutflow ?? 0)}</p>}
+      {view === 'monthly' && <p className="text-[12px] text-[var(--color-text-secondary)]">Employer retirement funding is an annual average, separate from employee cash outflow.</p>}
+      {showAfterTax && <div className="mt-4 flex flex-col gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-center">
+          <div><p>Cash Monthly (Annual Average)</p><strong>{cashRange(12)}</strong></div>
+          <div><p>Cash Biweekly (Annual Average)</p><strong>{cashRange(26)}</strong></div>
         </div>
-      )}
-      <ConfirmDialog
-        open={replacePrompt !== null}
-        title="Replace saved income?"
-        message={
-          replacePrompt
-            ? `Salary & Tax currently uses ${fmtCad(replacePrompt.saved)}. Replace it with your total compensation of ${fmtCad(replacePrompt.total)}?`
-            : ''
-        }
-        confirmLabel="Replace"
-        cancelLabel="Keep Saved"
-        onConfirm={() => finishSalaryTax(true)}
-        onCancel={() => finishSalaryTax(false)}
-      />
+        <TaxYearNotice />
+        {result.estimate?.status === 'uncertain' && <p>Earnings Treatment Needed. All {result.estimate.branches.length} earnings combinations are included in ranges.</p>}
+        {result.assumptions.map((assumption, i) => <p key={i} className="text-[12px] text-[var(--color-text-secondary)]">{assumption}</p>)}
+        <button type="button" disabled className="self-start flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)]"><ExternalLink size={14} />Full breakdown in Salary &amp; Tax</button>
+        <p className="text-[12px] text-[var(--color-text-secondary)]">Full breakdown transfer needs review.</p>
+      </div>}
     </div>
   )
 }

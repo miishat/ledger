@@ -3,10 +3,18 @@ import { useCompensationStore } from '../store/useCompensationStore'
 import { convertPackageToCad } from '../store/compensationFx'
 import { useCurrentPrice, useFxRate } from '../services/marketData'
 import type { FetchStatus } from '../services/marketData'
+import { usePlannerStore } from '../store/usePlannerStore'
+import { resolveCompensationOffers } from '../utils/finance/compensationRetirement'
 
 export function useCompensationDisplay() {
   const primaryPackage = useCompensationStore((s) => s.primaryPackage)
   const useCadConversion = useCompensationStore((s) => s.useCadConversion)
+  const rawComparePkg = useCompensationStore((s) => s.comparePackage)
+  const timeMode = useCompensationStore((s) => s.timeMode)
+  const includePersonalDeductions = useCompensationStore((s) => s.includePersonalDeductions)
+  const profile = usePlannerStore((s) => s.sharedTaxProfile)
+  const personalScenario = usePlannerStore((s) => s.salaryRetirementScenario)
+  const personalInputs = usePlannerStore((s) => s.inputs['salary-tax'])
 
   const ticker = primaryPackage.companyTicker?.trim() ?? ''
   const price = useCurrentPrice(ticker)
@@ -15,7 +23,7 @@ export function useCompensationDisplay() {
   // Live/override/cached USD price when a ticker is set; otherwise fall back
   // to the manually-entered companyCurrentPrice already stored on the package.
   const rawPrice = price.data?.value.price ?? primaryPackage.companyCurrentPrice
-  const fxAvailable = fx.data !== undefined
+  const fxAvailable = typeof fx.data?.value.rate === 'number' && Number.isFinite(fx.data.value.rate) && fx.data.value.rate > 0
   const fxRate = fx.data?.value.rate ?? 1
 
   const basePkg = useMemo(
@@ -29,6 +37,11 @@ export function useCompensationDisplay() {
     () => convertPackageToCad(basePkg, fxRate, useCadConversion && fxAvailable),
     [basePkg, fxRate, useCadConversion, fxAvailable],
   )
+  const retirementOptions = useMemo(() => ({ timeMode, fx: { stockCurrency: 'USD' as const, cadPerStockUnit: fxAvailable ? fxRate : null }, profile,
+    personalRrsp: personalScenario?.personalRrsp ?? Number(personalInputs?.rrsp ?? 0),
+    personalFhsa: personalScenario?.personalFhsa ?? Number(personalInputs?.fhsa ?? 0), includePersonalDeductions }),
+  [timeMode, fxAvailable, fxRate, profile, personalScenario, personalInputs, includePersonalDeductions])
+  const retirement = useMemo(() => resolveCompensationOffers(basePkg, rawComparePkg, retirementOptions), [basePkg, rawComparePkg, retirementOptions])
 
   const refreshPrice = useCallback((force?: boolean) => price.refresh(force), [price])
   const setManualPrice = useCallback((value: number) => price.setManual(value), [price])
@@ -36,6 +49,10 @@ export function useCompensationDisplay() {
 
   return {
     pkg,
+    rawPkg: basePkg,
+    rawComparePkg,
+    retirementOptions,
+    retirement,
     rawPrice,
     fxRate,
     fxStatus: fx.status as FetchStatus,

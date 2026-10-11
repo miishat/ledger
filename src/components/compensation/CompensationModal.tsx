@@ -38,15 +38,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const [companyCurrentPrice, setCompanyCurrentPrice] = useState(rawPrice || 100)
   const [companyTicker, setCompanyTicker] = useState(primaryPackage.companyTicker || '')
 
-  // Re-seed from the live/override price each time the modal opens, so a
-  // reopened modal reflects the price the top bar shows. Deliberately NOT
-  // keyed on rawPrice: a live refresh must not clobber mid-edit typing.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isOpen) setCompanyCurrentPrice(rawPrice || 100)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
-
   // Base & Cash
   const [baseSalary, setBaseSalary] = useState(primaryPackage.baseSalary)
   const [pastSalaryChanges, setPastSalaryChanges] = useState<PastSalary[]>(
@@ -62,8 +53,27 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
   const [esppDiscountPercent, setEsppDiscountPercent] = useState(primaryPackage.esppDiscountPercent || 15)
   const [esppLockedInPrice, setEsppLockedInPrice] = useState(primaryPackage.esppLockedInPrice || 100)
   const [esppLockInEndDate, setEsppLockInEndDate] = useState(primaryPackage.esppLockInEndDate || '')
-  const [rrspMatchPercent, setRrspMatchPercent] = useState(primaryPackage.rrspMatchPercent)
-  const [rrspMatchCap, setRrspMatchCap] = useState(primaryPackage.rrspMatchCap)
+
+  // Re-seed from the live/override price each time the modal opens, so a
+  // reopened modal reflects the price the top bar shows. Deliberately NOT
+  // keyed on rawPrice: a live refresh must not clobber mid-edit typing.
+  useEffect(() => {
+
+    if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCompanyCurrentPrice(rawPrice || 100)
+      setCompanyTicker(primaryPackage.companyTicker || '')
+      setBaseSalary(primaryPackage.baseSalary)
+      setPastSalaryChanges(primaryPackage.pastSalaryChanges?.length ? primaryPackage.pastSalaryChanges : [{ id: crypto.randomUUID(), salary: 0, changeMonth: 0 }])
+      setCashBonusPercent(primaryPackage.cashBonusPercent)
+      setCashBonusMonth((primaryPackage.cashBonusMonth || 12).toString())
+      setEsppContributionPercent(primaryPackage.esppContributionPercent)
+      setEsppDiscountPercent(primaryPackage.esppDiscountPercent || 15)
+      setEsppLockedInPrice(primaryPackage.esppLockedInPrice || 100)
+      setEsppLockInEndDate(primaryPackage.esppLockInEndDate || '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   // Equity (RSU)
   const [rsuGrantName, setRsuGrantName] = useState('')
@@ -159,8 +169,6 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
       esppDiscountPercent,
       esppLockedInPrice,
       esppLockInEndDate: esppLockInEndDate,
-      rrspMatchPercent,
-      rrspMatchCap,
     })
 
     onClose()
@@ -526,23 +534,10 @@ export function CompensationModal({ isOpen, onClose }: CompensationModalProps) {
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className={labelClass} htmlFor="rrsp-match-percent-input">RRSP Match (%)</label>
-                <NumberInput
-                  id="rrsp-match-percent-input"
-                  value={rrspMatchPercent}
-                  onCommit={setRrspMatchPercent}
-                  className={inputClass}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className={labelClass} htmlFor="rrsp-match-cap-input">RRSP Match Cap ($)</label>
-                <NumberInput
-                  id="rrsp-match-cap-input"
-                  value={rrspMatchCap}
-                  onCommit={setRrspMatchCap}
-                  className={inputClass}
-                />
+              <div className="rounded-lg border border-[var(--color-border)] p-4">
+                <h3 className="text-[14px] font-semibold">Workplace Retirement</h3>
+                <p className="text-[13px] text-[var(--color-text-secondary)]">Review participation, employer funding and CRA limits in the five-step Benefits workspace.</p>
+                <button type="button" className="retirement-button" onClick={handleSubmit}>Save &amp; Open Benefits Workspace</button>
               </div>
             </div>
           )}
