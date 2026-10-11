@@ -3,6 +3,7 @@ import { useCompensationStore } from '../../store/useCompensationStore'
 import { usePlannerStore } from '../../store/usePlannerStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { RetirementEditor } from '../retirement/RetirementEditor'
+import { TaxYearNotice } from '../ui/TaxYearNotice'
 import { RetirementNumericField } from '../retirement/RetirementNumericField'
 import { RetirementResults, RetirementSummary } from '../retirement/RetirementResults'
 import { createMatchingContract, createWorkplacePlan } from '../../utils/finance/retirementTypes'
@@ -101,8 +102,7 @@ export function CompensationRetirementWorkspace({ onValidityChange }: { onValidi
       )}
     </>
   )
-  return (
-    <section aria-label="Compensation Benefits Workspace">
+  const reviewNotice = <>
       {normalized.review.status !== 'ready' && (
         <div className="retirement-notice" role="alert">
           <h2>{normalized.review.status === 'legacy' ? 'Legacy Benefits Need Review' : 'Saved Benefits Need Review'}</h2>
@@ -121,6 +121,9 @@ export function CompensationRetirementWorkspace({ onValidityChange }: { onValidi
       {result.estimate && result.totalCompensation === null && (
         <p className="retirement-notice">Pension Funding Unknown. Known compensation excludes employer pension funding that has not been entered. Pension value is not estimated.</p>
       )}
+  </>
+  return (
+    <section aria-label="Compensation Benefits Workspace">
       <RetirementEditor
         mode="contract"
         contracts={normalized.contracts}
@@ -129,7 +132,7 @@ export function CompensationRetirementWorkspace({ onValidityChange }: { onValidi
         onProfileChange={setSharedTaxProfile}
         onClearCraLimits={clearCraLimits}
         onValidityChange={reportValidity}
-        summary={summary}
+        summary={<>{summary}<TaxYearNotice />{reviewNotice}</>}
         payContent={payContent}
         reviewContent={reviewContent}
       />

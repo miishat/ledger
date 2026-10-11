@@ -172,14 +172,14 @@ describe('Layout mobile top bar', () => {
     expect(screen.getByPlaceholderText('Jump to a page or tool…')).toBeInTheDocument()
   })
 
-  it('opens settings from the top bar', () => {
+  it('opens settings from the top bar', async () => {
     // Seed the disclaimer ack so the disclaimer dialog isn't also open,
     // which would otherwise make the dialog role ambiguous here.
     localStorage.setItem(DISCLAIMER_ACK_KEY, new Date().toISOString())
     const { container } = render(<MemoryRouter><Layout /></MemoryRouter>)
     const topbar = container.querySelector('[data-testid="mobile-topbar"]')!
     fireEvent.click(topbar.querySelector('button[aria-label="Settings"]') as HTMLButtonElement)
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Settings' })).toBeInTheDocument()
   })
 
   it('leaves the bottom bar with exactly the five routes', () => {

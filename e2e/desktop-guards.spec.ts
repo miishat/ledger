@@ -855,10 +855,25 @@ const LEGEND_ROUTES = [
 
 for (const [hash, expected] of LEGEND_ROUTES) {
   test(`multi-series charts on ${hash} name their series in text`, async ({ page }) => {
+    if (hash === '#/compensation') {
+      // This guard needs a valued combined chart. The shared fixture carries
+      // USD equity; supply its explicit CAD rate rather than relying on a
+      // live service or treating unconverted USD as CAD.
+      await page.addInitScript(() => {
+        const date = new Date().toISOString().slice(0, 10)
+        localStorage.setItem('ledger-market-data', JSON.stringify({ state: {
+          quotes: {}, historical: {}, fx: {}, overrides: { [`USD-CAD@${date}`]: 1.35 },
+        }, version: 1 }))
+      })
+    }
     await page.goto(`/${hash}`)
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(900)
-    expect(await countLegends(page)).toBeGreaterThanOrEqual(expected)
+    if (hash === '#/compensation') {
+      // Resolve this legacy fixture explicitly with a new zero-funding plan.
+      // Unreviewed benefits intentionally withhold combined charts.
+      await page.getByRole('button', { name: 'Enter Actual Plan Terms' }).click()
+    }
+    await expect.poll(() => countLegends(page)).toBeGreaterThanOrEqual(expected)
   })
 }
 

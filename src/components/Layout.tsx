@@ -1,9 +1,8 @@
-import React, { Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useThemeStore } from '../store/useThemeStore'
 import { ThemeBackground } from './theme/ThemeBackground'
 import { SidebarFloral } from './theme/SidebarFloral'
-import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
 import { UndoToast } from './ui/UndoToast'
@@ -25,6 +24,21 @@ import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
 import { useViewportHeight } from '../hooks/useViewportHeight'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+
+// Settings is a user-opened dialog. Defer its controls until opening so
+// backup/retirement review UI does not expand the first-paint budget.
+const SettingsSheet = lazy(() => import('./settings/SettingsSheet').then(m => ({ default: m.SettingsSheet })))
+
+function SettingsLoading({ onCancel }: { onCancel: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); onCancel() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+  return null
+}
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -49,6 +63,8 @@ export const Layout: React.FC = () => {
   const [topBarSlot, setTopBarSlot] = useState<HTMLElement | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsRequested, setSettingsRequested] = useState(false)
+  const openSettings = () => { setSettingsRequested(true); setSettingsOpen(true) }
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   // Captured once at mount: the last-seen-version effect below overwrites the key.
   const [shouldShowNews] = useState(() =>
@@ -253,7 +269,7 @@ export const Layout: React.FC = () => {
           }}
         >
           <button
-            onClick={() => setSettingsOpen(true)}
+            onClick={openSettings}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-primary/50 transition-colors"
           >
             <Settings className="w-4 h-4" /> Settings
@@ -301,7 +317,7 @@ export const Layout: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={openSettings}
             aria-label="Settings"
             className="-ml-2 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           >
@@ -379,12 +395,12 @@ export const Layout: React.FC = () => {
       <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-      <SettingsSheet
+      {settingsRequested && <Suspense fallback={<SettingsLoading onCancel={() => setSettingsOpen(false)} />}><SettingsSheet
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onOpenWhatsNew={() => setWhatsNewOpen(true)}
         onOpenDisclaimer={() => setDisclaimerOpen(true)}
-      />
+      /></Suspense>}
       <UndoToast />
     </div>
   )

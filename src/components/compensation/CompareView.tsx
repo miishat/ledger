@@ -133,28 +133,28 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
       <label className={labelClass}>RSU / Equity Grant</label>
 
       <div className="flex flex-col gap-1">
-        <label className={labelClass}>Grant Name</label>
-        <input type="text" value={rsuGrantName} onChange={(e) => setRsuGrantName(e.target.value)} className={inputClass} />
+        <label className={labelClass} htmlFor="compare-grant-name">Grant Name</label>
+        <input id="compare-grant-name" type="text" value={rsuGrantName} onChange={(e) => setRsuGrantName(e.target.value)} className={inputClass} />
       </div>
       <div className="flex flex-col gap-1">
-        <label className={labelClass}>Number of Shares</label>
-        <NumberInput value={rsuGrantShares} onCommit={setRsuGrantShares} className={inputClass} />
+        <label className={labelClass} htmlFor="compare-grant-shares">Number of Shares</label>
+        <NumberInput id="compare-grant-shares" value={rsuGrantShares} onCommit={setRsuGrantShares} className={inputClass} />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className={labelClass}>Grant Price ($)</label>
-          <NumberInput value={rsuGrantPrice} onCommit={setRsuGrantPrice} maxDecimals={3} className={inputClass} />
+          <label className={labelClass} htmlFor="compare-grant-price">Grant Price ($)</label>
+          <NumberInput id="compare-grant-price" value={rsuGrantPrice} onCommit={setRsuGrantPrice} maxDecimals={3} className={inputClass} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className={labelClass}>Grant Start Date</label>
-          <ThemedDatePicker value={rsuStartDate} onChange={setRsuStartDate} className={inputClass} />
+          <label className={labelClass} htmlFor="compare-grant-date">Grant Start Date</label>
+          <ThemedDatePicker id="compare-grant-date" value={rsuStartDate} onChange={setRsuStartDate} className={inputClass} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className={labelClass}>Vesting</label>
+          <label className={labelClass} htmlFor="compare-grant-vesting">Vesting</label>
           <ThemedSelect
-            value={rsuPreset}
+            id="compare-grant-vesting" value={rsuPreset}
             onChange={(v) => setRsuPreset(v as VestingPreset)}
             options={[
               { value: '4yr-1yr-cliff', label: '4yr / 1yr Cliff' },
@@ -164,9 +164,9 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className={labelClass}>Frequency</label>
+          <label className={labelClass} htmlFor="compare-grant-frequency">Frequency</label>
           <ThemedSelect
-            value={rsuFrequency}
+            id="compare-grant-frequency" value={rsuFrequency}
             onChange={(v) => setRsuFrequency(v as VestingFrequency)}
             options={[
               { value: 'monthly', label: 'Monthly' },
@@ -178,12 +178,12 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
       {rsuPreset === 'custom' && (
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>Total Vest (months)</label>
-            <NumberInput value={rsuTotalMonths} onCommit={setRsuTotalMonths} className={inputClass} />
+            <label className={labelClass} htmlFor="compare-grant-months">Total Vest (months)</label>
+            <NumberInput id="compare-grant-months" value={rsuTotalMonths} onCommit={setRsuTotalMonths} className={inputClass} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>Cliff (months)</label>
-            <NumberInput value={rsuCliffMonths} onCommit={setRsuCliffMonths} className={inputClass} />
+            <label className={labelClass} htmlFor="compare-grant-cliff">Cliff (months)</label>
+            <NumberInput id="compare-grant-cliff" value={rsuCliffMonths} onCommit={setRsuCliffMonths} className={inputClass} />
           </div>
         </div>
       )}

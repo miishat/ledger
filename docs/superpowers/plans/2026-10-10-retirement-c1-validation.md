@@ -1,0 +1,81 @@
+# Canadian Retirement C1 Validation
+
+Date: 2026-10-11. Implementation review build. User acceptance remains pending. No merge, push or deployment is authorized by this report.
+
+## Evidence conventions
+
+Paths below are repository-relative. Test names identify meaningful observable assertions rather than a general claim that a file passed. The final verification command runs all these tests together. Browser cases use Chromium, a frozen October 11, 2026 clock, deterministic local fixtures, and blocked external requests. The mixed-stock browser fixture supplies an explicit 1.35 CAD/USD manual FX override. No result depends on live quote services.
+
+- **Estimate**: `src/utils/finance/retirementEstimate.test.ts`
+- **Matching**: `src/utils/finance/retirementMatching.test.ts`
+- **Acceptance**: `src/utils/finance/retirementAcceptance.test.ts`
+- **Adapter**: `src/utils/finance/compensationRetirement.test.ts`
+- **Salary UI**: `src/components/planner/SalaryTaxRetirement.test.tsx`
+- **Transfer UI**: `src/components/compensation/SalaryScenarioTransfer.test.tsx`
+- **Persistence**: `src/store/retirementPersistence.test.ts`, `src/store/usePlannerStore.test.ts`, `src/store/useCompensationStore.test.ts`
+- **Backup**: `src/utils/backup.test.ts`; actual Undo callback boundary: `src/utils/retirementUndo.integration.test.ts`
+- **Browser**: `e2e/retirement-acceptance.spec.ts`
+
+## A01-A38 Traceability
+
+| ID | Specific evidence and observable assertion |
+| --- | --- |
+| A01 | Estimate, `separates RRSP benefit, deduction, funding and cash`: 105000 employment income, 10000 deduction/funding, 95000 before statutory deductions, 5000 employee outflow. Browser matching and transfer cases show 105000 total and 70714 cash. |
+| A02 | Estimate, `keeps DC deduction independent of known zero room and PA following-year`: 5000 RPP deduction, zero current RRSP usage, 10000 following-year PA. |
+| A03 | Estimate, `keeps DPSP separate from RRSP and PRPP reduces deduction capacity`: RRSP usage 5000, DPSP PA 5000, employment income 100000. |
+| A04 | Same Estimate test: PRPP 12000 capacity less 5000 employer funding yields 7000 member capacity, member deduction 5000, combined usage 10000. |
+| A05 | Matching, four `matches ... employee dollars` cases assert 0/1500/3000/3000; `counts tiers once and caps combined unconditional funding` checks zero cap. Browser participation/cap/reload checks live effects. |
+| A06 | Matching, `counts tiers once and caps combined unconditional funding`: tier 1 at 100 percent and tier 2 at 50 percent produce 4500. |
+| A07 | Acceptance, `A07 zero participation retains unconditional funding without an employee deduction`: 2000 employer, zero employee. |
+| A08 | Acceptance, `A08 preserves Quebec public pension earnings...`: pensionable 52500 in both branches, EI/QPIP earnings 50000/52500. Estimate uncertain branches assert the associated Quebec statutory contributions and tax differences. |
+| A09 | Acceptance, five `A09 ordinary employer ... funding` cases: DC, DB, DPSP, PRPP and VRSP keep Quebec employment/QPP/EI/QPIP earnings at 50000. |
+| A10 | Estimate, `retains unknown restricted branches through cash, tax and helper results` and independent multiple-plan possibilities; Salary UI ranges every combination. Browser `unknown restriction branches survive transfer...` checks two retained combinations, ranged cash and edited restriction recovery. |
+| A11 | Acceptance, `A11 and A12 distinguish zero deductible capacity...`: known zero deduction, unknown room remains null, full 7000 outflow. Estimate PRPP capacity and zero tests preserve the separate member rules. Salary UI distinguishes zero/unknown. |
+| A12 | Same Acceptance test: 12000 deduction versus 11000 room, remaining room -1000 and deduction capacity 3000. |
+| A13 | Estimate, `allocates employer RRSP first and preserves nondeductible actual cash`: deduction 6000, employee outflow 7000, employer 3000 retained. |
+| A14 | Estimate, `retains DB unknown funding/PA and exact current-service decimals`: 8655.32 outflow/deduction, unknown employer funding/PA. Salary UI `supports all six destinations and unknown DB funding`; Adapter DB unknown case and comparison unknown funding delta. |
+| A15 | Estimate, `holds employer and employee dollars fixed for the $100 contextual marginal`: audited 29.65 percent fixture and efficiency slices reconcile to income tax. Classified earnings and existing Ontario premium/surtax boundary fixtures in `canadaTax.test.ts` validate the underlying public annual contract. Salary UI uses contextual tax/marginal/efficiency results and hides branch-dependent graphics when ambiguous. |
+| A16 | Estimate, 13 province cases `preserves existing tax and statutory earnings in ...` at 1000/50000/200000 compare the audited existing annual result with no plans/personal deductions off. |
+| A17 | Adapter, `uses one CAD stock context for both offers without converting salary/retirement`: exact converted cash and unchanged retirement amounts. Browser mixed transfer asserts 1.35, source components summed once and unchanged employer 5000. Comparison component checks CAD delta across display toggles. |
+| A18 | Adapter, `blocks combined totals, cash tax and snapshot when conversion is missing`; Browser `unconverted USD equity keeps cash salary visible...`: Conversion Needed with cash 100000 visible and transfer disabled. |
+| A19 | Transfer UI cancellation and atomic-transfer tests; Browser `transfer cancel and keep preserve saved rows...`: complete planner state equal after Cancel, old rows after Keep, single new row after Replace, retained personal/profile values. |
+| A20 | Transfer UI parameterized on/off exact branch reconciliation; Browser simple and mixed transfers under both selections preserve nonzero saved personal values. Browser shared limit edit to zero is visible on both routes. |
+| A21 | Backup typed round-trip asserts both offers, toggle, zero/signed/stale capacities and malformed rows; Persistence repeated normalization; Undo integration executes actual `runUndo` callback and normal backup rehydrate; Browser comparison/reload and real file restore through Settings assert exact saved terms and profile. |
+| A22 | Adapter legacy gross 4000 preserved, precision withheld; Browser `unresolved legacy matching is retained...` displays 4000 and disabled transfer. |
+| A23 | `forecasterCompTax.test.ts`: complete saved/primary baseline, fixed contributions, manual/disabled authority and unavailable branches. New real-hook `ForecasterRetirement.integration.test.tsx` asserts taxed CAD bonus 7500, RSU events, no retirement lumps, unchanged events across CAD/after-tax toggles and employer funding edits. |
+| A24 | Estimate 13-province cases at low/below/above ceilings, Acceptance Quebec ordinary funding and group RRSP classification, existing audited `canadaTax.test.ts` statutory fixtures. |
+| A25 | Browser 12 route/theme tests: both actual routes, six themes, all five panes at 320/360/390, no document or visible control/card overflow, keyboard step activation, typed invalid contributions with associated error and recovery. Comparison browser case covers all five panes at all three widths. Compare equity labels are component and browser checked, including custom vesting fields in the component test. Existing all-theme axe guards run in full verification. |
+| A26 | Browser `October Next 1 Year and January stale-table scenarios...` uses frozen October, then a January 2027 tab sharing saved inputs, retaining source year 2026 and capacity 25000. Adapter historical/current versus Next 1 Year retains 2026 tax year and annualization notice. `TaxYearNotice.test.tsx` frozen 2027 tests assert stale tables warning; `canadaTax.test.ts` covers stale-year predicate. No 2027 table or capacity substitution. |
+| A27 | Estimate `distinguishes zero, legacy, stale and signed contribution room` and parameterized source-year-unknown cases preserve cap semantics and deductibility assumptions; Persistence and Salary UI legacy confirmation/source-year/signed-room assertions. |
+| A28 | Estimate `bounds actionable new deposits by both remaining capacities`: 1000 suggestion, unknown bound unavailable. Salary UI `labels capacity-bounded advice and hypothetical efficiency separately` asserts 1000 and hypothetical label. |
+| A29 | Acceptance three exact unmatched-gap boundaries 3000/4000/6000 earn 0/500/1500 and retain entered dollar amounts at zero earnings. Matching zero-earnings case preserves unconditional dollars. |
+| A30 | Matching combined unconditional plus conditional cap asserts 4000, zero cap 0, unchanged employee input. Browser cap edits 0/2000 preserve saved 3000 participation. |
+| A31 | Store ownership/reset tests; Compare UI `shares the persisted personal selection and profile...` and exact save/reopen terms. Browser comparison edit leaves primary 5000, reload retains 3000.12345. Forecaster baseline tests with absent/invalid salary prevent mixed fallback, retain manual authority. |
+| A32 | Adapter `counts CAD ESPP gain once...` and parameterized rich snapshots reconcile complete branches. Browser mixed CAD salary/USD RSU/ESPP transfer verifies both personal selections, FX, complete source sum and funding. |
+| A33 | Persistence legacy seeding, cap-only/zero-cap/discriminator/malformed review tests; Salary UI malformed-row repair; Backup forged-ready metadata remains invalid. Browser legacy review and disabled transfer. |
+| A34 | Acceptance DC/DPSP inclusive earnings bounds at 9000/9001 with fixed registered compensation; changing cash/match salary leaves warning intact. Estimate ordinary limit assertions. |
+| A35 | Estimate parameterized inclusive DC 35390 and DPSP 17695 ceiling versus one dollar over; combined DC/DPSP aggregate case warns at 36000 while preserving contributions. |
+| A36 | Acceptance PRPP 33810/33811 direction boundary; direction clears only its warning, remaining room and room warnings persist. |
+| A37 | Estimate `keeps dollar warnings but withholds unsupported mixed-provision earnings checks` and aggregate unknown-compensation case; Adapter equity remains excluded from default eligible earnings and no statutory plan compensation is invented. |
+| A38 | Adapter mixed edited classification asserts 90000 employment and pensionable earnings, 80000 restricted EI/QPIP earnings; original snapshot unchanged. Salary UI rebuilds gross/restrictions. Browser mixed gross edit checks exact 95000 Cash Employment Pay and provenance; separate uncertain transfer case edits employer dollars/restrictions and removes range. |
+
+## Browser and Recovery Boundaries
+
+Browser tests exercise production routes and public input/action behavior, not a separate prototype. Local storage fixtures establish deterministic opening data; subsequent edits, transfer review, file import and reload use the real application. Tests assert persisted public data as well as visible values.
+
+File restore has no Undo control in the current product. There is no retirement-specific Undo action. The existing Undo store callback and shared backup/rehydrate boundary are exercised directly in an integration test. This is not a claim of a browser restore-Undo flow. Drive pull normalization has existing deterministic integration coverage in `syncService.test.ts`; no live Google account, sync or external authentication changes were used.
+
+Browser viewport coverage is Chromium layout and keyboard behavior. It is not a real phone, Safari, assistive-technology or human visual acceptance claim. Six actual theme values are tested, with populated retirement plans and visible errors; the full existing axe suite supplies contrast/accessibility checks. The isolated review server remains on 5186 and prototype remains on 5184.
+
+## Results and Remaining Gates
+
+Focused initial acceptance: 20 browser tests passed in 25.1 seconds. Comparison mobile/keyboard coverage was extended before full verification. Component red-green: the comparison equity label test first failed because Grant Name had no associated form control; after associations were added all 12 CompareView tests passed. New exact acceptance cases: 14 passed. Real-hook Forecaster integration: 1 passed. Undo/backup integration: 1 passed.
+
+Full verification result is recorded below after command completion. Independent task and final branch review are performed by the root reviewer afterward. User acceptance remains pending regardless of test status.
+
+Full run 4 passed lint, 229 files/1881 unit tests, build, bundle (433.9kB), eager and type-scale checks. It found seven browser failures with 276 passed and five project-specific skips: three chart-legend fixtures, two mobile 15px fields, a legacy summary below the first screen, and Escape during lazy Settings loading. These were addressed before the final verification: explicit FX and user-confirmed zero-plan fixture for chart guards with the two-legend assertion retained; 16px retirement controls on phone layouts; full persistent legacy warning after the key result; Escape cancellation while the Settings chunk loads. New browser evidence covers delayed loading cancellation and legacy summaries at 320px with heights 640 and 700. The loading and January cases also verify the actual deferred Settings boundary and stale tax warning. The January tab explicitly asserts browser year 2027; its initial failure identified a missing Compensation C1 warning under the Gross hero selection. Added the existing TaxYearNotice below key figures so the always-present C1 cash results retain that warning. January scoped red-green: 1 failed, then 1 passed.
+
+
+Final verification: `CI=1 npm run verify` passed after all fixes. Lint passed; 229 test files and 1882 unit/integration tests passed (38.80s); TypeScript/Vite build passed; initial load graph 434.1kB raw across nine chunks passed the unchanged 450kB budget; eager graph 98 files and type-scale passed. Playwright ran 290 tests: 285 passed, five existing project-specific skips, no failures (2.6m). All 23 new retirement acceptance cases passed. The five skips are four first-screen key-figure checks intentionally omitted for mobile-landscape and the desktop scrollbar check omitted for short-wide. Exact local log: `.superpowers/sdd/task-6-full-verify-5.log`. The service-worker offline dashboard test also passed; this is not a claim of explicit offline Settings-file-import testing.
+
+Observed environment output was limited to Node reporting NO_COLOR ignored because FORCE_COLOR is set. No verification gate or external provider result was hidden or skipped to achieve the pass. Live Drive, Safari, physical devices and human screen-reader checks remain outside this automated run. Independent review and user acceptance remain pending.

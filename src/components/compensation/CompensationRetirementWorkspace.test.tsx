@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { CompensationRetirementWorkspace } from './CompensationRetirementWorkspace'
 import { useCompensationStore, defaultPrimaryPackage } from '../../store/useCompensationStore'
 import { usePlannerStore } from '../../store/usePlannerStore'
@@ -57,4 +57,10 @@ it('edits the province in the shared tax profile', () => {
   render(<CompensationRetirementWorkspace />)
   fireEvent.change(screen.getByLabelText('Province'), { target: { value: 'BC' } })
   expect(usePlannerStore.getState().sharedTaxProfile.province).toBe('BC')
+})
+it('places the key result before the persistent legacy review notice', async () => {
+ useCompensationStore.setState({ primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100000, rrspMatchPercent: 5, rrspMatchCap: 4000, retirement: undefined } })
+ await act(async () => { render(<CompensationRetirementWorkspace />) })
+ const result = document.querySelector('[data-key-figure]')!
+ expect(result.compareDocumentPosition(screen.getByText('Legacy Benefits Need Review')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })

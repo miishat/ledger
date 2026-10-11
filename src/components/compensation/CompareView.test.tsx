@@ -118,3 +118,11 @@ it('shows both offers actual CAD and cash ranges alongside their deltas', async 
  fireEvent.click(screen.getByRole('button', { name: 'After-Tax' }))
  expect(within(resultArea).getAllByText('Cash After Contributions')).toHaveLength(2)
 })
+it('names all comparison equity controls for keyboard and screen-reader users', async () => {
+ await act(async () => { render(<CompareView />) })
+ for (const label of ['Grant Name', 'Number of Shares', 'Grant Price ($)', 'Grant Start Date', 'Vesting', 'Frequency']) expect(screen.getByLabelText(label)).toBeInTheDocument()
+ fireEvent.click(screen.getByLabelText('Vesting'))
+ fireEvent.click(screen.getByRole('option', { name: 'Custom' }))
+ expect(screen.getByLabelText('Total Vest (months)')).toBeInTheDocument()
+ expect(screen.getByLabelText('Cliff (months)')).toBeInTheDocument()
+})
