@@ -8,7 +8,7 @@ function Harness({ initial = [createMatchingContract(createWorkplacePlan('group-
   const [contracts, setContracts] = useState(initial)
   const [invalid, setInvalid] = useState(false)
   const results = Array.isArray(contracts) ? contracts.map(c => resolveMatchingPlan(c, { baseSalary: 100000, cashBonus: 20000 })) : []
-  return <RetirementEditor mode="contract" contracts={contracts} onContractsChange={setContracts} profile={createSharedTaxProfile()} onProfileChange={() => {}} onClearCraLimits={() => {}} payContent={<p>Pay input</p>} reviewContent={<p>Review</p>} summary={<p>Funding: {invalid ? 'Needs Review' : results.map(r => r.plan?.employerContribution ?? 'Invalid').join(', ')}</p>} onValidityChange={setInvalid} />
+  return <RetirementEditor mode="contract" contracts={contracts} onContractsChange={next => setContracts(structuredClone(next))} profile={createSharedTaxProfile()} onProfileChange={() => {}} onClearCraLimits={() => {}} payContent={<p>Pay input</p>} reviewContent={<p>Review</p>} summary={<><p>Funding: {invalid ? 'Needs Review' : results.map(r => r.plan?.employerContribution ?? 'Invalid').join(', ')}</p><p>Employee: {results.map(r => r.plan?.employeeContribution ?? 'Invalid').join(', ')}</p></>} onValidityChange={setInvalid} />
 }
 const step = (name: string) => fireEvent.click(screen.getByRole('button', { name: new RegExp(name) }))
 describe('Shared contractual editor', () => {
@@ -55,5 +55,30 @@ describe('Shared contractual editor', () => {
     expect(screen.getByText('Funding: Needs Review')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Remove Plan 1' }))
     expect(screen.queryByText('Funding: Needs Review')).not.toBeInTheDocument()
+  })
+  it('retains a later plan invalid draft when an earlier valid plan is removed', () => {
+    render(<Harness initial={[createMatchingContract(createWorkplacePlan('prpp', 'a')), createMatchingContract(createWorkplacePlan('prpp', 'b'))]} />)
+    step('Workplace Plan')
+    fireEvent.change(screen.getAllByLabelText('Employee Annual Contribution')[1], { target: { value: 'bad contribution' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Plan 1' }))
+    expect(screen.getByLabelText('Employee Annual Contribution')).toHaveValue('bad contribution')
+    expect(screen.getByText('Funding: Needs Review')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Employee Annual Contribution'), { target: { value: '987.65' } })
+    expect(screen.getByText('Employee: 987.65')).toBeInTheDocument()
+    expect(screen.getByText('Funding: 0')).toBeInTheDocument()
+  })
+  it.each([false, true])('retains later invalid tier drafts across earlier removal with saved identifiers %s', savedIds => {
+    const contract = { ...createMatchingContract(), employee: { mode: 'dollars' as const, value: 6000 }, tiers: [
+      { ...(savedIds ? { id: 'first' } : {}), lowerPercent: 0, upperPercent: 3, matchRatio: 1 },
+      { ...(savedIds ? { id: 'second' } : {}), lowerPercent: 3, upperPercent: 6, matchRatio: .5 },
+    ] }
+    render(<Harness initial={[contract]} />); step('Employer Funding')
+    fireEvent.change(screen.getByLabelText('Tier 2 Employer Match Rate'), { target: { value: 'bad match' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Tier 1' }))
+    expect(screen.getByLabelText('Tier 1 Employer Match Rate')).toHaveValue('bad match')
+    expect(screen.getByText('Funding: Needs Review')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Tier 1 Employer Match Rate'), { target: { value: '0.75' } })
+    expect(screen.getByText('Funding: 2250')).toBeInTheDocument()
+    expect(screen.getByText('Employee: 6000')).toBeInTheDocument()
   })
 })

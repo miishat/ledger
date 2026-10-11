@@ -34,7 +34,7 @@ export interface RetirementProvenance {
   sourceBreakdown?: { salary: number; cashBonus: number; realizedEquity: number; esppGain: number }
 }
 export type SalaryRetirementScenario = RetirementScenario
-export interface MatchingTier { lowerPercent: number; upperPercent: number; matchRatio: number }
+export interface MatchingTier { id?: string; lowerPercent: number; upperPercent: number; matchRatio: number }
 export interface ContributionInput { mode: 'dollars' | 'percent'; value: number }
 export interface MatchingContract {
   plan: WorkplacePlan
