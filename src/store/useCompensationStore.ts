@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { STORAGE_KEYS } from './storageKeys'
+import { persistNormalizedRetirementStorage, normalizeCompensationState, normalizeOfferRetirement, type OfferRetirement } from './retirementPersistence'
+import type { MatchingContract } from '../utils/finance/retirementTypes'
+import { resolveMatchingPlan } from '../utils/finance/retirementMatching'
 
 export type VestingPreset = '4yr-1yr-cliff' | '3yr-no-cliff' | 'custom'
 export type VestingFrequency = 'monthly' | 'quarterly'
@@ -41,6 +44,7 @@ export interface CompensationPackage {
   esppDiscountPercent: number
   esppLockedInPrice: number
   esppLockInEndDate?: string
+  retirement?: OfferRetirement
   rrspMatchPercent: number
   rrspMatchCap: number
   rsuGrants: RSUGrant[]
@@ -79,7 +83,7 @@ export function getBaseSalaryForMonth(pkg: CompensationPackage, year: number, mo
 }
 
 export function calcAnnualBaseSalary(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
-  if (timeMode === 'next-1-year') {
+  if (timeMode === 'next-1-year' || !(pkg.pastSalaryChanges || []).some(change => change.salary > 0 && change.changeMonth >= 1 && change.changeMonth <= 12)) {
     return pkg.baseSalary;
   }
 
@@ -117,8 +121,16 @@ export function calcAnnualESPP(pkg: CompensationPackage, timeMode: TimeMode = 'c
   return Math.max(0, currentValue - contributionAmount);
 }
 
+/** Numeric compatibility subtotal. Use compensationRetirement for nullable funding and tax/transfer eligibility. */
 export function calcAnnualRRSP(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
-  return Math.min(calcAnnualBaseSalary(pkg, timeMode) * (pkg.rrspMatchPercent / 100), pkg.rrspMatchCap)
+  const normalized = normalizeOfferRetirement(pkg)
+  if (normalized.retirement.review.status === 'ready') {
+    return normalized.retirement.contracts.reduce((total, contract) => total + (resolveMatchingPlan(contract, { baseSalary: calcAnnualBaseSalary(pkg, timeMode), cashBonus: calcAnnualBonus(pkg, timeMode) }).plan?.employerContribution ?? 0), 0)
+  }
+  if (normalized.retirement.review.status === 'invalid') return 0
+  // Only the preserved legacy gross estimate is available before review.
+  const amount = Math.min(calcAnnualBaseSalary(pkg, timeMode) * (pkg.rrspMatchPercent / 100), pkg.rrspMatchCap)
+  return Number.isFinite(amount) && amount >= 0 ? amount : 0
 }
 
 export function calcAnnualRSU(pkg: CompensationPackage, timeMode: TimeMode = 'current-year'): number {
@@ -218,6 +230,10 @@ interface CompensationState {
   timeMode: TimeMode
   useCadConversion: boolean
   showAfterTax: boolean
+  includePersonalDeductions: boolean
+  setIncludePersonalDeductions: (include: boolean) => void
+  setRetirementContracts: (offer: 'primary' | 'compare', contracts: MatchingContract[]) => void
+  resetOffer: (offer: 'primary' | 'compare') => void
 
   setPrimaryPackage: (updates: Partial<CompensationPackage>) => void
   setComparePackage: (pkg: CompensationPackage | null) => void
@@ -249,18 +265,27 @@ export const defaultPrimaryPackage: CompensationPackage = {
 export const useCompensationStore = create<CompensationState>()(
   persist(
     (set) => ({
-      primaryPackage: defaultPrimaryPackage,
+      primaryPackage: normalizeOfferRetirement(defaultPrimaryPackage),
       comparePackage: null,
       compareMode: false,
       timeMode: 'current-year',
       useCadConversion: false,
       showAfterTax: false,
+      includePersonalDeductions: false,
+      setIncludePersonalDeductions: include => set({ includePersonalDeductions: include }),
+      setRetirementContracts: (offer, contracts) => set(state => {
+        const key = offer === 'primary' ? 'primaryPackage' : 'comparePackage'
+        const pkg = state[key]
+        if (!pkg) return {}
+        return { [key]: normalizeOfferRetirement({ ...pkg, retirement: { schemaVersion: 1, contracts: structuredClone(contracts), review: { status: 'ready', issues: [] } } }) }
+      }),
+      resetOffer: offer => set(state => offer === 'primary' ? { primaryPackage: normalizeOfferRetirement(structuredClone(defaultPrimaryPackage)) } : { comparePackage: state.comparePackage ? normalizeOfferRetirement({ ...structuredClone(defaultPrimaryPackage), id: state.comparePackage.id, name: state.comparePackage.name }) : null }),
 
       setPrimaryPackage: (updates) =>
         set((state) => ({
-          primaryPackage: { ...state.primaryPackage, ...updates },
+          primaryPackage: normalizeOfferRetirement({ ...state.primaryPackage, ...structuredClone(updates) }),
         })),
-      setComparePackage: (pkg) => set({ comparePackage: pkg }),
+      setComparePackage: (pkg) => set({ comparePackage: pkg ? normalizeOfferRetirement(structuredClone(pkg)) : null }),
       toggleCompareMode: () => set((state) => ({ compareMode: !state.compareMode })),
       setTimeMode: (mode) => set({ timeMode: mode }),
       toggleCadConversion: () => set((state) => ({ useCadConversion: !state.useCadConversion })),
@@ -291,11 +316,10 @@ export const useCompensationStore = create<CompensationState>()(
     }),
     {
       name: STORAGE_KEYS.compensation,
-      version: 1,
-      // Existing installs wrote version 0 with this exact shape, so v0 to v1
-      // is an identity migration. It exists so the next schema change has a
-      // hook instead of a silent reinterpretation of whatever is on disk.
-      migrate: (persisted: unknown) => persisted,
+      version: 2,
+      onRehydrateStorage: () => (_state, error) => { if (!error) persistNormalizedRetirementStorage(STORAGE_KEYS.compensation) },
+      migrate: persisted => normalizeCompensationState(persisted),
+      merge: (persisted, current) => persisted == null ? current : ({ ...current, ...normalizeCompensationState(persisted) }),
     }
   )
 )

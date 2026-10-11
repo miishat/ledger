@@ -326,3 +326,56 @@ describe('account currency backup restoration', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts)!).state.accounts[0].value).toBe(60)
   })
 })
+
+import { usePlannerStore } from '../store/usePlannerStore'
+import { useCompensationStore } from '../store/useCompensationStore'
+describe('retirement restore boundaries', () => {
+  it('normalizes file/undo storage and live rehydrate idempotently preserving invalid rows', async () => {
+    const envelope: BackupEnvelope = { version: BACKUP_VERSION, app: 'ledger', exportedAt: '', data: {
+      [STORAGE_KEYS.planner]: { version: 1, state: { inputs: { 'take-home-pay': { gross: 56789.123, province: 'BC', rrsp: 123.456 }, other: { target: 5 } } } },
+      [STORAGE_KEYS.compensation]: { version: 1, state: { primaryPackage: { ...useCompensationStore.getState().primaryPackage, retirement: undefined, baseSalary: 100000, rrspMatchPercent: 5, rrspMatchCap: 4000 }, comparePackage: null } },
+    } }
+    restoreBackup(envelope)
+    const first = buildBackup()
+    expect((first.data[STORAGE_KEYS.planner] as { state: { salaryRetirementScenario: { cashEmploymentIncome: number } } }).state.salaryRetirementScenario.cashEmploymentIncome).toBe(56789.123)
+    await usePlannerStore.persist.rehydrate()
+    await useCompensationStore.persist.rehydrate()
+    expect(usePlannerStore.getState().salaryRetirementScenario?.personalRrsp).toBe(123.456)
+    expect(useCompensationStore.getState().primaryPackage.retirement?.review.status).toBe('legacy')
+    restoreBackup(first)
+    expect(buildBackup().data).toEqual(first.data)
+    await usePlannerStore.persist.rehydrate()
+    expect(usePlannerStore.getState().sharedTaxProfile.province).toBe('BC')
+  })
+})
+
+import { createMatchingContract, createWorkplacePlan, createSharedTaxProfile } from '../utils/finance/retirementTypes'
+describe('typed retirement backup and undo', () => {
+  it('round-trips distinct offers, personal toggle, signed/zero capacities and recoverable invalid rows', async () => {
+    localStorage.clear()
+    const firstContract = { ...createMatchingContract(createWorkplacePlan('dc-rpp', 'first')), employee: { mode: 'dollars' as const, value: 3456.789 } }
+    const secondContract = { ...createMatchingContract(createWorkplacePlan('group-rrsp', 'second')), employee: { mode: 'percent' as const, value: 101 } }
+    const state = useCompensationStore.getState()
+    state.setRetirementContracts('primary', [firstContract])
+    state.setComparePackage({ ...state.primaryPackage, id: 'comparison' })
+    state.setRetirementContracts('compare', [secondContract])
+    state.setIncludePersonalDeductions(true)
+    usePlannerStore.getState().setSharedTaxProfile({ ...createSharedTaxProfile('QC'), rrspDeductionLimit: { state: 'known', value: 0, sourceYear: 2026 }, rrspContributionRoom: { state: 'known', value: -345.678, sourceYear: 2025 } })
+    const snapshot = buildBackup()
+    state.resetOffer('primary')
+    state.resetOffer('compare')
+    state.setIncludePersonalDeductions(false)
+    usePlannerStore.getState().clearCraLimits()
+    restoreBackup(snapshot)
+    await useCompensationStore.persist.rehydrate()
+    await usePlannerStore.persist.rehydrate()
+    expect(useCompensationStore.getState().primaryPackage.retirement?.contracts).toEqual([firstContract])
+    expect(useCompensationStore.getState().comparePackage?.retirement?.contracts).toEqual([secondContract])
+    expect(useCompensationStore.getState().comparePackage?.retirement?.review).toMatchObject({ status: 'invalid', raw: [secondContract] })
+    expect(useCompensationStore.getState().includePersonalDeductions).toBe(true)
+    expect(usePlannerStore.getState().sharedTaxProfile.rrspContributionRoom).toEqual({ state: 'known', value: -345.678, sourceYear: 2025 })
+    expect(usePlannerStore.getState().sharedTaxProfile.rrspDeductionLimit).toEqual({ state: 'known', value: 0, sourceYear: 2026 })
+    expect(buildBackup().data).toEqual(snapshot.data)
+    localStorage.clear()
+  })
+})

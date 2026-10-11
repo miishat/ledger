@@ -224,3 +224,29 @@ describe('a pull from an older build does not destroy newer stores', () => {
     expect(localStorage.getItem('ledger-trades')).not.toBeNull()
   })
 })
+
+import { usePlannerStore } from '../store/usePlannerStore'
+import { useCompensationStore, defaultPrimaryPackage } from '../store/useCompensationStore'
+describe('retirement Drive pull', () => {
+  it('migrates old remote payloads before storage/hash and retains live reviewed inputs across repeated pull', async () => {
+    localStorage.clear()
+    const envelope: BackupEnvelope = { app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: {
+      'ledger-planner': { version: 1, state: { inputs: { 'income-tax': { income: 91234.567, province: 'QC', rrspRoom: 4567.89 } } } },
+      'ledger-compensation': { version: 1, state: { primaryPackage: { ...defaultPrimaryPackage, baseSalary: 100000, rrspMatchPercent: 5, rrspMatchCap: 0 }, comparePackage: { ...defaultPrimaryPackage, id: 'second' }, includePersonalDeductions: true } },
+    } }
+    vi.mocked(drive.downloadSnapshot).mockResolvedValue(JSON.stringify(envelope))
+    await performPull('tok', remoteMeta(8))
+    await usePlannerStore.persist.rehydrate()
+    await useCompensationStore.persist.rehydrate()
+    expect(usePlannerStore.getState().salaryRetirementScenario?.cashEmploymentIncome).toBe(91234.567)
+    expect(usePlannerStore.getState().sharedTaxProfile.rrspDeductionLimit).toEqual({ state: 'legacy', value: 4567.89 })
+    expect(useCompensationStore.getState().primaryPackage.retirement?.review.status).toBe('legacy')
+    expect(useCompensationStore.getState().comparePackage?.retirement?.review.status).toBe('ready')
+    expect(useCompensationStore.getState().includePersonalDeductions).toBe(true)
+    const first = localStorage.getItem('ledger-compensation')
+    await performPull('tok', remoteMeta(8))
+    expect(localStorage.getItem('ledger-compensation')).toBe(first)
+    expect(collectFacts().currentHash).toBe(useSyncStore.getState().lastSyncedHash)
+    localStorage.clear()
+  })
+})

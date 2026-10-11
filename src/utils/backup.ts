@@ -1,3 +1,4 @@
+import { normalizeRetirementStorage } from '../store/retirementPersistence'
 import { STORAGE_KEYS, NON_BACKUP_KEY_NAMES, type StorageKeyName } from '../store/storageKeys'
 
 export const BACKUP_VERSION = 2
@@ -101,7 +102,7 @@ export function restoreBackup(envelope: BackupEnvelope): void {
   // leave storage half-written.
   const writes: Array<[string, string]> = Object.entries(envelope.data ?? {})
     .filter(([key]) => BACKUP_KEYS.includes(key))
-    .map(([key, value]) => [key, JSON.stringify(value)] as [string, string])
+    .map(([key, value]) => [key, JSON.stringify(normalizeRetirementStorage(key, value))] as [string, string])
   for (const [key, serialised] of writes) {
     localStorage.setItem(key, serialised)
   }
