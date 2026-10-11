@@ -17,6 +17,7 @@ import type { VestEvent } from '../../store/useCompensationStore'
 import { useCompensationDisplay } from '../../hooks/useCompensationDisplay'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import type { ChartTooltipProps } from '../../utils/chartTheme'
+import { formatMoney } from '../planner/format'
 import { retirementRange, PLAN_NAMES } from '../retirement/retirementPresentation'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
@@ -75,7 +76,7 @@ export function CompHeroWidget({ className = '', blocked = false }: CompHeroWidg
   const primaryPackage = { ...rawPkg, companyCurrentPrice: rawPkg.companyCurrentPrice * (retirementOptions.fx.cadPerStockUnit ?? 1) }
   const [view, setView] = useState<'annualized' | 'monthly'>('annualized')
   const totalComp = result.totalCompensation ?? result.knownCompensation ?? 0
-  const cashRange = (divisor = 1) => blocked || !result.estimate ? 'Needs Review' : retirementRange(result.estimate.branches.map(b => b.cashAfterContributions / divisor))
+  const cashRange = (divisor = 1) => blocked || !result.estimate ? 'Needs Review' : retirementRange(result.estimate.branches.map(b => b.cashAfterContributions / divisor), formatMoney, 'Earnings Treatment Needed')
 
   if (totalComp === 0 && result.status === 'ready') {
     return (
@@ -343,7 +344,7 @@ export function CompHeroWidget({ className = '', blocked = false }: CompHeroWidg
           <div><p>Cash Biweekly (Annual Average)</p><strong>{cashRange(26)}</strong></div>
         </div>
         <TaxYearNotice />
-        {result.estimate?.status === 'uncertain' && <p>Earnings Treatment Needed. All {result.estimate.branches.length} earnings combinations are included in ranges.</p>}
+        {result.estimate?.status === 'uncertain' && <p>Earnings Treatment Needed. {result.estimate.branchStatus === 'unavailable' ? 'Dependent results unavailable. All plan rows and known funding amounts are retained.' : `All ${result.estimate.branches.length} earnings combinations are included in ranges.`}</p>}
         {result.assumptions.map((assumption, i) => <p key={i} className="text-[12px] text-[var(--color-text-secondary)]">{assumption}</p>)}
         <SalaryScenarioTransfer result={result} blocked={blocked} />
       </div>}

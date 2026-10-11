@@ -45,3 +45,12 @@ describe('complete Forecaster tax baseline', () => {
     expect(resolveForecasterCompTax({ ...config, primaryPackage }).rate).toBeNull()
   })
 })
+
+it('withholds above-budget automatic rate without losing manual or tax-off authority', () => {
+ const savedScenario = { ...createRetirementScenario(), cashEmploymentIncome: 50000, workplacePlans: Array.from({ length: 17 }, (_, i) => ({ ...createWorkplacePlan('group-rrsp', `many-${i}`), employerContribution: 100 })) }
+ const automatic = resolveForecasterCompTax({ ...config, savedScenario })
+ expect(automatic.rate).toBeNull(); expect(automatic.rangePct).toBeNull()
+ expect(automatic.notices.join(' ')).toContain('dependent results unavailable')
+ expect(resolveForecasterCompTax({ ...config, savedScenario, auto: false }).rate).toBe(.41)
+ expect(resolveForecasterCompTax({ ...config, savedScenario, enabled: false }).rate).toBe(0)
+})

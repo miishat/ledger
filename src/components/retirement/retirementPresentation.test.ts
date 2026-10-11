@@ -12,3 +12,7 @@ describe('Retirement result presentation', () => {
     expect(retirementRange([100, NaN])).toBe('Needs Review')
   })
 })
+
+it('ranges the 262144 comparison outcomes without argument-stack overflow', () => {
+  expect(retirementRange(Array.from({ length: 262144 }, (_, i) => i))).toBe('$0 to $262,143')
+})

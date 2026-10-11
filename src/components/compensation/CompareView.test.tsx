@@ -126,3 +126,20 @@ it('names all comparison equity controls for keyboard and screen-reader users', 
  expect(screen.getByLabelText('Total Vest (months)')).toBeInTheDocument()
  expect(screen.getByLabelText('Cliff (months)')).toBeInTheDocument()
 })
+
+it('compares nine independent unknown rows per offer without Cartesian overflow', async () => {
+ const contracts = Array.from({ length: 9 }, (_, i) => { const c = createMatchingContract(createWorkplacePlan('group-rrsp', `many-${i}`)); c.unconditionalEmployer.value = 100; return c })
+ const offer = { ...defaultPrimaryPackage, baseSalary: 50000, rsuGrants: [], cashBonusPercent: 0, retirement: { ...ready, contracts } }
+ useCompensationStore.setState({ primaryPackage: offer, comparePackage: { ...offer, id: 'compare' }, showAfterTax: true })
+ await act(async () => { render(<CompareView />) })
+ expect(screen.getByText('Cash After Contributions Delta').parentElement).toHaveTextContent(/more|less|Equivalent/)
+})
+it('withholds above-budget cash delta while retaining known funding delta', async () => {
+ const contracts = Array.from({ length: 17 }, (_, i) => { const c = createMatchingContract(createWorkplacePlan('group-rrsp', `many-${i}`)); c.unconditionalEmployer.value = 100; return c })
+ const offer = { ...defaultPrimaryPackage, baseSalary: 50000, rsuGrants: [], retirement: { ...ready, contracts } }
+ useCompensationStore.setState({ primaryPackage: offer, comparePackage: { ...offer, id: 'compare' }, showAfterTax: true })
+ await act(async () => { render(<CompareView />) })
+ expect(screen.getByText('Cash After Contributions Delta').parentElement).toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.getByText('Employer Retirement Funding Delta').parentElement).toHaveTextContent('Equivalent')
+ expect(screen.queryByText(/All 0/)).not.toBeInTheDocument()
+})

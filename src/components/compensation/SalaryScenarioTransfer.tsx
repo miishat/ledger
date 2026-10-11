@@ -69,7 +69,7 @@ export function SalaryScenarioTransfer({ result, blocked = false }: { result: Co
     }
     setReview(snapshot)
   }
-  const reviewRange = (field: 'employmentIncome' | 'pensionableEarnings' | 'eiEarnings' | 'qpipEarnings' | 'employmentCreditIncome' | 'workerDeductionIncome') => retirementRange(review?.transferDetails.classifiedBranches.map(b => b.context[field]) ?? [], exactMoney)
+  const reviewRange = (field: 'employmentIncome' | 'pensionableEarnings' | 'eiEarnings' | 'qpipEarnings' | 'employmentCreditIncome' | 'workerDeductionIncome') => retirementRange(review?.transferDetails.classifiedBranches.map(b => b.context[field]) ?? [], exactMoney, 'Earnings Treatment Needed')
   return <>
     <button type="button" disabled={disabled} onClick={transfer} className="self-start flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)]"><ExternalLink size={14} />Full breakdown in Salary &amp; Tax</button>
     <Sheet open={review !== null} onClose={() => setReview(null)} ariaLabel="Replace Salary & Tax Scenario" title="Replace Salary & Tax Scenario" panelClassName="w-[48rem] max-w-[calc(100vw-1rem)] themed-card rounded-lg p-4" contentClassName="flex flex-col gap-3">
@@ -90,7 +90,7 @@ export function SalaryScenarioTransfer({ result, blocked = false }: { result: Co
           <p>QPIP Earnings: {reviewRange('qpipEarnings')}</p>
           <p>Employment Credit Base: {reviewRange('employmentCreditIncome')}</p>
           <p>Quebec Worker Deduction Base: {reviewRange('workerDeductionIncome')}</p>
-          <p>All {review.transferDetails.classifiedBranches.length} withdrawal-treatment combinations are retained.</p>
+          <p>{review.transferDetails.branchStatus === 'unavailable' ? 'Classification unavailable. Earnings Treatment Needed. All canonical plan rows and unknown restrictions are retained.' : `All ${review.transferDetails.classifiedBranches.length} withdrawal-treatment combinations are retained.`}</p>
           <p>CAD Per USD Stock Unit: {review.transferDetails.fx.cadPerStockUnit ?? 'Unavailable'}. Salary and retirement dollars are CAD.</p>
           {review.provenance?.assumptions.map((a, i) => <p key={i}>{a}</p>)}
           <TaxYearNotice />

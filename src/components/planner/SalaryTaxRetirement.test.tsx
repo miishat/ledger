@@ -148,3 +148,17 @@ describe('Salary retirement workspace', () => {
     expect(screen.getByText('Cash After Contributions').parentElement).not.toHaveTextContent('Needs Review')
   })
 })
+
+it('renders restored 17 unknown rows with unavailable tax precision and preserved funding', () => {
+ const s = { ...seed(), workplacePlans: Array.from({ length: 17 }, (_, i) => ({ ...createWorkplacePlan('group-rrsp', `many-${i}`), employeeContribution: 10, employerContribution: 100 })) }
+ usePlannerStore.getState().updateSalaryRetirementScenario(s)
+ usePlannerStore.getState().setSharedTaxProfile({ province: 'QC' })
+ render(<SalaryTaxTool />); step('Review')
+ expect(screen.getByText('Total Income Tax').parentElement).toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.getByText('Marginal Rate', { exact: true }).parentElement).toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.getByText('Potential top-band rate:', { exact: false })).toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.getByText('Current Contribution-Room Usage').parentElement).toHaveTextContent('$1,870')
+ expect(screen.getByText('QPIP', { exact: true }).parentElement).toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.getByText('CPP/QPP (Including Second Contribution)').parentElement).not.toHaveTextContent('Earnings Treatment Needed')
+ expect(screen.queryByText(/All 0/)).not.toBeInTheDocument()
+})

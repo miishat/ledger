@@ -1,10 +1,13 @@
-import { annualClassifiedTax, marginalSlices, PROVINCES, TAX_YEAR } from './canadaTax'
+import { annualClassifiedTax, employeeContributions, marginalSlices, PROVINCES, TAX_YEAR } from './canadaTax'
 import type { AnnualSalaryTax, ClassifiedTaxContext, MarginalBreakdown, MarginalSlice } from './canadaTax'
 import { validateWorkplacePlan } from './retirementTypes'
 export { validateWorkplacePlan } from './retirementTypes'
 import type { CapacityValue, RetirementIssue, RetirementScenario, SharedTaxProfile, WorkplacePlan } from './retirementTypes'
 
 const validMoney = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0
+// Bounds tax, marginal and efficiency work before independent combinations allocate.
+// Nine unknown arrangements retain all 512 combinations; larger cases keep canonical amounts.
+export const MAX_RETIREMENT_BRANCHES = 512
 export const REGISTERED_PLAN_LIMITS = { 2026: { rrsp: 33810, moneyPurchase: 35390, dpsp: 17695 } } as const
 export interface DeductionAllocation { planId: string; employerRrsp: number; employee: number }
 export interface RetirementBranch {
@@ -23,6 +26,8 @@ export interface RetirementBranch {
 }
 export interface RetirementEstimate {
   status: 'valid' | 'uncertain' | 'invalid'
+  branchStatus: 'complete' | 'unavailable'
+  independentAmounts: { employmentIncome: number; rrspDeduction: number; rppDeduction: number; fhsaDeduction: number; pension: number; pensionPlan: 'CPP' | 'QPP' } | null
   scenario: RetirementScenario
   issues: RetirementIssue[]
   branches: RetirementBranch[]
@@ -54,7 +59,7 @@ function capacity(value: CapacityValue, year: number, deduction: boolean, issues
 }
 export function estimateRetirement(scenario: RetirementScenario, profile: SharedTaxProfile): RetirementEstimate {
   const issues: RetirementIssue[] = []
-  const result: RetirementEstimate = { status: 'valid', scenario, issues, branches: [], employeeCashOutflow: null, knownEmployerFunding: 0,
+  const result: RetirementEstimate = { status: 'valid', branchStatus: 'complete', independentAmounts: null, scenario, issues, branches: [], employeeCashOutflow: null, knownEmployerFunding: 0,
     employerFunding: null, totalRetirementFunding: null, currentRoomUsage: null, followingYearPa: null, memberDeductionCapacity: null,
     remainingDeductionCapacity: null, remainingContributionRoom: null, additionalContributionCapacity: null, deductionAllocation: [], personalRrspDeduction: 0 }
   if (![scenario.cashEmploymentIncome, scenario.personalRrsp, scenario.personalFhsa].every(validMoney) || !Array.isArray(scenario.workplacePlans)
@@ -128,11 +133,20 @@ export function estimateRetirement(scenario: RetirementScenario, profile: Shared
     if (!supported || bases.some(b => b === null) || new Set(bases).size > 1) issues.push({ code: 'aggregate-limit-unverified', message: 'Combined legal earnings/aggregate check unverified. Administrator confirmation needed.' })
     else if (aggregate > .18 * (bases[0] as number)) issues.push({ code: 'aggregate-earnings-limit', message: 'Combined ordinary credits exceed 18% of confirmed compensation.' })
   }
-  const unknown = plans.some(p => p.kind === 'group-rrsp' && p.withdrawalRestriction === 'unknown' && (p.employerContribution ?? 0) > 0)
+  const employmentIncome = scenario.cashEmploymentIncome + rrspEmployer
+  const pension = employeeContributions(employmentIncome, profile.province)
+  result.independentAmounts = { employmentIncome, rrspDeduction, rppDeduction: rppEmployee, fhsaDeduction: fhsa, pension: pension.pension, pensionPlan: pension.plan }
+  const unknownPlans = plans.filter(p => p.kind === 'group-rrsp' && p.withdrawalRestriction === 'unknown' && (p.employerContribution ?? 0) > 0)
+  const unknown = unknownPlans.length > 0
+  if (unknownPlans.length > Math.log2(MAX_RETIREMENT_BRANCHES)) {
+    result.status = 'uncertain'; result.branchStatus = 'unavailable'
+    issues.push({ code: 'earnings-treatment-needed', message: 'Earnings Treatment Needed. Too many unresolved withdrawal restrictions; dependent results unavailable. All plan rows and known funding amounts are retained.' })
+    return result
+  }
   const insuranceKnown = sum(p => p.kind === 'group-rrsp' && p.withdrawalRestriction === 'withdrawable','employerContribution')
   if (unknown) { result.status = 'uncertain'; issues.push({ code: 'earnings-treatment-needed', message: 'Earnings Treatment Needed. Restricted and withdrawable branches shown.' }) }
   let possibilities: { extra: number; treatments: Record<string, 'restricted' | 'withdrawable'> }[] = [{ extra: 0, treatments: {} }]
-  for (const plan of plans.filter(p => p.kind === 'group-rrsp' && p.withdrawalRestriction === 'unknown' && (p.employerContribution ?? 0) > 0)) {
+  for (const plan of unknownPlans) {
     possibilities = possibilities.flatMap(branch => [
       { extra: branch.extra, treatments: { ...branch.treatments, [plan.id]: 'restricted' as const } },
       { extra: branch.extra + (plan.employerContribution ?? 0), treatments: { ...branch.treatments, [plan.id]: 'withdrawable' as const } },

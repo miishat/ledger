@@ -261,3 +261,41 @@ for (const theme of ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouv
 
 
 
+
+
+test('many-row file restore preserves unknowns, safely renders Salary and transfers unavailable classifications', async ({ page }) => {
+ await seed(page); await page.goto('./#/compensation')
+ const contracts = Array.from({ length: 17 }, (_, i) => {
+  const c = createMatchingContract({ ...createWorkplacePlan('group-rrsp', `many-${i}`), name: `Unknown Plan ${i + 1}` })
+  c.employee.value = 10; c.unconditionalEmployer.value = 100
+  return c
+ })
+ const primary = { ...pkg, baseSalary: 50000, cashBonusPercent: 0, retirement: { ...ready, contracts } }
+ const manySalary = { ...scenario, cashEmploymentIncome: 50000, personalRrsp: 0, personalFhsa: 0, workplacePlans: contracts.map(c => ({ ...c.plan, employeeContribution: 10, employerContribution: 100 })) }
+ const compensation = { state: { ...(await stored(page, 'ledger-compensation')), primaryPackage: primary }, version: 2 }
+ const planner = { state: { ...(await stored(page, 'ledger-planner')), salaryRetirementScenario: manySalary }, version: 2 }
+ await page.getByRole('button', { name: 'Settings', exact: true }).click()
+ await page.getByLabel('Import backup', { exact: true }).setInputFiles({ name: 'many-retirement.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ app: 'ledger', version: 2, exportedAt: '2026-10-11T12:00:00Z', data: { 'ledger-compensation': compensation, 'ledger-planner': planner } })) })
+ await expect(page.getByLabel('Annual Base Salary (CAD)', { exact: true })).toHaveValue('50000')
+ await page.keyboard.press('Escape')
+ await page.goto('./#/planner/salary-tax'); await step(page, 'Review')
+ await expect(page.getByText('Total Income Tax', { exact: true }).locator('..')).toContainText('Earnings Treatment Needed')
+ await expect(page.getByText('Current Contribution-Room Usage', { exact: true }).locator('..')).toContainText('$1,870')
+ expect((await stored(page, 'ledger-planner')).salaryRetirementScenario.workplacePlans).toEqual(manySalary.workplacePlans)
+ await page.reload(); await step(page, 'Workplace Plan')
+ await expect(page.getByLabel('Employee Annual Contribution', { exact: true })).toHaveCount(17)
+ await page.goto('./#/compensation'); await page.getByRole('button', { name: 'After-Tax', exact: true }).click()
+ await expect(page.locator('section[data-key-figure]')).toContainText('Earnings Treatment Needed')
+ // Personal inclusion differs, so the real replacement review is required.
+ await page.getByRole('button', { name: 'Full breakdown in Salary & Tax' }).click()
+ const review = page.getByRole('dialog', { name: 'Replace Salary & Tax Scenario' })
+ await expect(review).toContainText('Classification unavailable. Earnings Treatment Needed')
+ await expect(review).not.toContainText('All 0')
+ await review.getByRole('button', { name: 'Replace Scenario', exact: true }).click()
+ const saved = (await stored(page, 'ledger-planner')).salaryRetirementScenario
+ expect(saved.workplacePlans).toHaveLength(17)
+ expect(saved.workplacePlans.every((p: { withdrawalRestriction: string }) => p.withdrawalRestriction === 'unknown')).toBe(true)
+ expect(saved.transferDetails.branchStatus).toBe('unavailable')
+ expect(saved.transferDetails.classifiedBranches).toEqual([])
+ await expect(page.locator('section[data-key-figure]')).toContainText('Earnings Treatment Needed')
+})

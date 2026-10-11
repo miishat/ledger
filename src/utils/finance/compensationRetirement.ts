@@ -34,6 +34,7 @@ export interface CompensationRetirementResult {
 export interface SalaryRetirementSnapshot extends RetirementScenario {
   /** Historical review metadata only. Calculators always rebuild from the canonical scenario. */
   transferDetails: {
+    branchStatus: 'complete' | 'unavailable'
     employerTaxableBenefits: number
     classifiedBranches: Array<{ withdrawalTreatments: Record<string, string>; context: ClassifiedTaxContext }>
     profileAtTransfer: SharedTaxProfile
@@ -88,6 +89,7 @@ export function resolveCompensationOffers(primary: CompensationPackage, compare:
 export function buildSalaryRetirementSnapshot(result: CompensationRetirementResult, transferredAt = new Date().toISOString()): SalaryRetirementSnapshot | null {
   if (result.status !== 'ready' || !result.scenario || !result.estimate) return null
   return structuredClone({ ...result.scenario, provenance: { ...result.scenario.provenance!, transferredAt, editedAfterTransfer: false }, transferDetails: {
+    branchStatus: result.estimate.branchStatus,
     employerTaxableBenefits: result.scenario.workplacePlans.filter(plan => plan.kind === 'group-rrsp').reduce((sum, plan) => sum + (plan.employerContribution ?? 0), 0),
     classifiedBranches: result.estimate.branches.map(branch => ({ withdrawalTreatments: branch.withdrawalTreatments, context: branch.context })),
     profileAtTransfer: result.profile, fx: result.fx,

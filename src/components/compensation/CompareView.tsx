@@ -10,7 +10,7 @@ import { createMatchingContract, createWorkplacePlan } from '../../utils/finance
 import { RetirementEditor } from '../retirement/RetirementEditor'
 import { RetirementNumericField } from '../retirement/RetirementNumericField'
 import { RetirementResults } from '../retirement/RetirementResults'
-import { retirementRange } from '../retirement/retirementPresentation'
+import { retirementRange, retirementExtrema } from '../retirement/retirementPresentation'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
@@ -26,7 +26,7 @@ function OfferResults({ title, result, blocked, afterTax }: { title: string; res
       <div className="retirement-result-row"><dt>Known Compensation</dt><dd>{amount(result.knownCompensation)}</dd></div>
       <div className="retirement-result-row"><dt>Employer Retirement Funding</dt><dd>{blocked ? 'Needs Review' : result.status !== 'ready' ? unavailable : result.employerFunding === null ? 'Funding Unknown' : formatMoney(result.employerFunding)}</dd></div>
       <div className="retirement-result-row"><dt>Employee Cash Outflow</dt><dd>{amount(result.estimate?.employeeCashOutflow ?? null)}</dd></div>
-      {afterTax && <div className="retirement-result-row"><dt>Cash After Contributions</dt><dd>{blocked ? 'Needs Review' : result.estimate ? retirementRange(result.estimate.branches.map(b => b.cashAfterContributions)) : unavailable}</dd></div>}
+      {afterTax && <div className="retirement-result-row"><dt>Cash After Contributions</dt><dd>{blocked ? 'Needs Review' : result.estimate ? retirementRange(result.estimate.branches.map(b => b.cashAfterContributions), formatMoney, 'Earnings Treatment Needed') : unavailable}</dd></div>}
     </dl>
     {result.employerFunding === null && result.estimate && <p>Pension Value Not Estimated.</p>}
   </section>
@@ -87,7 +87,9 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
   const delta = (left: number[] | null, right: number[] | null) => {
     if (invalid || blocked) return 'Needs Review'
     if (!left || !right) return 'Unknown'
-    return retirementRange(right.flatMap(r => left.map(l => r - l)), n => n === 0 ? 'Equivalent' : `${n > 0 ? '+' : '-'}${formatMoney(Math.abs(n))} ${n > 0 ? 'more' : 'less'}`)
+    if (!left.length || !right.length) return 'Earnings Treatment Needed'
+    const [leftLow, leftHigh] = retirementExtrema(left); const [rightLow, rightHigh] = retirementExtrema(right)
+    return retirementRange([rightLow - leftHigh, rightHigh - leftLow], n => n === 0 ? 'Equivalent' : `${n > 0 ? '+' : '-'}${formatMoney(Math.abs(n))} ${n > 0 ? 'more' : 'less'}`)
   }
   const preciseDelta = (field: 'knownCompensation' | 'employerFunding') => {
     if (invalid || blocked) return 'Needs Review'
@@ -226,7 +228,7 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
       onContractsChange={contracts => setDraft(current => ({ ...current, retirement: { schemaVersion: 1, contracts, review: { status: 'ready', issues: [] } } }))}
       profile={retirementOptions.profile} onProfileChange={setSharedTaxProfile} onClearCraLimits={clearCraLimits}
       onValidityChange={setInvalid} summary={summary} payContent={payContent}
-      reviewContent={<>{result.assumptions.map((a, i) => <p key={i}>{a}</p>)}{result.estimate ? <><RetirementResults estimate={result.estimate} blocked={invalid || blocked} />{result.estimate.status === 'uncertain' && <p>All {result.estimate.branches.length} comparison earnings combinations are included in ranges.</p>}</> : <p>{unavailable(result)}</p>}</>} />
+      reviewContent={<>{result.assumptions.map((a, i) => <p key={i}>{a}</p>)}{result.estimate ? <><RetirementResults estimate={result.estimate} blocked={invalid || blocked} />{result.estimate.status === 'uncertain' && <p>{result.estimate.branchStatus === 'unavailable' ? 'Earnings Treatment Needed. Dependent results unavailable.' : `All ${result.estimate.branches.length} comparison earnings combinations are included in ranges.`}</p>}</> : <p>{unavailable(result)}</p>}</>} />
     <button type="button" className="retirement-button retirement-primary" disabled={invalid} onClick={() => setComparePackage(draft)}>Calculate Comparison</button>
     {comparePackage && <section aria-label="Offer Comparison Results" className="retirement-group">
       <div className="grid grid-cols-1 desktop:grid-cols-2 gap-3">
@@ -237,7 +239,7 @@ export function CompareView({ blocked = false }: { blocked?: boolean }) {
       <p><span>Known Compensation Delta</span>: <strong>{preciseDelta('knownCompensation')}</strong></p>
       <p><span>Employer Retirement Funding Delta</span>: <strong>{preciseDelta('employerFunding')}</strong></p>
       <p><span>Employee Cash Outflow Delta</span>: <strong>{estimateDelta(false)}</strong></p>
-      {showAfterTax && <><p><span>Cash After Contributions Delta</span>: <strong>{estimateDelta(true)}</strong></p><TaxYearNotice />{(result.estimate?.status === 'uncertain' || retirement.primary.estimate?.status === 'uncertain') && <p>Earnings Treatment Needed. All earnings combinations are included in ranges.</p>}</>}
+      {showAfterTax && <><p><span>Cash After Contributions Delta</span>: <strong>{estimateDelta(true)}</strong></p><TaxYearNotice />{(result.estimate?.status === 'uncertain' || retirement.primary.estimate?.status === 'uncertain') && <p>Earnings Treatment Needed. {(result.estimate?.branchStatus === 'unavailable' || retirement.primary.estimate?.branchStatus === 'unavailable') ? 'Dependent cash results unavailable; known amounts are retained.' : 'All earnings combinations are included in ranges.'}</p>}</>}
     </section>}
   </WidgetWrapper>
 }

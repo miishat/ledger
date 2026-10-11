@@ -128,3 +128,19 @@ it('allows unknown DB employer funding without replacing it with zero', () => {
  show(next); fireEvent.click(screen.getByRole('button', { name: /Full breakdown/ })); fireEvent.click(screen.getByRole('button', { name: 'Replace Scenario' }))
  expect(usePlannerStore.getState().salaryRetirementScenario!.workplacePlans[0].employerContribution).toBeNull()
 })
+
+it('retains above-budget uncertainty in snapshot, review and replacement', () => {
+ const contracts = Array.from({ length: 17 }, (_, i) => { const c = createMatchingContract(createWorkplacePlan('group-rrsp', `many-${i}`)); c.unconditionalEmployer.value = 100; return c })
+ const r = resolveCompensationRetirement({ ...defaultPrimaryPackage, baseSalary: 50000, rsuGrants: [], retirement: { schemaVersion: 1, contracts, review: { status: 'ready', issues: [] } } }, { timeMode: 'current-year', fx: { stockCurrency: 'CAD', cadPerStockUnit: 1 }, profile, personalRrsp: 0, personalFhsa: 0, includePersonalDeductions: false })
+ const snapshot = buildSalaryRetirementSnapshot(r)!
+ expect(snapshot.transferDetails).toHaveProperty('branchStatus', 'unavailable')
+ expect(snapshot.workplacePlans).toHaveLength(17)
+ show(r); fireEvent.click(screen.getByRole('button', { name: /Full breakdown/ }))
+ expect(screen.getByRole('dialog')).toHaveTextContent('Classification unavailable. Earnings Treatment Needed')
+ expect(screen.getByRole('dialog')).not.toHaveTextContent('All 0')
+ fireEvent.click(screen.getByRole('button', { name: 'Replace Scenario' }))
+ const saved = usePlannerStore.getState().salaryRetirementScenario!
+ expect(saved.workplacePlans).toHaveLength(17)
+ expect(saved.workplacePlans.every(p => p.withdrawalRestriction === 'unknown')).toBe(true)
+ expect(estimateRetirement(saved, profile).branches).toHaveLength(0)
+})

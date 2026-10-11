@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, renderHook } from '@testing-library/react'
 import { useForecasterSettings } from './useForecasterSettings'
 import { usePlannerStore } from '../../../store/usePlannerStore'
-import { createRetirementScenario, createSharedTaxProfile } from '../../../utils/finance/retirementTypes'
+import { createRetirementScenario, createSharedTaxProfile, createWorkplacePlan } from '../../../utils/finance/retirementTypes'
 import { retirementMarginalBreakdown } from '../../../utils/finance/retirementEstimate'
 import { useCompensationStore } from '../../../store/useCompensationStore'
 
@@ -35,3 +35,22 @@ describe('Forecaster complete baseline integration', () => {
   })
 })
 
+
+it('withholds above-budget automatic compensation events then honors manual and tax-off rates', () => {
+ useCompensationStore.setState({ primaryPackage: { ...original, baseSalary: 120000, cashBonusPercent: 10, rsuGrants: [] } })
+ const savedScenario = { ...createRetirementScenario(), cashEmploymentIncome: 50000, workplacePlans: Array.from({ length: 17 }, (_, i) => ({ ...createWorkplacePlan('group-rrsp', `many-${i}`), employerContribution: 100 })) }
+ usePlannerStore.setState({ salaryRetirementScenario: savedScenario, inputs: { forecaster: { autoSavings: false, manualSavings: 777 } } })
+ const auto = renderHook(() => useForecasterSettings())
+ expect(auto.result.current.compTax.ratePct).toBeNull()
+ expect(auto.result.current.autoFeed.compLumps).toEqual([])
+ expect(auto.result.current.resolved.monthlySavings).toBe(777)
+ auto.unmount()
+ usePlannerStore.getState().setInput('forecaster', 'compTaxAuto', false)
+ const manual = renderHook(() => useForecasterSettings())
+ expect(manual.result.current.autoFeed.compLumps.find(l => l.label === 'Bonus')?.amount).toBe(6000)
+ manual.unmount()
+ usePlannerStore.getState().setInput('forecaster', 'compTaxEnabled', false)
+ const taxOff = renderHook(() => useForecasterSettings())
+ expect(taxOff.result.current.autoFeed.compLumps.find(l => l.label === 'Bonus')?.amount).toBe(12000)
+ expect(taxOff.result.current.autoFeed.compLumps.some(l => /retirement|RRSP|pension/i.test(l.label ?? ''))).toBe(false)
+})

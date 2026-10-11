@@ -55,7 +55,7 @@ export function resolveForecasterCompTax(cfg: {
     notices.push(...marginal.issues.map(issue => issue.message))
     if (marginal.branches.length) {
       const rates = marginal.branches.map(branch => branch.total)
-      rangePct = [Math.min(...rates), Math.max(...rates)]
+      rangePct = rates.reduce<[number, number]>((bounds, rate) => [Math.min(bounds[0], rate), Math.max(bounds[1], rate)], [Infinity, -Infinity])
       if (marginal.status === 'valid' && rates.every(Number.isFinite)) automaticRate = rates[0] / 100
     }
   } else if (scenario) notices.push('Tax baseline needs review. Automatic rate unavailable.')

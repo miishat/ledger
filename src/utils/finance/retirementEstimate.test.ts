@@ -171,3 +171,25 @@ describe('retirement annual estimate', () => {
     expect(b.rrspDeduction).toBe(1000); expect(b.baselineTax.taxableIncome).toBe(102873); expect(b.taxSavings).toBe(0)
   })
 })
+
+
+describe('bounded unknown earnings', () => {
+  const many = (count: number) => ({ ...createRetirementScenario(), cashEmploymentIncome: 50000, workplacePlans: Array.from({ length: count }, (_, i) => ({ ...createWorkplacePlan('group-rrsp', `unknown-${i}`), employeeContribution: 10, employerContribution: 100 })) })
+  it('withholds 17-row dependent precision while preserving every known amount', () => {
+    const s = many(17); const r = estimateRetirement(s, profile())
+    expect(r.branches).toHaveLength(0)
+    expect(r.status).toBe('uncertain'); expect(r.scenario.workplacePlans).toEqual(s.workplacePlans)
+    expect(r.employeeCashOutflow).toBe(170); expect(r.employerFunding).toBe(1700)
+    expect(r.totalRetirementFunding).toBe(1870); expect(r.currentRoomUsage).toBe(1870)
+    expect(r.deductionAllocation).toHaveLength(17)
+    expect(r.issues.some(i => i.message.includes('dependent results unavailable'))).toBe(true)
+    expect(retirementMarginalBreakdown(s, profile()).branches).toEqual([])
+    expect(retirementEfficiencySlices(s, profile()).branches).toEqual([])
+  })
+  it('retains every independent combination at the 512-branch budget and withholds above it', () => {
+    const r = estimateRetirement(many(9), profile())
+    expect(r.branches).toHaveLength(512)
+    expect(new Set(r.branches.map(b => JSON.stringify(b.withdrawalTreatments))).size).toBe(512)
+    expect(estimateRetirement(many(10), profile()).branches).toEqual([])
+  })
+})
