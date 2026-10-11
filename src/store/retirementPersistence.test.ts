@@ -63,3 +63,16 @@ it('preserves supplied retirement blocks with a malformed discriminator for revi
   expect(result.primaryPackage.retirement.contracts).toEqual(retirement.contracts)
   expect(normalizeCompensationState(result)).toEqual(result)
 })
+
+it.each([
+  { status: 'invalid', issues: [null] },
+  { status: 'legacy', issues: 'bad' },
+  { status: 'ready', issues: [{ code: 'invalid-retirement-schema', message: 'Saved schema error' }] },
+  { status: 'ready', issues: [{ code: 'legacy-retirement', message: 'Saved legacy marker' }] },
+])('validates saved review metadata instead of trusting shortcuts: %j', review => {
+  const retirement = { schemaVersion: 1, review }
+  const result = normalizeCompensationState({ primaryPackage: { retirement } })
+  expect(result.primaryPackage.retirement.review.status).toBe('invalid')
+  expect(result.primaryPackage.retirement.review.raw).toBeDefined()
+  expect(normalizeCompensationState(result)).toEqual(result)
+})

@@ -54,3 +54,13 @@ it('does not revive legacy funding for an invalid reviewed typed contract', () =
   const contract = { ...createMatchingContract(), employee: { mode: 'percent' as const, value: 101 } }
   expect(calcAnnualRRSP({ ...defaultPrimaryPackage, baseSalary: 100000, rrspMatchPercent: 5, rrspMatchCap: 4000, retirement: { schemaVersion: 1, contracts: [contract], review: { status: 'ready', issues: [] } } })).toBe(0)
 })
+
+it('same-version hydration preserves malformed review metadata as invalid raw data', async () => {
+  const retirement = { schemaVersion: 1, contracts: [], review: { status: 'invalid', issues: [null] } }
+  localStorage.setItem('ledger-compensation', JSON.stringify({ version: 2, state: { primaryPackage: { ...defaultPrimaryPackage, retirement }, comparePackage: null } }))
+  await useCompensationStore.persist.rehydrate()
+  expect(useCompensationStore.getState().primaryPackage.retirement?.review.status).toBe('invalid')
+  const stored = JSON.parse(localStorage.getItem('ledger-compensation')!).state.primaryPackage.retirement
+  expect(stored.review.raw).toEqual(retirement.review)
+  expect(stored.review.issues[0].code).toBe('invalid-retirement-review')
+})

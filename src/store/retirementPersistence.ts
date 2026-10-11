@@ -64,24 +64,40 @@ export function normalizeOfferRetirement(pkg: unknown): CompensationPackage & { 
   const typed = record(raw.retirement)
   let retirement: OfferRetirement
   if (typed.schemaVersion === 1) {
-    // Unresolved legacy snapshots remain unresolved until an explicit review action.
-    if (record(typed.review).status === 'legacy' || (Array.isArray(record(typed.review).issues) && (record(typed.review).issues as RetirementIssue[]).some(entry => ['legacy-retirement', 'invalid-retirement-schema'].includes(entry.code)))) retirement = typed as unknown as OfferRetirement
+    const savedReview = record(typed.review)
+    const metadataValid = ['ready', 'legacy', 'invalid'].includes(savedReview.status as string)
+      && Array.isArray(savedReview.issues)
+      && savedReview.issues.every(entry => {
+        const savedIssue = record(entry)
+        return typeof savedIssue.code === 'string' && savedIssue.code.length > 0
+          && typeof savedIssue.message === 'string'
+          && (savedIssue.planId === undefined || typeof savedIssue.planId === 'string')
+      })
+    const markers = metadataValid ? (savedReview.issues as RetirementIssue[]).filter(entry =>
+      ['legacy-retirement', 'invalid-retirement-schema', 'invalid-retirement-review'].includes(entry.code)) : []
+    const issues: RetirementIssue[] = [...markers]
+    if (!metadataValid) issues.push({ code: 'invalid-retirement-review', message: 'Saved retirement review metadata needs review.' })
+    if (!Array.isArray(typed.contracts)) issues.push(issue('Retirement contracts need review.'))
     else {
-      const issues: RetirementIssue[] = []
-      if (!Array.isArray(typed.contracts)) issues.push(issue('Retirement contracts need review.'))
-      else {
-        const ids = new Set<string>()
-        for (const contract of typed.contracts) {
-          issues.push(...resolveMatchingPlan(contract, { baseSalary: 0, cashBonus: 0 }).issues)
-          const id = record(record(contract).plan).id as string
-          if (ids.has(id)) issues.push({ ...issue('Duplicate retirement contract identifier.'), planId: id })
-          ids.add(id)
-        }
+      const ids = new Set<string>()
+      for (const contract of typed.contracts) {
+        issues.push(...resolveMatchingPlan(contract, { baseSalary: 0, cashBonus: 0 }).issues)
+        const id = record(record(contract).plan).id as string
+        if (ids.has(id)) issues.push({ ...issue('Duplicate retirement contract identifier.'), planId: id })
+        ids.add(id)
       }
-      retirement = { ...typed, schemaVersion: 1, contracts: typed.contracts as MatchingContract[], review: issues.length ? { status: 'invalid', issues, raw: record(typed.review).raw ?? typed.contracts } : ready() }
     }
+    // Saved reports never certify valid contracts. Only well-shaped unresolved
+    // legacy metadata remains legacy; every other retained review marker blocks precision.
+    const legacy = metadataValid && savedReview.status === 'legacy'
+      && issues.every(entry => entry.code === 'legacy-retirement')
+    if (legacy && !issues.length) issues.push({ code: 'legacy-retirement', message: 'Retirement Details Need Review.' })
+    const status = legacy ? 'legacy' : issues.length ? 'invalid' : 'ready'
+    retirement = { ...typed, schemaVersion: 1, contracts: typed.contracts as MatchingContract[],
+      review: status === 'ready' ? ready() : { status, issues,
+        raw: savedReview.raw ?? (!metadataValid ? typed.review ?? typed : typed.contracts ?? typed) } }
   } else if (raw.retirement !== undefined) {
-    retirement = { schemaVersion: 1, contracts: typed.contracts as MatchingContract[], review: { status: 'invalid', issues: [{ code: 'invalid-retirement-schema', message: 'Saved retirement schema needs review.' }], raw: raw.retirement } }
+    retirement = normalizeOfferRetirement({ ...raw, retirement: { schemaVersion: 1, contracts: typed.contracts, review: { status: 'invalid', issues: [{ code: 'invalid-retirement-schema', message: 'Saved retirement schema needs review.' }], raw: raw.retirement } } }).retirement
   } else if ((raw.rrspMatchPercent ?? 0) !== 0 || (raw.rrspMatchCap ?? 0) !== 0) {
     const valid = money(raw.rrspMatchPercent ?? 0) && Number(raw.rrspMatchPercent ?? 0) <= 100 && money(raw.rrspMatchCap ?? 0)
     retirement = { schemaVersion: 1, contracts: [], review: { status: valid ? 'legacy' : 'invalid', issues: [{ code: 'legacy-retirement', message: 'Retirement Details Need Review.' }], raw: { rrspMatchPercent: raw.rrspMatchPercent, rrspMatchCap: raw.rrspMatchCap } } }

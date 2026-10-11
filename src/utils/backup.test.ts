@@ -379,3 +379,11 @@ describe('typed retirement backup and undo', () => {
     localStorage.clear()
   })
 })
+
+it('restore preserves malformed review metadata and never accepts a forged ready marker', () => {
+  const retirement = { schemaVersion: 1, review: { status: 'ready', issues: [{ code: 'invalid-retirement-schema', message: 'Needs review' }] } }
+  restoreBackup({ app: 'ledger', version: BACKUP_VERSION, exportedAt: '', data: { [STORAGE_KEYS.compensation]: { version: 2, state: { primaryPackage: { ...useCompensationStore.getState().primaryPackage, retirement }, comparePackage: null } } } })
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.compensation)!).state.primaryPackage.retirement
+  expect(stored.review.status).toBe('invalid')
+  expect(stored.review.raw).toBeDefined()
+})

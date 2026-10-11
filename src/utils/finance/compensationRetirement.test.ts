@@ -119,3 +119,15 @@ it('counts CAD ESPP gain once, excludes equity from ordinary match earnings, and
   expect(snapshot.workplacePlans[0].employerContribution).toBe(3300)
   expect(edited.provenance?.editedAfterTransfer).toBe(true)
 })
+
+it.each([
+  { status: 'invalid', issues: [null] },
+  { status: 'ready', issues: [{ code: 'invalid-retirement-schema', message: 'Needs review' }] },
+])('adapter withholds malformed review metadata safely: %j', review => {
+  const retirement = { schemaVersion: 1, review } as unknown as NonNullable<typeof pkg.retirement>
+  const result = resolveCompensationRetirement({ ...pkg, retirement }, options)
+  expect(result.status).toBe('review-needed')
+  expect(result.review.status).toBe('invalid')
+  expect(result.estimate).toBeNull()
+  expect(buildSalaryRetirementSnapshot(result)).toBeNull()
+})
