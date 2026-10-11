@@ -92,3 +92,15 @@ Actual Settings file-import browser evidence adds the 24th retirement acceptance
 First final `CI=1 npm run verify` passed lint, then stopped with 1890 passing tests/one failing test across 229 files: existing Dashboard deferred Customize dialog was not found under suite load. The unchanged isolated Dashboard suite passed eight tests in 2.14s. No Dashboard code, assertion, timeout, bundle budget, verification configuration or port was changed. Logs: `.superpowers/sdd/final-fix-full-verify.log` and `.superpowers/sdd/final-fix-dashboard-recheck.log`.
 
 Final unchanged `CI=1 npm run verify` rerun completed with exit 0 after all fix changes: lint; 229 files/1891 unit and integration tests (37.52s); TypeScript/Vite build; nine-chunk initial graph 434.1kB within the unchanged 450kB budget; eager graph 98; type-scale 277; 291 Playwright tests, 286 passed/five existing viewport-specific skips, no failures (2.7m). All 24 retirement browser cases passed. Exact log: `.superpowers/sdd/final-fix-full-verify-2.log`; detailed local report: `.superpowers/sdd/final-fix-report.md`. Browser evidence remains deterministic Chromium, with no live provider, Safari, physical-device or human screen-reader acceptance claim. Independent root rereview and user acceptance remain pending; no merge, push or deployment was performed.
+
+## Final technical review status
+
+Whole-branch review and focused fix re-review are complete. The single P2 robustness issue is closed, and no Critical or Important findings remain. Technical readiness is approved at source commit 58734501ccc33d028bbaae9328462d4bcaf8ccd6. The final full verification above covers the unchanged source tree. User visual review and permanent acceptance remain pending. The implementation stays on codex/retirement-c1-review, with its review server on 5186; the original prototype remains on 5184. No merge, push or deployment.
+
+## Review build
+
+Compensation: http://127.0.0.1:5186/ledger/#/compensation
+Salary & Tax: http://127.0.0.1:5186/ledger/#/planner/salary-tax
+Original C1 prototype: http://127.0.0.1:5184/ledger/#/compensation?retirement-preview=1&variant=C1
+
+Both actual calculator tabs are available in the in-app browser, with Salary & Tax currently selected. The separate review origin contains illustrative Example RRSP Plan data: CAD100000 base, employee5000, employer5000, restricted group RRSP, cash70714 rounded on both screens. The implementation screenshot is C:/Users/misha/.codex/visualizations/2026/10/10/01a127ad-59ab-74f1-ac24-588ebed5a3c1/retirement-c1-implemented-review.jpg. The original prototype and primary checkout are preserved. Source is unchanged since the final green verification and approved fix review; this final documentation update records delivery only.

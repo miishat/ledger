@@ -1,6 +1,6 @@
 # Retirement Contributions C1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the reviewed Canadian retirement specification with selected C1 organization, then present a tested isolated build for user acceptance.
 **Architecture:** Resolve contractual contributions separately from statutory classification and tax. Persist canonical scenarios and a shared personal tax profile. Both screens, transfer and Forecaster consume the same deterministic results. Extend existing stores and calculators.
@@ -34,12 +34,12 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Existing 2026 tax tables and audited fixtures, reviewed spec REQ-01/02, 11-17, 22-35a, 44/47.
 **Produces:** Typed contracts and pure functions described above, default constructors for zero-contribution plans/profile/scenario, reusable validation and branch results for downstream workers. Expose stable functions for fixed-dollar marginal and savings baselines.
 
-- [ ] Add failing tests for A01-A16, A24, A27-A30 and A34-A37. Cover all provinces, low earnings, saturation, unknown branches, nonfinite/invalid tiers and exact decimals.
-- [ ] Implement matching, split statutory/credit bases, employee RPP deduction, employer RRSP/PRPP treatment and stable deduction allocation. Preserve statutory earnings for employee contributions.
-- [ ] Implement capacity provenance: legacy positive cap always provisional; explicit stale year assumes unknown current cap; zero is known; signed room retained. Keep current room separate from next-year PA.
-- [ ] Implement DB unknown funding/PA, versioned 2026 ceilings, separate statutory compensation, aggregate ordinary DC/DPSP limits and PRPP member direction. Validation withholds precise dependent results rather than dropping rows.
-- [ ] Implement employee tax savings baseline retaining employer benefits/deductions and employer PRPP capacity reduction. Contextual marginal/efficiency helpers hold contribution dollars fixed and propagate uncertainty.
-- [ ] Run focused new and existing Canadian tax tests and typecheck. Document public interfaces and any integration assumptions in task report, self-review, commit.
+- [x] Add failing tests for A01-A16, A24, A27-A30 and A34-A37. Cover all provinces, low earnings, saturation, unknown branches, nonfinite/invalid tiers and exact decimals.
+- [x] Implement matching, split statutory/credit bases, employee RPP deduction, employer RRSP/PRPP treatment and stable deduction allocation. Preserve statutory earnings for employee contributions.
+- [x] Implement capacity provenance: legacy positive cap always provisional; explicit stale year assumes unknown current cap; zero is known; signed room retained. Keep current room separate from next-year PA.
+- [x] Implement DB unknown funding/PA, versioned 2026 ceilings, separate statutory compensation, aggregate ordinary DC/DPSP limits and PRPP member direction. Validation withholds precise dependent results rather than dropping rows.
+- [x] Implement employee tax savings baseline retaining employer benefits/deductions and employer PRPP capacity reduction. Contextual marginal/efficiency helpers hold contribution dollars fixed and propagate uncertainty.
+- [x] Run focused new and existing Canadian tax tests and typecheck. Document public interfaces and any integration assumptions in task report, self-review, commit.
 
 ## Task 2: Typed persistence, scenario adapters and migrations
 
@@ -47,12 +47,12 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Task 1 contracts. Spec REQ-03/03a/04, 16/18/20/21, 36-38, 40-44.
 **Produces:** Canonical persisted planner profile/scenario actions, independent offer plan arrays/toggle, idempotent normalizers and shared-CAD compensation adapter. Preserve old scalar fields as raw compatibility data.
 
-- [ ] Add failing migration tests for A19-A22/A27/A31/A33: old scalar seeding, zero/ambiguous legacy matching, retained raw malformed rows, reviewed discriminator, precise personal inputs, unrelated tools/history/grants and idempotent hydrate/restore/undo/Drive paths.
-- [ ] Add typed planner profile/scenario actions including atomic import, reset retaining shared settings, clear limits and edited-after-transfer detection. Existing scalar tools remain compatible.
-- [ ] Normalize ordinary hydration and every backup restoration path including live rehydrate/undo. Preserve legacy estimate without assuming employee participation, destination or ratio; unresolved legacy blocks precise tax.
-- [ ] Add compensation adapter resolving current-year historical base/bonus or annualized basis, native stock components through one shared FX context, matching and classified tax scenario. Missing stock conversion blocks combined CAD/tax/transfer. Salary/retirement stay CAD.
-- [ ] Add snapshot builder with provenance, equity-sale assumption and personal inclusion. Do not transfer total compensation as cash salary or double-add source equity.
-- [ ] Test A17/A18/A20/A21/A26/A32/A38 adapter behavior, run affected regression tests and typecheck, document APIs, self-review and commit.
+- [x] Add failing migration tests for A19-A22/A27/A31/A33: old scalar seeding, zero/ambiguous legacy matching, retained raw malformed rows, reviewed discriminator, precise personal inputs, unrelated tools/history/grants and idempotent hydrate/restore/undo/Drive paths.
+- [x] Add typed planner profile/scenario actions including atomic import, reset retaining shared settings, clear limits and edited-after-transfer detection. Existing scalar tools remain compatible.
+- [x] Normalize ordinary hydration and every backup restoration path including live rehydrate/undo. Preserve legacy estimate without assuming employee participation, destination or ratio; unresolved legacy blocks precise tax.
+- [x] Add compensation adapter resolving current-year historical base/bonus or annualized basis, native stock components through one shared FX context, matching and classified tax scenario. Missing stock conversion blocks combined CAD/tax/transfer. Salary/retirement stay CAD.
+- [x] Add snapshot builder with provenance, equity-sale assumption and personal inclusion. Do not transfer total compensation as cash salary or double-add source equity.
+- [x] Test A17/A18/A20/A21/A26/A32/A38 adapter behavior, run affected regression tests and typecheck, document APIs, self-review and commit.
 
 ## Task 3: C1 shared editor and Salary & Tax integration
 
@@ -60,12 +60,12 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Tasks 1/2 results and store actions. C1 visual reference in `C:/Users/misha/.codex/worktrees/retirement-ui-prototype/ledger/src/components/retirement/RetirementPrototype.tsx` and CSS, inspect C1 only for organization, not engine logic.
 **Produces:** Shared accessible plan editor supporting annual manual mode versus contractual match mode, profile editor and branch-aware results. Standalone Salary & Tax keeps personal contributions on by default; imported selection is persisted.
 
-- [ ] Add failing component tests for plan creation/edit/removal, all plan kinds, multiple rows, unknown/zero/year/profile states, reset/clear and inclusion behavior.
-- [ ] Implement five grouped C1 steps: Pay & Deductions, Workplace Plan, Employer Funding, CRA Limits, Review; side summary, Back/Continue, visible labels and keyboard access. Preserve existing salary/province/personal inputs and tax details.
-- [ ] Provide explicit controls for restrictions, participation basis/override, tier matching, unconditional funding, null/zero caps, DB entered funding/PA, advanced registered compensation and PRPP member direction. Salary mode takes annual employer dollars, not matching inference.
-- [ ] Show Cash After Contributions first, annual-average periods, cash reconciliation and separate retirement destinations, allocation/room/PA warnings and uncertainty. Personal excluded values remain visible. Invalid rows show associated errors and block dependent precision.
-- [ ] Integrate tax brackets/marginal/efficiency with the same context and bounded actionable suggestions, hypothetical bands and explicit assumptions. Preserve original functionalities.
-- [ ] Test transfer edits rebuilding bases (A38), contextual results (A10/A15/A28), narrow layout preparation and themes. Run affected component/finance tests and typecheck, self-review and commit.
+- [x] Add failing component tests for plan creation/edit/removal, all plan kinds, multiple rows, unknown/zero/year/profile states, reset/clear and inclusion behavior.
+- [x] Implement five grouped C1 steps: Pay & Deductions, Workplace Plan, Employer Funding, CRA Limits, Review; side summary, Back/Continue, visible labels and keyboard access. Preserve existing salary/province/personal inputs and tax details.
+- [x] Provide explicit controls for restrictions, participation basis/override, tier matching, unconditional funding, null/zero caps, DB entered funding/PA, advanced registered compensation and PRPP member direction. Salary mode takes annual employer dollars, not matching inference.
+- [x] Show Cash After Contributions first, annual-average periods, cash reconciliation and separate retirement destinations, allocation/room/PA warnings and uncertainty. Personal excluded values remain visible. Invalid rows show associated errors and block dependent precision.
+- [x] Integrate tax brackets/marginal/efficiency with the same context and bounded actionable suggestions, hypothetical bands and explicit assumptions. Preserve original functionalities.
+- [x] Test transfer edits rebuilding bases (A38), contextual results (A10/A15/A28), narrow layout preparation and themes. Run affected component/finance tests and typecheck, self-review and commit.
 
 ## Task 4: Compensation C1 benefits, totals, comparison and transfer
 
@@ -73,12 +73,12 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Task 2 adapter and shared editor. Spec REQ-12-21, 36-38 and 45-47.
 **Produces:** Actual C1 workplace editing in existing Benefits area; primary/comparison independent plans with consistent CAD/tax/results, rich reviewed transfer.
 
-- [ ] Add failing tests for participation-sensitive totals, zero/unconditional/combined caps, legacy review, unknown DB funding, persisted comparison/toggle and shared CAD stock assumptions.
-- [ ] Replace old assumed RRSP matching controls with C1 editor while preserving Base & Cash/Equity and all package features. Offer explicit legacy review with actual terms or annual-dollar group RRSP plus required assumptions.
-- [ ] Show employer funding only once in gross totals/charts by destination; employee cash outflow separately; monthly funding sums as annual averages. Known compensation/unknown pension values remain explicit.
-- [ ] Use one resolved CAD context for both offers. After Tax compares branch-aware Cash After Contributions with shared settings/toggle; unknown funding delta is not zero. Conversion Needed blocks unavailable combined results/transfer while known components remain.
-- [ ] Implement Full Breakdown review with source assumptions/provenance and Replace Scenario, Keep Existing, Cancel. Atomic replacement preserves personal/profile; unchanged opens directly. Validate transfer reconciliation on/off, decimal precision and subsequent edits.
-- [ ] Run compensation/store/hook regressions and typecheck, self-review and commit.
+- [x] Add failing tests for participation-sensitive totals, zero/unconditional/combined caps, legacy review, unknown DB funding, persisted comparison/toggle and shared CAD stock assumptions.
+- [x] Replace old assumed RRSP matching controls with C1 editor while preserving Base & Cash/Equity and all package features. Offer explicit legacy review with actual terms or annual-dollar group RRSP plus required assumptions.
+- [x] Show employer funding only once in gross totals/charts by destination; employee cash outflow separately; monthly funding sums as annual averages. Known compensation/unknown pension values remain explicit.
+- [x] Use one resolved CAD context for both offers. After Tax compares branch-aware Cash After Contributions with shared settings/toggle; unknown funding delta is not zero. Conversion Needed blocks unavailable combined results/transfer while known components remain.
+- [x] Implement Full Breakdown review with source assumptions/provenance and Replace Scenario, Keep Existing, Cancel. Atomic replacement preserves personal/profile; unchanged opens directly. Validate transfer reconciliation on/off, decimal precision and subsequent edits.
+- [x] Run compensation/store/hook regressions and typecheck, self-review and commit.
 
 ## Task 5: Forecaster complete baseline integration
 
@@ -86,10 +86,10 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Complete saved Salary & Tax or primary Compensation scenario, task 1 branch-aware fixed-dollar marginal rates.
 **Produces:** Automatic haircut uses one complete baseline, explicit source and uncertainty/manual alternative; existing manual settings and liquid feeds retained.
 
-- [ ] Add failing tests for A23/A31: saved scenario priority, absence fallback, invalid saved scenario unavailable, legacy/unknown branches and manual override authority.
-- [ ] Use saved typed scenario when present, otherwise primary complete compensation with personal off. Hold annual resolved contributions fixed; never mix incomes/plans from different stores.
-- [ ] Show source, table-year assumption and unresolved range/unavailable state. Retain bonus/equity/ESPP feed, exclude retirement funding from liquid events and do not alter manual cash savings.
-- [ ] Run Forecaster/feed regressions and typecheck, self-review and commit.
+- [x] Add failing tests for A23/A31: saved scenario priority, absence fallback, invalid saved scenario unavailable, legacy/unknown branches and manual override authority.
+- [x] Use saved typed scenario when present, otherwise primary complete compensation with personal off. Hold annual resolved contributions fixed; never mix incomes/plans from different stores.
+- [x] Show source, table-year assumption and unresolved range/unavailable state. Retain bonus/equity/ESPP feed, exclude retirement funding from liquid events and do not alter manual cash savings.
+- [x] Run Forecaster/feed regressions and typecheck, self-review and commit.
 
 ## Task 6: Browser acceptance, integration verification and review build
 
@@ -97,11 +97,11 @@ Planner owns typed shared profile, typed Salary & Tax scenario and preserved per
 **Consumes:** Completed tasks 1-5 and A01-A38 acceptance contract.
 **Produces:** Acceptance traceability, tested review build, honest limitations and pending user acceptance.
 
-- [ ] Map A01-A38 to domain/store/component/browser evidence. Cover both actual routes, employer matching, restore/reload/undo, rich transfer cancellation/replacement/inclusion and edited provenance in browser tests.
-- [ ] Exercise 320/360/390 widths, keyboard flow, labels/errors, app themes and comparison. Verify no horizontal scroll and preserve original package actions/features.
-- [ ] Run repository full `npm run verify` after final fixes. Configure isolated server ports if existing Playwright default conflicts; never stop another server. Document actual command/results and any environment gaps.
-- [ ] Perform task review and final whole-branch review, fix all Critical/Important issues and re-review. Keep validation coverage meaningful, no artificial waits or weakened assertions.
-- [ ] Start isolated review server on an unused port such as 5186, open actual Compensation C1 implementation in Codex and preserve prototype 5184. Present review link and state acceptance pending. No merge/push/deploy.
+- [x] Map A01-A38 to domain/store/component/browser evidence. Cover both actual routes, employer matching, restore/reload/undo, rich transfer cancellation/replacement/inclusion and edited provenance in browser tests.
+- [x] Exercise 320/360/390 widths, keyboard flow, labels/errors, app themes and comparison. Verify no horizontal scroll and preserve original package actions/features.
+- [x] Run repository full `npm run verify` after final fixes. Configure isolated server ports if existing Playwright default conflicts; never stop another server. Document actual command/results and any environment gaps.
+- [x] Perform task review and final whole-branch review, fix all Critical/Important issues and re-review. Keep validation coverage meaningful, no artificial waits or weakened assertions.
+- [x] Start isolated review server on an unused port such as 5186, open actual Compensation C1 implementation in Codex and preserve prototype 5184. Present review link and state acceptance pending. No merge/push/deploy.
 
 ## Acceptance Ownership and Progress
 
@@ -109,4 +109,34 @@ Domain: A01-A16/A24/A27-A30/A34-A37. Persistence/adapters: A17-A22/A26/A31-A33/A
 
 Plan self-review: contracts separate canonical input from derived earnings; allocation does not modify actual funding; task ownership is sequential with shared components preceding consumers; all REQ groups and A01-A38 have an owner. No placeholder decisions or unauthorized permanent changes.
 
-Task ledger: Tasks 1-6 pending. Record each base/head, report, review verdict and evidence here as work completes.
+Task ledger: Tasks 1-6 complete. The entries below record implementation, review and validation evidence; permanent user acceptance remains pending.
+
+Task 1 complete: base ebf57ef, implementation ad3dda6, review fixes bb83cdc; independent spec and quality review approved. Finance 226 tests; amended focused128 tests/typecheck/lint passed. UI/persistence verification remains downstream. Task 2 base bb83cdc.
+
+Task 2 complete: base bb83cdc, implementation 5e7b3b8, malformed metadata fixes 3ac8d7d; independent spec and quality review approved. Initial affected322 tests; amended280 tests/typecheck/lint passed. Task 3 base3ac8d7d.
+
+Task 3 complete: base3ac8d7d, implementationd64d061, stable surviving draft fixes e146707; independent spec and quality review approved. Amended339 tests/typecheck/lint passed. FirstbrowserSalaryC1 visualorganizationconfirmed, finalresponsivechecks pending. Task4base e146707.
+
+Task 4 execution partition: implement and review 4a first (primary visible C1 workspace, Benefits modal, hero/chart/hook integration). Then fresh worker 4b implements persisted comparison and rich Full Breakdown transfer using 4a APIs. Sequential ownership prevents overlapping edits. Task 4 is complete only after both reviews pass. Until 4b, old salary-only transfer must be unavailable rather than silently used.
+
+Task4a complete: basee146707 implementation1c2711a fallback/populationfixesa64f60b; independent spec and qualityreviewapproved.157affectedtests/typechecklintpassed. Task4bbasea64f60b; richtransfer/comparisonstillpending.
+
+Task4b complete: basea64f60b, implementationcbafe86; independent specandqualityreviewapproved nofindings.232affectedtests/typechecklintpassed. Task4 completeonlynow. Task5basecbafe86; Forecaster integration pending.
+
+### Task 5 complete
+- Base cbafe86, implementation 3aea743. Complete saved Salary baseline priority and primary-only fallback with personal deductions off; fixed-contribution marginal context, explicit unavailable/range/manual states, CAD liquid feed with missing-FX withholding.
+- Focused evidence: 208 tests across 15 files, typecheck, scoped lint and diff checks. Independent task reviewer: spec compliant and quality approved, no Critical/Important findings.
+- Minor follow-up for Task 6: direct display-toggle/forecast event integration coverage, beyond mocked hook test. Reviewer inspected shared raw package/FX source and confirmed independence in code.
+- Task 6 browser acceptance/full verification and final whole-branch review remain pending; user acceptance remains pending.
+
+### Task 6 complete
+- Base 3aea743, acceptance/fixes 2a5214a, rich cancellation follow-up daa23d8. A01-A38 evidence matrix is in the validation report. Independent task review and fix re-review approved both spec compliance and quality.
+- Observed fixes: comparison equity labels, deferred Settings loading with immediate Escape/focus preservation, mobile input fonts, legacy summary first-screen placement, and visible stale-year notice in the C1 cash summary. Existing chart fixture now supplies deterministic FX and observes readiness.
+- Full final CI=1 npm run verify exited 0 after final test changes: 229 test files/1882 unit tests, build, initial bundle 434.1 kB under unchanged 450 kB, eager graph/type-scale, 285 browser tests passed and five existing viewport-policy skips. All 23 new acceptance browser cases passed. Rich Cancel/Keep asserts exact persisted state under both personal selections.
+- Minor: existing Node color-environment warnings, no product defect; documented in validation. Real devices/Safari/human assistive technology and live Drive remain unverified. Undo callback integration uses the existing recovery boundary, with no browser restore-Undo claim.
+- Final whole-branch review and actual review-build presentation remain pending. User acceptance remains pending; no merge, push or deployment.
+
+### Final review and completion
+- Independent whole-branch review found one P2: unbounded unknown-restriction combinations and Cartesian comparison deltas could crash valid many-row scenarios. Commit 5873450 fixes it with a preallocation 512-branch budget, explicit Earnings Treatment Needed above budget, lossless known results and snapshots, safe extrema/interval differences, and authoritative manual Forecaster settings.
+- Focused 111 tests and actual 17-row restore/render/reload/transfer browser proof passed. Final unchanged CI=1 npm run verify passed 229 files/1891 tests, build and unchanged budgets, 286 browser tests plus five existing policy skips. One transient existing Dashboard test failure passed unchanged in isolation and the final full rerun; no Dashboard edits or timeout changes.
+- Final independent fix re-review approved technical readiness, no Critical/Important/Minor findings. All implementation tasks and technical gates are complete. Permanent acceptance remains pending user review; preserve the isolated branch and both worktrees. No merge, push or deployment.

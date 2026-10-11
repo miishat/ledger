@@ -1,7 +1,7 @@
 # Canadian retirement contributions and employer matching
 
 Date: 2026-10-10
-Status: Reviewed draft specification for user review. Independent source and app audits and fresh-context specification review completed. Implementation is not authorized by this document.
+Status: Reviewed specification. Independent source and app audits and fresh-context specification review completed. The user subsequently authorized C1 implementation in an isolated review build. Permanent acceptance remains pending until the user reviews the implementation.
 Tax-table baseline: Ledger's existing 2026 annual employee estimate.
 
 ## Problem Statement
