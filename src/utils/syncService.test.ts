@@ -60,6 +60,19 @@ describe('syncService', () => {
     expect(envelope.data['ledger-budget']).toEqual({ x: 1 })
   })
 
+  it('passes exclusion metadata through the persisted triage payload', async () => {
+    const payload = { version: 3, state: {
+      exclusionRules: { rule: { id: 'rule', enabled: false, revision: 2 } },
+      importRecords: { ignored: { decision: 'ignored', ignoreReason: 'rule', exclusionMatches: [{ ruleId: 'rule', revision: 1, name: 'Original' }] },
+        included: { decision: 'pending', exclusionOverride: 'include' } },
+    } }
+    localStorage.setItem('ledger-triage', JSON.stringify(payload))
+    vi.mocked(drive.uploadSnapshot).mockResolvedValue(remoteMeta(4))
+    await performPush('tok', 'folder-1', 4, 3)
+    expect(vi.mocked(drive.uploadSnapshot).mock.calls[0][2].data['ledger-triage']).toEqual(payload)
+    localStorage.removeItem('ledger-triage')
+  })
+
   it('performPush records the sync bookmark only after a successful upload', async () => {
     localStorage.setItem('ledger-budget', JSON.stringify({ x: 1 }))
     vi.mocked(drive.uploadSnapshot).mockRejectedValue(new Error('network down'))

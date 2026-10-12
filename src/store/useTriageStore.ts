@@ -20,6 +20,11 @@ interface TriageState {
   importDays: ImportDay[];
   lastImport: ImportReport | null;
   saveExclusionRule: (draft: ExclusionRuleDraft, options?: { id?: string; applyPending?: boolean }) => string;
+  setExclusionRuleEnabled: (id: string, enabled: boolean) => void;
+  deleteExclusionRule: (id: string) => void;
+  applyExclusionRulesToPending: () => string[];
+  includeExclusionMatch: (id: string) => void;
+  excludeExclusionMatches: (ids: string[]) => string[];
   createImportSource: (name: string, bankKey?: string) => string;
   bindImportSource: (sourceId: string, bankKey: string) => void;
   importTransactions: (rows: TriageTransaction[], sourceId: string) => ImportReport;
@@ -41,6 +46,24 @@ interface TriageState {
   clearAll: () => void;
   learnRule: (description: string, categoryId: string) => void;
   removeRule: (description: string) => void;
+}
+
+function validRules(state: Pick<TriageState, 'exclusionRules' | 'importSources'>) {
+  return Object.entries(state.exclusionRules).filter(([id, rule]) =>
+    rule?.id === id && rule.enabled === true && Number.isSafeInteger(rule.revision) && rule.revision >= 1 &&
+    validateExclusionDraft(rule, state.importSources).length === 0).map(([, rule]) => rule);
+}
+
+function applyPendingRules(state: TriageState, exclusionRules = state.exclusionRules) {
+  const eligible = Object.values(state.pendingTransactions).filter(tx => {
+    const record = tx.importRecordId && state.importRecords[tx.importRecordId];
+    return record && record.decision === 'pending' && !!state.importSources[record.sourceId];
+  });
+  const result = applyImportExclusions(eligible, state.importRecords, validRules({ ...state, exclusionRules }));
+  const pendingTransactions = { ...state.pendingTransactions };
+  for (const tx of eligible) delete pendingTransactions[tx.id];
+  for (const tx of result.pending) pendingTransactions[tx.id] = tx;
+  return { pendingTransactions, importRecords: result.records, excludedIds: result.excludedIds };
 }
 
 export function migrateTriageState(persisted: unknown, version: number) {
@@ -66,7 +89,6 @@ export const useTriageStore = create<TriageState>()(
         const state = get();
         const errors = validateExclusionDraft(draft, state.importSources);
         if (errors.length) throw new Error(errors[0]);
-        if (options.applyPending) throw new Error('Applying rules to pending transactions is not available yet');
         const previous = options.id ? state.exclusionRules[options.id] : undefined;
         if (options.id && !previous) throw new Error('Choose an available exclusion rule');
         const revision = previous ? previous.revision + 1 : 1;
@@ -75,8 +97,59 @@ export const useTriageStore = create<TriageState>()(
         const rule: ExclusionRule = { ...draft, name: draft.name.trim(),
           description: { ...draft.description }, amount: { ...draft.amount },
           id, revision, enabled: previous?.enabled ?? true };
-        set({ exclusionRules: { ...state.exclusionRules, [id]: rule } });
+        const exclusionRules = { ...state.exclusionRules, [id]: rule };
+        const applied = options.applyPending ? applyPendingRules(state, exclusionRules) : undefined;
+        useUndoStore.getState().dismissUndo();
+        set({ exclusionRules, ...(applied ? { pendingTransactions: applied.pendingTransactions, importRecords: applied.importRecords } : {}) });
         return id;
+      },
+
+      setExclusionRuleEnabled: (id, enabled) => {
+        const state = get(), rule = state.exclusionRules[id];
+        if (!rule) return;
+        if (enabled && (rule.id !== id || !Number.isSafeInteger(rule.revision) || rule.revision < 1 ||
+          validateExclusionDraft(rule, state.importSources).length)) throw new Error('Choose a valid exclusion rule');
+        useUndoStore.getState().dismissUndo();
+        set({ exclusionRules: { ...state.exclusionRules, [id]: { ...rule, enabled } } });
+      },
+
+      deleteExclusionRule: (id) => {
+        if (!get().exclusionRules[id]) return;
+        useUndoStore.getState().dismissUndo();
+        const exclusionRules = { ...get().exclusionRules };
+        delete exclusionRules[id];
+        set({ exclusionRules });
+      },
+
+      applyExclusionRulesToPending: () => {
+        const applied = applyPendingRules(get());
+        useUndoStore.getState().dismissUndo();
+        set({ pendingTransactions: applied.pendingTransactions, importRecords: applied.importRecords });
+        return applied.excludedIds;
+      },
+
+      includeExclusionMatch: (id) => {
+        const state = get(), tx = state.pendingTransactions[id];
+        const record = tx?.importRecordId ? state.importRecords[tx.importRecordId] : undefined;
+        if (!tx || !record || !state.importSources[record.sourceId]) return;
+        useUndoStore.getState().dismissUndo();
+        set({ pendingTransactions: { ...state.pendingTransactions, [id]: { ...tx, exclusionMatches: undefined } },
+          importRecords: { ...state.importRecords, [record.id]: { ...record, exclusionOverride: 'include', exclusionMatches: undefined } } });
+      },
+
+      excludeExclusionMatches: (ids) => {
+        const state = get(), pendingTransactions = { ...state.pendingTransactions }, importRecords = { ...state.importRecords };
+        const excludedIds: string[] = [];
+        for (const id of new Set(ids)) {
+          const tx = pendingTransactions[id], record = tx?.importRecordId ? importRecords[tx.importRecordId] : undefined;
+          if (!tx?.exclusionMatches?.length || tx.duplicate || !record || record.decision !== 'pending') continue;
+          delete pendingTransactions[id];
+          importRecords[record.id] = { ...record, decision: 'ignored', ignoreReason: 'rule', exclusionMatches: tx.exclusionMatches };
+          excludedIds.push(record.id);
+        }
+        useUndoStore.getState().dismissUndo();
+        set({ pendingTransactions, importRecords });
+        return excludedIds;
       },
 
       createImportSource: (name, bankKey) => {
@@ -109,9 +182,7 @@ export const useTriageStore = create<TriageState>()(
           ...Object.values(state.pendingTransactions).filter(tx => !tx.importRecordId),
         ];
         const result = matchImport(rows, sourceId, state.importRecords, state.importDays, legacy);
-        const rules = Object.entries(state.exclusionRules).filter(([id, rule]) =>
-          rule?.id === id && rule.enabled === true && Number.isSafeInteger(rule.revision) && rule.revision >= 1 &&
-          validateExclusionDraft(rule, state.importSources).length === 0).map(([, rule]) => rule);
+        const rules = validRules(state);
         const excluded = applyImportExclusions(result.pending, result.records, rules);
         const report = { ...result.report, excludedIds: excluded.excludedIds };
         set({
@@ -122,14 +193,22 @@ export const useTriageStore = create<TriageState>()(
       },
 
       restoreImportRecord: (id) => {
-        const record = get().importRecords[id];
+        const state = get(), record = state.importRecords[id];
         if (!record || record.decision !== 'ignored') return;
-        get().addPending([{ ...record.original, importRecordId: id, importSourceId: record.sourceId }]);
+        useUndoStore.getState().dismissUndo();
+        set({ pendingTransactions: { ...state.pendingTransactions,
+          [id]: { ...record.original, id, importRecordId: id, importSourceId: record.sourceId, exclusionMatches: undefined,
+            duplicate: record.matchedRecordId || record.matchedTransactionId ? 'possible' : undefined,
+            duplicateRecordId: record.matchedRecordId, duplicateTransactionId: record.matchedTransactionId } },
+          importRecords: { ...state.importRecords, [id]: { ...record, decision: 'pending',
+            exclusionOverride: 'include', exclusionMatches: undefined, ignoreReason: undefined,
+            matchedRecordId: undefined, matchedTransactionId: undefined } } });
       },
 
       resolveDuplicate: (id) => {
         const tx = get().pendingTransactions[id];
         if (!tx?.duplicate) return;
+        useUndoStore.getState().dismissUndo();
         set(state => {
           const pendingTransactions = { ...state.pendingTransactions };
           delete pendingTransactions[id];
@@ -153,7 +232,8 @@ export const useTriageStore = create<TriageState>()(
           return { categoryRules: newRules };
         }),
 
-      addPending: (transactions) =>
+      addPending: (transactions) => {
+        useUndoStore.getState().dismissUndo();
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           const importRecords = { ...state.importRecords };
@@ -161,25 +241,31 @@ export const useTriageStore = create<TriageState>()(
             newPending[tx.id] = tx;
             if (tx.importRecordId && tx.importSourceId) {
               const previous = importRecords[tx.importRecordId];
-              importRecords[tx.importRecordId] = { id: tx.importRecordId, sourceId: tx.importSourceId,
-                original: previous?.original ?? { ...tx }, decision: 'pending' };
+              importRecords[tx.importRecordId] = { ...previous, id: tx.importRecordId, sourceId: tx.importSourceId,
+                original: previous?.original ?? { ...tx }, decision: 'pending',
+                matchedRecordId: undefined, matchedTransactionId: undefined };
             }
           });
           return { pendingTransactions: newPending, importRecords };
-        }),
+        });
+      },
 
-      updatePending: (id, updates) =>
+      updatePending: (id, updates) => {
+        if (!get().pendingTransactions[id]) return;
+        useUndoStore.getState().dismissUndo();
         set((state) => ({
           pendingTransactions: {
             ...state.pendingTransactions,
             [id]: { ...state.pendingTransactions[id], ...updates },
           },
-        })),
+        }));
+      },
 
       approveTransaction: (id) => {
         const state = get();
         const tx = state.pendingTransactions[id];
         if (!tx || tx.exclusionMatches?.length) return;
+        useUndoStore.getState().dismissUndo();
         
         // Push to main budget store
         useBudgetStore.getState().addTransaction({
@@ -208,6 +294,7 @@ export const useTriageStore = create<TriageState>()(
       },
 
       approveAll: () => {
+        useUndoStore.getState().dismissUndo();
         const state = get();
         const budgetState = useBudgetStore.getState();
         const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
@@ -249,18 +336,25 @@ export const useTriageStore = create<TriageState>()(
         for (const tx of Object.values(get().pendingTransactions).filter(tx => tx.flag === 'card-payment')) get().rejectTransaction(tx.id);
       },
 
-      rejectTransaction: (id) =>
+      rejectTransaction: (id) => {
+        useUndoStore.getState().dismissUndo();
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           const tx = newPending[id];
           delete newPending[id];
           const record = tx?.importRecordId && state.importRecords[tx.importRecordId];
           return { pendingTransactions: newPending, importRecords: record ? {
-            ...state.importRecords, [record.id]: { ...record, decision: 'ignored' },
+            ...state.importRecords, [record.id]: { ...record, decision: 'ignored',
+              exclusionMatches: tx.exclusionMatches,
+              matchedRecordId: tx.duplicateRecordId, matchedTransactionId: tx.duplicateTransactionId,
+              ignoreReason: tx.exclusionMatches?.length ? 'rule' : tx.flag === 'card-payment' ? 'card-payment' : 'manual' },
           } : state.importRecords };
-        }),
+        });
+      },
 
-      clearAll: () => set(state => {
+      clearAll: () => {
+        useUndoStore.getState().dismissUndo();
+        set(state => {
         const cancelled = new Set(Object.values(state.pendingTransactions).map(tx => tx.importRecordId).filter(Boolean));
         const cancelledTransactions = new Set(Object.keys(state.pendingTransactions));
         // Duplicate decisions are only meaningful while their original survives.
@@ -282,7 +376,8 @@ export const useTriageStore = create<TriageState>()(
           importDays: state.importDays.filter(day => day.recordIds.every(id => !cancelled.has(id))),
           lastImport: null,
         };
-      }),
+        });
+      },
     }),
     {
       name: STORAGE_KEYS.triage,

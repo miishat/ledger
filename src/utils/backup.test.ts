@@ -49,6 +49,21 @@ describe('backup', () => {
     expect(JSON.parse(localStorage.getItem('ledger-budget')!)).toEqual({ x: 2 })
   })
 
+  it('round-trips exclusion history inside the existing triage key', () => {
+    const payload = { version: 3, state: {
+      exclusionRules: { rule: { id: 'rule', revision: 2, enabled: false } },
+      importRecords: { ignored: { decision: 'ignored', ignoreReason: 'rule', exclusionMatches: [{ ruleId: 'rule', revision: 1, name: 'Original' }] },
+        included: { decision: 'pending', exclusionOverride: 'include' } },
+    } }
+    localStorage.setItem(STORAGE_KEYS.triage, JSON.stringify(payload))
+    const backup = buildBackup()
+    expect(backup.data[STORAGE_KEYS.triage]).toEqual(payload)
+    localStorage.clear()
+    restoreBackup(backup)
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.triage)!)).toEqual(payload)
+    expect(BACKUP_KEYS.filter(key => key.includes('exclusion'))).toEqual([])
+  })
+
   it('rejects a non-Ledger or future-version envelope', () => {
     expect(() => restoreBackup({ app: 'other' } as unknown as BackupEnvelope))
       .toThrow('Invalid Ledger backup file')

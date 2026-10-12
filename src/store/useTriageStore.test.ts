@@ -95,7 +95,7 @@ describe('new import exclusions', () => {
     expect(useTriageStore.getState().exclusionRules[id]).toMatchObject({ revision: 2, enabled: false })
     const before = useTriageStore.getState()
     expect(() => store.saveExclusionRule({ ...draft, sourceId: 'missing' })).toThrow('Choose an available card or account')
-    expect(() => store.saveExclusionRule(draft, { applyPending: true })).toThrow()
+    expect(() => store.saveExclusionRule(draft, { id: 'missing', applyPending: true })).toThrow()
     expect(useTriageStore.getState()).toBe(before)
   })
 
