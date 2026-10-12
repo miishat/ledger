@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Budgeting } from './Budgeting'
@@ -111,4 +111,16 @@ describe('Budgeting header on a phone', () => {
     expect(screen.getAllByRole('button', { name: 'Add Transaction' })).toHaveLength(1)
     expect(screen.getByText('Manage your income, track expenses, and view your cash flow.')).toBeInTheDocument()
   })
+})
+
+it('places one exclusion rules widget in Setup and preserves the tabs', () => {
+  cleanup()
+  renderBudget()
+  fireEvent.click(screen.getByRole('tab', { name: 'Setup' }))
+  expect(screen.getAllByText('Exclusion Rules (0)')).toHaveLength(1)
+  expect(screen.getByRole('tab', { name: 'Transactions' })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument()
+  const category = screen.getByText('Categorization Rules (0)')
+  const exclusions = screen.getByText('Exclusion Rules (0)')
+  expect(category.compareDocumentPosition(exclusions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })

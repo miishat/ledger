@@ -13,6 +13,7 @@ import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
 import { ImportSummary } from '../components/budget/ImportSummary';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
+import { ExclusionRulesWidget } from '../components/budget/ExclusionRulesWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
 import { SubscriptionsWidget } from '../components/budget/SubscriptionsWidget';
@@ -249,6 +250,7 @@ export const Budgeting: React.FC = () => {
           <ReallocationHistory selectedMonth={range.to} />
 
           <CategorizationRulesWidget />
+          <ExclusionRulesWidget />
         </TabPanel>
       )}
 

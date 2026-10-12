@@ -1,0 +1,97 @@
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { beforeEach, afterEach, it, expect, vi } from 'vitest'
+import { ExclusionRuleSheet } from './ExclusionRuleSheet'
+import { useTriageStore } from '../../store/useTriageStore'
+import { useBudgetStore } from '../../store/useBudgetStore'
+import { useUndoStore } from '../../store/useUndoStore'
+const initial = useTriageStore.getState(), budget = useBudgetStore.getState(), undo = useUndoStore.getState()
+beforeEach(() => {
+ useTriageStore.setState(initial, true); useBudgetStore.setState(budget, true); useUndoStore.setState(undo, true)
+ useTriageStore.setState({importSources:{a:{id:'a',name:'Card A'}},importRecords:{a:{id:'a',sourceId:'a',decision:'pending',original:{id:'a',date:'2026-06-10',description:'PAYMENT',amount:50,type:'income'}}},pendingTransactions:{a:{id:'a',importRecordId:'a',date:'2026-06-10',description:'Edited merchant',amount:50,type:'income'}}})
+})
+afterEach(cleanup)
+const select = (label:string, option:string) => {fireEvent.click(screen.getByRole('button',{name:label})); fireEvent.click(screen.getByRole('option',{name:option}))}
+it('uses bank originals and scoped row defaults; cancel never writes', () => {
+ const onClose=vi.fn(); render(<ExclusionRuleSheet open onClose={onClose} seedRecordId="a" />)
+ expect(screen.getByLabelText('Original bank description')).toHaveValue('PAYMENT')
+ expect(screen.getByRole('button',{name:'Card or account'})).toHaveTextContent('Card A')
+ expect(screen.getByRole('button',{name:'Money direction'})).toHaveTextContent('Money in')
+ expect(screen.getByLabelText('Apply current rules to transactions awaiting review')).not.toBeChecked()
+ expect(screen.getByText('1 matching import')).toBeInTheDocument()
+ fireEvent.change(screen.getByLabelText('Rule name'),{target:{value:'My payments'}})
+ fireEvent.click(screen.getByRole('button',{name:'Cancel'}))
+ expect(useTriageStore.getState().exclusionRules).toEqual({}); expect(useTriageStore.getState().pendingTransactions.a).toBeDefined(); expect(onClose).toHaveBeenCalledOnce()
+})
+it('requires explicit scope and preserves invalid decimal text', () => {
+ render(<ExclusionRuleSheet open onClose={vi.fn()} />)
+ fireEvent.change(screen.getByLabelText('Rule name'),{target:{value:'Payments'}})
+ fireEvent.change(screen.getByLabelText('Original bank description'),{target:{value:'PAY'}})
+ expect(screen.getByRole('button',{name:'Save Rule'})).toBeDisabled()
+ select('Card or account','All cards/accounts'); select('Description match','Contains')
+ expect(screen.getByText('1 matching import')).toBeInTheDocument()
+ select('Description match','Starts with'); select('Amount match','Exact amount')
+ fireEvent.change(screen.getByLabelText('Amount'),{target:{value:'1.234'}})
+ expect(screen.getByLabelText('Amount')).toHaveValue('1.234'); expect(screen.getByRole('button',{name:'Save Rule'})).toBeDisabled()
+ fireEvent.change(screen.getByLabelText('Amount'),{target:{value:'50'}})
+ select('Behavior','Automatically exclude')
+ expect(screen.getByText(/Matching new imports will be excluded automatically/)).toBeInTheDocument()
+ fireEvent.click(screen.getByRole('button',{name:'Save Rule'}))
+ expect(Object.values(useTriageStore.getState().exclusionRules)[0].sourceId).toBeNull()
+ expect(useTriageStore.getState().pendingTransactions.a).toBeDefined()
+ useUndoStore.getState().runUndo(); expect(useTriageStore.getState().exclusionRules).toEqual({})
+})
+it('saves and applies atomically and Undo restores only affected IDs', () => {
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ select('Behavior','Automatically exclude')
+ fireEvent.click(screen.getByLabelText('Apply current rules to transactions awaiting review'))
+ fireEvent.click(screen.getByRole('button',{name:'Save Rule'}))
+ expect(useTriageStore.getState().pendingTransactions.a).toBeUndefined()
+ useTriageStore.setState(s=>({pendingTransactions:{...s.pendingTransactions,b:{id:'b',date:'2026-07-01',description:'Other',amount:2,type:'expense'}}}))
+ useUndoStore.getState().runUndo()
+ expect(useTriageStore.getState().pendingTransactions.a.description).toBe('Edited merchant')
+ expect(useTriageStore.getState().pendingTransactions.b).toBeDefined()
+ expect(useTriageStore.getState().importRecords.a).not.toHaveProperty('ignoreReason')
+})
+it('requires a source for legacy seeds and rejects inverted ranges',()=>{
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="missing" />)
+ expect(screen.getByText('Source information unavailable')).toBeInTheDocument()
+ expect(screen.getByRole('button',{name:'Save Rule'})).toBeDisabled()
+ cleanup(); render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ select('Amount match','Between amounts')
+ fireEvent.change(screen.getByLabelText('Minimum amount'),{target:{value:'51'}})
+ fireEvent.change(screen.getByLabelText('Maximum amount'),{target:{value:'50'}})
+ expect(screen.getByText('Enter a valid amount range')).toBeInTheDocument()
+ expect(screen.getByRole('button',{name:'Save Rule'})).toBeDisabled()
+})
+it('counts pending matches across all next enabled rules, not only the draft',()=>{
+ const other={id:'b',importRecordId:'b',date:'2026-06-10',description:'OTHER',amount:20,type:'income' as const}
+ useTriageStore.setState(s=>({pendingTransactions:{...s.pendingTransactions,b:other},importRecords:{...s.importRecords,b:{id:'b',sourceId:'a',decision:'pending',original:other}},exclusionRules:{other:{id:'other',revision:1,enabled:true,name:'Other',sourceId:'a',description:{operator:'exact',value:'OTHER'},direction:'in',amount:{operator:'any'},behavior:'review'}}}))
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ fireEvent.click(screen.getByLabelText('Apply current rules to transactions awaiting review'))
+ expect(screen.getByText(/2 pending imports match the next enabled rule set/)).toBeInTheDocument()
+})
+it('reinitializes drafts when the editing target changes',()=>{
+ const other={id:'b',date:'2026-06-10',description:'SECOND',amount:20,type:'expense' as const}
+ useTriageStore.setState(s=>({importRecords:{...s.importRecords,b:{id:'b',sourceId:'a',decision:'pending',original:other}}}))
+ const view=render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ fireEvent.change(screen.getByLabelText('Rule name'),{target:{value:'Unsaved'}})
+ view.rerender(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="b" />)
+ expect(screen.getByLabelText('Original bank description')).toHaveValue('SECOND')
+ expect(screen.getByLabelText('Rule name')).toHaveValue('SECOND')
+ expect(screen.getByRole('button',{name:'Money direction'})).toHaveTextContent('Money out')
+})
+it('reports unavailable-source records outside preview without guessing',()=>{
+ useTriageStore.setState(s=>({importRecords:{...s.importRecords,b:{id:'b',sourceId:'gone',decision:'ignored',original:{id:'b',date:'2026-06-10',description:'PAYMENT',amount:20,type:'income'}}}}))
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ expect(screen.getByText(/1 saved imports have unavailable source information/)).toBeInTheDocument()
+ expect(screen.getByText('1 matching import')).toBeInTheDocument()
+})
+it('preview count changes with original-text criterion and never edits records',()=>{
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ fireEvent.change(screen.getByLabelText('Original bank description'),{target:{value:'Edited merchant'}})
+ expect(screen.getByText('No matching imports.')).toBeInTheDocument()
+ expect(useTriageStore.getState().importRecords.a.original.description).toBe('PAYMENT')
+ fireEvent.change(screen.getByLabelText('Original bank description'),{target:{value:'PAY'}})
+ select('Description match','Contains')
+ expect(screen.getByText('1 matching import')).toBeInTheDocument()
+})
