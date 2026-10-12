@@ -6,6 +6,8 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.11.2-beta] - 2026-10-12
+
 ### Added
 - Overlapping transaction CSV imports remember the original charges and review decisions for each card or account. Repeated days skip already handled entries while preserving multiple identical purchases.
 - Import summaries show skipped entries and changed days. Ignored charges can return to review, and possible duplicates show the existing entry with Same charge and Keep both actions.
