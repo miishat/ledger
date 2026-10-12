@@ -71,7 +71,7 @@ export function matchImport(
         originalRowData: tx.originalRowData ? { ...tx.originalRowData } : undefined,
       }
       records[tx.id] = { id: tx.id, sourceId, original, decision: 'pending' }
-      pending.push({ ...tx, importRecordId: tx.id, duplicate: possible || old ? 'possible' : undefined,
+      pending.push({ ...tx, importRecordId: tx.id, importSourceId: sourceId, duplicate: possible || old ? 'possible' : undefined,
         duplicateRecordId: possible?.id, duplicateTransactionId: old?.id })
       recordIds.push(tx.id)
       report.addedIds.push(tx.id)

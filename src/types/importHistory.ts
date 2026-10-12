@@ -11,6 +11,8 @@ export interface ImportRecord {
   sourceId: string
   original: TriageTransaction
   decision: 'pending' | 'accepted' | 'ignored' | 'duplicate'
+  matchedRecordId?: string
+  matchedTransactionId?: string
 }
 
 export interface ImportDay {

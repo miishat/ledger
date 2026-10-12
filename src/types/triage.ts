@@ -8,6 +8,7 @@ export interface TriageTransaction {
   originalRowData?: Record<string, string>; // The raw CSV row
   bankSource?: { key: string; name: string };
   importRecordId?: string;
+  importSourceId?: string;
   duplicateRecordId?: string;
   duplicateTransactionId?: string;
   /** Set at import time when this row looks like something already in the

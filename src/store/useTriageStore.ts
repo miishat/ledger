@@ -3,10 +3,21 @@ import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from './storageKeys'
 import type { TriageTransaction } from '../types/triage';
 import { useBudgetStore } from './useBudgetStore';
+import { v4 as uuidv4 } from 'uuid';
+import { matchImport } from '../utils/budget/importHistory';
+import type { ImportDay, ImportRecord, ImportReport, ImportSource } from '../types/importHistory';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
   categoryRules: Record<string, string>;
+  importSources: Record<string, ImportSource>;
+  importRecords: Record<string, ImportRecord>;
+  importDays: ImportDay[];
+  lastImport: ImportReport | null;
+  createImportSource: (name: string, bankKey?: string) => string;
+  importTransactions: (rows: TriageTransaction[], sourceId: string) => ImportReport;
+  restoreImportRecord: (id: string) => void;
+  resolveDuplicate: (id: string) => void;
   
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
@@ -30,6 +41,55 @@ export const useTriageStore = create<TriageState>()(
     (set, get) => ({
       pendingTransactions: {},
       categoryRules: {},
+      importSources: {},
+      importRecords: {},
+      importDays: [],
+      lastImport: null,
+
+      createImportSource: (name, bankKey) => {
+        const existing = bankKey && Object.values(get().importSources).find(source => source.bankKey === bankKey);
+        if (existing) return existing.id;
+        if (!name.trim()) throw new Error('Enter a card or account name');
+        const id = uuidv4();
+        set(state => ({ importSources: { ...state.importSources, [id]: { id, name: name.trim(), bankKey } } }));
+        return id;
+      },
+
+      importTransactions: (rows, sourceId) => {
+        const state = get();
+        if (!state.importSources[sourceId]) throw new Error('Choose a card or account');
+        const importedIds = new Set(Object.keys(state.importRecords));
+        const legacy = [
+          ...Object.values(useBudgetStore.getState().transactions).filter(tx => !importedIds.has(tx.id)),
+          ...Object.values(state.pendingTransactions).filter(tx => !tx.importRecordId),
+        ];
+        const result = matchImport(rows, sourceId, state.importRecords, state.importDays, legacy);
+        set({
+          pendingTransactions: { ...state.pendingTransactions, ...Object.fromEntries(result.pending.map(tx => [tx.id, tx])) },
+          importRecords: result.records, importDays: result.days, lastImport: result.report,
+        });
+        return result.report;
+      },
+
+      restoreImportRecord: (id) => {
+        const record = get().importRecords[id];
+        if (!record || record.decision !== 'ignored') return;
+        get().addPending([{ ...record.original, importRecordId: id, importSourceId: record.sourceId }]);
+      },
+
+      resolveDuplicate: (id) => {
+        const tx = get().pendingTransactions[id];
+        if (!tx?.duplicate) return;
+        set(state => {
+          const pendingTransactions = { ...state.pendingTransactions };
+          delete pendingTransactions[id];
+          const recordId = tx.importRecordId;
+          const record = recordId && state.importRecords[recordId];
+          return { pendingTransactions, importRecords: record ? { ...state.importRecords,
+            [record.id]: { ...record, decision: 'duplicate', matchedRecordId: tx.duplicateRecordId, matchedTransactionId: tx.duplicateTransactionId },
+          } : state.importRecords };
+        });
+      },
 
       learnRule: (description, categoryId) =>
         set((state) => ({
@@ -46,10 +106,16 @@ export const useTriageStore = create<TriageState>()(
       addPending: (transactions) =>
         set((state) => {
           const newPending = { ...state.pendingTransactions };
+          const importRecords = { ...state.importRecords };
           transactions.forEach((tx) => {
             newPending[tx.id] = tx;
+            if (tx.importRecordId && tx.importSourceId) {
+              const previous = importRecords[tx.importRecordId];
+              importRecords[tx.importRecordId] = { id: tx.importRecordId, sourceId: tx.importSourceId,
+                original: previous?.original ?? { ...tx }, decision: 'pending' };
+            }
           });
-          return { pendingTransactions: newPending };
+          return { pendingTransactions: newPending, importRecords };
         }),
 
       updatePending: (id, updates) =>
@@ -84,7 +150,10 @@ export const useTriageStore = create<TriageState>()(
         set((state) => {
           const newPending = { ...state.pendingTransactions };
           delete newPending[id];
-          return { pendingTransactions: newPending };
+          const record = tx.importRecordId && state.importRecords[tx.importRecordId];
+          return { pendingTransactions: newPending, importRecords: record ? {
+            ...state.importRecords, [record.id]: { ...record, decision: 'accepted' },
+          } : state.importRecords };
         });
       },
 
@@ -111,42 +180,52 @@ export const useTriageStore = create<TriageState>()(
         const approvedIds = txs.map((tx) => tx.id);
         set((current) => {
           const newPending = { ...current.pendingTransactions };
+          const importRecords = { ...current.importRecords };
           for (const id of approvedIds) delete newPending[id];
-          return { pendingTransactions: newPending };
+          for (const tx of txs) {
+            const record = tx.importRecordId && importRecords[tx.importRecordId];
+            if (record) importRecords[record.id] = { ...record, decision: 'accepted' };
+          }
+          return { pendingTransactions: newPending, importRecords };
         });
         return approvedIds;
       },
 
-      rejectDuplicates: () =>
-        set((state) => ({
-          pendingTransactions: Object.fromEntries(
-            Object.entries(state.pendingTransactions).filter(([, tx]) => !tx.duplicate),
-          ),
-        })),
+      rejectDuplicates: () => {
+        for (const tx of Object.values(get().pendingTransactions).filter(tx => tx.duplicate)) get().resolveDuplicate(tx.id);
+      },
 
-      rejectCardPayments: () =>
-        set((state) => ({
-          pendingTransactions: Object.fromEntries(
-            Object.entries(state.pendingTransactions).filter(([, tx]) => tx.flag !== 'card-payment'),
-          ),
-        })),
+      rejectCardPayments: () => {
+        for (const tx of Object.values(get().pendingTransactions).filter(tx => tx.flag === 'card-payment')) get().rejectTransaction(tx.id);
+      },
 
       rejectTransaction: (id) =>
         set((state) => {
           const newPending = { ...state.pendingTransactions };
+          const tx = newPending[id];
           delete newPending[id];
-          return { pendingTransactions: newPending };
+          const record = tx?.importRecordId && state.importRecords[tx.importRecordId];
+          return { pendingTransactions: newPending, importRecords: record ? {
+            ...state.importRecords, [record.id]: { ...record, decision: 'ignored' },
+          } : state.importRecords };
         }),
 
-      clearAll: () => set({ pendingTransactions: {} }),
+      clearAll: () => set(state => {
+        const cancelled = new Set(Object.values(state.pendingTransactions).map(tx => tx.importRecordId).filter(Boolean));
+        return { pendingTransactions: {},
+          importRecords: Object.fromEntries(Object.entries(state.importRecords).filter(([id]) => !cancelled.has(id))),
+          importDays: state.importDays.filter(day => day.recordIds.every(id => !cancelled.has(id))),
+          lastImport: null,
+        };
+      }),
     }),
     {
       name: STORAGE_KEYS.triage,
-      version: 1,
-      // Existing installs wrote version 0 with this exact shape, so v0 to v1
-      // is an identity migration. It exists so the next schema change has a
-      // hook instead of a silent reinterpretation of whatever is on disk.
-      migrate: (persisted: unknown) => persisted,
+      version: 2,
+      migrate: (persisted: unknown) => ({
+        ...(persisted as Partial<TriageState>),
+        importSources: {}, importRecords: {}, importDays: [], lastImport: null,
+      }),
     }
   )
 );
