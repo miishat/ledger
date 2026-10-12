@@ -1,10 +1,23 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 import { CSVUploader } from './CSVUploader'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useTriageStore } from '../../store/useTriageStore'
 import { parseCSV } from '../../utils/csvParser'
+
+const initialTriage = useTriageStore.getState()
+const initialBudget = useBudgetStore.getState()
+beforeEach(() => {
+  useTriageStore.setState(initialTriage, true)
+  useBudgetStore.setState(initialBudget, true)
+})
+
+async function chooseNewSource() {
+  await screen.findByRole('dialog', { name: 'Choose Import Source' })
+  fireEvent.change(screen.getByLabelText('Card or account name'), { target: { value: 'My card' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+}
 
 vi.mock('../../utils/csvParser', async () => {
   const actual = await vi.importActual<typeof import('../../utils/csvParser')>('../../utils/csvParser')
@@ -65,7 +78,7 @@ describe('CSVUploader on a phone', () => {
   })
 })
 
-it('flags an imported row that already exists in the budget', async () => {
+it('holds a legacy row for review because its original card is unknown', async () => {
   useBudgetStore.setState({
     transactions: {
       e1: { id: 'e1', date: '2026-08-04', amount: 42.5, description: 'TIM HORTONS #123', type: 'expense' },
@@ -75,12 +88,13 @@ it('flags an imported row that already exists in the budget', async () => {
   render(<CSVUploader />)
   const input = document.querySelector('input[type="file"]') as HTMLInputElement
   fireEvent.change(input, { target: { files: [new File([csv], 'stmt.csv', { type: 'text/csv' })] } })
+  await chooseNewSource()
 
   await waitFor(() => {
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(2)
   })
   const pending = Object.values(useTriageStore.getState().pendingTransactions)
-  expect(pending.find((p) => p.description === 'Tim Hortons #123')?.duplicate).toBe('exact')
+  expect(pending.find((p) => p.description === 'Tim Hortons #123')?.duplicate).toBe('possible')
   expect(pending.find((p) => p.description === 'Coffee')?.duplicate).toBeUndefined()
 })
 
@@ -110,6 +124,7 @@ describe('CSVUploader Chase category fallback', () => {
     const file = new File(['x'], 'chase.csv', { type: 'text/csv' })
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [file] } })
+    await chooseNewSource()
 
     await waitFor(() => {
       const pending = useTriageStore.getState().pendingTransactions
@@ -137,8 +152,75 @@ it('imports CIBC rows directly into categorized triage with refund, payment and 
   })
   await waitFor(() => expect(Object.values(useTriageStore.getState().pendingTransactions)).toHaveLength(3))
   const rows = Object.values(useTriageStore.getState().pendingTransactions)
-  expect(rows.find(r => r.amount === 15.99)).toMatchObject({ type: 'expense', categoryId: 'cg', duplicate: 'exact' })
+  expect(rows.find(r => r.amount === 15.99)).toMatchObject({ type: 'expense', categoryId: 'cg', duplicate: 'possible' })
   expect(rows.find(r => r.amount === -27.11)).toMatchObject({ type: 'expense', categoryId: 'cg' })
   expect(rows.find(r => r.amount === 100)).toMatchObject({ flag: 'card-payment' })
   expect(screen.queryByRole('dialog', { name: 'Map CSV Columns' })).not.toBeInTheDocument()
+})
+
+it('cancels source selection without adding rows or remembered decisions', async () => {
+  render(<CSVUploader />)
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['Date,Amount,Description\n2026-06-10,-5,Coffee'], 'bank.csv')] } })
+  await screen.findByRole('dialog', { name: 'Choose Import Source' })
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(useTriageStore.getState().pendingTransactions).toEqual({})
+  expect(useTriageStore.getState().importRecords).toEqual({})
+  expect(useTriageStore.getState().importSources).toEqual({})
+})
+
+it('automatically routes CIBC cards and skips a repeated day after it was accepted', async () => {
+  render(<CSVUploader />)
+  const csv = '2026-06-10,Coffee,5.00,,1234********5678\n2026-06-10,Coffee,5.00,,1234********5678'
+  const input = document.querySelector('input[type="file"]')!
+  fireEvent.change(input, { target: { files: [new File([csv], 'first.csv')] } })
+  await waitFor(() => expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(2))
+  expect(Object.values(useTriageStore.getState().pendingTransactions).every(tx => !tx.duplicate)).toBe(true)
+  useTriageStore.getState().approveAll()
+  fireEvent.change(input, { target: { files: [new File([csv], 'different-name.csv')] } })
+  await waitFor(() => expect(useTriageStore.getState().lastImport?.skippedIds).toHaveLength(2))
+  expect(useTriageStore.getState().pendingTransactions).toEqual({})
+  expect(Object.keys(useBudgetStore.getState().transactions)).toHaveLength(2)
+})
+
+it('lets a newly recognized CIBC card reuse a previously named source', async () => {
+  const store = useTriageStore.getState()
+  const sourceId = store.createImportSource('My card')
+  store.importTransactions([{ id: 'a', date: '2026-06-10', amount: 5, description: 'Coffee', type: 'expense' }], sourceId)
+  store.approveAll()
+  render(<CSVUploader />)
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['2026-06-10,Coffee,5.00,,1234********5678'], 'cibc.csv')] } })
+  await screen.findByRole('dialog', { name: 'Choose Import Source' })
+  fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
+  fireEvent.click(screen.getByRole('option', { name: 'My card' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  expect(useTriageStore.getState().importSources[sourceId].bankKey).toBe('cibc:1234:5678')
+  expect(useTriageStore.getState().pendingTransactions).toEqual({})
+  expect(useTriageStore.getState().lastImport?.skippedIds).toHaveLength(1)
+})
+
+it('reserves a manual source for one card while planning a multi-card file and cancels without partial writes', async () => {
+  const sourceId = useTriageStore.getState().createImportSource('My card')
+  render(<CSVUploader />)
+  const csv = '2026-06-10,Coffee,5.00,,1234********5678\n2026-06-10,Coffee,5.00,,1234********9999'
+  const input = document.querySelector('input[type="file"]')!
+  const selectFirst = async () => {
+    fireEvent.change(input, { target: { files: [new File([csv], 'cards.csv')] } })
+    await screen.findByRole('dialog', { name: 'Choose Import Source' })
+    fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
+    fireEvent.click(screen.getByRole('option', { name: 'My card' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  }
+  await selectFirst()
+  expect(useTriageStore.getState().importRecords).toEqual({})
+  fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
+  expect(screen.queryByRole('option', { name: 'My card' })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('option', { name: 'New card or account' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(useTriageStore.getState().importSources[sourceId].bankKey).toBeUndefined()
+  expect(useTriageStore.getState().importRecords).toEqual({})
+  await selectFirst()
+  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  expect(Object.keys(useTriageStore.getState().importSources)).toHaveLength(2)
+  expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(2)
+  expect(useTriageStore.getState().lastImport?.addedIds).toHaveLength(2)
 })

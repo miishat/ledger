@@ -78,4 +78,21 @@ describe('daily import history', () => {
     expect(next.report.skippedIds).toHaveLength(2)
     expect(next.pending).toHaveLength(2)
   })
+
+  it('remembers a matched merchant alias when a later file adds another charge to that day', () => {
+    const first = matchImport([row('a')], 'card-a', {}, [], [])
+    const alias = matchImport([row('alias', { description: 'Coffee shop' })], 'card-a', first.records, first.days, [])
+    alias.records.alias = { ...alias.records.alias, decision: 'duplicate', matchedRecordId: 'a' }
+    const next = matchImport([row('b', { description: 'Coffee shop' }), row('new', { amount: 42 })], 'card-a', alias.records, alias.days, [])
+    expect(next.pending.map(tx => tx.id)).toEqual(['new'])
+    expect(next.report.skippedIds).toEqual(['alias'])
+  })
+
+  it('uses a deliberate legacy match as bank identity on subsequent changed-day imports', () => {
+    const first = matchImport([row('alias')], 'card-a', {}, [], [row('legacy')])
+    first.records.alias = { ...first.records.alias, decision: 'duplicate', matchedTransactionId: 'legacy' }
+    const next = matchImport([row('b'), row('new', { amount: 42 })], 'card-a', first.records, first.days, [row('legacy')])
+    expect(next.pending.map(tx => tx.id)).toEqual(['new'])
+    expect(next.report.skippedIds).toEqual(['alias'])
+  })
 })

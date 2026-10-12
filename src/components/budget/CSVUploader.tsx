@@ -3,7 +3,8 @@ import { Upload, X } from 'lucide-react';
 import { parseCSV, type UnrecognizedCSVResult } from '../../utils/csvParser';
 import { guessCategory } from '../../utils/autoCategorize';
 import { chaseCategoryId } from '../../utils/budget/chaseCategoryMap';
-import { classifyDuplicates } from '../../utils/budget/importDedupe';
+import { ImportSourceSheet } from './ImportSourceSheet';
+import type { ImportReport } from '../../types/importHistory';
 import { useTriageStore } from '../../store/useTriageStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,10 +23,54 @@ export const CSVUploader: React.FC = () => {
   const [mapDate, setMapDate] = useState<string>('');
   const [mapAmount, setMapAmount] = useState<string>('');
   const [mapDesc, setMapDesc] = useState<string>('');
+  const [sourceRows, setSourceRows] = useState<TriageTransaction[] | null>(null);
+  const [reservedBindings, setReservedBindings] = useState<Record<string, string>>({});
+  const remainingGroups = useRef<TriageTransaction[][]>([]);
+  const sourcePlans = useRef<Array<{ rows: TriageTransaction[]; sourceId?: string; name?: string }>>([]);
 
-  const addPending = useTriageStore((state) => state.addPending);
   const categoryRules = useTriageStore((state) => state.categoryRules);
   const categories = useBudgetStore((state) => state.categories);
+
+  const routeGroups = (groups: TriageTransaction[][]) => {
+    const store = useTriageStore.getState();
+    for (const [index, group] of groups.entries()) {
+      const bank = group[0].bankSource;
+      const source = bank && Object.values(store.importSources).find(s => s.bankKey === bank.key);
+      if (!bank || (!source && Object.values(store.importSources).some(s => !s.bankKey))) {
+        remainingGroups.current = groups.slice(index + 1);
+        setReservedBindings(Object.fromEntries(sourcePlans.current.filter(plan => plan.sourceId && plan.rows[0].bankSource)
+          .map(plan => [plan.sourceId!, plan.rows[0].bankSource!.key])));
+        setSourceRows(group);
+        return;
+      }
+      sourcePlans.current.push({ rows: group, sourceId: source ? source.id : undefined, name: bank.name });
+    }
+    // Check the complete selection before binding sources or importing rows.
+    const bindings = new Map<string, string>();
+    for (const plan of sourcePlans.current) {
+      if (!plan.sourceId) continue;
+      const source = store.importSources[plan.sourceId];
+      const bankKey = plan.rows[0].bankSource?.key;
+      if (!source) throw new Error('Choose an available card or account');
+      const binding = bindings.get(source.id) ?? source.bankKey;
+      if (bankKey && binding && binding !== bankKey) throw new Error('Each card needs its own import source');
+      if (bankKey) bindings.set(source.id, bankKey);
+    }
+    const report: ImportReport = { addedIds: [], skippedIds: [], changedDays: [] };
+    for (const plan of sourcePlans.current) {
+      const bank = plan.rows[0].bankSource;
+      const sourceId = plan.sourceId ?? store.createImportSource(plan.name!, bank?.key);
+      if (bank && plan.sourceId) store.bindImportSource(sourceId, bank.key);
+      const result = store.importTransactions(plan.rows, sourceId);
+      report.addedIds.push(...result.addedIds);
+      report.skippedIds.push(...result.skippedIds);
+      report.changedDays.push(...result.changedDays);
+    }
+    useTriageStore.setState({ lastImport: report });
+    sourcePlans.current = [];
+    remainingGroups.current = [];
+    setSourceRows(null);
+  };
 
   const handleTransactions = (transactions: TriageTransaction[]) => {
     // Auto-categorize
@@ -40,16 +85,14 @@ export const CSVUploader: React.FC = () => {
         categoryId
       };
     });
-    // Compare against what is already in the budget AND what is already waiting
-    // in triage, so importing the same file twice flags the second copy.
-    const existing = [
-      ...Object.values(useBudgetStore.getState().transactions),
-      ...Object.values(useTriageStore.getState().pendingTransactions).map((p) => ({
-        id: p.id, date: p.date, amount: p.amount, description: p.description, type: p.type,
-      })),
-    ];
-    const verdicts = classifyDuplicates(categorized, existing);
-    addPending(categorized.map((tx) => (verdicts[tx.id] ? { ...tx, duplicate: verdicts[tx.id] } : tx)));
+    if (!categorized.length) return;
+    sourcePlans.current = [];
+    const groups = new Map<string, TriageTransaction[]>();
+    for (const tx of categorized) {
+      const key = tx.bankSource?.key ?? 'manual';
+      groups.set(key, [...(groups.get(key) ?? []), tx]);
+    }
+    routeGroups([...groups.values()]);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +202,17 @@ export const CSVUploader: React.FC = () => {
         </button>
       )}
       {error && <span className="text-[12px] text-error text-center">{error}</span>}
+      {sourceRows && <ImportSourceSheet key={sourceRows[0].id} bankSource={sourceRows[0].bankSource}
+      reservedBindings={reservedBindings} onClose={() => {
+        setSourceRows(null); sourcePlans.current = []; remainingGroups.current = [];
+      }} onImport={choice => {
+        sourcePlans.current.push({ rows: sourceRows, ...choice });
+        try { routeGroups(remainingGroups.current); }
+        catch (err) {
+          setError(err instanceof Error ? err.message : 'Unable to import transactions');
+          setSourceRows(null); sourcePlans.current = []; remainingGroups.current = [];
+        }
+      }} />}
 
       <Sheet
         open={!!mappingData}

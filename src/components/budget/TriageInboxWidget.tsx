@@ -15,6 +15,10 @@ export const TriageInboxWidget: React.FC = () => {
   const approveAll = useTriageStore((state) => state.approveAll);
   const addPending = useTriageStore((state) => state.addPending);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
+  const resolveDuplicate = useTriageStore((state) => state.resolveDuplicate);
+  const importRecords = useTriageStore((state) => state.importRecords);
+  const importSources = useTriageStore((state) => state.importSources);
+  const transactions = useBudgetStore((state) => state.transactions);
   const rejectDuplicates = useTriageStore((state) => state.rejectDuplicates);
   const rejectCardPayments = useTriageStore((state) => state.rejectCardPayments);
   const clearAll = useTriageStore((state) => state.clearAll);
@@ -44,9 +48,18 @@ export const TriageInboxWidget: React.FC = () => {
     });
   };
 
+  const approveWithUndo = (tx: typeof txList[number]) => {
+    approveTransaction(tx.id);
+    offerUndo('Added 1 transaction', () => { deleteTransactions([tx.id]); addPending([tx]); });
+  };
+  const ignoreWithUndo = (tx: typeof txList[number], duplicate = false) => {
+    if (duplicate) resolveDuplicate(tx.id); else rejectTransaction(tx.id);
+    offerUndo(duplicate ? 'Matched 1 duplicate' : 'Ignored 1 charge', () => addPending([tx]));
+  };
+
   return (
     <WidgetWrapper title={`Triage Inbox (${txList.length})`}>
-      <div className="flex justify-end gap-2 mt-2">
+      <div className="flex flex-wrap justify-end gap-2 mt-2">
         <button
           onClick={() => setConfirmClearOpen(true)}
           className="text-[13px] font-medium text-error hover:opacity-80 transition-opacity flex items-center gap-1 bg-error/10 px-2 py-1 rounded-md"
@@ -55,7 +68,11 @@ export const TriageInboxWidget: React.FC = () => {
         </button>
         {duplicates.length > 0 && (
           <button
-            onClick={rejectDuplicates}
+            onClick={() => {
+              const rows = duplicates;
+              rejectDuplicates();
+              offerUndo(`Matched ${rows.length} duplicates`, () => addPending(rows));
+            }}
             className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
           >
             Reject {duplicates.length} duplicate{duplicates.length === 1 ? '' : 's'}
@@ -63,7 +80,11 @@ export const TriageInboxWidget: React.FC = () => {
         )}
         {cardPayments.length > 0 && (
           <button
-            onClick={rejectCardPayments}
+            onClick={() => {
+              const rows = cardPayments;
+              rejectCardPayments();
+              offerUndo(`Ignored ${rows.length} card payments`, () => addPending(rows));
+            }}
             className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
           >
             Reject {cardPayments.length} card payment{cardPayments.length === 1 ? '' : 's'}
@@ -77,11 +98,15 @@ export const TriageInboxWidget: React.FC = () => {
         </button>
       </div>
       <div className="flex flex-col gap-3 mt-3 max-h-[280px] desktop:max-h-[400px] overflow-y-auto pr-2">
-        {txList.map(tx => (
+        {txList.map(tx => {
+          const existing = tx.duplicateRecordId ? importRecords[tx.duplicateRecordId]?.original :
+            tx.duplicateTransactionId ? transactions[tx.duplicateTransactionId] ?? pendingTransactions[tx.duplicateTransactionId] : undefined;
+          return (
           <div key={tx.id} className="flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="min-w-0 break-words">
                 <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{tx.description}</p>
+                {tx.importSourceId && <p className="text-[12px] text-text-secondary">{importSources[tx.importSourceId]?.name}</p>}
                 <p className="text-[12px] text-[var(--color-text-secondary)]">
                   {tx.date}
                   {tx.duplicate && (
@@ -96,39 +121,50 @@ export const TriageInboxWidget: React.FC = () => {
                   )}
                 </p>
               </div>
-              <span className={`text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
+              <span className={`shrink-0 text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
                 {tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount)}
               </span>
             </div>
+            {existing && <p className="text-[13px] text-text-secondary break-words">
+              Existing: {existing.description} · {existing.date} · ${existing.amount.toFixed(2)}
+            </p>}
             
             <div className="flex items-center gap-2 mt-1">
               <ThemedSelect
                 value={tx.categoryId || ''}
                 onChange={(v) => updatePending(tx.id, { categoryId: v })}
-                className="flex-1 text-[12px]"
+                className="flex-1 min-w-0 text-[12px]"
+                ariaLabel={`Category for ${tx.description}`}
                 options={[
                   { value: '', label: 'Uncategorized' },
                   ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),
                 ]}
               />
               
-              <button
-                onClick={() => approveTransaction(tx.id)}
-                className="p-1 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
+              {!tx.duplicate && <button
+                onClick={() => approveWithUndo(tx)}
+                className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
                 title="Approve"
+                aria-label={`Approve ${tx.description}`}
               >
                 <Check size={16} />
-              </button>
-              <button
-                onClick={() => rejectTransaction(tx.id)}
-                className="p-1 rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
+              </button>}
+              {!tx.duplicate && <button
+                onClick={() => ignoreWithUndo(tx)}
+                className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
                 title="Reject/Delete"
+                aria-label={`Ignore ${tx.description}`}
               >
                 <X size={16} />
-              </button>
+              </button>}
             </div>
+            {tx.duplicate && <div className="flex flex-wrap gap-2 text-[13px]">
+              <button onClick={() => ignoreWithUndo(tx, true)} className="min-h-11 px-3 rounded border border-border text-accent">Same charge</button>
+              <button onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent">Keep both</button>
+              <button onClick={() => ignoreWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-text-secondary">Ignore this charge</button>
+            </div>}
           </div>
-        ))}
+        ); })}
       </div>
       <ConfirmDialog
         open={confirmClearOpen}

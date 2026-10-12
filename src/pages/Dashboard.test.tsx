@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setMatchMedia, resetMatchMedia } from '../test-utils/matchMedia'
 import { Dashboard, DASHBOARD_WIDGET_LABELS, DASHBOARD_WIDGET_IDS } from './Dashboard'
 import { useDashboardLayoutStore } from '../store/useDashboardLayoutStore'
@@ -46,6 +46,9 @@ it('opens the deferred Customize panel from its visible header action', async ()
   setMatchMedia(true)
   render(<MemoryRouter><Dashboard /></MemoryRouter>)
   fireEvent.click(screen.getByRole('button', { name: 'Customize' }))
+  // The deferred module can take longer than the DOM query's default window
+  // under the full suite. Wait for that actual prerequisite, not a larger timer.
+  await vi.dynamicImportSettled()
   expect(await screen.findByRole('dialog', { name: 'Customize dashboard' })).toBeInTheDocument()
   expect(screen.getByRole('checkbox', { name: 'Show Net Worth Over Time' })).toBeInTheDocument()
 })

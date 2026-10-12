@@ -83,6 +83,33 @@ describe('TriageInboxWidget', () => {
     useUndoStore.getState().runUndo()
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
   })
+
+  it('shows the existing bank entry and resolves a possible match with Same charge', () => {
+    const store = useTriageStore.getState()
+    const sourceId = store.createImportSource('Card A')
+    store.importTransactions([{ id: 'a', date: '2026-06-10', amount: 5, description: 'Coffee', type: 'expense' }], sourceId)
+    store.approveAll()
+    store.importTransactions([{ id: 'b', date: '2026-06-10', amount: 5, description: 'Coffee shop', type: 'expense' }], sourceId)
+    render(<TriageInboxWidget />)
+    expect(screen.getByText(/Existing: Coffee/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Same charge' }))
+    expect(useTriageStore.getState().importRecords.b.decision).toBe('duplicate')
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['a'])
+  })
+
+  it('allows Keep both and restores import decisions on undo', () => {
+    const store = useTriageStore.getState()
+    const sourceId = store.createImportSource('Card A')
+    store.importTransactions([{ id: 'a', date: '2026-06-10', amount: 5, description: 'Coffee', type: 'expense' }], sourceId)
+    store.approveAll()
+    store.importTransactions([{ id: 'b', date: '2026-06-10', amount: 5, description: 'Coffee shop', type: 'expense' }], sourceId)
+    render(<TriageInboxWidget />)
+    fireEvent.click(screen.getByRole('button', { name: 'Keep both' }))
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['a', 'b'])
+    useUndoStore.getState().runUndo()
+    expect(useTriageStore.getState().importRecords.b.decision).toBe('pending')
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['a'])
+  })
 })
 
 describe('TriageInboxWidget card payments', () => {
@@ -114,6 +141,17 @@ describe('TriageInboxWidget card payments', () => {
     render(<TriageInboxWidget />)
     fireEvent.click(screen.getByRole('button', { name: 'Reject 1 card payment' }))
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
+  })
+
+  it('offers Undo for bulk card-payment exclusions and restores the pending decision', () => {
+    const store = useTriageStore.getState()
+    const sourceId = store.createImportSource('Card A')
+    store.importTransactions([{ id: 'payment', date: '2026-06-10', amount: 50, description: 'Payment', type: 'income', flag: 'card-payment' }], sourceId)
+    render(<TriageInboxWidget />)
+    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 card payment' }))
+    expect(useTriageStore.getState().importRecords.payment.decision).toBe('ignored')
+    useUndoStore.getState().runUndo()
+    expect(useTriageStore.getState().importRecords.payment.decision).toBe('pending')
   })
 
   it('offers no card payment button when nothing is flagged', () => {

@@ -11,6 +11,7 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
+import { ImportSummary } from '../components/budget/ImportSummary';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
 import { CategoryManagerWidget } from '../components/budget/CategoryManagerWidget';
@@ -192,6 +193,7 @@ export const Budgeting: React.FC = () => {
       )}
 
       <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
+      <ImportSummary />
 
       <ParadigmBanner selectedMonth={range.to} />
 

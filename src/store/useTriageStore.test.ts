@@ -2,6 +2,7 @@ import { useTriageStore } from './useTriageStore'
 import { useBudgetStore } from './useBudgetStore'
 import type { TriageTransaction } from '../types/triage'
 import { buildBackup, restoreBackup } from '../utils/backup'
+import { useUndoStore } from './useUndoStore'
 
 const triageInitial = useTriageStore.getState()
 const budgetInitial = useBudgetStore.getState()
@@ -235,5 +236,36 @@ describe('remembered imports', () => {
     expect(useTriageStore.getState().importRecords.a1.decision).toBe('ignored')
     expect(useTriageStore.getState().importDays).toHaveLength(1)
     expect(Object.values(useTriageStore.getState().importSources)[0].name).toBe('Card A')
+  })
+
+  it('invalidates duplicate decisions that refer to cancelled pending originals', () => {
+    const store = useTriageStore.getState()
+    const sourceId = store.createImportSource('Card A')
+    store.importTransactions([pending({ id: 'a', description: 'Coffee' })], sourceId)
+    store.importTransactions([pending({ id: 'b', description: 'Coffee shop' })], sourceId)
+    store.resolveDuplicate('b')
+    store.clearAll()
+    store.importTransactions([pending({ id: 'c', description: 'Coffee shop' })], sourceId)
+    expect(useTriageStore.getState().pendingTransactions.c).toBeDefined()
+    expect(useTriageStore.getState().lastImport?.skippedIds).toEqual([])
+  })
+
+  it('dismisses stale undo when another import is confirmed', () => {
+    const sourceId = importCoffees()
+    const rows = Object.values(useTriageStore.getState().pendingTransactions)
+    useTriageStore.getState().clearAll()
+    useUndoStore.getState().offerUndo('Discarded', () => useTriageStore.getState().addPending(rows))
+    useTriageStore.getState().importTransactions(coffees('b'), sourceId)
+    useUndoStore.getState().runUndo()
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['b1', 'b2'])
+  })
+
+  it('binds a recognized card to an existing manual source without losing its history', () => {
+    const sourceId = importCoffees()
+    useTriageStore.getState().approveAll()
+    useTriageStore.getState().bindImportSource(sourceId, 'cibc:1234:5678')
+    expect(useTriageStore.getState().createImportSource('CIBC card 5678', 'cibc:1234:5678')).toBe(sourceId)
+    useTriageStore.getState().importTransactions(coffees('b'), sourceId)
+    expect(useTriageStore.getState().lastImport?.skippedIds).toHaveLength(2)
   })
 })

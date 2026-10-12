@@ -6,6 +6,7 @@ import { useBudgetStore } from './useBudgetStore';
 import { v4 as uuidv4 } from 'uuid';
 import { matchImport } from '../utils/budget/importHistory';
 import type { ImportDay, ImportRecord, ImportReport, ImportSource } from '../types/importHistory';
+import { useUndoStore } from './useUndoStore';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
@@ -15,6 +16,7 @@ interface TriageState {
   importDays: ImportDay[];
   lastImport: ImportReport | null;
   createImportSource: (name: string, bankKey?: string) => string;
+  bindImportSource: (sourceId: string, bankKey: string) => void;
   importTransactions: (rows: TriageTransaction[], sourceId: string) => ImportReport;
   restoreImportRecord: (id: string) => void;
   resolveDuplicate: (id: string) => void;
@@ -55,10 +57,22 @@ export const useTriageStore = create<TriageState>()(
         return id;
       },
 
+      bindImportSource: (sourceId, bankKey) => {
+        const source = get().importSources[sourceId];
+        if (!source || (source.bankKey && source.bankKey !== bankKey)) throw new Error('Choose the matching card or a new source');
+        const conflict = Object.values(get().importSources).find(s => s.bankKey === bankKey && s.id !== sourceId);
+        if (conflict) throw new Error('This card already has an import source');
+        set(state => ({ importSources: { ...state.importSources, [sourceId]: { ...source, bankKey } } }));
+      },
+
       importTransactions: (rows, sourceId) => {
         const state = get();
         if (!state.importSources[sourceId]) throw new Error('Choose a card or account');
+        useUndoStore.getState().dismissUndo();
         const importedIds = new Set(Object.keys(state.importRecords));
+        for (const record of Object.values(state.importRecords)) {
+          if (record.matchedTransactionId) importedIds.add(record.matchedTransactionId);
+        }
         const legacy = [
           ...Object.values(useBudgetStore.getState().transactions).filter(tx => !importedIds.has(tx.id)),
           ...Object.values(state.pendingTransactions).filter(tx => !tx.importRecordId),
@@ -212,6 +226,21 @@ export const useTriageStore = create<TriageState>()(
 
       clearAll: () => set(state => {
         const cancelled = new Set(Object.values(state.pendingTransactions).map(tx => tx.importRecordId).filter(Boolean));
+        const cancelledTransactions = new Set(Object.keys(state.pendingTransactions));
+        // Duplicate decisions are only meaningful while their original survives.
+        // Invalidate dependent decisions too, including a chain of matches.
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const record of Object.values(state.importRecords)) {
+            if (!cancelled.has(record.id) && record.decision === 'duplicate' &&
+              ((record.matchedRecordId && cancelled.has(record.matchedRecordId)) ||
+                (record.matchedTransactionId && cancelledTransactions.has(record.matchedTransactionId)))) {
+              cancelled.add(record.id);
+              changed = true;
+            }
+          }
+        }
         return { pendingTransactions: {},
           importRecords: Object.fromEntries(Object.entries(state.importRecords).filter(([id]) => !cancelled.has(id))),
           importDays: state.importDays.filter(day => day.recordIds.every(id => !cancelled.has(id))),

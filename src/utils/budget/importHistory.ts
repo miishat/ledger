@@ -31,7 +31,23 @@ export function matchImport(
   const days = [...existingDays]
   const pending: TriageTransaction[] = []
   const report: ImportReport = { addedIds: [], skippedIds: [], changedDays: [] }
-  const known = Object.values(existingRecords).filter(r => r.sourceId === sourceId && r.decision !== 'duplicate')
+  const occurrenceId = (record: ImportRecord, visited = new Set<string>()): string | null => {
+    if (visited.has(record.id)) return null
+    if (record.decision !== 'duplicate') return record.id
+    visited.add(record.id)
+    if (record.matchedRecordId) {
+      const target = existingRecords[record.matchedRecordId]
+      return target?.sourceId === sourceId ? occurrenceId(target, visited) : null
+    }
+    return record.matchedTransactionId ? `legacy:${record.matchedTransactionId}` : null
+  }
+  // A confirmed match adds an alias for one occurrence, not another purchase.
+  // Legacy matches acquire bank provenance only after an explicit user decision.
+  const known = Object.values(existingRecords).filter(r => r.sourceId === sourceId)
+    .flatMap(record => {
+      const occurrence = occurrenceId(record)
+      return occurrence ? [{ record, occurrence }] : []
+    })
   const grouped = new Map<string, TriageTransaction[]>()
   for (const tx of incoming) {
     const group = grouped.get(tx.date) ?? []
@@ -40,7 +56,10 @@ export function matchImport(
   }
 
   for (const [date, group] of grouped) {
-    const sorted = [...group].sort((a, b) => importRowKey(a).localeCompare(importRowKey(b)))
+    const sorted = [...group].sort((a, b) => {
+      const keyA = importRowKey(a), keyB = importRowKey(b)
+      return keyA < keyB ? -1 : keyA > keyB ? 1 : 0
+    })
     const signature = JSON.stringify(sorted.map(importRowKey))
     const snapshot = days.find(d => d.sourceId === sourceId && d.date === date && d.signature === signature &&
       d.recordIds.every(id => records[id]))
@@ -49,21 +68,23 @@ export function matchImport(
       continue
     }
 
-    const sameDay = known.filter(r => r.original.date === date)
-    const available = new Map<string, ImportRecord[]>()
-    for (const record of sameDay) {
-      const key = importRowKey(record.original)
-      available.set(key, [...(available.get(key) ?? []), record])
+    const sameDay = known.filter(item => item.record.original.date === date)
+    const available = new Map<string, typeof known>()
+    const consumed = new Set<string>()
+    for (const item of sameDay) {
+      const key = importRowKey(item.record.original)
+      available.set(key, [...(available.get(key) ?? []), item])
     }
     const recordIds: string[] = []
     for (const tx of sorted) {
-      const match = available.get(importRowKey(tx))?.shift()
+      const match = available.get(importRowKey(tx))?.find(item => !consumed.has(item.occurrence))
       if (match) {
-        recordIds.push(match.id)
-        report.skippedIds.push(match.id)
+        consumed.add(match.occurrence)
+        recordIds.push(match.record.id)
+        report.skippedIds.push(match.record.id)
         continue
       }
-      const possible = known.find(r => possibleMatch(tx, r.original))
+      const possible = known.find(item => possibleMatch(tx, item.record.original))?.record
       const old = !possible ? legacy.find(t => possibleMatch(tx, { ...t, amount: t.shared?.totalAmount ?? t.amount })) : undefined
       const original: TriageTransaction = {
         id: tx.id, date: tx.date, amount: tx.amount, description: tx.description, type: tx.type,
@@ -76,7 +97,7 @@ export function matchImport(
       recordIds.push(tx.id)
       report.addedIds.push(tx.id)
     }
-    const missingCount = [...available.values()].reduce((sum, rows) => sum + rows.length, 0)
+    const missingCount = new Set(sameDay.filter(item => !consumed.has(item.occurrence)).map(item => item.occurrence)).size
     if (missingCount) report.changedDays.push({ sourceId, date, missingCount })
     days.push({ sourceId, date, signature, recordIds })
   }

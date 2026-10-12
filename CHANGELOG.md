@@ -4,6 +4,13 @@ All notable changes to Ledger are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 pre-1.0 beta.
 
+## [Unreleased]
+
+### Added
+- Overlapping transaction CSV imports remember the original charges and review decisions for each card or account. Repeated days skip already handled entries while preserving multiple identical purchases.
+- Import summaries show skipped entries and changed days. Ignored charges can return to review, and possible duplicates show the existing entry with Same charge and Keep both actions.
+- CIBC imports recognize the masked card automatically. Other CSVs let you choose a saved card or account. Import history travels with backups and sync; older transactions without source history remain reviewable.
+
 ## [0.11.1-beta] - 2026-10-08
 
 ### Added
