@@ -37,10 +37,10 @@ export const TriageInboxWidget: React.FC = () => {
   const cardPayments = txList.filter((tx) => tx.flag === 'card-payment');
   // Recomputed from the list rather than subtracted, because one row can be both
   // a duplicate and flagged, and subtracting both counts would double-count it.
-  const acceptableCount = txList.filter((tx) => !tx.duplicate && !tx.flag).length;
+  const acceptableCount = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length).length;
 
   const handleAcceptAll = () => {
-    const rows = txList.filter((tx) => !tx.duplicate && !tx.flag);
+    const rows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
     const ids = approveAll();
     offerUndo(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`, () => {
       deleteTransactions(ids);

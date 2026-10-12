@@ -10,10 +10,104 @@ const triageInitial = useTriageStore.getState()
 const budgetInitial = useBudgetStore.getState()
 const undoInitial = useUndoStore.getState()
 
+const sources = { a: { id: 'a', name: 'Card A' } }
+const draft: ExclusionRuleDraft = {
+  name: 'Payments', sourceId: 'a', description: { operator: 'exact', value: 'PAYMENT' },
+  direction: 'in', amount: { operator: 'any' }, behavior: 'review',
+}
+const row: TriageTransaction = {
+  id: 'a', date: '2026-06-10', description: 'PAYMENT', amount: 50, type: 'income',
+}
+
 beforeEach(() => {
   useTriageStore.setState(triageInitial, true)
   useBudgetStore.setState(budgetInitial, true)
   useUndoStore.setState(undoInitial, true)
+})
+
+describe('new import exclusions', () => {
+  const setup = (behavior: 'review' | 'automatic' = 'review') => {
+    useTriageStore.setState({ importSources: sources })
+    const store = useTriageStore.getState()
+    store.saveExclusionRule({ ...draft, behavior })
+    return store
+  }
+
+  it('retains automatically excluded originals across repeat uploads', () => {
+    const store = setup('automatic')
+    expect(store.importTransactions([row], 'a').excludedIds).toEqual(['a'])
+    expect(useTriageStore.getState().importRecords.a).toMatchObject({ decision: 'ignored', ignoreReason: 'rule', original: row })
+    expect(useBudgetStore.getState().transactions.a).toBeUndefined()
+    const repeat = store.importTransactions([{ ...row, id: 'b' }], 'a')
+    expect(repeat.skippedIds).toEqual(['a'])
+    expect(repeat.excludedIds).toEqual([])
+  })
+
+  it('holds review matches from both batch and ordinary approval', () => {
+    const store = setup()
+    store.importTransactions([row], 'a')
+    expect(useTriageStore.getState().pendingTransactions.a.exclusionMatches).toHaveLength(1)
+    expect(store.approveAll()).toEqual([])
+    store.approveTransaction('a')
+    expect(useBudgetStore.getState().transactions.a).toBeUndefined()
+  })
+
+  it('does not hold a different source', () => {
+    const store = setup()
+    const other = store.createImportSource('Card B')
+    store.importTransactions([row], other)
+    expect(useTriageStore.getState().pendingTransactions.a.exclusionMatches).toBeUndefined()
+    expect(store.approveAll()).toEqual(['a'])
+  })
+
+  it('keeps possible duplicates pending despite automatic matches', () => {
+    const store = setup('automatic')
+    useBudgetStore.setState({ transactions: { legacy: { ...row, id: 'legacy' } } })
+    expect(store.importTransactions([row], 'a').excludedIds).toEqual([])
+    expect(useTriageStore.getState().pendingTransactions.a).toMatchObject({ duplicate: 'possible' })
+    expect(useTriageStore.getState().importRecords.a.decision).toBe('pending')
+  })
+
+  it('prefers review when automatic and review rules overlap', () => {
+    const store = setup('automatic')
+    store.saveExclusionRule(draft)
+    expect(store.importTransactions([row], 'a').excludedIds).toEqual([])
+    expect(useTriageStore.getState().pendingTransactions.a.exclusionMatches).toHaveLength(2)
+  })
+
+  it('does not recalculate earlier pending holds or accepted history on import', () => {
+    useTriageStore.setState({ importSources: sources })
+    const store = useTriageStore.getState()
+    store.importTransactions([row], 'a')
+    store.approveAll()
+    store.importTransactions([{ ...row, id: 'old', date: '2026-07-10' }], 'a')
+    store.saveExclusionRule({ ...draft, behavior: 'automatic' })
+    expect(store.importTransactions([{ ...row, id: 'new', date: '2026-08-10' }], 'a').excludedIds).toEqual(['new'])
+    expect(useTriageStore.getState().pendingTransactions.old.exclusionMatches).toBeUndefined()
+    expect(useTriageStore.getState().importRecords.a.decision).toBe('accepted')
+  })
+
+  it('validates before writes and preserves enabled state while incrementing revisions', () => {
+    const store = setup()
+    const id = Object.keys(useTriageStore.getState().exclusionRules)[0]
+    useTriageStore.setState({ exclusionRules: { [id]: { ...useTriageStore.getState().exclusionRules[id], enabled: false } } })
+    expect(store.saveExclusionRule({ ...draft, name: 'Edited' }, { id })).toBe(id)
+    expect(useTriageStore.getState().exclusionRules[id]).toMatchObject({ revision: 2, enabled: false })
+    const before = useTriageStore.getState()
+    expect(() => store.saveExclusionRule({ ...draft, sourceId: 'missing' })).toThrow('Choose an available card or account')
+    expect(() => store.saveExclusionRule(draft, { applyPending: true })).toThrow()
+    expect(useTriageStore.getState()).toBe(before)
+  })
+
+  it('filters runtime-invalid rules and disabled rules before import evaluation', () => {
+    useTriageStore.setState({ importSources: sources, exclusionRules: {
+      disabled: { ...draft, id: 'disabled', revision: 1, enabled: false, behavior: 'automatic' },
+      missing: { ...draft, id: 'missing', revision: 1, enabled: true, sourceId: 'gone', behavior: 'automatic' },
+      malformed: { ...draft, id: 'malformed', revision: 1, enabled: true, behavior: 'automatic', direction: 'sideways' as never },
+    } })
+    expect(useTriageStore.getState().importTransactions([row], 'a').excludedIds).toEqual([])
+    expect(useTriageStore.getState().pendingTransactions.a.exclusionMatches).toBeUndefined()
+  })
 })
 
 describe('triage exclusion persistence migration', () => {

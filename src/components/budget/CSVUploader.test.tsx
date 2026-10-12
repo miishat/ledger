@@ -5,12 +5,35 @@ import { CSVUploader } from './CSVUploader'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { useTriageStore } from '../../store/useTriageStore'
 import { parseCSV } from '../../utils/csvParser'
+import type { ExclusionRuleDraft } from '../../types/exclusionRules'
 
 const initialTriage = useTriageStore.getState()
 const initialBudget = useBudgetStore.getState()
 beforeEach(() => {
   useTriageStore.setState(initialTriage, true)
   useBudgetStore.setState(initialBudget, true)
+})
+
+it('aggregates exclusions separately from skips across multiple import sources', async () => {
+  const store = useTriageStore.getState()
+  const first = store.createImportSource('Card A', 'cibc:1234:5678')
+  const second = store.createImportSource('Card B', 'cibc:1234:9999')
+  const draft: ExclusionRuleDraft = {
+    name: 'Payments', sourceId: first, description: { operator: 'exact', value: 'PAYMENT' },
+    direction: 'out', amount: { operator: 'any' }, behavior: 'automatic',
+  }
+  store.saveExclusionRule(draft)
+  store.importTransactions([{ id: 'known', date: '2026-06-09', description: 'Coffee', amount: 5, type: 'expense' }], second)
+  render(<CSVUploader />)
+  const csv = '2026-06-10,PAYMENT,50.00,,1234********5678\n' +
+    '2026-06-09,Coffee,5.00,,1234********9999\n2026-06-10,Shop,10.00,,1234********9999'
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File([csv], 'cards.csv')] } })
+  await waitFor(() => expect(useTriageStore.getState().lastImport?.addedIds).toHaveLength(2))
+  const report = useTriageStore.getState().lastImport!
+  expect(report.excludedIds).toHaveLength(1)
+  expect(report.skippedIds).toEqual(['known'])
+  expect(report.addedIds).toContain(report.excludedIds![0])
+  expect(report.addedIds.length - report.excludedIds!.length).toBe(1)
 })
 
 async function chooseNewSource() {

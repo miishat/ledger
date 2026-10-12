@@ -7,8 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { matchImport } from '../utils/budget/importHistory';
 import type { ImportDay, ImportRecord, ImportReport, ImportSource } from '../types/importHistory';
 import { useUndoStore } from './useUndoStore';
-import type { ExclusionRule } from '../types/exclusionRules';
+import type { ExclusionRule, ExclusionRuleDraft } from '../types/exclusionRules';
 import { validateExclusionDraft } from '../utils/budget/exclusionRules';
+import { applyImportExclusions } from '../utils/budget/applyImportExclusions';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
@@ -18,6 +19,7 @@ interface TriageState {
   importRecords: Record<string, ImportRecord>;
   importDays: ImportDay[];
   lastImport: ImportReport | null;
+  saveExclusionRule: (draft: ExclusionRuleDraft, options?: { id?: string; applyPending?: boolean }) => string;
   createImportSource: (name: string, bankKey?: string) => string;
   bindImportSource: (sourceId: string, bankKey: string) => void;
   importTransactions: (rows: TriageTransaction[], sourceId: string) => ImportReport;
@@ -60,6 +62,23 @@ export const useTriageStore = create<TriageState>()(
       importDays: [],
       lastImport: null,
 
+      saveExclusionRule: (draft, options = {}) => {
+        const state = get();
+        const errors = validateExclusionDraft(draft, state.importSources);
+        if (errors.length) throw new Error(errors[0]);
+        if (options.applyPending) throw new Error('Applying rules to pending transactions is not available yet');
+        const previous = options.id ? state.exclusionRules[options.id] : undefined;
+        if (options.id && !previous) throw new Error('Choose an available exclusion rule');
+        const revision = previous ? previous.revision + 1 : 1;
+        if (!Number.isSafeInteger(revision) || revision < 1) throw new Error('Choose a valid rule revision');
+        const id = options.id ?? uuidv4();
+        const rule: ExclusionRule = { ...draft, name: draft.name.trim(),
+          description: { ...draft.description }, amount: { ...draft.amount },
+          id, revision, enabled: previous?.enabled ?? true };
+        set({ exclusionRules: { ...state.exclusionRules, [id]: rule } });
+        return id;
+      },
+
       createImportSource: (name, bankKey) => {
         const existing = bankKey && Object.values(get().importSources).find(source => source.bankKey === bankKey);
         if (existing) return existing.id;
@@ -90,11 +109,16 @@ export const useTriageStore = create<TriageState>()(
           ...Object.values(state.pendingTransactions).filter(tx => !tx.importRecordId),
         ];
         const result = matchImport(rows, sourceId, state.importRecords, state.importDays, legacy);
+        const rules = Object.entries(state.exclusionRules).filter(([id, rule]) =>
+          rule?.id === id && rule.enabled === true && Number.isSafeInteger(rule.revision) && rule.revision >= 1 &&
+          validateExclusionDraft(rule, state.importSources).length === 0).map(([, rule]) => rule);
+        const excluded = applyImportExclusions(result.pending, result.records, rules);
+        const report = { ...result.report, excludedIds: excluded.excludedIds };
         set({
-          pendingTransactions: { ...state.pendingTransactions, ...Object.fromEntries(result.pending.map(tx => [tx.id, tx])) },
-          importRecords: result.records, importDays: result.days, lastImport: result.report,
+          pendingTransactions: { ...state.pendingTransactions, ...Object.fromEntries(excluded.pending.map(tx => [tx.id, tx])) },
+          importRecords: excluded.records, importDays: result.days, lastImport: report,
         });
-        return result.report;
+        return report;
       },
 
       restoreImportRecord: (id) => {
@@ -155,7 +179,7 @@ export const useTriageStore = create<TriageState>()(
       approveTransaction: (id) => {
         const state = get();
         const tx = state.pendingTransactions[id];
-        if (!tx) return;
+        if (!tx || tx.exclusionMatches?.length) return;
         
         // Push to main budget store
         useBudgetStore.getState().addTransaction({
@@ -186,7 +210,7 @@ export const useTriageStore = create<TriageState>()(
       approveAll: () => {
         const state = get();
         const budgetState = useBudgetStore.getState();
-        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag);
+        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
 
         txs.forEach((tx) => {
           budgetState.addTransaction({

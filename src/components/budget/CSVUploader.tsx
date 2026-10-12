@@ -56,7 +56,7 @@ export const CSVUploader: React.FC = () => {
       if (bankKey && binding && binding !== bankKey) throw new Error('Each card needs its own import source');
       if (bankKey) bindings.set(source.id, bankKey);
     }
-    const report: ImportReport = { addedIds: [], skippedIds: [], changedDays: [] };
+    const report: ImportReport = { addedIds: [], skippedIds: [], excludedIds: [], changedDays: [] };
     for (const plan of sourcePlans.current) {
       const bank = plan.rows[0].bankSource;
       const sourceId = plan.sourceId ?? store.createImportSource(plan.name!, bank?.key);
@@ -64,6 +64,7 @@ export const CSVUploader: React.FC = () => {
       const result = store.importTransactions(plan.rows, sourceId);
       report.addedIds.push(...result.addedIds);
       report.skippedIds.push(...result.skippedIds);
+      report.excludedIds!.push(...(result.excludedIds ?? []));
       report.changedDays.push(...result.changedDays);
     }
     useTriageStore.setState({ lastImport: report });
