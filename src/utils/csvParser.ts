@@ -49,13 +49,14 @@ export const PARSERS: BankParserConfig[] = [
       const amount = Number(amountText);
       if (!/^\d+(?:\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount)) throw new Error('Invalid amount');
       const originalRowData = Object.fromEntries(row.map((value, i) => [String(i), value]));
+      const bankSource = { key: `cibc:${card.slice(0, 4)}:${card.slice(-4)}`, name: `CIBC card ${card.slice(-4)}` };
       // Card payments are transfers; other credits return money to spending.
       const isPayment = /^(?:PAYMENT THANK YOU(?:\/.*)?|PRE AUTHORIZED PAYMENT - THANK YOU)$/i
         .test(description.replace(/\s+/g, ' '));
       if (credit && isPayment) {
-        return { date, description, amount, type: 'income', flag: 'card-payment', originalRowData };
+        return { date, description, amount, type: 'income', flag: 'card-payment', originalRowData, bankSource };
       }
-      return { date, description, amount: debit ? amount : -amount, type: 'expense', originalRowData };
+      return { date, description, amount: debit ? amount : -amount, type: 'expense', originalRowData, bankSource };
     },
   },
   {

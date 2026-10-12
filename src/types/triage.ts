@@ -6,6 +6,10 @@ export interface TriageTransaction {
   description: string;
   type: 'expense' | 'income';
   originalRowData?: Record<string, string>; // The raw CSV row
+  bankSource?: { key: string; name: string };
+  importRecordId?: string;
+  duplicateRecordId?: string;
+  duplicateTransactionId?: string;
   /** Set at import time when this row looks like something already in the
    *  budget. 'exact' means same date, amount, direction and description;
    *  'possible' means same date, amount and direction only. */

@@ -23,6 +23,7 @@ describe('CIBC credit card import', () => {
     expect(cibc().parse(cibcRow())).toMatchObject({
       date: '2026-10-06', description: 'SHOP, OTTAWA ON', amount: 15.99, type: 'expense',
       originalRowData: { '4': '1234********5678' },
+      bankSource: { key: 'cibc:1234:5678', name: 'CIBC card 5678' },
     })
   })
 
