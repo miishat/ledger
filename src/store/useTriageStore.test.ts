@@ -3,13 +3,72 @@ import { useBudgetStore } from './useBudgetStore'
 import type { TriageTransaction } from '../types/triage'
 import { buildBackup, restoreBackup } from '../utils/backup'
 import { useUndoStore } from './useUndoStore'
+import { migrateTriageState } from './useTriageStore'
+import type { ExclusionRuleDraft } from '../types/exclusionRules'
 
 const triageInitial = useTriageStore.getState()
 const budgetInitial = useBudgetStore.getState()
+const undoInitial = useUndoStore.getState()
 
 beforeEach(() => {
   useTriageStore.setState(triageInitial, true)
   useBudgetStore.setState(budgetInitial, true)
+  useUndoStore.setState(undoInitial, true)
+})
+
+describe('triage exclusion persistence migration', () => {
+  const sources = { a: { id: 'a', name: 'Card A' } }
+  const draft: ExclusionRuleDraft = {
+    name: 'Payments', sourceId: 'a', description: { operator: 'exact', value: 'PAYMENT' },
+    direction: 'in', amount: { operator: 'any' }, behavior: 'review',
+  }
+
+  it.each([0, 1, 2, 3])('rehydrates version %s without losing the inbox or valid history', async version => {
+    const original = pending({ id: 'accepted' })
+    const importRecords = {
+      accepted: { id: 'accepted', sourceId: 'a', original, decision: 'accepted' },
+      ignored: { id: 'ignored', sourceId: 'a', original: { ...original, id: 'ignored' }, decision: 'ignored' },
+    }
+    const importDays = [{ sourceId: 'a', date: original.date, signature: 'daily-original', recordIds: ['accepted', 'ignored'] }]
+    const lastImport = { addedIds: ['accepted'], skippedIds: [], changedDays: [] }
+    const state = { pendingTransactions: { old: pending({ id: 'old' }) }, categoryRules: { coffee: 'c' },
+      importSources: sources, importRecords, importDays, lastImport,
+      ...(version === 3 ? { exclusionRules: { r: { ...draft, id: 'r', revision: 1, enabled: true } } } : {}),
+    }
+    localStorage.setItem('ledger-triage', JSON.stringify({ state, version }))
+    await useTriageStore.persist.rehydrate()
+    expect(useTriageStore.getState().pendingTransactions).toEqual(state.pendingTransactions)
+    expect(useTriageStore.getState().categoryRules).toEqual(state.categoryRules)
+    expect(useTriageStore.getState().importSources).toEqual(version < 2 ? {} : sources)
+    expect(useTriageStore.getState().importRecords).toEqual(version < 2 ? {} : importRecords)
+    expect(useTriageStore.getState().importDays).toEqual(version < 2 ? [] : importDays)
+    expect(useTriageStore.getState().lastImport).toEqual(version < 2 ? null : lastImport)
+    expect(useTriageStore.getState().exclusionRules).toEqual(version === 3 ? state.exclusionRules : {})
+    useTriageStore.setState({ categoryRules: { coffee: 'c' } })
+    expect(JSON.parse(localStorage.getItem('ledger-triage')!).version).toBe(3)
+    await useTriageStore.persist.rehydrate()
+    expect(useTriageStore.getState().importRecords).toEqual(version < 2 ? {} : importRecords)
+  })
+
+  it('exports a migration that handles absent state and preserves version-2 history', () => {
+    expect(migrateTriageState(null, 0)).toMatchObject({ importSources: {}, importRecords: {}, importDays: [], lastImport: null, exclusionRules: {} })
+    expect(migrateTriageState({ importSources: sources }, 2)).toMatchObject({ importSources: sources, exclusionRules: {} })
+  })
+
+  it.each([2, 3])('keeps malformed restored rules inert and available for correction at version %s', async version => {
+    const exclusionRules = {
+      valid: { ...draft, id: 'valid', revision: 1, enabled: true },
+      invalid: { ...draft, id: 'invalid', revision: 1, enabled: true, direction: 'sideways' },
+      revision: { ...draft, id: 'revision', revision: -1, enabled: true },
+      missing: { ...draft, id: 'missing', revision: 1, enabled: true, sourceId: 'gone' },
+    }
+    localStorage.setItem('ledger-triage', JSON.stringify({ state: { importSources: sources, exclusionRules }, version }))
+    await useTriageStore.persist.rehydrate()
+    expect(useTriageStore.getState().exclusionRules.valid).toEqual(exclusionRules.valid)
+    for (const id of ['invalid', 'revision', 'missing']) {
+      expect(useTriageStore.getState().exclusionRules[id]).toEqual({ ...exclusionRules[id as keyof typeof exclusionRules], enabled: false })
+    }
+  })
 })
 
 const pending = (over: Partial<TriageTransaction> = {}): TriageTransaction => ({

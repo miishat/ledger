@@ -1,4 +1,7 @@
+import type { ExclusionMatch } from './exclusionRules'
+
 export interface TriageTransaction {
+  exclusionMatches?: ExclusionMatch[];
   id: string; // Temporary UUID for triage
   date: string; // YYYY-MM-DD
   amount: number; // Absolute value

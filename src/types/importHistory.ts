@@ -1,4 +1,5 @@
 import type { TriageTransaction } from './triage'
+import type { ExclusionMatch } from './exclusionRules'
 
 export interface ImportSource {
   id: string
@@ -13,6 +14,9 @@ export interface ImportRecord {
   decision: 'pending' | 'accepted' | 'ignored' | 'duplicate'
   matchedRecordId?: string
   matchedTransactionId?: string
+  exclusionMatches?: ExclusionMatch[]
+  exclusionOverride?: 'include'
+  ignoreReason?: 'rule' | 'card-payment' | 'manual'
 }
 
 export interface ImportDay {
@@ -23,6 +27,7 @@ export interface ImportDay {
 }
 
 export interface ImportReport {
+  excludedIds?: string[]
   addedIds: string[]
   skippedIds: string[]
   changedDays: Array<{ sourceId: string; date: string; missingCount: number }>

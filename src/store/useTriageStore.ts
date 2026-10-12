@@ -7,10 +7,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { matchImport } from '../utils/budget/importHistory';
 import type { ImportDay, ImportRecord, ImportReport, ImportSource } from '../types/importHistory';
 import { useUndoStore } from './useUndoStore';
+import type { ExclusionRule } from '../types/exclusionRules';
+import { validateExclusionDraft } from '../utils/budget/exclusionRules';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
   categoryRules: Record<string, string>;
+  exclusionRules: Record<string, ExclusionRule>;
   importSources: Record<string, ImportSource>;
   importRecords: Record<string, ImportRecord>;
   importDays: ImportDay[];
@@ -38,11 +41,20 @@ interface TriageState {
   removeRule: (description: string) => void;
 }
 
+export function migrateTriageState(persisted: unknown, version: number) {
+  const state = (persisted ?? {}) as Partial<TriageState>;
+  return { ...state,
+    ...(version < 2 ? { importSources: {}, importRecords: {}, importDays: [], lastImport: null } : {}),
+    exclusionRules: state.exclusionRules ?? {},
+  };
+}
+
 export const useTriageStore = create<TriageState>()(
   persist(
     (set, get) => ({
       pendingTransactions: {},
       categoryRules: {},
+      exclusionRules: {},
       importSources: {},
       importRecords: {},
       importDays: [],
@@ -250,11 +262,18 @@ export const useTriageStore = create<TriageState>()(
     }),
     {
       name: STORAGE_KEYS.triage,
-      version: 2,
-      migrate: (persisted: unknown) => ({
-        ...(persisted as Partial<TriageState>),
-        importSources: {}, importRecords: {}, importDays: [], lastImport: null,
-      }),
+      version: 3,
+      migrate: migrateTriageState,
+      merge: (persisted, current) => {
+        const state = { ...current, ...(persisted as Partial<TriageState>) };
+        state.exclusionRules = Object.fromEntries(Object.entries(state.exclusionRules ?? {}).map(([id, rule]) => {
+          const valid = rule && typeof rule === 'object' && rule.id === id &&
+            Number.isSafeInteger(rule.revision) && rule.revision >= 1 && typeof rule.enabled === 'boolean' &&
+            validateExclusionDraft(rule, state.importSources).length === 0;
+          return [id, valid ? rule : { ...rule, enabled: false }];
+        }));
+        return state;
+      },
     }
   )
 );
