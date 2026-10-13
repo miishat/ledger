@@ -9,6 +9,8 @@ pre-1.0 beta.
 ## [0.11.2-beta] - 2026-10-12
 
 ### Added
+- User-defined exclusion rules match original bank descriptions by card or account, with a preview and optional direction and amount conditions.
+- Matching imports can wait for review or be excluded automatically. Excluded entries retain their reasons and can return to review without creating duplicate charges.
 - Overlapping transaction CSV imports remember the original charges and review decisions for each card or account. Repeated days skip already handled entries while preserving multiple identical purchases.
 - Import summaries show skipped entries and changed days. Ignored charges can return to review, and possible duplicates show the existing entry with Same charge and Keep both actions.
 - CIBC imports recognize the masked card automatically. Other CSVs let you choose a saved card or account. Import history travels with backups and sync; older transactions without source history remain reviewable.

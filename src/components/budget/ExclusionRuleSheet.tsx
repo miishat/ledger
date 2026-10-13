@@ -46,13 +46,15 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
   const [applyPending, setApplyPending] = useState(false)
   const [saveError, setSaveError] = useState('')
   const cents = parseAmountCents(amountText), maxCents = parseAmountCents(maxAmountText)
+  const amountError = amountOperator === 'exact' && cents === null ? 'Enter a valid amount' : amountOperator === 'between' && (cents === null || maxCents === null) ? 'Enter a valid amount range' : ''
   const draft: ExclusionRuleDraft = { name, sourceId: scope === 'all' ? null : scope,
     description: { operator, value: text }, direction, behavior,
-    amount: amountOperator === 'exact' ? {operator:'exact', cents:cents ?? NaN} : amountOperator === 'between' ? {operator:'between',minCents:cents ?? NaN,maxCents:maxCents ?? NaN} : { operator:amountOperator } as ExclusionRuleDraft['amount'] }
+    amount: amountOperator === 'exact' ? (cents === null ? {operator:'any'} : {operator:'exact', cents}) : amountOperator === 'between' ? (cents === null || maxCents === null ? {operator:'any'} : {operator:'between',minCents:cents,maxCents}) : { operator:amountOperator } as ExclusionRuleDraft['amount'] }
   const errors = validateExclusionDraft(draft, sources)
+  if (amountError) errors.push(amountError)
   if (unavailable) errors.push('Source information unavailable')
   if (ruleId && !existing) errors.push('Choose an available exclusion rule')
-  const preview = previewExclusionRule(draft, Object.values(records).filter(r => !!sources[r.sourceId]), Object.values(pending))
+  const preview = previewExclusionRule(draft, (amountError ? [] : Object.values(records).filter(r => !!sources[r.sourceId])), Object.values(pending))
   const eligible = Object.values(pending).filter(tx => { const r = tx.importRecordId && records[tx.importRecordId]; return r && r.decision === 'pending' && !!sources[r.sourceId] })
   const nextRules = [...Object.entries(rules).filter(([id, rule]) => id !== ruleId && rule?.id === id && rule?.enabled === true && validateExclusionDraft(rule, sources).length === 0).map(([, rule]) => rule),
     { ...draft, id: ruleId ?? 'preview-draft', revision: existing?.revision ?? 1, enabled: existing?.enabled ?? true }]
@@ -87,7 +89,7 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
     {amountOperator === 'between' && <label className="text-[14px] flex flex-col gap-1">Maximum amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
     <div id="exclusion-errors">{[...errors, ...(saveError ? [saveError] : [])].map(error=><p key={error} role="alert" className="text-[13px] text-error">{error}</p>)}</div>
     <p className="text-[13px] text-text-secondary">{behavior === 'automatic' ? 'Matching new imports will be excluded automatically and kept in Excluded imports. Possible duplicates still need review.' : 'Matches will wait for your decision and stay out of Accept All.'}</p>
-    <ExclusionRulePreview preview={preview} />
+    <ExclusionRulePreview preview={preview} criteriaKey={JSON.stringify(draft) + amountText + maxAmountText} />
     {unavailableRecords > 0 && <p className="text-[13px] text-text-secondary">{unavailableRecords} saved imports have unavailable source information and are outside this preview.</p>}
     <label className="flex items-start gap-2 text-[14px]"><input type="checkbox" checked={applyPending} onChange={e=>setApplyPending(e.target.checked)} />Apply current rules to transactions awaiting review</label>
     {applyPending && <p className="text-[13px] text-text-secondary">All current enabled rules, including this draft if active, will be reapplied to {checked.length} transactions awaiting review. {matchingCount} pending imports match the next enabled rule set. Existing holds may be cleared. Included overrides stay included.</p>}

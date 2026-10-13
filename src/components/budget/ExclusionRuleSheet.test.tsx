@@ -95,3 +95,18 @@ it('preview count changes with original-text criterion and never edits records',
  select('Description match','Contains')
  expect(screen.getByText('1 matching import')).toBeInTheDocument()
 })
+
+it('never previews or saves an unparsed amount as an unconstrained rule',()=>{
+ render(<ExclusionRuleSheet open onClose={vi.fn()} seedRecordId="a" />)
+ select('Amount match','Exact amount')
+ for (const value of ['', 'NaN', 'Infinity', '-1', '0.001', '9007199254740992']) {
+  fireEvent.change(screen.getByLabelText('Amount'),{target:{value}})
+  expect(screen.getByRole('button',{name:'Save Rule'})).toBeDisabled()
+  expect(screen.getByText('No matching imports.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button',{name:'Save Rule'}))
+  expect(useTriageStore.getState().exclusionRules).toEqual({})
+ }
+ fireEvent.change(screen.getByLabelText('Amount'),{target:{value:'50.00'}})
+ expect(screen.getByText('1 matching import')).toBeInTheDocument()
+ expect(screen.getByRole('button',{name:'Save Rule'})).toBeEnabled()
+})
