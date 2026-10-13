@@ -305,7 +305,7 @@ it('seeds a similar-transactions rule from the original bank description', () =>
   useTriageStore.getState().updatePending('held', {description: 'Edited merchant'})
   render(<TriageInboxWidget />)
   fireEvent.click(screen.getByRole('button', {name: 'Exclude similar transactions'}))
-  expect(screen.getByLabelText('Original bank description')).toHaveValue('PAYMENT')
+  expect(screen.getByLabelText('Bank Description')).toHaveValue('PAYMENT')
 })
 
 it('explains why legacy rows cannot create a sourced rule', () => {
