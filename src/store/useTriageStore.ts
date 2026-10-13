@@ -1,4 +1,4 @@
-import { cashMovement, entryKindOf, hasValidOffsetCategory } from '../utils/budget/transactionKinds';
+import { cashMovement, entryKindOf, hasValidPendingCategory } from '../utils/budget/transactionKinds';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from './storageKeys'
@@ -279,7 +279,7 @@ export const useTriageStore = create<TriageState>()(
       approveTransaction: (id) => {
         const state = get();
         const tx = state.pendingTransactions[id];
-        if (!tx || tx.exclusionMatches?.length || !hasValidOffsetCategory(tx, useBudgetStore.getState().categories, useBudgetStore.getState().categoryGroups)) return;
+        if (!tx || tx.exclusionMatches?.length || !hasValidPendingCategory(tx, useBudgetStore.getState().categories, useBudgetStore.getState().categoryGroups)) return;
         useUndoStore.getState().dismissUndo();
         
         // Push to main budget store
@@ -312,7 +312,7 @@ export const useTriageStore = create<TriageState>()(
         useUndoStore.getState().dismissUndo();
         const state = get();
         const budgetState = useBudgetStore.getState();
-        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidOffsetCategory(tx, budgetState.categories, budgetState.categoryGroups));
+        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidPendingCategory(tx, budgetState.categories, budgetState.categoryGroups));
 
         txs.forEach((tx) => {
           budgetState.addTransaction({

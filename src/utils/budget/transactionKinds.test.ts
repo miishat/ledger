@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Transaction } from '../../types/budget';
-import { cashMovement, encodeEntryAmounts, entryKindOf, hasValidOffsetCategory } from './transactionKinds';
+import { cashMovement, encodeEntryAmounts, entryKindOf, hasValidOffsetCategory, hasValidPendingCategory } from './transactionKinds';
 import { splitParts } from './splits';
 
 const receipt: Transaction = {
@@ -75,4 +75,18 @@ it('requires an existing expense category only for offsets', () => {
   expect(hasValidOffsetCategory({ ...offset, categoryId: 'g' }, categories, {})).toBe(false);
   expect(hasValidOffsetCategory({ type: 'income', amount: 40 }, categories, groups)).toBe(true);
   expect(hasValidOffsetCategory({ type: 'expense', amount: 40 }, categories, groups)).toBe(true);
+});
+
+
+it('requires review of populated incompatible ordinary categories but permits uncategorized rows', () => {
+  const categories = { g: { id: 'g', groupId: 'food', name: 'Groceries', targetAmount: 0 }, s: { id: 's', groupId: 'earn', name: 'Salary', targetAmount: 0 } };
+  const groups = { food: { id: 'food', name: 'Food', kind: 'expense' as const }, earn: { id: 'earn', name: 'Income', kind: 'income' as const } };
+  for (const type of ['income', 'expense'] as const) {
+    expect(hasValidPendingCategory({ type, amount: 40 }, categories, groups)).toBe(true);
+    expect(hasValidPendingCategory({ type, amount: 40, categoryId: '' }, categories, groups)).toBe(true);
+    expect(hasValidPendingCategory({ type, amount: 40, categoryId: 'deleted' }, categories, groups)).toBe(false);
+    expect(hasValidPendingCategory({ type, amount: 40, categoryId: type === 'income' ? 'g' : 's' }, categories, groups)).toBe(false);
+    expect(hasValidPendingCategory({ type, amount: 40, categoryId: type === 'income' ? 's' : 'g' }, categories, groups)).toBe(true);
+  }
+  expect(hasValidPendingCategory({ type: 'expense', amount: -40 }, categories, groups)).toBe(false);
 });

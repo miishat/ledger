@@ -183,6 +183,7 @@ describe('useTriageStore approval', () => {
   })
 
   it('learns a rule from an approved transaction that carries a category', () => {
+    useBudgetStore.setState({ categories: { 'c-1': { id: 'c-1', name: 'Entertainment', groupId: 'expense', targetAmount: 0 } }, categoryGroups: { expense: { id: 'expense', name: 'Expenses', kind: 'expense' } } })
     useTriageStore.getState().addPending([pending({ categoryId: 'c-1' })])
     useTriageStore.getState().approveTransaction('t1')
     expect(useTriageStore.getState().categoryRules.NETFLIX).toBe('c-1')
@@ -484,4 +485,21 @@ describe('incoming receipt treatment', () => {
     expect(useBudgetStore.getState().transactions.legacy.amount).toBe(-40)
     expect(useTriageStore.getState().categoryRules.NETFLIX).toBeUndefined()
   })
+})
+
+
+it.each(['income', 'expense'] as const)('holds a persisted incompatible %s category until deliberately cleared, without learning it', type => {
+  useBudgetStore.setState({ categories: { g: { id: 'g', name: 'Groceries', groupId: 'food', targetAmount: 0 }, s: { id: 's', name: 'Salary', groupId: 'earn', targetAmount: 0 } }, categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' }, earn: { id: 'earn', name: 'Income', kind: 'income' } } })
+  const store = useTriageStore.getState()
+  const categoryId = type === 'income' ? 'g' : 's'
+  const row = pending({ type, categoryId })
+  useTriageStore.setState({ pendingTransactions: { t1: row } })
+  store.approveTransaction('t1')
+  expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
+  expect(store.approveAll()).toEqual([])
+  expect(useTriageStore.getState().categoryRules).toEqual({})
+  store.updatePending('t1', { categoryId: '' })
+  expect(store.approveAll()).toEqual(['t1'])
+  expect(useBudgetStore.getState().transactions.t1.categoryId).toBe('')
+  expect(useTriageStore.getState().categoryRules).toEqual({})
 })

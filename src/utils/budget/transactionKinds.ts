@@ -36,3 +36,15 @@ export function hasValidOffsetCategory(
   const category = tx.categoryId ? categories[tx.categoryId] : undefined;
   return !!category && groups[category.groupId]?.kind === 'expense';
 }
+
+
+/** Ordinary uncategorized rows are ready; populated guesses must match their type. */
+export function hasValidPendingCategory(
+  tx: Pick<Transaction, 'type' | 'amount' | 'categoryId'>,
+  categories: Record<string, Category>, groups: Record<string, CategoryGroup>,
+): boolean {
+  if (!hasValidOffsetCategory(tx, categories, groups)) return false;
+  if (!tx.categoryId) return true;
+  const category = categories[tx.categoryId];
+  return !!category && groups[category.groupId]?.kind === tx.type;
+}

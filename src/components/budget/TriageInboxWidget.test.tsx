@@ -346,7 +346,7 @@ it('reviews incoming treatment and expense category before acceptance, with real
   const source = store.createImportSource('Bank')
   const row = { id: 'receipt', date: '2026-10-13', amount: 40, description: 'Transfer', type: 'income' as const, categoryId: 's' }
   store.importTransactions([row], source)
-  store.addPending([{ ...row, id: 'purchase', description: 'Purchase', type: 'expense' }])
+  store.addPending([{ ...row, id: 'purchase', description: 'Purchase', type: 'expense', categoryId: '' }])
   render(<TriageInboxWidget />)
   expect(screen.queryByRole('button', { name: 'Treatment for Purchase' })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Treatment for Transfer' }))
@@ -393,4 +393,28 @@ it('keeps explicitly classified card payments out of the displayed Accept All co
   expect(store.approveAll()).toEqual([])
   fireEvent.click(screen.getByRole('button', { name: 'Approve Card payment' }))
   expect(useBudgetStore.getState().transactions.card.amount).toBe(-40)
+})
+
+
+it.each(['income', 'expense'] as const)('requires deliberate category review of a persisted incompatible %s guess', type => {
+  useBudgetStore.setState({ categories: { g: { id: 'g', name: 'Groceries', groupId: 'food', targetAmount: 0 }, s: { id: 's', name: 'Salary', groupId: 'earn', targetAmount: 0 } }, categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' }, earn: { id: 'earn', name: 'Income', kind: 'income' } } })
+  const row = { id: 'legacy', date: '2026-10-13', amount: 40, description: 'Legacy', type, categoryId: type === 'income' ? 'g' : 's' }
+  useTriageStore.setState({ pendingTransactions: { legacy: row, duplicate: { ...row, id: 'duplicate', description: 'Duplicate', duplicate: 'possible' } } })
+  render(<TriageInboxWidget />)
+  expect(screen.getByRole('button', { name: 'Approve Legacy' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Keep both' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Accept All (0)' })).toBeDisabled()
+  expect(screen.getAllByText('Review this category before accepting. Choose a valid category or Uncategorized.')).toHaveLength(2)
+  fireEvent.click(screen.getByRole('button', { name: 'Category for Legacy' }))
+  fireEvent.click(screen.getByRole('option', { name: 'Uncategorized' }))
+  expect(screen.getByRole('button', { name: 'Accept All (1)' })).toBeEnabled()
+  fireEvent.click(screen.getByRole('button', { name: 'Approve Legacy' }))
+  expect(useBudgetStore.getState().transactions.legacy.categoryId).toBe('')
+  expect(useTriageStore.getState().categoryRules).toEqual({})
+  fireEvent.click(screen.getByRole('button', { name: 'Category for Duplicate' }))
+  fireEvent.click(screen.getByRole('option', { name: type === 'income' ? 'Salary' : 'Groceries' }))
+  expect(screen.getByRole('button', { name: 'Keep both' })).toBeEnabled()
+  fireEvent.click(screen.getByRole('button', { name: 'Keep both' }))
+  expect(useBudgetStore.getState().transactions.duplicate.categoryId).toBe(type === 'income' ? 's' : 'g')
+  expect(useTriageStore.getState().categoryRules.Duplicate).toBe(type === 'income' ? 's' : 'g')
 })

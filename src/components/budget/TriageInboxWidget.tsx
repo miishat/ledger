@@ -10,7 +10,7 @@ import { formatMoney } from '../planner/format';
 import { captureTriageUndo } from '../../utils/budget/triageUndo';
 import { ExclusionRuleSheet } from './ExclusionRuleSheet';
 
-import { cashMovement, entryKindOf, hasValidOffsetCategory } from '../../utils/budget/transactionKinds';
+import { cashMovement, entryKindOf, hasValidOffsetCategory, hasValidPendingCategory } from '../../utils/budget/transactionKinds';
 
 const reviewEntryId = (id: string) => `import-review-${id}`;
 
@@ -46,7 +46,7 @@ export const TriageInboxWidget: React.FC = () => {
   const cardPayments = txList.filter((tx) => tx.flag === 'card-payment');
   // Recomputed from the list rather than subtracted, because one row can be both
   // a duplicate and flagged, and subtracting both counts would double-count it.
-  const acceptableRows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidOffsetCategory(tx, categories, categoryGroups));
+  const acceptableRows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidPendingCategory(tx, categories, categoryGroups));
   const acceptableCount = acceptableRows.length;
   const held = txList.filter(tx => tx.exclusionMatches?.length && !tx.duplicate && tx.importRecordId && importSources[importRecords[tx.importRecordId]?.sourceId]);
   const captureRows = (rows: typeof txList) => captureTriageUndo({ pendingIds: rows.map(tx => tx.id), recordIds: rows.flatMap(tx => tx.importRecordId ? [tx.importRecordId] : []) });
@@ -74,7 +74,7 @@ export const TriageInboxWidget: React.FC = () => {
   };
 
   const approveWithUndo = (tx: typeof txList[number]) => {
-    if (tx.exclusionMatches?.length || !hasValidOffsetCategory(tx, categories, categoryGroups)) return;
+    if (tx.exclusionMatches?.length || !hasValidPendingCategory(tx, categories, categoryGroups)) return;
     const offer = captureRows([tx]);
     approveTransaction(tx.id);
     offerApprovalUndo(offer, [tx.id]);
@@ -131,6 +131,7 @@ export const TriageInboxWidget: React.FC = () => {
         {txList.map(tx => {
           const kind = entryKindOf(tx);
           const offsetReady = hasValidOffsetCategory(tx, categories, categoryGroups);
+          const categoryReady = hasValidPendingCategory(tx, categories, categoryGroups);
           const matchingCategories = categoryList.filter(cat => categoryGroups[cat.groupId]?.kind === tx.type);
           const selectedCategory = matchingCategories.some(cat => cat.id === tx.categoryId) ? tx.categoryId : '';
           const existing = tx.duplicateRecordId ? importRecords[tx.duplicateRecordId]?.original :
@@ -186,6 +187,7 @@ export const TriageInboxWidget: React.FC = () => {
               {kind === 'refund-payment' && <p className="text-[12px] text-text-secondary">Reduces spending in one expense category. You can split this payment after acceptance in the transaction editor.</p>}
               {kind === 'refund-payment' && !refundsAndPaymentsEnabled && <p className="text-[12px] text-text-secondary">Refunds & Payments is off for new transactions. This saved payment still counts.</p>}
             </div>}
+            {!categoryReady && offsetReady && <p className="text-[12px] text-text-secondary">Review this category before accepting. Choose a valid category or Uncategorized.</p>}
             {!offsetReady && <p className="text-[12px] text-text-secondary">Choose an expense category before accepting this payment</p>}
             <div className="flex items-center gap-2 mt-1">
               <ThemedSelect
@@ -201,7 +203,7 @@ export const TriageInboxWidget: React.FC = () => {
               
               {!tx.duplicate && <button
                 onClick={() => approveWithUndo(tx)}
-                disabled={!!tx.exclusionMatches?.length || !offsetReady}
+                disabled={!!tx.exclusionMatches?.length || !categoryReady}
                 className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
                 title="Approve"
                 aria-label={`Approve ${tx.description}`}
@@ -219,7 +221,7 @@ export const TriageInboxWidget: React.FC = () => {
             </div>
             {tx.duplicate && <div className="flex flex-wrap gap-2 text-[13px]">
               <button onClick={() => ignoreWithUndo(tx, true)} className="min-h-11 px-3 rounded border border-border text-accent">Same charge</button>
-              <button disabled={!!tx.exclusionMatches?.length || !offsetReady} onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent disabled:opacity-50">Keep both</button>
+              <button disabled={!!tx.exclusionMatches?.length || !categoryReady} onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent disabled:opacity-50">Keep both</button>
               <button onClick={() => ignoreWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-text-secondary">Ignore this charge</button>
             </div>}
           </div>
