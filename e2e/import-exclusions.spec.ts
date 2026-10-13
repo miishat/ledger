@@ -6,6 +6,7 @@ const upload = (page: Page, content: string) => page.locator('input[type=file]')
 const accept = (page: Page, count: number) => page.getByRole('button', { name: `Accept All (${count})`, exact: true })
 const editor = (page: Page) => page.getByRole('dialog', { name: 'Exclusion Rule', exact: true })
 const pendingRow = (page: Page, description: string) => page.locator('[id^="import-review-"]').filter({ has: page.getByText(description, { exact: true }) })
+const persistedRuleCount = (page: Page) => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ledger-triage')!).state.exclusionRules).length)
 async function start(page: Page, width = 1280, height = 812) {
   await page.setViewportSize({ width, height })
   await page.addInitScript(() => {
@@ -156,6 +157,7 @@ test('preview uses original bank labels and exact versus contains matching', asy
     localStorage.setItem('ledger-triage', JSON.stringify(data))
   })
   await reopen(page)
+  const rulesBeforeCancel = await persistedRuleCount(page)
   await page.getByRole('button', { name: 'Exclude similar transactions', exact: true }).first().click()
   await editor(page).getByLabel('Original bank description').fill('Savings')
   await expect(editor(page).getByText('1 matching import', { exact: true })).toBeVisible()
@@ -163,12 +165,13 @@ test('preview uses original bank labels and exact versus contains matching', asy
   await expect(editor(page).getByText('2 matching imports', { exact: true })).toBeVisible()
   await expect(editor(page).getByText('Edited merchant', { exact: true })).toHaveCount(0)
   await editor(page).getByRole('button', { name: 'Cancel', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Edit Savings', exact: true })).toHaveCount(0)
+  expect(await persistedRuleCount(page)).toBe(rulesBeforeCancel)
 })
 for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
   test(`keyboard create cancel and collapsed history restore at ${width}x${height}`, async ({ page }) => {
     await start(page, width, height)
     await upload(page, row('2026-06-10', 'Savings'))
+    const rulesBeforeCancel = await persistedRuleCount(page)
     await page.mouse.move(0, 0)
     await page.getByRole('tab', { name: 'Setup', exact: true }).click()
     await tabTo(page, page.getByRole('button', { name: 'Add exclusion rule', exact: true }))
@@ -182,6 +185,7 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
     await tabTo(page, editor(page).getByRole('button', { name: 'Cancel', exact: true }))
     await page.keyboard.press('Enter')
     await expect(editor(page)).toBeHidden()
+    expect(await persistedRuleCount(page)).toBe(rulesBeforeCancel)
     await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
     await tabTo(page, pendingRow(page, 'Savings').getByRole('button', { name: 'Exclude similar transactions', exact: true }))
     await page.keyboard.press('Enter')

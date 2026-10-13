@@ -54,12 +54,13 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
   if (amountError) errors.push(amountError)
   if (unavailable) errors.push('Source information unavailable')
   if (ruleId && !existing) errors.push('Choose an available exclusion rule')
-  const preview = previewExclusionRule(draft, (amountError ? [] : Object.values(records).filter(r => !!sources[r.sourceId])), Object.values(pending))
+  const draftValid = errors.length === 0
+  const preview = draftValid ? previewExclusionRule(draft, Object.values(records).filter(r => !!sources[r.sourceId]), Object.values(pending)) : null
   const eligible = Object.values(pending).filter(tx => { const r = tx.importRecordId && records[tx.importRecordId]; return r && r.decision === 'pending' && !!sources[r.sourceId] })
   const nextRules = [...Object.entries(rules).filter(([id, rule]) => id !== ruleId && rule?.id === id && rule?.enabled === true && validateExclusionDraft(rule, sources).length === 0).map(([, rule]) => rule),
-    { ...draft, id: ruleId ?? 'preview-draft', revision: existing?.revision ?? 1, enabled: existing?.enabled ?? true }]
+    ...(draftValid ? [{ ...draft, id: ruleId ?? 'preview-draft', revision: existing?.revision ?? 1, enabled: existing?.enabled ?? true }] : [])]
   const checked = eligible.filter(tx => records[tx.importRecordId!].exclusionOverride !== 'include')
-  const matchingCount = checked.filter(tx => evaluateExclusionRules(nextRules, records[tx.importRecordId!].original, records[tx.importRecordId!].sourceId).length > 0).length
+  const matchingCount = draftValid ? checked.filter(tx => evaluateExclusionRules(nextRules, records[tx.importRecordId!].original, records[tx.importRecordId!].sourceId).length > 0).length : null
   const unavailableRecords = Object.values(records).filter(record => record.decision !== 'duplicate' && !sources[record.sourceId]).length
   const save = () => {
     if (errors.length) return
@@ -89,10 +90,10 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
     {amountOperator === 'between' && <label className="text-[14px] flex flex-col gap-1">Maximum amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
     <div id="exclusion-errors">{[...errors, ...(saveError ? [saveError] : [])].map(error=><p key={error} role="alert" className="text-[13px] text-error">{error}</p>)}</div>
     <p className="text-[13px] text-text-secondary">{behavior === 'automatic' ? 'Matching new imports will be excluded automatically and kept in Excluded imports. Possible duplicates still need review.' : 'Matches will wait for your decision and stay out of Accept All.'}</p>
-    <ExclusionRulePreview preview={preview} criteriaKey={JSON.stringify(draft) + amountText + maxAmountText} />
+    {preview ? <ExclusionRulePreview preview={preview} criteriaKey={JSON.stringify(draft) + amountText + maxAmountText} /> : <p className="text-[13px] text-text-secondary">Draft preview unavailable. Enter valid criteria to preview matching imports.</p>}
     {unavailableRecords > 0 && <p className="text-[13px] text-text-secondary">{unavailableRecords} saved imports have unavailable source information and are outside this preview.</p>}
     <label className="flex items-start gap-2 text-[14px]"><input type="checkbox" checked={applyPending} onChange={e=>setApplyPending(e.target.checked)} />Apply current rules to transactions awaiting review</label>
-    {applyPending && <p className="text-[13px] text-text-secondary">All current enabled rules, including this draft if active, will be reapplied to {checked.length} transactions awaiting review. {matchingCount} pending imports match the next enabled rule set. Existing holds may be cleared. Included overrides stay included.</p>}
+    {applyPending && (matchingCount === null ? <p className="text-[13px] text-text-secondary">Pending application preview unavailable until this draft is valid.</p> : <p className="text-[13px] text-text-secondary">All current enabled rules, including this draft if active, will be reapplied to {checked.length} transactions awaiting review. {matchingCount} pending imports match the next enabled rule set. Existing holds may be cleared. Included overrides stay included.</p>)}
     <p className="text-[13px] text-text-secondary">Already accepted transactions will stay unchanged.</p>
     <div className="flex flex-wrap justify-end gap-2"><button type="button" className="min-h-11 px-3" onClick={onClose}>Cancel</button><button type="button" className="min-h-11 px-3 rounded-md bg-accent text-bg-primary disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
   </Sheet>

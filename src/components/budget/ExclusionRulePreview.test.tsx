@@ -16,15 +16,24 @@ it('shows a clear no-match state with historical coverage',()=>{
  expect(screen.getByText(/including accepted and ignored records/)).toBeInTheDocument()
 })
 
-it('resets expanded pagination when criteria or preview results change',()=>{
- const preview:ExclusionPreview={count:21,moneyInCents:0,moneyOutCents:0,pendingCount:21,acceptedCount:0,ignoredCount:0,eligiblePendingCount:21,legacyUnavailableCount:0,rows:Array.from({length:21},(_,i)=>({recordId:String(i),sourceId:'a',description:'Bank '+i,date:'2026-06-10',movementCents:50,decision:'pending',identityNeedsReview:false,overridden:false}))}
+const paginatedPreview:ExclusionPreview={count:21,moneyInCents:0,moneyOutCents:0,pendingCount:21,acceptedCount:0,ignoredCount:0,eligiblePendingCount:21,legacyUnavailableCount:0,rows:Array.from({length:21},(_,i)=>({recordId:String(i),sourceId:'a',description:'Bank '+i,date:'2026-06-10',movementCents:50,decision:'pending',identityNeedsReview:false,overridden:false}))}
+it('resets expanded pagination on criteria-only changes including A to B to A',()=>{
+ const preview=paginatedPreview
  const view=render(<ExclusionRulePreview preview={preview} criteriaKey="exact" />)
  fireEvent.click(screen.getByRole('button',{name:'Show 20 more'}))
  view.rerender(<ExclusionRulePreview preview={preview} criteriaKey="contains" />)
  expect(screen.queryByText('Bank 20')).toBeNull()
  view.rerender(<ExclusionRulePreview preview={preview} criteriaKey="exact" />)
  expect(screen.queryByText('Bank 20')).toBeNull()
+})
+it('resets expanded pagination on result-only changes with supplied criteria unchanged',()=>{
+ const preview=paginatedPreview
+ const view=render(<ExclusionRulePreview preview={preview} criteriaKey="exact" />)
  fireEvent.click(screen.getByRole('button',{name:'Show 20 more'}))
- view.rerender(<ExclusionRulePreview preview={{...preview,rows:preview.rows.map(row=>({...row,description:'Changed '+row.recordId}))}} criteriaKey="contains" />)
+ expect(screen.getByText('Bank 20')).toBeInTheDocument()
+ view.rerender(<ExclusionRulePreview preview={{...preview,rows:preview.rows.map(row=>({...row,description:'Changed '+row.recordId}))}} criteriaKey="exact" />)
+ expect(screen.getByText('Changed 0')).toBeInTheDocument()
  expect(screen.queryByText('Changed 20')).toBeNull()
+ fireEvent.click(screen.getByRole('button',{name:'Show 20 more'}))
+ expect(screen.getByText('Changed 20')).toBeInTheDocument()
 })
