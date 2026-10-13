@@ -4,6 +4,11 @@ export function formatMoney(n: number): string {
   return `${n < 0 && roundedAbs !== 0 ? '-' : ''}$${abs}`
 }
 
+export function formatMoneyWithCents(n: number): string {
+  const rounded = Math.round(n * 100) / 100
+  return `${rounded < 0 ? '-' : ''}$${Math.abs(rounded).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
 /** Compact axis labels: $950, $12k, $500k, $1.2M, $12M. */
 export function formatMoneyCompact(n: number): string {
   const sign = n < 0 ? '-' : ''

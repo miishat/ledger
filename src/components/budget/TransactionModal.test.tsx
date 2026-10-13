@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import { TransactionModal } from './TransactionModal'
-import { useBudgetStore } from '../../store/useBudgetStore'
+import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore'
 import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const seed = () =>
@@ -14,6 +14,7 @@ const seed = () =>
       salary: { id: 'salary', groupId: 'gi', name: 'Salary', targetAmount: 0 },
       groceries: { id: 'groceries', groupId: 'ge', name: 'Groceries', targetAmount: 0 },
     },
+    refundsAndPaymentsEnabled: true,
     transactions: {},
   })
 
@@ -21,7 +22,7 @@ describe('TransactionModal category filtering', () => {
   it('shows only expense categories for expense type', () => {
     seed()
     render(<TransactionModal isOpen onClose={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /uncategorized|groceries/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Category/i }))
     expect(screen.getByRole('option', { name: /groceries/i })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /salary/i })).not.toBeInTheDocument()
   })
@@ -30,7 +31,7 @@ describe('TransactionModal category filtering', () => {
     seed()
     render(<TransactionModal isOpen onClose={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Income' }))
-    fireEvent.click(screen.getByRole('button', { name: /uncategorized|salary/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Category/i }))
     expect(screen.getByRole('option', { name: /salary/i })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /groceries/i })).not.toBeInTheDocument()
   })
@@ -185,7 +186,8 @@ describe('TransactionModal splits, tags and note', () => {
         groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
         household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
       },
-      transactions: {},
+      refundsAndPaymentsEnabled: true,
+    transactions: {},
     })
     render(<TransactionModal isOpen onClose={() => {}} />)
 
@@ -211,7 +213,8 @@ describe('TransactionModal splits, tags and note', () => {
     useBudgetStore.setState({
       categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
       categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
-      transactions: {},
+      refundsAndPaymentsEnabled: true,
+    transactions: {},
     })
     render(<TransactionModal isOpen onClose={() => {}} />)
 
@@ -230,7 +233,8 @@ describe('TransactionModal splits, tags and note', () => {
     useBudgetStore.setState({
       categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
       categories: { groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
-      transactions: {},
+      refundsAndPaymentsEnabled: true,
+    transactions: {},
     })
     render(<TransactionModal isOpen onClose={() => {}} />)
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '20' } })
@@ -251,18 +255,6 @@ describe('TransactionModal negative amounts', () => {
   }
 
   const submit = () => fireEvent.click(screen.getByRole('button', { name: /add transaction|save/i }))
-
-  it('accepts a negative expense as a refund', () => {
-    seed()
-    render(<TransactionModal isOpen onClose={() => {}} />)
-    setAmount('-39.99')
-    submit()
-
-    const saved = Object.values(useBudgetStore.getState().transactions)
-    expect(saved).toHaveLength(1)
-    expect(saved[0].amount).toBe(-39.99)
-    expect(saved[0].type).toBe('expense')
-  })
 
   it('still rejects a negative income', () => {
     seed()
@@ -293,45 +285,6 @@ describe('TransactionModal negative expense splitting is out of scope', () => {
     fireEvent.blur(input)
   }
 
-  it('hides the split control once the amount goes negative', () => {
-    seed()
-    render(<TransactionModal isOpen onClose={() => {}} />)
-    setAmount('50')
-    expect(screen.getByLabelText('Split across categories')).toBeInTheDocument()
-
-    setAmount('-50')
-    expect(screen.queryByLabelText('Split across categories')).not.toBeInTheDocument()
-  })
-
-  it('does not save splits on a negative expense, even if slices were entered before the amount went negative', () => {
-    useBudgetStore.setState({
-      categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
-      categories: {
-        groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
-        household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
-      },
-      transactions: {},
-    })
-    render(<TransactionModal isOpen onClose={() => {}} />)
-
-    setAmount('180')
-    fireEvent.click(screen.getByLabelText('Split across categories'))
-    fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
-    const sliceAmounts = screen.getAllByLabelText('Slice amount')
-    fireEvent.change(sliceAmounts[0], { target: { value: '120' } })
-    fireEvent.blur(sliceAmounts[0])
-
-    // Flip the amount negative after slices were entered: the split control
-    // disappears, but isSplit/splits still live in component state, so the
-    // save-time guard is what must close this path.
-    setAmount('-180')
-    fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form') as HTMLFormElement)
-
-    const saved = Object.values(useBudgetStore.getState().transactions)[0]
-    expect(saved.amount).toBe(-180)
-    expect(saved.splits).toBeUndefined()
-  })
-
   it('refuses to save when the slices exceed the amount', () => {
     useBudgetStore.setState({
       categoryGroups: { g1: { id: 'g1', name: 'Food', kind: 'expense' } },
@@ -339,7 +292,8 @@ describe('TransactionModal negative expense splitting is out of scope', () => {
         groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
         household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
       },
-      transactions: {},
+      refundsAndPaymentsEnabled: true,
+    transactions: {},
     })
     const onClose = vi.fn()
     render(<TransactionModal isOpen onClose={onClose} />)
@@ -368,7 +322,8 @@ describe('TransactionModal negative expense splitting is out of scope', () => {
         groceries: { id: 'groceries', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
         household: { id: 'household', groupId: 'g1', name: 'Household', targetAmount: 0 },
       },
-      transactions: {},
+      refundsAndPaymentsEnabled: true,
+    transactions: {},
     })
     render(<TransactionModal isOpen onClose={() => {}} />)
 
@@ -385,4 +340,187 @@ describe('TransactionModal negative expense splitting is out of scope', () => {
     expect(saved.amount).toBe(180)
     expect(saved.splits).toEqual([{ categoryId: 'groceries', amount: 120 }])
   })
+})
+
+
+describe('Refunds & Payments entry', () => {
+  const amount = (value: string, label = 'Amount') => {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    fireEvent.blur(screen.getByLabelText(label))
+  }
+  const save = () => fireEvent.submit(screen.getByRole('button', { name: /Add Transaction|Save Changes/ }).closest('form')!)
+  const choose = (label: string, option: string) => {
+    fireEvent.click(screen.getByRole('button', { name: label }))
+    fireEvent.click(screen.getByRole('option', { name: option }))
+  }
+  beforeEach(() => { seed(); setMatchMedia(true) })
+
+  it('saves a positive entry as a negative expense that reduces spending, without income categories', () => {
+    useBudgetStore.setState({ transactions: { purchase: { id: 'purchase', type: 'expense', amount: 120, categoryId: 'groceries', date: '2026-10-01', description: '' } } })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+    amount('40')
+    expect(screen.getByText('Reduces Groceries spending by $40.00')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Category' }))
+    expect(screen.queryByRole('option', { name: 'Salary' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('option', { name: 'Groceries' }))
+    save()
+    const saved = Object.values(useBudgetStore.getState().transactions).find(t => t.id !== 'purchase')!
+    expect(saved).toMatchObject({ type: 'expense', amount: -40, categoryId: 'groceries' })
+    expect(saved.shared).toBeUndefined()
+    expect(saved.reimbursement).toBeUndefined()
+    useBudgetStore.getState().updateTransaction(saved.id, { date: '2026-10-02' })
+    expect(getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 9).spent).toBe(80)
+  })
+
+  it('keeps a saved offset editable with positive magnitude while disabled', () => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: false })
+    const initial = { id: 'legacy', type: 'expense' as const, amount: -40, categoryId: 'groceries', date: '2026-09-02', description: 'Refund', tags: ['trip'], note: 'receipt' }
+    useBudgetStore.getState().addTransaction(initial)
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+    expect(screen.getByLabelText('Amount')).toHaveValue('40')
+    expect(screen.getByRole('button', { name: 'Refunds & Payments' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Refunds & Payments is off for new transactions. This saved payment still counts.')).toBeInTheDocument()
+    amount('50'); save()
+    expect(useBudgetStore.getState().transactions.legacy).toMatchObject({ ...initial, amount: -50 })
+  })
+
+  it.each([undefined, { id: 'income', type: 'income' as const, amount: 40, categoryId: 'salary', date: '2026-10-01', description: '' }])('hides offset choice when disabled for new and income entries', initial => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: false })
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+    expect(screen.queryByRole('button', { name: 'Refunds & Payments' })).not.toBeInTheDocument()
+  })
+
+  it.each(['0', '-40', '0.001', '9'.repeat(310)])('rejects invalid positive magnitude %s', value => {
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    amount(value); save()
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero.')
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+    if (value.startsWith('-')) expect(screen.getByText('Use Refunds & Payments for money received.')).toBeInTheDocument()
+  })
+
+  it('requires a valid category, including when a category is removed while the form is open', () => {
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    amount('40'); choose('Category', 'Uncategorized'); save()
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a valid category before saving.')
+    choose('Category', 'Groceries')
+    useBudgetStore.setState({ categoryGroups: {} }); save()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  })
+
+  it.each([false, true])('encodes signed split magnitudes with remainder %s', remainder => {
+    useBudgetStore.setState({ categories: { ...useBudgetStore.getState().categories, dining: { id: 'dining', groupId: 'ge', name: 'Dining', targetAmount: 0 } } })
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+    amount('100'); fireEvent.click(screen.getByLabelText('Split across categories'))
+    amount('60', 'Slice amount')
+    if (!remainder) {
+      fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
+      const fields = screen.getAllByLabelText('Slice amount')
+      fireEvent.change(fields[1], { target: { value: '40' } }); fireEvent.blur(fields[1])
+      fireEvent.click(screen.getAllByRole('button', { name: 'Slice category' })[1])
+      fireEvent.click(screen.getByRole('option', { name: 'Dining' }))
+    }
+    expect(screen.getAllByText('Reduces Groceries spending by '+(remainder ? '$40.00' : '$60.00')).length).toBeGreaterThan(0)
+    save()
+    const saved = Object.values(useBudgetStore.getState().transactions)[0]
+    expect(saved.amount).toBe(-100)
+    expect(saved.splits).toEqual(remainder ? [{ categoryId: 'groceries', amount: -60 }] : [{ categoryId: 'groceries', amount: -60 }, { categoryId: 'dining', amount: -40 }])
+  })
+
+  it.each(['150', '-1', '0.001'])('rejects invalid offset allocation %s', value => {
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+    amount('100'); fireEvent.click(screen.getByLabelText('Split across categories')); amount(value, 'Slice amount'); save()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  })
+
+  it('saves cent allocations and rejects incompatible income slices after conversion', () => {
+    const initial = { id: 'pay', type: 'income' as const, amount: 0.01, categoryId: 'salary', date: '2026-10-01', description: '', splits: [{ categoryId: 'salary', amount: 0.01 }] }
+    useBudgetStore.getState().addTransaction(initial)
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' })); save()
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a valid category for every allocation.')
+    choose('Slice category', 'Groceries'); save()
+    expect(useBudgetStore.getState().transactions.pay).toMatchObject({ type: 'expense', amount: -0.01, splits: [{ categoryId: 'groceries', amount: -0.01 }] })
+  })
+
+  it('requires explicit shared settlement acknowledgment and preserves the same ID', () => {
+    const initial = { id: 'pay', type: 'income' as const, amount: 40, categoryId: 'salary', date: '2026-10-01', description: '', reimbursement: { from: 'Alex' } }
+    useBudgetStore.getState().addTransaction(initial)
+    render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' })); save()
+    expect(useBudgetStore.getState().transactions.pay).toEqual(initial)
+    expect(screen.getByLabelText('Use this payment to reduce expenses instead of settling the shared bill.')).not.toBeChecked()
+    fireEvent.click(screen.getByLabelText('Use this payment to reduce expenses instead of settling the shared bill.')); save()
+    expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(1)
+    expect(useBudgetStore.getState().transactions.pay).toMatchObject({ type: 'expense', amount: -40, categoryId: 'groceries' })
+    expect(useBudgetStore.getState().transactions.pay.reimbursement).toBeUndefined()
+  })
+
+  it('requires turning off Shared bill before selecting offset mode', () => {
+    render(<TransactionModal isOpen onClose={() => {}} />)
+    fireEvent.click(screen.getByLabelText('Shared bill'))
+    fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+    expect(screen.getByRole('button', { name: 'Expense' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent('Turn off Shared bill before using Refunds & Payments. This will discard the shared bill IOU treatment.')
+    fireEvent.click(screen.getByLabelText('Shared bill')); fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+    expect(screen.queryByLabelText('Shared bill')).not.toBeInTheDocument()
+  })
+})
+
+
+it.each(['-', ''])('does not save a stale amount after editing the input to %s', text => {
+  seed()
+  render(<TransactionModal isOpen onClose={() => {}} />)
+  const input = screen.getByLabelText('Amount')
+  fireEvent.change(input, { target: { value: '40' } })
+  fireEvent.change(input, { target: { value: text } })
+  if (text === '-') expect(screen.getByText('Use Refunds & Payments for money received.')).toBeInTheDocument()
+  fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form')!)
+  expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero.')
+})
+
+it('cancels shared settlement conversion without changing the saved transaction', () => {
+  seed()
+  const initial = { id: 'settlement', type: 'income' as const, amount: 40, date: '2026-10-02', categoryId: 'salary', description: 'Alex', reimbursement: { from: 'Alex' } }
+  useBudgetStore.getState().addTransaction(initial)
+  const close = vi.fn()
+  render(<TransactionModal isOpen onClose={close} initialTransaction={initial} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+  expect(screen.getByText('This payment currently settles a shared bill. Using it to reduce expenses will stop settling that balance. Shared bills already count only your share, so this can reduce spending again.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /^Close$/ }))
+  expect(close).toHaveBeenCalled()
+  expect(useBudgetStore.getState().transactions.settlement).toEqual(initial)
+})
+
+
+it('does not turn malformed saved negative income into a positive payment on open', () => {
+  seed()
+  const initial = { id: 'invalid', type: 'income' as const, amount: -40, date: '2026-10-02', categoryId: 'salary', description: '' }
+  useBudgetStore.getState().addTransaction(initial)
+  render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+  fireEvent.submit(screen.getByRole('button', { name: 'Save Changes' }).closest('form')!)
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero.')
+  expect(useBudgetStore.getState().transactions.invalid.amount).toBe(-40)
+})
+
+it('preserves an ordinary income split and converts its cash direction exclusively', () => {
+  seed()
+  const initial = { id: 'income', type: 'income' as const, amount: 100, date: '2026-10-02', categoryId: 'salary', description: '', splits: [{ categoryId: 'salary', amount: 60 }] }
+  useBudgetStore.getState().addTransaction(initial)
+  const view = render(<TransactionModal isOpen onClose={() => {}} initialTransaction={initial} />)
+  fireEvent.submit(screen.getByRole('button', { name: 'Save Changes' }).closest('form')!)
+  expect(useBudgetStore.getState().transactions.income).toEqual(initial)
+  view.unmount()
+  render(<TransactionModal isOpen onClose={() => {}} initialTransaction={{ ...initial, splits: undefined }} />)
+  const before = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 9)
+  fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+  fireEvent.submit(screen.getByRole('button', { name: 'Save Changes' }).closest('form')!)
+  const after = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 9)
+  expect(after.spent).toBe(before.spent - 100)
+  expect(after.remaining + after.unallocated).toBe(before.remaining + before.unallocated)
+  expect(useBudgetStore.getState().transactions.income).toMatchObject({ id: 'income', type: 'expense', amount: -100, categoryId: 'groceries', date: initial.date })
 })

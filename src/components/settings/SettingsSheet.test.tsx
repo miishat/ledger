@@ -2,10 +2,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { SettingsSheet } from './SettingsSheet'
 import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
+import { useBudgetStore } from '../../store/useBudgetStore'
 
 const noop = () => {}
 
 describe('SettingsSheet', () => {
+  it('reads and persists the Refunds & Payments preference directly', async () => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: true })
+    const view = render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
+    expect(screen.getByLabelText('Refunds & Payments')).toBeChecked()
+    fireEvent.click(screen.getByLabelText('Refunds & Payments'))
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(false)
+    await useBudgetStore.persist.rehydrate()
+    expect(screen.getByLabelText('Refunds & Payments')).not.toBeChecked()
+    view.unmount()
+    render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
+    fireEvent.click(screen.getByLabelText('Refunds & Payments'))
+    await useBudgetStore.persist.rehydrate()
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(true)
+  })
   it('renders the section cards and the about footer', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     expect(screen.getByText('Appearance')).toBeInTheDocument()
@@ -54,7 +69,7 @@ describe('SettingsSheet phone layout', () => {
   it('every section card shares one padding class and has a heading', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     const sections = Array.from(document.querySelectorAll('section'))
-    expect(sections).toHaveLength(5)
+    expect(sections).toHaveLength(6)
     for (const s of sections) {
       expect(s.className).toBe(sections[0].className)
       expect(s.className).toMatch(/\bp-3\b/)

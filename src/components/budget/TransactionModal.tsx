@@ -6,8 +6,9 @@ import { ThemedDatePicker } from '../ui/ThemedDatePicker';
 import { NumberInput } from '../ui/NumberInput';
 import { Sheet } from '../ui/Sheet';
 import { Checkbox } from '../ui/Checkbox';
-import { formatMoney } from '../planner/format';
+import { formatMoney, formatMoneyWithCents } from '../planner/format';
 import { sharedPeople } from '../../utils/budget/sharedExpenses';
+import { entryKindOf, encodeEntryAmounts, type TransactionEntryKind } from '../../utils/budget/transactionKinds';
 import { splitRemainder, round2 } from '../../utils/budget/splits';
 
 import type { Transaction, TransactionSplit } from '../../types/budget';
@@ -35,15 +36,21 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   const categoryGroups = useBudgetStore((state) => state.categoryGroups);
   const transactions = useBudgetStore((state) => state.transactions);
 
-  const [type, setType] = useState<TransactionType>(initialTransaction?.type ?? 'expense');
+  const enabled = useBudgetStore(state => state.refundsAndPaymentsEnabled);
+  const [type, setType] = useState<TransactionEntryKind>(initialTransaction ? entryKindOf(initialTransaction) : 'expense');
+  const [settlementAcknowledged, setSettlementAcknowledged] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const categoryList = Object.values(categories).filter((cat) => {
     const group = categoryGroups[cat.groupId];
-    return (group?.kind ?? 'expense') === type;
+    return (group?.kind ?? 'expense') === (type === 'income' ? 'income' : 'expense');
   });
 
-  const [amount, setAmount] = useState<number>(initialTransaction?.amount ?? 0);
+  const [amount, setAmount] = useState<number>(initialTransaction && Number.isFinite(initialTransaction.amount)
+    ? (type === 'refund-payment' ? Math.abs(initialTransaction.amount) : initialTransaction.amount)
+    : 0);
   const [amountError, setAmountError] = useState<string | null>(null);
+  const [negativeAmountTyped, setNegativeAmountTyped] = useState(false);
   const [category, setCategory] = useState<string>(
     initialTransaction?.categoryId ?? categoryList[0]?.id ?? '',
   );
@@ -59,7 +66,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const [isSplit, setIsSplit] = useState(!!initialTransaction?.splits?.length);
   const [splits, setSplits] = useState<TransactionSplit[]>(
-    initialTransaction?.splits ?? [{ categoryId: category, amount: 0 }],
+    initialTransaction?.splits?.map(slice => ({ ...slice, amount: type === 'refund-payment' ? Math.abs(slice.amount) : slice.amount })) ?? [{ categoryId: category, amount: 0 }],
   );
   const [tagsText, setTagsText] = useState<string>((initialTransaction?.tags ?? []).join(', '));
   const [note, setNote] = useState<string>(initialTransaction?.note ?? '');
@@ -68,11 +75,17 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
 
-  const handleTypeChange = (nextType: TransactionType) => {
+  const handleTypeChange = (nextType: TransactionEntryKind) => {
+    if (nextType === 'refund-payment' && isShared) {
+      setValidationError('Turn off Shared bill before using Refunds & Payments. This will discard the shared bill IOU treatment.');
+      return;
+    }
+    setValidationError(null);
+    setSettlementAcknowledged(false);
     setType(nextType);
     const nextCategoryList = Object.values(categories).filter((cat) => {
       const group = categoryGroups[cat.groupId];
-      return (group?.kind ?? 'expense') === nextType;
+      return (group?.kind ?? 'expense') === (nextType === 'income' ? 'income' : 'expense');
     });
     setCategory((current) => {
       if (current && !nextCategoryList.some((c) => c.id === current)) {
@@ -84,16 +97,8 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // An expense may be negative: that is a refund, money returning to the
-    // category it left. Income may not, because a negative income has no
-    // meaning here and would corrupt income totals.
-    const amountInvalid = type === 'expense' ? amount === 0 : amount <= 0;
-    if (amountInvalid) {
-      setAmountError(
-        type === 'expense'
-          ? 'Enter an amount. Use a negative amount for a refund.'
-          : 'Enter an amount greater than zero.',
-      );
+    if (!Number.isFinite(amount) || amount <= 0 || round2(amount) <= 0) {
+      setAmountError('Enter an amount greater than zero.');
       document.getElementById('tx-amount')?.focus();
       return;
     }
@@ -113,16 +118,38 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
     }
     setSharedError(null);
 
-    // The slice editor already says "Slices exceed the amount by X", but it
-    // only warned: submit validated the amount and nothing else, so an
-    // over-allocated split saved and then contributed more than its own
-    // amount to every budget total. splitParts now clamps that case too, but
-    // the honest place to stop it is before it is stored.
-    if (isSplit && amount > 0 && splitRemainder(amount, splits) < 0) {
+    const current = useBudgetStore.getState();
+    const validCategory = (id?: string) => {
+      const cat = id ? current.categories[id] : undefined;
+      const group = cat ? current.categoryGroups[cat.groupId] : undefined;
+      return !!group && group.kind === (type === 'income' ? 'income' : 'expense');
+    };
+    const populatedSplits = isSplit ? splits.filter(slice => slice.amount !== 0 || !!slice.categoryId) : [];
+    if (populatedSplits.some(slice => !Number.isFinite(slice.amount) || slice.amount <= 0 || round2(slice.amount) <= 0)) {
+      setValidationError('Enter an amount greater than zero for every allocation.');
+      return;
+    }
+    const cleanedSplits = populatedSplits.map(slice => ({ ...slice, amount: round2(slice.amount) }));
+    const remainder = splitRemainder(round2(amount), cleanedSplits);
+    if (remainder < 0) {
       setAmountError('Slices add up to more than the amount. Reduce a slice before saving.');
       document.getElementById('tx-amount')?.focus();
       return;
     }
+    if ((!isSplit || remainder > 0) && !validCategory(category)) {
+      setValidationError('Choose a valid category before saving.');
+      return;
+    }
+    if (cleanedSplits.some(slice => !validCategory(slice.categoryId))) {
+      setValidationError('Choose a valid category for every allocation.');
+      return;
+    }
+    if (type === 'refund-payment' && initialTransaction?.reimbursement && !settlementAcknowledged) {
+      setValidationError('Confirm how this shared bill payment should be used before saving.');
+      return;
+    }
+    setValidationError(null);
+    const encoded = encodeEntryAmounts(type, amount, cleanedSplits);
 
     const sharedField =
       type === 'expense' && amount > 0 && isShared && totalPaid > amount && sharedWith.trim()
@@ -132,18 +159,6 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
       type === 'income' && isReimbursement && reimbursementFrom.trim()
         ? { from: reimbursementFrom.trim() }
         : undefined;
-
-    // Splitting a negative expense (a refund) is out of scope: the parts of a
-    // transaction must sum to its amount (see splits.ts), and a negative
-    // amount cannot be represented as a sum of positive slices. Refuse to
-    // save splits here even if slices were entered before the amount was
-    // made negative.
-    const cleanedSplits = isSplit && amount > 0
-      ? splits
-          .filter((s) => s.amount > 0)
-          .map((s) => ({ categoryId: s.categoryId || undefined, amount: round2(s.amount) }))
-      : [];
-    const splitsField = cleanedSplits.length > 0 ? cleanedSplits : undefined;
 
     const tags = Array.from(
       new Set(
@@ -158,28 +173,24 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
     if (initialTransaction) {
       updateTransaction(initialTransaction.id, {
-        type,
-        amount,
+        ...encoded,
         categoryId: category,
         date,
         description,
         shared: sharedField,
         reimbursement: reimbursementField,
-        splits: splitsField,
         tags: tagsField,
         note: noteField
       });
     } else {
       addTransaction({
         id: crypto.randomUUID(),
-        type,
-        amount,
+        ...encoded,
         categoryId: category,
         date,
         description,
         shared: sharedField,
         reimbursement: reimbursementField,
-        splits: splitsField,
         tags: tagsField,
         note: noteField
       });
@@ -211,32 +222,30 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
-          {/* Type Toggle */}
-          <div className="flex rounded-md overflow-hidden border border-[var(--color-border)]">
-            <button
-              type="button"
-              className={`flex-1 py-2 text-[14px] font-medium transition-colors ${
-                type === 'expense'
-                  ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
-                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-              }`}
-              onClick={() => handleTypeChange('expense')}
-            >
-              Expense
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-2 text-[14px] font-medium transition-colors ${
-                type === 'income'
-                  ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]'
-                  : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-              }`}
-              onClick={() => handleTypeChange('income')}
-            >
-              Income
-            </button>
+          <div className="grid grid-cols-2 rounded-md overflow-hidden border border-[var(--color-border)]">
+            {(['expense', 'income', ...(enabled || (initialTransaction && entryKindOf(initialTransaction) === 'refund-payment') ? ['refund-payment'] : [])] as TransactionEntryKind[]).map(kind => (
+              <button key={kind} type="button" aria-pressed={type === kind}
+                className={`${kind === 'refund-payment' ? 'col-span-2 border-t border-[var(--color-border)]' : ''} min-h-[44px] py-2 text-[14px] font-medium transition-colors ${type === kind ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)]' : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                onClick={() => handleTypeChange(kind)}>
+                {kind === 'expense' ? 'Expense' : kind === 'income' ? 'Income' : 'Refunds & Payments'}
+              </button>
+            ))}
           </div>
-
+          {validationError && <p role="alert" className="text-[12px] text-error">{validationError}</p>}
+          {type === 'refund-payment' && (
+            <div className="flex flex-col gap-2 text-[12px] text-[var(--color-text-secondary)]">
+              <p>Reduces spending in the selected category. This amount will not count as income.</p>
+              {!enabled && <p>Refunds &amp; Payments is off for new transactions. This saved payment still counts.</p>}
+              {initialTransaction?.reimbursement && <>
+                <p>This payment currently settles a shared bill. Using it to reduce expenses will stop settling that balance. Shared bills already count only your share, so this can reduce spending again.</p>
+                <label className="flex items-start gap-2">
+                  <Checkbox checked={settlementAcknowledged} onChange={setSettlementAcknowledged} ariaLabel="Use this payment to reduce expenses instead of settling the shared bill." />
+                  Use this payment to reduce expenses instead of settling the shared bill.
+                </label>
+              </>}
+              {Number.isFinite(amount) && amount > 0 && remaining >= 0 && (isSplit ? [...splits.filter(slice => slice.amount > 0), ...(remaining > 0 ? [{ categoryId: category, amount: remaining }] : [])] : [{ categoryId: category, amount }]).map((part, i) => categoryList.some(cat => cat.id === part.categoryId) && round2(part.amount) > 0 && <p key={i}>Reduces {categories[part.categoryId!].name} spending by {formatMoneyWithCents(round2(part.amount))}</p>)}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <label htmlFor="tx-amount" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               {type === 'expense' && isShared ? 'Your share' : 'Amount'}
@@ -244,6 +253,10 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             <NumberInput
               id="tx-amount"
               value={amount}
+              onTextChange={(text) => {
+                setNegativeAmountTyped(text.startsWith('-'));
+                if (Number.isNaN(parseFloat(text))) setAmount(0);
+              }}
               onCommit={(v) => { setAmount(v); if (v > 0) setAmountError(null); }}
               aria-invalid={amountError ? 'true' : 'false'}
               aria-describedby={amountError ? 'tx-amount-error' : undefined}
@@ -254,6 +267,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               }`}
               placeholder="0.00"
             />
+            {negativeAmountTyped && <p className="text-[12px] text-[var(--color-text-secondary)]">Use Refunds &amp; Payments for money received.</p>}
             {amountError && (
               <p id="tx-amount-error" role="alert" className="text-[12px] text-error">
                 {amountError}
@@ -342,6 +356,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               Category
             </label>
             <ThemedSelect
+              ariaLabel="Category"
               value={category}
               onChange={(v) => setCategory(v)}
               options={[
@@ -351,9 +366,6 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             />
           </div>
 
-          {/* Splitting a negative expense (a refund) is out of scope: negative amounts
-              cannot be represented as a sum of positive slices (see splits.ts). Hide the
-              control entirely rather than let a refund reach the split UI. */}
           {amount >= 0 && (
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-secondary)]">
@@ -363,7 +375,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             {isSplit && (
               <div className="flex flex-col gap-2 pl-1 border-l-2 border-[var(--color-border)] ml-1">
                 {splits.map((slice, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                  <div key={i} className="flex flex-wrap items-center gap-2">
                     <ThemedSelect
                       ariaLabel="Slice category"
                       value={slice.categoryId ?? ''}
@@ -379,6 +391,9 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                     <NumberInput
                       id={`tx-split-amount-${i}`}
                       value={slice.amount}
+                      onTextChange={(text) => {
+                        if (Number.isNaN(parseFloat(text))) setSplits(cur => cur.map((s, j) => j === i ? { ...s, amount: 0 } : s));
+                      }}
                       onCommit={(v) =>
                         setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, amount: v } : s)))
                       }

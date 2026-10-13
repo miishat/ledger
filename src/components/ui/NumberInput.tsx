@@ -3,6 +3,8 @@ import React, { useState } from 'react'
 interface NumberInputProps {
   value: number
   onCommit: (value: number) => void
+  /** Optional raw editing feedback, including incomplete numeric buffers. */
+  onTextChange?: (text: string) => void
   id?: string
   min?: number
   max?: number
@@ -35,6 +37,7 @@ function display(value: number, maxDecimals?: number): string {
 export const NumberInput: React.FC<NumberInputProps> = ({
   value,
   onCommit,
+  onTextChange,
   min,
   max,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -60,6 +63,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         const next = e.target.value
         if (!NUMERIC.test(next)) return
         setText(next)
+        onTextChange?.(next)
         const parsed = parseFloat(next)
         if (!Number.isNaN(parsed)) onCommit(clamp(parsed))
       }}

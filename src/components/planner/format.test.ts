@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMoney, formatMoneyCompact } from './format'
+import { formatMoney, formatMoneyWithCents, formatMoneyCompact } from './format'
 
 describe('formatMoneyCompact', () => {
   it('formats sub-thousand values as plain dollars', () => {
@@ -44,4 +44,11 @@ describe('formatMoney (symmetric rounding)', () => {
   it('renders a value that rounds to zero as $0, never -$0', () => {
     expect(formatMoney(-0.4)).toBe('$0')
   })
+})
+
+it('formats money with cents for exact transaction effects', () => {
+  expect(formatMoneyWithCents(40)).toBe('$40.00')
+  expect(formatMoneyWithCents(0.01)).toBe('$0.01')
+  expect(formatMoneyWithCents(1234.567)).toBe('$1,234.57')
+  expect(formatMoneyWithCents(-0.01)).toBe('-$0.01')
 })

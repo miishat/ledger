@@ -9,6 +9,7 @@ import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSu
 import { Checkbox } from '../ui/Checkbox'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { PHONE_SECONDARY_ACTION } from './actionStyles'
+import { useBudgetStore } from '../../store/useBudgetStore'
 
 interface SettingsSheetProps {
   open: boolean
@@ -121,6 +122,8 @@ const ReminderSettings: React.FC = () => {
  *  About as a footer row. Modal on desktop, bottom sheet on mobile. */
 export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onOpenWhatsNew, onOpenDisclaimer }) => {
   const isDesktop = useIsDesktop()
+  const refundsAndPaymentsEnabled = useBudgetStore(state => state.refundsAndPaymentsEnabled)
+  const setRefundsAndPaymentsEnabled = useBudgetStore(state => state.setRefundsAndPaymentsEnabled)
   return (
   <Sheet
     open={open}
@@ -149,6 +152,14 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
 
     <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market data" badge={<MarketDataStatusBadge />} description="Your key is stored only on this device.">
       <MarketDataSection />
+    </SectionCard>
+
+    <SectionCard icon={<RefreshCw className="w-4 h-4" />} title="Transactions">
+      <label className="flex items-center gap-2 text-[13px] text-text-primary">
+        <Checkbox checked={refundsAndPaymentsEnabled} onChange={setRefundsAndPaymentsEnabled} ariaLabel="Refunds & Payments" />
+        Refunds &amp; Payments
+      </label>
+      <p className="mt-2 text-[12px] text-text-secondary">Let money received reduce spending in an expense category. Turning this off hides the option for new transactions; saved payments still count.</p>
     </SectionCard>
 
     <SectionCard icon={<Database className="w-4 h-4" />} title="Backup" description="Save, restore or try sample data.">
