@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { TriageInboxWidget } from './TriageInboxWidget'
 import { useTriageStore } from '../../store/useTriageStore'
 import { useBudgetStore } from '../../store/useBudgetStore'
@@ -12,6 +12,54 @@ beforeEach(() => {
   useTriageStore.setState(triageInitial, true)
   useBudgetStore.setState(budgetInitial, true)
   useUndoStore.setState(undoInitial, true)
+})
+
+it('undoes the complete discard effect, including transitive aliases, days and report', () => {
+  const row = { id: 'a', date: '2026-08-04', amount: 10, description: 'Clean', type: 'expense' as const, importRecordId: 'a' }
+  const record = { id: 'a', sourceId: 'source', original: row, decision: 'pending' as const }
+  const records = {
+    a: record,
+    b: { ...record, id: 'b', decision: 'duplicate' as const, matchedRecordId: 'a' },
+    c: { ...record, id: 'c', decision: 'duplicate' as const, matchedRecordId: 'b' },
+    d: { ...record, id: 'd', decision: 'duplicate' as const, matchedTransactionId: 'a' },
+    ignored: { ...record, id: 'ignored', decision: 'ignored' as const },
+  }
+  const removedDay = { sourceId: 'source', date: row.date, signature: 'removed', recordIds: ['a', 'b', 'c', 'd', 'ignored'] }
+  const survivingDay = { sourceId: 'source', date: '2026-08-03', signature: 'surviving', recordIds: ['ignored'] }
+  const report = { addedIds: ['a'], skippedIds: ['b', 'c', 'd'], changedDays: [] }
+  useTriageStore.setState({ pendingTransactions: { a: row }, importRecords: records, importDays: [removedDay, survivingDay], lastImport: report })
+  render(<TriageInboxWidget />)
+  fireEvent.click(screen.getByRole('button', { name: 'Discard All' }))
+  fireEvent.click(screen.getAllByRole('button', { name: 'Discard All' })[1])
+  expect(Object.keys(useTriageStore.getState().importRecords)).toEqual(['ignored'])
+  expect(useTriageStore.getState().importDays).toEqual([survivingDay])
+  expect(useTriageStore.getState().lastImport).toBeNull()
+  const unrelatedDay = { ...survivingDay, signature: 'unrelated', date: '2026-08-05' }
+  const editedIgnored = { ...records.ignored, ignoreReason: 'manual' as const }
+  act(() => {
+    useTriageStore.setState({ pendingTransactions: { unrelated: { ...row, id: 'unrelated' } }, importRecords: { ignored: editedIgnored }, importDays: [survivingDay, unrelatedDay] })
+    useUndoStore.getState().runUndo()
+  })
+  expect(useTriageStore.getState().pendingTransactions).toEqual({ a: row, unrelated: { ...row, id: 'unrelated' } })
+  expect.soft(useTriageStore.getState().importRecords).toEqual({ ...records, ignored: editedIgnored })
+  expect.soft(useTriageStore.getState().importDays).toEqual([removedDay, survivingDay, unrelatedDay])
+  expect.soft(useTriageStore.getState().lastImport).toEqual(report)
+})
+
+it.each(['action', 'import'])('invalidates discard Undo after a subsequent %s', next => {
+  const store = useTriageStore.getState()
+  const sourceId = store.createImportSource('Card A')
+  store.importTransactions([{ id: 'a', date: '2026-08-04', amount: 10, description: 'Clean', type: 'expense' }], sourceId)
+  render(<TriageInboxWidget />)
+  fireEvent.click(screen.getByRole('button', { name: 'Discard All' }))
+  fireEvent.click(screen.getAllByRole('button', { name: 'Discard All' })[1])
+  expect(useUndoStore.getState().pending).not.toBeNull()
+  const row = { id: 'new', date: '2026-08-05', amount: 20, description: 'New', type: 'expense' as const }
+  if (next === 'import') store.importTransactions([row], sourceId)
+  else store.addPending([row])
+  expect(useUndoStore.getState().pending).toBeNull()
+  useUndoStore.getState().runUndo()
+  expect(useTriageStore.getState().pendingTransactions.a).toBeUndefined()
 })
 
 describe('TriageInboxWidget', () => {

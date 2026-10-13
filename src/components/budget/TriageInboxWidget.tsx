@@ -210,7 +210,7 @@ export const TriageInboxWidget: React.FC = () => {
         tone="danger"
         onConfirm={() => {
           const cleared = txList;
-          const offer = captureRows(cleared);
+          const offer = captureTriageUndo({ discard: true });
           clearAll();
           offer(`Cleared ${cleared.length} pending transaction${cleared.length === 1 ? '' : 's'}`);
           setConfirmClearOpen(false);

@@ -29,7 +29,7 @@ export function ExcludedImportsWidget({ focusRequest = 0 }: { focusRequest?: num
   return <div className="min-w-0">
     <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
     <details id={EXCLUDED_IMPORTS_ID} ref={detailsRef} className="min-w-0 rounded-lg border border-border bg-bg-secondary p-3">
-      <summary ref={summaryRef} tabIndex={-1} className="min-h-11 cursor-pointer text-[14px] font-medium text-text-primary">Excluded imports ({excluded.length})</summary>
+      <summary ref={summaryRef} tabIndex={0} className="min-h-11 cursor-pointer text-[14px] font-medium text-text-primary">Excluded imports ({excluded.length})</summary>
       <p className="text-[13px] text-text-secondary mb-3">Excluded and ignored bank entries stay in your import history. Restore sends an entry back to review.</p>
       {excluded.length === 0 && <p className="text-[13px] text-text-secondary">No excluded imports.</p>}
       <ul className="space-y-2 min-w-0">

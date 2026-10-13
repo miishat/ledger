@@ -17,6 +17,25 @@ describe('captureTriageUndo',()=>{
  })
 })
 
+it('captures actual deleted discard entities and preserves unrelated replacement state', () => {
+ const row={id:'a',date:'2026-06-10',description:'BANK',amount:50,type:'income' as const,importRecordId:'a'}
+ const record={id:'a',sourceId:'a',decision:'pending' as const,original:row}
+ const day={sourceId:'a',date:row.date,signature:'original',recordIds:['a']}
+ const report={addedIds:['a'],skippedIds:[],changedDays:[]}
+ useTriageStore.setState({pendingTransactions:{a:row},importRecords:{a:record},importDays:[day],lastImport:report})
+ const offer=captureTriageUndo({pendingIds:['a'],recordIds:['a'],discard:true})
+ useTriageStore.getState().clearAll()
+ offer('Discard')
+ const replacement={...record,decision:'ignored' as const}
+ const newDay={...day,signature:'new',recordIds:['new']}
+ const newReport={addedIds:['new'],skippedIds:[],changedDays:[]}
+ useTriageStore.setState({importRecords:{a:replacement},importDays:[newDay],lastImport:newReport})
+ useUndoStore.getState().runUndo()
+ expect(useTriageStore.getState().importRecords.a).toEqual(replacement)
+ expect(useTriageStore.getState().importDays).toEqual([day,newDay])
+ expect(useTriageStore.getState().lastImport).toEqual(newReport)
+})
+
 it('restores include override absence, deletes a new rule and replaces a dismissed offer',()=>{
  const row={id:'a',date:'2026-06-10',description:'BANK',amount:50,type:'income' as const}
  const record={id:'a',sourceId:'a',decision:'pending' as const,original:row}

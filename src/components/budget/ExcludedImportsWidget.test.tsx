@@ -20,6 +20,16 @@ function seed() {
   store.deleteExclusionRule(ruleId)
   useTriageStore.setState({lastImport:null})
 }
+it('keeps the collapsed history summary in the tab order without a recent report', () => {
+  seed()
+  const { container, rerender } = render(<ExcludedImportsWidget />)
+  const summary = screen.getByText('Excluded imports (1)')
+  expect(container.querySelector('details')).not.toHaveAttribute('open')
+  expect(summary.tabIndex).toBe(0)
+  rerender(<ExcludedImportsWidget focusRequest={1} />)
+  expect(summary).toHaveFocus()
+  expect(container.querySelector('details')).toHaveAttribute('open')
+})
 it('restores a rule exclusion with no recent report or surviving rule and offers exact Undo', () => {
   seed()
   const original = useTriageStore.getState().importRecords.a
