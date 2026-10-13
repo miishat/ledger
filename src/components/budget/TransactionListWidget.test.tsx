@@ -7,6 +7,54 @@ import type { Transaction } from '../../types/budget'
 
 const initialState = useBudgetStore.getState()
 
+describe('Refunds & Payments list behavior', () => {
+  const seed = (includeIncome = false) => useBudgetStore.setState({
+    categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' }, inc: { id: 'inc', name: 'Income', kind: 'income' } },
+    categories: {
+      groceries: { id: 'groceries', groupId: 'food', name: 'Groceries', targetAmount: 0 },
+      house: { id: 'house', groupId: 'food', name: 'Household', targetAmount: 0 },
+      salary: { id: 'salary', groupId: 'inc', name: 'Salary', targetAmount: 0 },
+    },
+    transactions: {
+      payment: { id: 'payment', date: '2026-10-02', amount: -40, categoryId: 'groceries', type: 'expense', description: 'Returned order', splits: [{ categoryId: 'house', amount: -10 }] },
+      ...(includeIncome ? { income: { id: 'income', date: '2026-10-03', amount: 2000, type: 'income' as const, description: 'Pay' } } : {}),
+    },
+  })
+  it('finds offsets by their treatment label on desktop and phone', () => {
+    seed()
+    render(<TransactionListWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'refunds & payments' } })
+    expect(within(screen.getByRole('table')).getByText('Returned order')).toBeInTheDocument()
+    expect(within(screen.getByTestId('transactions-cards')).getByText('+$40')).toBeInTheDocument()
+  })
+  it('finds split offsets by slice attribution', () => {
+    seed()
+    render(<TransactionListWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'All Categories' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Household' }))
+    expect(within(screen.getByRole('table')).getByText('Returned order')).toBeInTheDocument()
+  })
+  it('offers expense categories only for payments and preserves their signed splits when applying', () => {
+    seed()
+    render(<TransactionListWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    fireEvent.click(screen.getByLabelText('Select all transactions'))
+    fireEvent.click(screen.getByLabelText('Category for selected'))
+    expect(screen.queryByRole('option', { name: 'Salary' })).toBeNull()
+    fireEvent.click(screen.getByRole('option', { name: 'Household' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(useBudgetStore.getState().transactions.payment).toMatchObject({ type: 'expense', amount: -40, categoryId: 'house', splits: [{ categoryId: 'house', amount: -10 }] })
+  })
+  it('disables recategorization for mixed income and expense selections while keeping deletion', () => {
+    seed(true)
+    render(<TransactionListWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    fireEvent.click(screen.getByLabelText('Select all transactions'))
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled()
+    expect(screen.queryByLabelText('Category for selected')).toBeNull()
+    expect(screen.getByText('Select only income or only expenses to change categories.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete selected' })).toBeEnabled()
+  })
+})
+
 beforeEach(() => {
   useBudgetStore.setState(initialState, true)
   useUndoStore.setState({ pending: null })
@@ -472,7 +520,8 @@ describe('TransactionListWidget negative expenses', () => {
     })
     render(<TransactionListWidget range={{ from: '2026-08', to: '2026-08' }} />)
     expect(screen.queryByText('-$-40')).not.toBeInTheDocument()
-    expect(screen.getAllByText('$40').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('+$40').length).toBe(2)
+    expect(screen.getAllByText('Refunds & Payments')).toHaveLength(2)
   })
 })
 

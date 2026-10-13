@@ -2,7 +2,22 @@
 // average of completed months). Thresholds exported for UI copy.
 
 import type { Category, Transaction } from '../../types/budget'
-import { amountForCategory } from './splits'
+import { amountForCategory, round2, splitParts } from './splits'
+
+export function categoryExpenseBreakdown(
+  transactions: Record<string, Transaction>, categoryId: string, month: string,
+): { purchases: number; offsets: number; net: number } {
+  let purchases = 0, offsets = 0
+  for (const tx of Object.values(transactions)) {
+    if (tx.type !== 'expense' || !tx.date.startsWith(month)) continue
+    for (const part of splitParts(tx)) {
+      if (part.categoryId !== categoryId) continue
+      if (part.amount >= 0) purchases += part.amount
+      else offsets -= part.amount
+    }
+  }
+  return { purchases: round2(purchases), offsets: round2(offsets), net: round2(purchases - offsets) }
+}
 
 export const ANOMALY_RATIO = 1.5
 export const ANOMALY_MIN_DELTA = 50

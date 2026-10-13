@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ParadigmBanner } from './ParadigmBanner'
-import { useBudgetStore } from '../../store/useBudgetStore'
+import { getMonthlyBudgetStats, useBudgetStore } from '../../store/useBudgetStore'
 
 function seed(paradigm: string, incomeAmount: number) {
   useBudgetStore.setState({
@@ -23,6 +23,30 @@ function seed(paradigm: string, incomeAmount: number) {
 }
 
 describe('ParadigmBanner', () => {
+  it('subtracts signed split offsets from the correct 50/30/20 classes', () => {
+    seed('50/30/20', 2000)
+    useBudgetStore.setState({
+      categoryGroups: {
+        ge: { id: 'ge', name: 'Housing', kind: 'expense', budgetClass: 'need' },
+        gw: { id: 'gw', name: 'Leisure', kind: 'expense', budgetClass: 'want' },
+        gs: { id: 'gs', name: 'Saving', kind: 'expense', budgetClass: 'savings' },
+      },
+      categories: {
+        rent: { id: 'rent', groupId: 'ge', name: 'Rent', targetAmount: 0 },
+        fun: { id: 'fun', groupId: 'gw', name: 'Fun', targetAmount: 0 },
+        saving: { id: 'saving', groupId: 'gs', name: 'Saving', targetAmount: 0 },
+      },
+      transactions: {
+        i: { id: 'i', date: '2026-07-01', amount: 2000, description: 'Salary', type: 'income' },
+        purchase: { id: 'purchase', date: '2026-07-02', amount: 120, description: 'Purchase', type: 'expense', categoryId: 'rent' },
+        offset: { id: 'offset', date: '2026-07-03', amount: -40, description: 'Payment', type: 'expense', categoryId: 'rent', splits: [{ categoryId: 'fun', amount: -10 }, { categoryId: 'saving', amount: -10 }] },
+      },
+    })
+    const f = getMonthlyBudgetStats(useBudgetStore.getState(), 2026, 6).fiftyThirtyTwenty
+    expect(f).toMatchObject({ needsSpent: 100, wantsSpent: -10, savingsSpent: -10, needsPct: 5, wantsPct: -0.5, savingsPct: -0.5 })
+    render(<ParadigmBanner selectedMonth="2026-07" />)
+    expect(screen.getByText(/Needs 5%/)).toBeInTheDocument()
+  })
   beforeEach(() => seed('Ledger Custom', 1000))
 
   it('renders nothing for Ledger Custom', () => {

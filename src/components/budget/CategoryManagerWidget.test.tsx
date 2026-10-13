@@ -184,7 +184,7 @@ describe('split transaction attribution', () => {
 })
 
 describe('refunds can make a category net negative', () => {
-  it('shows the truthful negative spent figure and does not render a dropped/negative-width progress bar', () => {
+  it('shows net credit with purchases and payments detail and a zero-width progress bar', () => {
     useBudgetStore.setState({
       paradigm: 'Ledger Custom',
       budgetSetupCollapsed: false,
@@ -203,8 +203,10 @@ describe('refunds can make a category net negative', () => {
     })
     const { container } = render(<CategoryManagerWidget selectedMonth="2026-07" />)
 
-    // The displayed figure must stay truthful and negative.
-    expect(screen.getByText(/-\$40 spent/)).toBeInTheDocument()
+    // Preserve the signed total while describing the credit as a magnitude.
+    expect(screen.getByText('$40.00 net credit')).toBeInTheDocument()
+    expect(screen.getByText('$60.00 purchases · $100.00 refunds & payments')).toBeInTheDocument()
+    expect(screen.getByText('Spending details').tagName).toBe('SUMMARY')
 
     // The progress bar must never render a negative or CSS-invalid width.
     const bar = container.querySelector('.h-1.bg-bg-secondary .h-full') as HTMLElement
@@ -214,6 +216,17 @@ describe('refunds can make a category net negative', () => {
     const pct = parseFloat(width)
     expect(pct).toBeGreaterThanOrEqual(0)
     expect(pct).toBe(0)
+  })
+  it('keeps positive net spending and adds details only when payments exist', () => {
+    useBudgetStore.setState({ transactions: {
+      purchase: { id: 'purchase', date: '2026-07-05', amount: 120, categoryId: 'c1', description: 'Purchase', type: 'expense' },
+      payment: { id: 'payment', date: '2026-07-10', amount: -40, categoryId: 'c1', description: 'Payment', type: 'expense' },
+    } })
+    const { rerender } = render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    expect(screen.getByText('$80 spent')).toBeInTheDocument()
+    expect(screen.getByText('$120.00 purchases · $40.00 refunds & payments')).toBeInTheDocument()
+    rerender(<CategoryManagerWidget selectedMonth="2026-06" />)
+    expect(screen.queryByText('Spending details')).toBeNull()
   })
 })
 

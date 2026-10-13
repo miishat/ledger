@@ -1,10 +1,30 @@
 import type { Category, Transaction } from '../../types/budget'
-import { categoryMonthlySeries, categoryMonthlyTotal, detectAnomalies } from './categoryStats'
+import { categoryExpenseBreakdown, categoryMonthlySeries, categoryMonthlyTotal, detectAnomalies } from './categoryStats'
 
 let id = 0
 const tx = (date: string, amount: number, categoryId: string): Transaction =>
   ({ id: `t${id++}`, date, amount, categoryId, description: 'x', type: 'expense' })
 const asRecord = (list: Transaction[]) => Object.fromEntries(list.map((t) => [t.id, t]))
+
+describe('categoryExpenseBreakdown', () => {
+  it.each([[120, 40, 80], [60, 100, -40], [0, 40, -40]])(
+    'separates purchases %s and payments %s with net %s', (purchase, offset, net) => {
+      const rows = asRecord([tx('2026-10-01', purchase, 'food'), tx('2026-10-02', -offset, 'food')])
+      expect(categoryExpenseBreakdown(rows, 'food', '2026-10')).toEqual({ purchases: purchase, offsets: offset, net })
+    },
+  )
+  it('attributes split payments and remainder in their real month, excluding income', () => {
+    const payment = { ...tx('2026-10-02', -100, 'food'), splits: [{ categoryId: 'house', amount: -30 }] }
+    const rows = asRecord([tx('2026-09-01', 120, 'food'), payment, { ...tx('2026-10-03', 2000, 'food'), type: 'income' }])
+    expect(categoryExpenseBreakdown(rows, 'food', '2026-09')).toEqual({ purchases: 120, offsets: 0, net: 120 })
+    expect(categoryExpenseBreakdown(rows, 'food', '2026-10')).toEqual({ purchases: 0, offsets: 70, net: -70 })
+    expect(categoryExpenseBreakdown(rows, 'house', '2026-10')).toEqual({ purchases: 0, offsets: 30, net: -30 })
+  })
+  it('rounds purchase, payment and net totals to cents', () => {
+    const rows = asRecord([tx('2026-10-01', 0.1, 'food'), tx('2026-10-02', 0.2, 'food'), tx('2026-10-03', -0.1, 'food')])
+    expect(categoryExpenseBreakdown(rows, 'food', '2026-10')).toEqual({ purchases: 0.3, offsets: 0.1, net: 0.2 })
+  })
+})
 
 const categories: Record<string, Category> = {
   dining: { id: 'dining', groupId: 'g', name: 'Dining', targetAmount: 200 },

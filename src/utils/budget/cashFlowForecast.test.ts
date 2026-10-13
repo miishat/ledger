@@ -16,6 +16,15 @@ const recurringItem = (over: Partial<RecurringItem>): RecurringItem => ({
 })
 
 describe('forecastMonthEnd', () => {
+  it('keeps forecast net unchanged by ordinary receipt conversion and honors receipt month', () => {
+    const rows = asRecord([tx('2026-10-01', 2000, 'income'), tx('2026-10-02', 120, 'expense')])
+    const receipt = tx('2026-10-03', 40, 'income')
+    const before = { ...rows, [receipt.id]: receipt }
+    const after = { ...rows, [receipt.id]: { ...receipt, type: 'expense' as const, amount: -40 } }
+    expect(forecastMonthEnd(before, [], '2026-10', '2026-10-04').projectedNet).toBe(1920)
+    expect(forecastMonthEnd(after, [], '2026-10', '2026-10-04').projectedNet).toBe(1920)
+    expect(forecastMonthEnd(after, [], '2026-09', '2026-09-30').projectedNet).toBe(0)
+  })
   const txs = asRecord([
     tx('2026-07-01', 4000, 'income'),
     tx('2026-07-05', 1500, 'expense'),

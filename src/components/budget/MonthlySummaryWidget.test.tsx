@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MonthlySummaryWidget } from './MonthlySummaryWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
 
@@ -10,6 +10,32 @@ beforeEach(() => {
 })
 
 describe('MonthlySummaryWidget', () => {
+  it('keeps net 1920 when an ordinary receipt becomes an expense offset', () => {
+    const rows = {
+      salary: { id: 'salary', date: '2026-10-01', amount: 2000, description: 'Salary', type: 'income' as const },
+      purchase: { id: 'purchase', date: '2026-10-02', amount: 120, description: 'Purchase', type: 'expense' as const },
+      receipt: { id: 'receipt', date: '2026-10-03', amount: 40, description: 'Receipt', type: 'income' as const },
+    }
+    useBudgetStore.setState({ transactions: rows })
+    render(<MonthlySummaryWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    const netRow = () => screen.getByText('Net Change').parentElement?.textContent
+    expect(netRow()).toBe('Net Change+$1,920')
+    act(() => useBudgetStore.setState({ transactions: { ...rows, receipt: { ...rows.receipt, type: 'expense', amount: -40 } } }))
+    expect(netRow()).toBe('Net Change+$1,920')
+  })
+  it('nets cross-month payments only when the selected range includes both months', () => {
+    useBudgetStore.setState({ transactions: {
+      purchase: { id: 'purchase', date: '2026-09-25', amount: 120, description: 'Purchase', type: 'expense' },
+      payment: { id: 'payment', date: '2026-10-03', amount: -40, description: 'Payment', type: 'expense' },
+    } })
+    const { rerender } = render(<MonthlySummaryWidget range={{ from: '2026-09', to: '2026-09' }} />)
+    const moneyOut = () => screen.getByText('Money Out').closest('div.flex.justify-between')?.textContent
+    expect(moneyOut()).toBe('Money Out-$120')
+    rerender(<MonthlySummaryWidget range={{ from: '2026-10', to: '2026-10' }} />)
+    expect(moneyOut()).toBe('Money Out$40')
+    rerender(<MonthlySummaryWidget range={{ from: '2026-09', to: '2026-10' }} />)
+    expect(moneyOut()).toBe('Money Out-$80')
+  })
   it('shows a Projected Net row matching the summary row style', () => {
     const month = new Date().toISOString().slice(0, 7)
     render(<MonthlySummaryWidget range={{ from: month, to: month }} />)

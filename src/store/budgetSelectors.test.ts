@@ -8,6 +8,40 @@ import {
 import { totalMonthlyBudget } from './budgetSelectors'
 import type { Category, CategoryGroup } from '../types/budget'
 import { incomeExpenseSeries, savingsRate, type MonthlyFlow } from './budgetSelectors'
+import { getMonthlyBudgetStats, useBudgetStore } from './useBudgetStore'
+
+describe('Refunds & Payments accounting invariants', () => {
+  it('keeps ordinary receipt conversion net unchanged in monthly selectors and budget stats', () => {
+    const original = {
+      salary: { ...tx('2026-10-01', 2000, 'income'), id: 'salary' },
+      receipt: { ...tx('2026-10-02', 40, 'income'), id: 'receipt' },
+      purchase: { ...tx('2026-10-03', 120, 'expense'), id: 'purchase', categoryId: 'food' },
+    }
+    const converted = { ...original, receipt: { ...original.receipt, type: 'expense' as const, amount: -40, categoryId: 'food' } }
+    for (const rows of [original, converted]) {
+      expect(monthlyIncomeTotal(rows, '2026-10') - monthlyExpenseTotal(rows, '2026-10')).toBe(1920)
+      const stats = getMonthlyBudgetStats({ ...useBudgetStore.getState(), transactions: rows, categories: {}, categoryGroups: {}, reallocations: {} }, 2026, 9)
+      expect(stats.unallocated - stats.spent).toBe(1920)
+    }
+    expect(monthlyIncomeTotal(converted, '2026-10')).toBe(2000)
+    expect(monthlyExpenseTotal(converted, '2026-10')).toBe(80)
+    expect(converted.receipt.id).toBe(original.receipt.id)
+  })
+  it('keeps September purchases and October offsets in their actual months', () => {
+    const rows = { purchase: tx('2026-09-25', 120, 'expense'), receipt: tx('2026-10-03', -40, 'expense') }
+    expect(monthlyExpenseTotal(rows, '2026-09')).toBe(120)
+    expect(monthlyExpenseTotal(rows, '2026-10')).toBe(-40)
+    expect(monthlyExpenseTotal(rows, '2026-09') + monthlyExpenseTotal(rows, '2026-10')).toBe(80)
+  })
+  it('keeps a shared purchase own share at 60 and excludes its settlement from income', () => {
+    const rows = {
+      purchase: { ...tx('2026-10-01', 60, 'expense'), shared: { totalAmount: 120, sharedWith: 'Sam' } },
+      settlement: { ...tx('2026-10-02', 60, 'income'), reimbursement: { from: 'Sam' } },
+    }
+    expect(monthlyExpenseTotal(rows, '2026-10')).toBe(60)
+    expect(monthlyIncomeTotal(rows, '2026-10')).toBe(0)
+  })
+})
 
 function tx(date: string, amount: number, type: 'expense' | 'income'): Transaction {
   return { id: `${date}-${amount}-${type}`, date, amount, description: 't', type }

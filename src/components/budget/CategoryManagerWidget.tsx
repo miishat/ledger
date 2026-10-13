@@ -5,7 +5,8 @@ import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
 import { ReallocationModal } from './ReallocationModal';
 import { totalMonthlyBudget } from '../../store/budgetSelectors';
-import { formatMoney } from '../planner/format';
+import { formatMoney, formatMoneyWithCents } from '../planner/format';
+import { categoryExpenseBreakdown } from '../../utils/budget/categoryStats';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
 import { amountForCategory } from '../../utils/budget/splits';
@@ -249,6 +250,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                           const reallocsIn = monthReallocs.filter(r => r.toCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
                           const reallocsOut = monthReallocs.filter(r => r.fromCategoryId === cat.id).reduce((sum, r) => sum + r.amount, 0);
                           const effectiveTarget = monthlyEquivalent(cat) + reallocsIn - reallocsOut;
+                          const breakdown = categoryExpenseBreakdown(transactions, cat.id, selectedMonth);
 
                           const isOverBudget = !isIncomeGroup && actualAmount > effectiveTarget && effectiveTarget > 0;
                           const progressPercentage = effectiveTarget > 0 ? Math.max(0, Math.min((actualAmount / effectiveTarget) * 100, 100)) : 0;
@@ -265,8 +267,14 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                             <>
                               <div className="flex flex-col items-end min-w-[100px]">
                                 <span className={`text-[12px] font-medium whitespace-nowrap ${isOverBudget ? 'text-error' : 'text-text-secondary'}`}>
-                                  {formatMoney(actualAmount)} {isIncomeGroup ? 'earned' : 'spent'} {isOverBudget && `(${formatMoney(actualAmount - effectiveTarget)} over)`}
+                                  {actualAmount < 0 ? `${formatMoneyWithCents(-actualAmount)} net credit` : `${formatMoney(actualAmount)} spent`} {isOverBudget && `(${formatMoney(actualAmount - effectiveTarget)} over)`}
                                 </span>
+                                {breakdown.offsets > 0 && (
+                                  <details className="text-[12px] text-text-secondary max-w-[230px] text-right">
+                                    <summary className="cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-accent">Spending details</summary>
+                                    <p>{formatMoneyWithCents(breakdown.purchases)} purchases · {formatMoneyWithCents(breakdown.offsets)} refunds &amp; payments</p>
+                                  </details>
+                                )}
                                 {paradigm === 'Zero-Based' && (stats.perCategory[cat.id]?.overspend ?? 0) > 0 && (
                                   <button
                                     type="button"

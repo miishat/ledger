@@ -11,6 +11,8 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Checkbox } from '../ui/Checkbox';
 import { inRange, type MonthRange } from '../../utils/budget/period';
 import { useUndoStore } from '../../store/useUndoStore';
+import { cashMovement, entryKindOf } from '../../utils/budget/transactionKinds';
+import { splitParts } from '../../utils/budget/splits';
 
 interface TransactionListWidgetProps {
   range: MonthRange;
@@ -26,6 +28,7 @@ const resolveCategoryLabel = (tx: Transaction, categories: Record<string, Catego
 export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ range }) => {
   const transactions = useBudgetStore((state) => state.transactions);
   const categories = useBudgetStore((state) => state.categories);
+  const categoryGroups = useBudgetStore((state) => state.categoryGroups);
   const clearAllTransactions = useBudgetStore((state) => state.clearAllTransactions);
   const setTransactionsCategory = useBudgetStore((state) => state.setTransactionsCategory);
   const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
@@ -60,8 +63,8 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     .filter(tx => inRange(tx.date, range))
     .filter(tx => {
       if (selectedCategoryId === '') return true;
-      if (selectedCategoryId === 'uncategorized') return !tx.categoryId;
-      return tx.categoryId === selectedCategoryId;
+      if (selectedCategoryId === 'uncategorized') return splitParts(tx).some(part => !part.categoryId);
+      return splitParts(tx).some(part => part.categoryId === selectedCategoryId);
     })
     .filter(tx => {
       if (!needle) return true;
@@ -75,6 +78,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         sliceNames,
         (tx.tags ?? []).join(' '),
         tx.note ?? '',
+        entryKindOf(tx) === 'refund-payment' ? 'Refunds & Payments' : '',
       ]
         .join(' ')
         .toLowerCase();
@@ -99,6 +103,12 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const selected = selectedIds.filter((id) => visibleIdSet.has(id));
   const selectedSet = new Set(selected);
   const allVisibleSelected = visibleIds.length > 0 && selected.length === visibleIds.length;
+  const selectedTypes = new Set(selected.map(id => transactions[id].type));
+  const mixedTypes = selectedTypes.size > 1;
+  const bulkCategories = Object.values(categories).filter(c =>
+    categoryGroups[c.groupId]?.kind === (selectedTypes.has('expense') ? 'expense' : 'income'),
+  );
+  const canApplyCategory = !mixedTypes && bulkCategories.some(c => c.id === bulkCategoryId);
 
   // Measured from the first rendered row rather than assumed: a row carrying
   // several tag chips wraps and exceeds the nominal height, which would
@@ -170,10 +180,10 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
   const toggleAll = () => setSelectedIds(allVisibleSelected ? [] : visibleIds);
 
   const getTransactionDisplay = (tx: Transaction) => ({
-    amountClass: tx.type === 'income' ? 'text-accent' : 'text-text-primary',
-    amountText: tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount),
+    amountClass: cashMovement(tx) > 0 ? 'text-accent' : 'text-text-primary',
+    amountText: `${cashMovement(tx) > 0 ? '+' : ''}${formatMoney(cashMovement(tx))}`,
     categoryLabel: resolveCategoryLabel(tx, categories),
-    badge: tx.shared
+    badge: entryKindOf(tx) === 'refund-payment' ? 'Refunds & Payments' : tx.shared
       ? `shared · ${tx.shared.sharedWith}`
       : tx.reimbursement
         ? `reimb · ${tx.reimbursement.from}`
@@ -232,24 +242,24 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
       {selected.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border border-accent/40 bg-accent/10">
           <span className="text-[13px] font-medium text-text-primary">{selected.length} selected</span>
-          <ThemedSelect
+          {mixedTypes ? <span className="text-[13px] text-text-secondary">Select only income or only expenses to change categories.</span> : <ThemedSelect
             ariaLabel="Category for selected"
             value={bulkCategoryId}
             onChange={setBulkCategoryId}
             className="text-[13px]"
             options={[
               { value: '', label: 'Choose a category' },
-              ...Object.values(categories).map((c) => ({ value: c.id, label: c.name })),
+              ...bulkCategories.map((c) => ({ value: c.id, label: c.name })),
             ]}
-          />
+          />}
           <button
             onClick={() => {
-              if (!bulkCategoryId) return;
+              if (!canApplyCategory) return;
               setTransactionsCategory(selected, bulkCategoryId);
               setSelectedIds([]);
               setBulkCategoryId('');
             }}
-            disabled={!bulkCategoryId}
+            disabled={!canApplyCategory}
             className="text-[13px] px-3 py-1.5 rounded-md bg-accent text-[var(--color-bg-primary)] font-medium disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Apply
