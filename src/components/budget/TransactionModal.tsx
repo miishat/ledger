@@ -26,6 +26,21 @@ interface TransactionFormProps {
   initialTransaction?: Transaction | null;
 }
 
+function normalizeEntryAmounts(amount: number, slices: TransactionSplit[]) {
+  const safePositiveCents = (value: number) => {
+    const cents = Math.round(value * 100);
+    return Number.isFinite(value) && value > 0 && Number.isSafeInteger(cents) && cents > 0;
+  };
+  const normalizedAmount = round2(amount);
+  const normalizedSplits = slices.map(slice => ({ ...slice, amount: round2(slice.amount) }));
+  const remaining = splitRemainder(normalizedAmount, normalizedSplits);
+  const invalidAmount = !safePositiveCents(amount) || !Number.isFinite(normalizedAmount);
+  const invalidAllocation = slices.some(slice => !safePositiveCents(slice.amount))
+    || normalizedSplits.some(slice => !Number.isFinite(slice.amount))
+    || !Number.isFinite(remaining) || !Number.isSafeInteger(Math.round(remaining * 100));
+  return { amount: normalizedAmount, splits: normalizedSplits, remaining, invalidAmount, invalidAllocation };
+}
+
 /** Mounted only while the sheet is open, so useState initialisers are the form
  *  reset. Do not reintroduce an effect that sets state here. */
 function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) {
@@ -71,7 +86,8 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   const [tagsText, setTagsText] = useState<string>((initialTransaction?.tags ?? []).join(', '));
   const [note, setNote] = useState<string>(initialTransaction?.note ?? '');
 
-  const remaining = splitRemainder(amount, isSplit ? splits : []);
+  const normalized = normalizeEntryAmounts(amount, isSplit ? splits.filter(slice => slice.amount !== 0 || !!slice.categoryId) : []);
+  const remaining = normalized.remaining;
 
   const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
 
@@ -97,7 +113,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!Number.isFinite(amount) || amount <= 0 || round2(amount) <= 0) {
+    if (normalized.invalidAmount) {
       setAmountError('Enter an amount greater than zero.');
       document.getElementById('tx-amount')?.focus();
       return;
@@ -124,13 +140,12 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
       const group = cat ? current.categoryGroups[cat.groupId] : undefined;
       return !!group && group.kind === (type === 'income' ? 'income' : 'expense');
     };
-    const populatedSplits = isSplit ? splits.filter(slice => slice.amount !== 0 || !!slice.categoryId) : [];
-    if (populatedSplits.some(slice => !Number.isFinite(slice.amount) || slice.amount <= 0 || round2(slice.amount) <= 0)) {
+    if (normalized.invalidAllocation) {
       setValidationError('Enter an amount greater than zero for every allocation.');
       return;
     }
-    const cleanedSplits = populatedSplits.map(slice => ({ ...slice, amount: round2(slice.amount) }));
-    const remainder = splitRemainder(round2(amount), cleanedSplits);
+    const cleanedSplits = normalized.splits;
+    const remainder = normalized.remaining;
     if (remainder < 0) {
       setAmountError('Slices add up to more than the amount. Reduce a slice before saving.');
       document.getElementById('tx-amount')?.focus();
@@ -149,7 +164,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
       return;
     }
     setValidationError(null);
-    const encoded = encodeEntryAmounts(type, amount, cleanedSplits);
+    const encoded = encodeEntryAmounts(type, normalized.amount, cleanedSplits);
 
     const sharedField =
       type === 'expense' && amount > 0 && isShared && totalPaid > amount && sharedWith.trim()
@@ -243,7 +258,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   Use this payment to reduce expenses instead of settling the shared bill.
                 </label>
               </>}
-              {Number.isFinite(amount) && amount > 0 && remaining >= 0 && (isSplit ? [...splits.filter(slice => slice.amount > 0), ...(remaining > 0 ? [{ categoryId: category, amount: remaining }] : [])] : [{ categoryId: category, amount }]).map((part, i) => categoryList.some(cat => cat.id === part.categoryId) && round2(part.amount) > 0 && <p key={i}>Reduces {categories[part.categoryId!].name} spending by {formatMoneyWithCents(round2(part.amount))}</p>)}
+              {!normalized.invalidAmount && !normalized.invalidAllocation && remaining >= 0 && (isSplit ? [...normalized.splits, ...(remaining > 0 ? [{ categoryId: category, amount: remaining }] : [])] : [{ categoryId: category, amount: normalized.amount }]).map((part, i) => categoryList.some(cat => cat.id === part.categoryId) && round2(part.amount) > 0 && <p key={i}>Reduces {categories[part.categoryId!].name} spending by {formatMoneyWithCents(round2(part.amount))}</p>)}
             </div>
           )}
           <div className="flex flex-col gap-2">
@@ -419,8 +434,10 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   Add a slice
                 </button>
                 <p className="text-meta text-[var(--color-text-secondary)]">
-                  {remaining > 0
-                    ? `${formatMoney(remaining)} left to allocate, which stays on the category above.`
+                  {normalized.invalidAmount || normalized.invalidAllocation
+                    ? 'Enter valid amounts to see the allocation remainder.'
+                    : remaining > 0
+                    ? `${formatMoneyWithCents(remaining)} left to allocate, which stays on the category above.`
                     : remaining < 0
                       ? `Slices exceed the amount by ${formatMoney(Math.abs(remaining))}.`
                       : 'Fully allocated.'}

@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import { TransactionModal } from './TransactionModal'
 import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore'
+import { splitParts } from '../../utils/budget/splits'
 import { setMatchMedia } from '../../test-utils/matchMedia'
 
 const seed = () =>
@@ -523,4 +524,53 @@ it('preserves an ordinary income split and converts its cash direction exclusive
   expect(after.spent).toBe(before.spent - 100)
   expect(after.remaining + after.unallocated).toBe(before.remaining + before.unallocated)
   expect(useBudgetStore.getState().transactions.income).toMatchObject({ id: 'income', type: 'expense', amount: -100, categoryId: 'groceries', date: initial.date })
+})
+
+it.each(['parent', 'slice'])('rejects finite 1e308 %s values before cent rounding can save Infinity', field => {
+  seed()
+  render(<TransactionModal isOpen onClose={() => {}} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+  fireEvent.change(screen.getByLabelText('Amount'), { target: { value: field === 'parent' ? '1' + '0'.repeat(308) : '100' } })
+  if (field === 'slice') {
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+    fireEvent.change(screen.getByLabelText('Slice amount'), { target: { value: '1' + '0'.repeat(308) } })
+  }
+  fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form')!)
+  expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero')
+})
+
+it.each(['parent', 'slice'])('rejects unsafe cent integers for %s values', field => {
+  seed()
+  render(<TransactionModal isOpen onClose={() => {}} />)
+  fireEvent.change(screen.getByLabelText('Amount'), { target: { value: field === 'parent' ? '100000000000000' : '100' } })
+  if (field === 'slice') {
+    fireEvent.click(screen.getByLabelText('Split across categories'))
+    fireEvent.change(screen.getByLabelText('Slice amount'), { target: { value: '100000000000000' } })
+  }
+  fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form')!)
+  expect(Object.values(useBudgetStore.getState().transactions)).toHaveLength(0)
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero')
+})
+
+it('shows the same rounded split reductions and parent remainder that it saves', () => {
+  seed()
+  useBudgetStore.setState({ categories: { ...useBudgetStore.getState().categories, dining: { id: 'dining', groupId: 'ge', name: 'Dining', targetAmount: 0 } } })
+  render(<TransactionModal isOpen onClose={() => {}} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Refunds & Payments' }))
+  fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '1.004' } })
+  fireEvent.click(screen.getByLabelText('Split across categories'))
+  fireEvent.click(screen.getByRole('button', { name: 'Add a slice' }))
+  const amounts = screen.getAllByLabelText('Slice amount')
+  amounts.forEach(input => fireEvent.change(input, { target: { value: '0.335' } }))
+  fireEvent.click(screen.getAllByRole('button', { name: 'Slice category' })[1])
+  fireEvent.click(screen.getByRole('option', { name: 'Dining' }))
+  expect(screen.getByText('Reduces Groceries spending by $0.34')).toBeInTheDocument()
+  expect(screen.getByText('Reduces Dining spending by $0.34')).toBeInTheDocument()
+  expect(screen.getByText('Reduces Groceries spending by $0.32')).toBeInTheDocument()
+  expect(screen.getByText(/\$0.32 left to allocate/)).toBeInTheDocument()
+  fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form')!)
+  const saved = Object.values(useBudgetStore.getState().transactions)[0]
+  expect(saved).toMatchObject({ amount: -1, splits: [{ categoryId: 'groceries', amount: -0.34 }, { categoryId: 'dining', amount: -0.34 }] })
+  expect(splitParts(saved)).toEqual([{ categoryId: 'groceries', amount: -0.34 }, { categoryId: 'dining', amount: -0.34 }, { categoryId: 'groceries', amount: -0.32 }])
 })
