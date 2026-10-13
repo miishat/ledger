@@ -68,6 +68,28 @@ describe('amountForCategory', () => {
 })
 
 describe('splitRemainder', () => {
+  it('keeps negative slices and an uncovered cent remainder signed', () => {
+    const tx = { ...base, amount: -100, splits: [
+      { categoryId: 'household', amount: -33.33 },
+      { categoryId: 'dining', amount: -33.33 },
+    ] }
+    expect(splitParts(tx)).toEqual([
+      { categoryId: 'household', amount: -33.33 },
+      { categoryId: 'dining', amount: -33.33 },
+      { categoryId: 'groceries', amount: -33.34 },
+    ])
+    expect(amountForCategory(tx, 'household')).toBe(-33.33)
+    expect(splitRemainder(tx.amount, tx.splits)).toBe(-33.34)
+  })
+
+  it('returns fully allocated negative slices without a remainder', () => {
+    expect(splitParts({ ...base, amount: -40, splits: [
+      { categoryId: 'household', amount: -25 }, { categoryId: 'dining', amount: -15 },
+    ] })).toEqual([
+      { categoryId: 'household', amount: -25 }, { categoryId: 'dining', amount: -15 },
+    ])
+  })
+
   it('reports what is left to allocate, rounded to cents', () => {
     expect(splitRemainder(100, [{ amount: 33.33 }, { amount: 33.33 }])).toBe(33.34)
   })

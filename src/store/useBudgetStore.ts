@@ -85,9 +85,11 @@ interface BudgetState {
   categoryGroups: Record<string, CategoryGroup>;
   reallocations: Record<string, Reallocation>;
   budgetSetupCollapsed: boolean;
+  refundsAndPaymentsEnabled: boolean;
 
   setParadigm: (paradigm: BudgetingParadigm) => void;
   toggleBudgetSetup: () => void;
+  setRefundsAndPaymentsEnabled: (enabled: boolean) => void;
   
   addTransaction: (transaction: Transaction) => void;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
@@ -110,7 +112,7 @@ interface BudgetState {
   seedDefaults: () => void;
 }
 
-export const BUDGET_PERSIST_VERSION = 4;
+export const BUDGET_PERSIST_VERSION = 5;
 
 /** The composition the persist config actually runs. Extracted and exported so
  *  a test can pin the wiring, not just the individual steps: the defect this
@@ -124,7 +126,12 @@ export function migrateBudgetPersisted(persistedState: unknown, version: number)
   };
   const v2 = migrateBudgetState(withDefaults, version);
   const v3 = version >= 3 ? v2 : migrateBudgetStateV3(v2);
-  return version >= 4 ? v3 : migrateBudgetStateV4(v3);
+  const v4 = version >= 4 ? v3 : migrateBudgetStateV4(v3);
+  const state = v4 as Partial<BudgetState>;
+  return {
+    ...state,
+    refundsAndPaymentsEnabled: state.refundsAndPaymentsEnabled ?? true,
+  };
 }
 
 export const useBudgetStore = create<BudgetState>()(
@@ -136,9 +143,11 @@ export const useBudgetStore = create<BudgetState>()(
       categoryGroups: {},
       reallocations: {},
       budgetSetupCollapsed: false,
+      refundsAndPaymentsEnabled: true,
 
       setParadigm: (paradigm) => set({ paradigm }),
       toggleBudgetSetup: () => set((state) => ({ budgetSetupCollapsed: !state.budgetSetupCollapsed })),
+      setRefundsAndPaymentsEnabled: (enabled) => set({ refundsAndPaymentsEnabled: enabled }),
 
       addTransaction: (transaction) =>
         set((state) => ({

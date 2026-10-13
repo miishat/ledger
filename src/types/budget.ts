@@ -22,8 +22,8 @@ export interface Category {
   cadence?: BudgetCadence;
 }
 
-/** One slice of a split transaction. Amounts are positive and expressed in the
- *  same sign convention as the parent transaction. */
+/** One slice of a split transaction. Stored slices have the same sign as the
+ *  canonical parent transaction; form values are positive magnitudes. */
 export interface TransactionSplit {
   categoryId?: string;
   amount: number;

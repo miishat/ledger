@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect } from 'vitest'
 import { migrateBudgetState, migrateBudgetStateV3, migrateBudgetStateV4, migrateBudgetPersisted, BUDGET_PERSIST_VERSION } from './useBudgetStore'
 
 describe('budget store migration v1 -> v2', () => {
@@ -319,5 +319,73 @@ describe('budget persist migration wiring', () => {
     const once = migrateBudgetPersisted(v3, 3)
     const twice = migrateBudgetPersisted(once, 3)
     expect(twice).toEqual(once)
+  })
+})
+
+describe('refund payment preference persistence', () => {
+  const offset = {
+    id: 'refund', date: '2026-10-12', amount: -40, description: 'Incoming payment',
+    type: 'expense' as const, categoryId: 'groceries',
+    splits: [{ categoryId: 'dining', amount: -15 }],
+  }
+  const initial = useBudgetStore.getInitialState()
+
+  beforeEach(() => {
+    localStorage.removeItem('ledger-budget')
+    useBudgetStore.setState(initial, true)
+  })
+
+  afterEach(() => {
+    useBudgetStore.setState(initial, true)
+    localStorage.removeItem('ledger-budget')
+  })
+
+  it('starts enabled on fresh stores at persistence version 5', () => {
+    expect(BUDGET_PERSIST_VERSION).toBe(5)
+    expect(useBudgetStore.getInitialState().refundsAndPaymentsEnabled).toBe(true)
+  })
+
+  it.each([1, 2, 3, 4])('enables absent preferences from version %s without rewriting negative transactions', version => {
+    const migrated = migrateBudgetPersisted({ transactions: { refund: offset } }, version) as Record<string, unknown>
+    expect(migrated.refundsAndPaymentsEnabled).toBe(true)
+    expect(migrated.transactions).toEqual({ refund: offset })
+  })
+
+  it.each([1, 2, 3, 4])('preserves explicit false from version %s', version => {
+    const migrated = migrateBudgetPersisted({ refundsAndPaymentsEnabled: false, transactions: { refund: offset } }, version) as Record<string, unknown>
+    expect(migrated.refundsAndPaymentsEnabled).toBe(false)
+    expect(migrated.transactions).toEqual({ refund: offset })
+  })
+
+  it('persists explicit false and restores it after reload', async () => {
+    useBudgetStore.getState().setRefundsAndPaymentsEnabled(false)
+    const saved = localStorage.getItem('ledger-budget')!
+    expect(JSON.parse(saved).state.refundsAndPaymentsEnabled).toBe(false)
+    useBudgetStore.setState(initial, true)
+    localStorage.setItem('ledger-budget', saved)
+    await useBudgetStore.persist.rehydrate()
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(false)
+    useBudgetStore.getState().setRefundsAndPaymentsEnabled(true)
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(true)
+  })
+
+  it('merges defaults into a same-version payload missing the preference and other fields', async () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({
+      version: 5, state: { transactions: { refund: offset } },
+    }))
+    await useBudgetStore.persist.rehydrate()
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(true)
+    expect(useBudgetStore.getState().categories).toEqual({})
+    expect(useBudgetStore.getState().transactions.refund).toEqual(offset)
+  })
+
+  it('rehydrates an older disabled preference without changing signed slices', async () => {
+    localStorage.setItem('ledger-budget', JSON.stringify({
+      version: 4, state: { refundsAndPaymentsEnabled: false, transactions: { refund: offset } },
+    }))
+    await useBudgetStore.persist.rehydrate()
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(false)
+    expect(useBudgetStore.getState().transactions.refund).toEqual(offset)
+    expect(JSON.parse(localStorage.getItem('ledger-budget')!).version).toBe(5)
   })
 })
