@@ -7,14 +7,15 @@ import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 // vi.mock factories are hoisted above every import and top-level const, so
 // the capture array has to be created with vi.hoisted, and the factory must
 // not use JSX (that would reach for the JSX runtime import before it exists).
-const { captured } = vi.hoisted(() => ({ captured: [] as { nodes: { name: string }[] }[] }))
+type ChartData = { nodes: { name: string; kind: string }[]; links: { source: number; target: number; value: number }[] }
+const { captured } = vi.hoisted(() => ({ captured: [] as ChartData[] }))
 
 vi.mock('recharts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('recharts')>()
   return {
     ...actual,
     ResponsiveContainer: ({ children }: { children: ReactNode }) => children,
-    Sankey: ({ data }: { data: { nodes: { name: string }[] } }) => {
+    Sankey: ({ data }: { data: ChartData }) => {
       captured.push(data)
       return null
     },
@@ -71,5 +72,34 @@ describe('CashFlowWidget on a phone', () => {
     seedEightAndEight()
     render(<CashFlowWidget range={range} />)
     expect(captured.at(-1)!.nodes).toHaveLength(8 + 1 + 8 + 1)
+  })
+
+  it('folds credits separately from income and preserves source indices and totals', () => {
+    setMatchMedia(false)
+    seedEightAndEight()
+    const state = useBudgetStore.getState()
+    const categoryGroups = { ...state.categoryGroups }
+    const categories = { ...state.categories }
+    const transactions = { ...state.transactions }
+    for (let i = 1; i <= 8; i++) {
+      categoryGroups[`gc${i}`] = { id: `gc${i}`, name: `Credit ${i}`, kind: 'expense' }
+      categories[`c${i}`] = { id: `c${i}`, groupId: `gc${i}`, name: `Credit category ${i}`, targetAmount: 0 }
+      transactions[`tc${i}`] = { id: `tc${i}`, date: '2026-08-03', amount: -(50 - i), description: 'offset', type: 'expense', categoryId: `c${i}` }
+    }
+    useBudgetStore.setState({ categoryGroups, categories, transactions })
+    render(<CashFlowWidget range={range} />)
+    const { nodes, links } = captured.at(-1)!
+    expect(nodes.map((n) => n.name)).toEqual([
+      'Income 1', 'Income 2', 'Income 3', 'Other sources',
+      'Credit 1 credit', 'Credit 2 credit', 'Credit 3 credit', 'Other expense credits',
+      'Available funds', 'Spend 1', 'Spend 2', 'Spend 3', 'Spend 4', 'Other spending', 'Net remaining',
+    ])
+    expect(nodes.slice(4, 8).every((n) => n.kind === 'credit')).toBe(true)
+    expect(links.slice(0, 8).map((l) => [l.source, l.target])).toEqual(Array.from({ length: 8 }, (_, i) => [i, 8]))
+    expect(links.slice(0, 4).reduce((sum, l) => sum + l.value, 0)).toBe(7964)
+    expect(links.slice(4, 8).reduce((sum, l) => sum + l.value, 0)).toBe(364)
+    expect(links.at(-1)).toEqual({ source: 8, target: 14, value: 7564 })
+    expect(links.every((l) => l.value > 0 && l.source < nodes.length && l.target < nodes.length)).toBe(true)
+    expect(screen.getByRole('img', { name: /income across 8 sources.*expense credits across 8 groups.*positive net expenses across 8 groups/ })).toBeInTheDocument()
   })
 })

@@ -12,7 +12,7 @@ import { ChartFigure } from '../ui/ChartFigure'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { foldSmallest } from '../../utils/budget/foldSmallest'
 
-type NodeKind = 'income' | 'pool' | 'expense' | 'savings'
+type NodeKind = 'income' | 'credit' | 'pool' | 'expense' | 'savings'
 
 interface LinkRenderProps {
   sourceX: number
@@ -25,14 +25,13 @@ interface LinkRenderProps {
   index: number
 }
 
-// Income routes into the pool in the accent colour, expenses leave in the
-// error colour, and the leftover Savings flow is drawn brighter so the money
-// you kept stands out.
-function renderLink(incomeLinkCount: number, savingsIndex: number) {
+// Income and expense credits enter in the accent colour, expenses leave in
+// the error colour, and the remaining flow is drawn brighter.
+function renderLink(sourceLinkCount: number, savingsIndex: number) {
   return ({ sourceX, sourceY, sourceControlX, targetControlX, targetX, targetY, linkWidth, index }: LinkRenderProps) => {
-    const isIncome = index < incomeLinkCount
+    const isSource = index < sourceLinkCount
     const isSavings = index === savingsIndex
-    const stroke = isIncome || isSavings ? 'var(--accent)' : 'var(--error)'
+    const stroke = isSource || isSavings ? 'var(--accent)' : 'var(--error)'
     const opacity = isSavings ? 0.55 : 0.28
     return (
       <path
@@ -55,7 +54,7 @@ function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
     <g>
       <title>{name}</title>
       <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--border-color)" />
-      {kind === 'pool' ? null : kind === 'income' ? (
+      {kind === 'pool' ? null : kind === 'income' || kind === 'credit' ? (
         <text x={x - 6} y={y + height / 2} textAnchor="end" dominantBaseline="middle" fill="var(--text-primary)" fontSize={12}>
           {label}
         </text>
@@ -101,16 +100,14 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
   }
 
   const incomeNames = [...incomeByCat.keys()]
-  // A group whose refunds outweigh its spending nets zero or less. A Sankey has
-  // no way to draw a negative flow, so the group is left out of the diagram
-  // rather than drawn as a node with no link into it.
-  const expenseNames = [...expenseByGroup.keys()].filter((name) => (expenseByGroup.get(name) ?? 0) > 0)
+  const expenseEntries = [...expenseByGroup.entries()].filter(([, value]) => value > 0)
+  const creditEntries: [string, number][] = [...expenseByGroup.entries()]
+    .filter(([, value]) => value < 0)
+    .map(([name, value]) => [`${name} credit`, -value])
+  const hasCredits = creditEntries.length > 0
 
-  // Check against what will actually be drawn, not against the raw maps: a
-  // group that nets to zero or less is filtered out of expenseNames above,
-  // so a month with no income and only such a group would otherwise reach
-  // the Sankey below with nothing left to render.
-  if (incomeNames.length === 0 && expenseNames.length === 0) {
+  // Zero net groups contribute no flow, but credit-only periods have sources.
+  if (incomeNames.length === 0 && expenseEntries.length === 0 && !hasCredits) {
     return (
       <WidgetWrapper title="Cash Flow">
         <p className="text-[13px] text-text-secondary mt-2">No transactions this month.</p>
@@ -119,37 +116,43 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
   }
 
   const totalIncome = [...incomeByCat.values()].reduce((s, v) => s + v, 0)
-  const totalExpense = expenseNames.reduce((s, name) => s + (expenseByGroup.get(name) ?? 0), 0)
-  const savings = Math.max(0, totalIncome - totalExpense)
+  const totalExpense = expenseEntries.reduce((s, [, value]) => s + value, 0)
+  const totalCredits = creditEntries.reduce((s, [, value]) => s + value, 0)
+  const savings = Math.max(0, totalIncome + totalCredits - totalExpense)
 
   // Rule 6 of docs/mobile-layout-rules.md. At 375px this Sankey drew nine
   // income labels and nine expense labels down a 240px chart. A phone keeps
-  // the three largest sources and four largest spending groups and folds the
-  // rest; the accessible label below still reports the real counts.
+  // the three largest income sources, three largest credits and four largest
+  // spending groups and folds the rest separately; narration keeps real counts.
   const incomeEntries: [string, number][] = [...incomeByCat.entries()]
-  const expenseEntries: [string, number][] = expenseNames.map((name) => [name, expenseByGroup.get(name)!])
   const drawnIncome = isDesktop ? incomeEntries : foldSmallest(incomeEntries, 3, 'Other sources')
+  const drawnCredits = isDesktop ? creditEntries : foldSmallest(creditEntries, 3, 'Other expense credits')
   const drawnExpense = isDesktop ? expenseEntries : foldSmallest(expenseEntries, 4, 'Other spending')
 
-  const poolIdx = drawnIncome.length
+  const poolIdx = drawnIncome.length + drawnCredits.length
   const nodes = [
     ...drawnIncome.map(([name]) => ({ name, kind: 'income' as const })),
-    { name: 'Income', kind: 'pool' as const },
+    ...drawnCredits.map(([name]) => ({ name, kind: 'credit' as const })),
+    { name: hasCredits ? 'Available funds' : 'Income', kind: 'pool' as const },
     ...drawnExpense.map(([name]) => ({ name, kind: 'expense' as const })),
-    ...(savings > 0 ? [{ name: 'Savings', kind: 'savings' as const }] : []),
+    ...(savings > 0 ? [{ name: hasCredits ? 'Net remaining' : 'Savings', kind: 'savings' as const }] : []),
   ]
 
   const incomeLinks = drawnIncome.map(([, value], i) => ({ source: i, target: poolIdx, value }))
+  const creditLinks = drawnCredits.map(([, value], i) => ({ source: drawnIncome.length + i, target: poolIdx, value }))
   const expenseLinks = drawnExpense.map(([, value], i) => ({ source: poolIdx, target: poolIdx + 1 + i, value }))
   const savingsLinks = savings > 0 ? [{ source: poolIdx, target: nodes.length - 1, value: savings }] : []
-  const links = [...incomeLinks, ...expenseLinks, ...savingsLinks].filter((l) => l.value > 0)
+  const sourceLinks = [...incomeLinks, ...creditLinks].filter((l) => l.value > 0)
+  const links = [...sourceLinks, ...expenseLinks, ...savingsLinks].filter((l) => l.value > 0)
 
   const savingsIndex = savings > 0 ? links.length - 1 : -1
 
   return (
     <WidgetWrapper title="Cash Flow">
       <ChartFigure
-        label={`Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources into ${formatMoney(totalExpense)} of expenses across ${expenseNames.length} groups, leaving ${formatMoney(savings)} saved`}
+        label={hasCredits
+          ? `Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources plus ${formatMoney(totalCredits)} expense credits across ${creditEntries.length} groups into ${formatMoney(totalExpense)} of positive net expenses across ${expenseEntries.length} groups, leaving ${formatMoney(savings)} net remaining`
+          : `Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources into ${formatMoney(totalExpense)} of expenses across ${expenseEntries.length} groups, leaving ${formatMoney(savings)} saved`}
         className="h-[240px] desktop:h-[300px] mt-2"
       >
         <ResponsiveContainer width="100%" height="100%">
@@ -157,13 +160,14 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
             data={{ nodes, links }}
             nodePadding={24}
             margin={{ top: 24, right: 110, bottom: 10, left: 100 }}
-            link={renderLink(incomeLinks.length, savingsIndex)}
+            link={renderLink(sourceLinks.length, savingsIndex)}
             node={renderNode}
           >
             <Tooltip formatter={(value) => formatMoney(Number(value))} {...chartTooltipStyles} />
           </Sankey>
         </ResponsiveContainer>
       </ChartFigure>
+      {hasCredits && <p className="text-[13px] text-text-secondary mt-2">Expense credits reduce spending and are not income.</p>}
     </WidgetWrapper>
   )
 }
