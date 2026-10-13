@@ -16,7 +16,7 @@ pre-1.0 beta.
 - CIBC imports recognize the masked card automatically. Other CSVs let you choose a saved card or account. Import history travels with backups and sync; older transactions without source history remain reviewable.
 
 ### Fixed
-- The exclusion-rule popup has a solid background, consistent Title Case labels, and shorter introductory text.
+- The exclusion-rule popup matches the Add Transaction dialog style, with a solid background, consistent title-case labels, and shorter introductory text.
 
 ## [0.11.1-beta] - 2026-10-08
 

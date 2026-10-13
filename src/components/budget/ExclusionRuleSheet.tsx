@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
+import { Checkbox } from '../ui/Checkbox'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ExclusionRulePreview } from './ExclusionRulePreview'
 import { useTriageStore } from '../../store/useTriageStore'
@@ -8,7 +10,7 @@ import { cashMovementCents, evaluateExclusionRules, previewExclusionRule, valida
 import { captureTriageUndo } from '../../utils/budget/triageUndo'
 
 export type ExclusionRuleSheetProps = { open: boolean; onClose: () => void; ruleId?: string; seedRecordId?: string }
-const inputClass = 'min-h-11 w-full rounded-md border border-border bg-bg-secondary px-3 text-text-primary'
+const inputClass = 'min-h-11 w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] font-normal text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors'
 function parseAmountCents(text: string): number | null {
   if (!/^\d+(?:\.\d{1,2})?$/.test(text.trim())) return null
   const value = Math.round(Number(text.trim()) * 100)
@@ -70,31 +72,36 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
       offer('Save exclusion rule', ruleId ? [] : [id]); onClose()
     } catch (error) { setSaveError(error instanceof Error ? error.message : 'Unable to save rule') }
   }
-  const select = (label: string, value: string, onChange: (value: string) => void, options: {value:string;label:string}[]) => <div role="group" aria-label={label} aria-describedby="exclusion-errors" className="flex flex-col gap-1"><span className="text-[13px] text-text-secondary">{label}</span><ThemedSelect ariaLabel={label} value={value} onChange={onChange} options={options} className="min-h-11" /></div>
-  return <Sheet open={open} onClose={onClose} title="Exclusion Rule" ariaLabel="Exclusion Rule" panelClassName="w-full max-w-xl rounded-xl border border-border bg-[var(--dropdown-bg)] shadow-2xl" contentClassName="flex flex-col gap-4 p-4">
-    <h2 className="hidden desktop:block text-[18px] font-semibold">Exclusion Rule</h2>
+  const select = (label: string, value: string, onChange: (value: string) => void, options: {value:string;label:string}[]) => <div role="group" aria-label={label} aria-describedby="exclusion-errors" className="flex flex-col gap-2"><span className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">{label}</span><ThemedSelect ariaLabel={label} value={value} onChange={onChange} options={options} className="min-h-11" /></div>
+  return <Sheet open={open} onClose={onClose} title="Exclusion Rule" ariaLabel="Exclusion Rule" panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)] desktop:overflow-hidden">
+    <div className="hidden desktop:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+      <h2 className="text-[18px] font-semibold leading-[1.2] text-[var(--color-text-primary)]">Exclusion Rule</h2>
+      <button type="button" onClick={onClose} aria-label="Close" className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"><X size={20} /></button>
+    </div>
+    <div className="p-4 flex flex-col gap-4">
     <p className="text-[14px] text-text-secondary">Exclude matching imports from totals. Restore them anytime.</p>
     {existing && validateExclusionDraft(existing,sources).length > 0 && <p role="alert">Needs correction. Choose valid criteria before saving.</p>}
-    <label className="text-[14px] flex flex-col gap-1">Rule Name<input className={inputClass} value={name} onChange={e=>setName(e.target.value)} aria-describedby="exclusion-errors" /></label>
-    {select('Card Or Account',scope,setScope,[{value:'',label:'Choose Card Or Account'},{value:'all',label:'All Cards/Accounts'},...Object.values(sources).map(s=>({value:s.id,label:s.name}))])}
+    <label className="text-[12px] font-medium leading-none text-text-secondary flex flex-col gap-2">Rule Name<input className={inputClass} value={name} onChange={e=>setName(e.target.value)} aria-describedby="exclusion-errors" /></label>
+    {select('Card or Account',scope,setScope,[{value:'',label:'Choose Card or Account'},{value:'all',label:'All Cards/Accounts'},...Object.values(sources).map(s=>({value:s.id,label:s.name}))])}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {select('Description Match',operator,v=>setOperator(v as typeof operator),[{value:'exact',label:'Exactly Matches'},{value:'contains',label:'Contains'},{value:'starts-with',label:'Starts With'}])}
-      {select('Money Direction',direction,v=>setDirection(v as typeof direction),[{value:'in',label:'Money In'},{value:'out',label:'Money Out'},{value:'either',label:'Either'}])}
+      {select('Description Match',operator,v=>setOperator(v as typeof operator),[{value:'exact',label:'Exactly Matches'},{value:'contains',label:'Contains'},{value:'starts-with',label:'Starts with'}])}
+      {select('Money Direction',direction,v=>setDirection(v as typeof direction),[{value:'in',label:'Money in'},{value:'out',label:'Money out'},{value:'either',label:'Either'}])}
     </div>
-    <label className="text-[14px] flex flex-col gap-1">Original Bank Description<input className={inputClass} value={text} onChange={e=>setText(e.target.value)} aria-describedby="exclusion-errors" /></label>
+    <label className="text-[12px] font-medium leading-none text-text-secondary flex flex-col gap-2">Original Bank Description<input className={inputClass} value={text} onChange={e=>setText(e.target.value)} aria-describedby="exclusion-errors" /></label>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {select('Amount Match',amountOperator,v=>setAmountOperator(v as typeof amountOperator),[{value:'any',label:'Any Amount'},{value:'exact',label:'Exact Amount'},{value:'between',label:'Between Amounts'}])}
       {select('Behavior',behavior,v=>setBehavior(v as typeof behavior),[{value:'review',label:'Review Matches'},{value:'automatic',label:'Automatically Exclude'}])}
     </div>
-    {amountOperator !== 'any' && <label className="text-[14px] flex flex-col gap-1">{amountOperator === 'exact' ? 'Amount' : 'Minimum Amount'}<input className={inputClass} inputMode="decimal" value={amountText} onChange={e=>setAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
-    {amountOperator === 'between' && <label className="text-[14px] flex flex-col gap-1">Maximum Amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
+    {amountOperator !== 'any' && <label className="text-[12px] font-medium leading-none text-text-secondary flex flex-col gap-2">{amountOperator === 'exact' ? 'Amount' : 'Minimum Amount'}<input className={inputClass} inputMode="decimal" value={amountText} onChange={e=>setAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
+    {amountOperator === 'between' && <label className="text-[12px] font-medium leading-none text-text-secondary flex flex-col gap-2">Maximum Amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
     <div id="exclusion-errors">{[...errors, ...(saveError ? [saveError] : [])].map(error=><p key={error} role="alert" className="text-[13px] text-error">{error}</p>)}</div>
     <p className="text-[13px] text-text-secondary">{behavior === 'automatic' ? 'Matching new imports will be excluded automatically and kept in Excluded imports. Possible duplicates still need review.' : 'Matches will wait for your decision and stay out of Accept All.'}</p>
     {preview ? <ExclusionRulePreview preview={preview} criteriaKey={JSON.stringify(draft) + amountText + maxAmountText} /> : <p className="text-[13px] text-text-secondary">Draft preview unavailable. Enter valid criteria to preview matching imports.</p>}
     {unavailableRecords > 0 && <p className="text-[13px] text-text-secondary">{unavailableRecords} saved imports have unavailable source information and are outside this preview.</p>}
-    <label className="flex items-start gap-2 text-[14px]"><input type="checkbox" checked={applyPending} onChange={e=>setApplyPending(e.target.checked)} />Apply current rules to transactions awaiting review</label>
+    <label className="flex items-center gap-2 text-[12px] font-medium text-text-secondary"><Checkbox checked={applyPending} onChange={setApplyPending} ariaLabel="Apply current rules to transactions awaiting review" />Apply current rules to transactions awaiting review</label>
     {applyPending && (matchingCount === null ? <p className="text-[13px] text-text-secondary">Pending application preview unavailable until this draft is valid.</p> : <p className="text-[13px] text-text-secondary">All current enabled rules, including this draft if active, will be reapplied to {checked.length} transactions awaiting review. {matchingCount} pending imports match the next enabled rule set. Existing holds may be cleared. Included overrides stay included.</p>)}
     <p className="text-[13px] text-text-secondary">Already accepted transactions will stay unchanged.</p>
-    <div className="flex flex-wrap justify-end gap-2"><button type="button" className="min-h-11 px-3" onClick={onClose}>Cancel</button><button type="button" className="min-h-11 px-3 rounded-md bg-accent text-bg-primary disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
+    <div className="pt-2 mt-2 border-t border-[var(--color-border)] flex gap-2"><button type="button" className="min-h-11 px-4 py-3 rounded-md text-[14px] font-medium text-text-secondary hover:text-text-primary transition-colors" onClick={onClose}>Cancel</button><button type="button" className="flex-1 min-h-11 py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
+    </div>
   </Sheet>
 }

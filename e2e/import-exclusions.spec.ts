@@ -177,7 +177,7 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
     await tabTo(page, page.getByRole('button', { name: 'Add exclusion rule', exact: true }))
     await page.keyboard.press('Enter')
     await expect(editor(page)).toBeVisible()
-    await expect(editor(page).getByRole('button', { name: 'Card Or Account', exact: true })).toBeFocused()
+    await expect(editor(page).getByRole('button', { name: 'Card or Account', exact: true })).toBeFocused()
     await tabTo(page, editor(page).getByLabel('Rule Name'))
     await expect(editor(page).getByLabel('Rule Name')).toBeFocused()
     await page.keyboard.type('Unsaved')
