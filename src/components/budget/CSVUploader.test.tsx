@@ -125,6 +125,7 @@ describe('CSVUploader Chase category fallback', () => {
   it('uses the Chase category only when no learned rule matches', async () => {
     useBudgetStore.setState({
       ...useBudgetStore.getState(),
+      categoryGroups: { g1: { id: 'g1', name: 'Expenses', kind: 'expense' } },
       categories: {
         cg: { id: 'cg', groupId: 'g1', name: 'Groceries', targetAmount: 0 },
         cp: { id: 'cp', groupId: 'g1', name: 'Personal', targetAmount: 0 },
@@ -161,6 +162,7 @@ describe('CSVUploader Chase category fallback', () => {
 
 it('imports CIBC rows directly into categorized triage with refund, payment and duplicate semantics', async () => {
   useBudgetStore.setState({
+    categoryGroups: { g1: { id: 'g1', name: 'Expenses', kind: 'expense' } },
     categories: { cg: { id: 'cg', groupId: 'g1', name: 'Groceries', targetAmount: 0 } },
     transactions: { e1: { id: 'e1', date: '2026-10-06', amount: 15.99,
       description: 'SHOP, OTTAWA ON', type: 'expense' } },
@@ -246,4 +248,40 @@ it('reserves a manual source for one card while planning a multi-card file and c
   expect(Object.keys(useTriageStore.getState().importSources)).toHaveLength(2)
   expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(2)
   expect(useTriageStore.getState().lastImport?.addedIds).toHaveLength(2)
+})
+
+
+it('rejects incompatible learned and heuristic category guesses without changing incoming classification', async () => {
+  useBudgetStore.setState({ categories: { g: { id: 'g', name: 'Groceries', groupId: 'food', targetAmount: 0 } }, categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' } } })
+  useTriageStore.setState({ categoryRules: { Transfer: 'g' } })
+  render(<CSVUploader />)
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['2026-06-10,Transfer,,40.00,1234********5678'], 'receipt.csv')] } })
+  await waitFor(() => expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(1))
+  const receipt = Object.values(useTriageStore.getState().pendingTransactions)[0]
+  expect(receipt).toMatchObject({ amount: -40, type: 'expense', categoryId: 'g' })
+  // Ordinary received payments parsed as income cannot use the expense rule.
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['Date,Amount,Description\n2026-06-11,40,Transfer'], 'incoming.csv')] } })
+  await screen.findByRole('dialog', { name: 'Choose Import Source' })
+  fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
+  fireEvent.click(screen.getByRole('option', { name: 'New card or account' }))
+  await chooseNewSource()
+  const incoming = Object.values(useTriageStore.getState().pendingTransactions).find(tx => tx.type === 'income')!
+  expect(incoming.categoryId).toBeUndefined()
+  expect(incoming.amount).toBe(40)
+})
+
+
+it('rejects incompatible Chase fallback guesses and permits a compatible fallback after an incompatible learned rule', async () => {
+  useBudgetStore.setState({ categories: { g: { id: 'g', name: 'Groceries', groupId: 'food', targetAmount: 0 }, s: { id: 's', name: 'Salary', groupId: 'earn', targetAmount: 0 } }, categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' }, earn: { id: 'earn', name: 'Income', kind: 'income' } } })
+  useTriageStore.setState({ categoryRules: { Transfer: 's' } })
+  vi.mocked(parseCSV).mockResolvedValueOnce([
+    { id: 'receipt', date: '2026-10-13', amount: 40, description: 'Receipt', type: 'income', originalRowData: { Category: 'Groceries' } },
+    { id: 'purchase', date: '2026-10-13', amount: 40, description: 'Transfer', type: 'expense', originalRowData: { Category: 'Groceries' } },
+  ])
+  render(<CSVUploader />)
+  fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['x'], 'chase.csv')] } })
+  await chooseNewSource()
+  expect(useTriageStore.getState().pendingTransactions.receipt.categoryId).toBeUndefined()
+  expect(useTriageStore.getState().pendingTransactions.purchase.categoryId).toBe('g')
+  expect(useTriageStore.getState().categoryRules.Transfer).toBe('s')
 })

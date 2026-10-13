@@ -4,7 +4,7 @@ export interface TriageTransaction {
   exclusionMatches?: ExclusionMatch[];
   id: string; // Temporary UUID for triage
   date: string; // YYYY-MM-DD
-  amount: number; // Absolute value
+  amount: number; // Positive income/purchase; negative expense for an incoming refund or payment
   categoryId?: string; // Guessed or selected category
   description: string;
   type: 'expense' | 'income';

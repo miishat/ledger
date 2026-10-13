@@ -10,10 +10,13 @@ import { formatMoney } from '../planner/format';
 import { captureTriageUndo } from '../../utils/budget/triageUndo';
 import { ExclusionRuleSheet } from './ExclusionRuleSheet';
 
+import { cashMovement, entryKindOf, hasValidOffsetCategory } from '../../utils/budget/transactionKinds';
+
 const reviewEntryId = (id: string) => `import-review-${id}`;
 
 export const TriageInboxWidget: React.FC = () => {
   const pendingTransactions = useTriageStore((state) => state.pendingTransactions);
+  const setPendingReceiptTreatment = useTriageStore((state) => state.setPendingReceiptTreatment);
   const updatePending = useTriageStore((state) => state.updatePending);
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
   const approveAll = useTriageStore((state) => state.approveAll);
@@ -31,6 +34,8 @@ export const TriageInboxWidget: React.FC = () => {
   const [seedRecordId, setSeedRecordId] = useState<string>();
 
   const categories = useBudgetStore((state) => state.categories);
+  const categoryGroups = useBudgetStore((state) => state.categoryGroups);
+  const refundsAndPaymentsEnabled = useBudgetStore((state) => state.refundsAndPaymentsEnabled);
 
   const txList = Object.values(pendingTransactions).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const categoryList = Object.values(categories);
@@ -41,7 +46,7 @@ export const TriageInboxWidget: React.FC = () => {
   const cardPayments = txList.filter((tx) => tx.flag === 'card-payment');
   // Recomputed from the list rather than subtracted, because one row can be both
   // a duplicate and flagged, and subtracting both counts would double-count it.
-  const acceptableRows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
+  const acceptableRows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidOffsetCategory(tx, categories, categoryGroups));
   const acceptableCount = acceptableRows.length;
   const held = txList.filter(tx => tx.exclusionMatches?.length && !tx.duplicate && tx.importRecordId && importSources[importRecords[tx.importRecordId]?.sourceId]);
   const captureRows = (rows: typeof txList) => captureTriageUndo({ pendingIds: rows.map(tx => tx.id), recordIds: rows.flatMap(tx => tx.importRecordId ? [tx.importRecordId] : []) });
@@ -69,7 +74,7 @@ export const TriageInboxWidget: React.FC = () => {
   };
 
   const approveWithUndo = (tx: typeof txList[number]) => {
-    if (tx.exclusionMatches?.length) return;
+    if (tx.exclusionMatches?.length || !hasValidOffsetCategory(tx, categories, categoryGroups)) return;
     const offer = captureRows([tx]);
     approveTransaction(tx.id);
     offerApprovalUndo(offer, [tx.id]);
@@ -124,6 +129,10 @@ export const TriageInboxWidget: React.FC = () => {
       </div>
       <div className="flex flex-col gap-3 mt-3 max-h-[280px] desktop:max-h-[400px] overflow-y-auto pr-2">
         {txList.map(tx => {
+          const kind = entryKindOf(tx);
+          const offsetReady = hasValidOffsetCategory(tx, categories, categoryGroups);
+          const matchingCategories = categoryList.filter(cat => categoryGroups[cat.groupId]?.kind === tx.type);
+          const selectedCategory = matchingCategories.some(cat => cat.id === tx.categoryId) ? tx.categoryId : '';
           const existing = tx.duplicateRecordId ? importRecords[tx.duplicateRecordId]?.original :
             tx.duplicateTransactionId ? transactions[tx.duplicateTransactionId] ?? pendingTransactions[tx.duplicateTransactionId] : undefined;
           return (
@@ -147,7 +156,7 @@ export const TriageInboxWidget: React.FC = () => {
                 </p>
               </div>
               <span className={`shrink-0 text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
-                {tx.type === 'income' ? `+${formatMoney(tx.amount)}` : formatMoney(-tx.amount)}
+                {cashMovement(tx) > 0 ? `+${formatMoney(cashMovement(tx))}` : formatMoney(cashMovement(tx))}
               </span>
             </div>
             {existing && <p className="text-[13px] text-text-secondary break-words">
@@ -164,21 +173,35 @@ export const TriageInboxWidget: React.FC = () => {
               <button disabled={!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]} onClick={() => setSeedRecordId(tx.importRecordId)} className="min-h-11 px-3 rounded-md border border-border text-accent disabled:opacity-50">Exclude similar transactions</button>
               {(!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]) && <p className="text-[12px] text-text-secondary mt-1">Source information unavailable</p>}
             </div>
+            {cashMovement(tx) > 0 && <div className="flex flex-col gap-1 min-w-0">
+              <p className="text-[12px] text-text-secondary">Changing treatment clears the category. Review your category before accepting.</p>
+              <ThemedSelect value={kind} ariaLabel={`Treatment for ${tx.description}`}
+                onChange={value => {
+                  if (value !== kind) setPendingReceiptTreatment(tx.id, value as 'income' | 'refund-payment');
+                }}
+                options={[
+                  { value: 'income', label: 'Income' },
+                  ...(refundsAndPaymentsEnabled || kind === 'refund-payment' ? [{ value: 'refund-payment', label: 'Refunds & Payments' }] : []),
+                ]} />
+              {kind === 'refund-payment' && <p className="text-[12px] text-text-secondary">Reduces spending in one expense category. You can split this payment after acceptance in the transaction editor.</p>}
+              {kind === 'refund-payment' && !refundsAndPaymentsEnabled && <p className="text-[12px] text-text-secondary">Refunds & Payments is off for new transactions. This saved payment still counts.</p>}
+            </div>}
+            {!offsetReady && <p className="text-[12px] text-text-secondary">Choose an expense category before accepting this payment</p>}
             <div className="flex items-center gap-2 mt-1">
               <ThemedSelect
-                value={tx.categoryId || ''}
+                value={selectedCategory || ''}
                 onChange={(v) => updatePending(tx.id, { categoryId: v })}
                 className="flex-1 min-w-0 text-[12px]"
                 ariaLabel={`Category for ${tx.description}`}
                 options={[
                   { value: '', label: 'Uncategorized' },
-                  ...categoryList.map(cat => ({ value: cat.id, label: cat.name })),
+                  ...matchingCategories.map(cat => ({ value: cat.id, label: cat.name })),
                 ]}
               />
               
               {!tx.duplicate && <button
                 onClick={() => approveWithUndo(tx)}
-                disabled={!!tx.exclusionMatches?.length}
+                disabled={!!tx.exclusionMatches?.length || !offsetReady}
                 className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
                 title="Approve"
                 aria-label={`Approve ${tx.description}`}
@@ -196,7 +219,7 @@ export const TriageInboxWidget: React.FC = () => {
             </div>
             {tx.duplicate && <div className="flex flex-wrap gap-2 text-[13px]">
               <button onClick={() => ignoreWithUndo(tx, true)} className="min-h-11 px-3 rounded border border-border text-accent">Same charge</button>
-              <button disabled={!!tx.exclusionMatches?.length} onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent disabled:opacity-50">Keep both</button>
+              <button disabled={!!tx.exclusionMatches?.length || !offsetReady} onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent disabled:opacity-50">Keep both</button>
               <button onClick={() => ignoreWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-text-secondary">Ignore this charge</button>
             </div>}
           </div>

@@ -422,3 +422,66 @@ describe('remembered imports', () => {
     expect(useTriageStore.getState().lastImport?.skippedIds).toHaveLength(2)
   })
 })
+
+
+describe('incoming receipt treatment', () => {
+  const setup = () => {
+    useBudgetStore.setState({ categories: { groceries: { id: 'groceries', name: 'Groceries', groupId: 'food', targetAmount: 0 }, salary: { id: 'salary', name: 'Salary', groupId: 'earn', targetAmount: 0 } }, categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' }, earn: { id: 'earn', name: 'Income', kind: 'income' } } })
+    return useTriageStore.getState()
+  }
+  it('classifies an incoming receipt without changing its original import identity and survives acceptance undo and repeat upload', () => {
+    const store = setup()
+    const source = store.createImportSource('Bank')
+    const original = pending({ type: 'income', amount: 40, categoryId: 'salary', description: 'E-transfer' })
+    store.importTransactions([original], source)
+    const record = useTriageStore.getState().importRecords.t1
+    store.setPendingReceiptTreatment('t1', 'refund-payment')
+    expect(useTriageStore.getState().pendingTransactions.t1).toMatchObject({ type: 'expense', amount: -40, date: original.date, categoryId: undefined })
+    expect(useTriageStore.getState().importRecords.t1).toEqual(record)
+    store.updatePending('t1', { categoryId: 'groceries' })
+    const converted = useTriageStore.getState().pendingTransactions.t1
+    store.setPendingReceiptTreatment('t1', 'refund-payment')
+    expect(useTriageStore.getState().pendingTransactions.t1).toBe(converted)
+    store.approveTransaction('t1')
+    store.approveTransaction('t1')
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['t1'])
+    expect(useBudgetStore.getState().transactions.t1).toMatchObject({ type: 'expense', amount: -40, categoryId: 'groceries' })
+    expect(useTriageStore.getState().categoryRules).toEqual({})
+    useBudgetStore.getState().deleteTransactions(['t1'])
+    store.addPending([converted])
+    store.importTransactions([{ ...original, id: 'repeat' }], source)
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['t1'])
+    store.approveAll()
+    expect(useTriageStore.getState().categoryRules).toEqual({})
+    store.importTransactions([{ ...original, id: 'repeat2' }], source)
+    expect(Object.keys(useBudgetStore.getState().transactions)).toEqual(['t1'])
+    expect(useTriageStore.getState().importRecords.t1.original).toEqual(original)
+  })
+  it('blocks offsets with missing, deleted, or income categories from both approvals', () => {
+    const store = setup()
+    for (const categoryId of [undefined, 'missing', 'salary']) {
+      store.addPending([pending({ type: 'expense', amount: -40, categoryId })])
+      store.approveTransaction('t1')
+      expect(store.approveAll()).toEqual([])
+      expect(useBudgetStore.getState().transactions.t1).toBeUndefined()
+    }
+  })
+  it('preserves holds and never changes outgoing purchases or disabled new receipts', () => {
+    const store = setup()
+    store.addPending([pending(), pending({ id: 'in', type: 'income', flag: 'card-payment', duplicate: 'possible' })])
+    store.setPendingReceiptTreatment('t1', 'refund-payment')
+    expect(useTriageStore.getState().pendingTransactions.t1.amount).toBe(12.5)
+    store.setPendingReceiptTreatment('in', 'refund-payment')
+    store.updatePending('in', { categoryId: 'groceries' })
+    expect(useTriageStore.getState().pendingTransactions.in).toMatchObject({ flag: 'card-payment', duplicate: 'possible', amount: -12.5 })
+    expect(store.approveAll()).toEqual(['t1'])
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: false })
+    store.setPendingReceiptTreatment('in', 'income')
+    store.setPendingReceiptTreatment('in', 'refund-payment')
+    expect(useTriageStore.getState().pendingTransactions.in.type).toBe('income')
+    store.addPending([pending({ id: 'legacy', amount: -40, categoryId: 'groceries' })])
+    store.approveTransaction('legacy')
+    expect(useBudgetStore.getState().transactions.legacy.amount).toBe(-40)
+    expect(useTriageStore.getState().categoryRules.NETFLIX).toBeUndefined()
+  })
+})

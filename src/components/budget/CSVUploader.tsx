@@ -30,6 +30,7 @@ export const CSVUploader: React.FC = () => {
 
   const categoryRules = useTriageStore((state) => state.categoryRules);
   const categories = useBudgetStore((state) => state.categories);
+  const categoryGroups = useBudgetStore((state) => state.categoryGroups);
 
   const routeGroups = (groups: TriageTransaction[][]) => {
     const store = useTriageStore.getState();
@@ -78,9 +79,13 @@ export const CSVUploader: React.FC = () => {
     const categorized = transactions.map(tx => {
       // The user's own learned rules are deliberate, so they win. Chase's own
       // category column is consulted only where no rule matched.
+      const compatible = (id: string | undefined) => {
+        const category = id ? categories[id] : undefined;
+        return category && categoryGroups[category.groupId]?.kind === tx.type ? id : undefined;
+      };
       const categoryId =
-        guessCategory(tx.description, categories, categoryRules) ??
-        chaseCategoryId(tx.originalRowData?.['Category'], categories);
+        compatible(guessCategory(tx.description, categories, categoryRules)) ??
+        compatible(chaseCategoryId(tx.originalRowData?.['Category'], categories));
       return {
         ...tx,
         categoryId

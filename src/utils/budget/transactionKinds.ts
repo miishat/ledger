@@ -1,4 +1,4 @@
-import type { Transaction, TransactionSplit } from '../../types/budget';
+import type { Category, CategoryGroup, Transaction, TransactionSplit } from '../../types/budget';
 import { round2 } from './splits';
 
 export type TransactionEntryKind = 'expense' | 'income' | 'refund-payment';
@@ -24,4 +24,15 @@ export function encodeEntryAmounts(
     amount: sign * round2(amount),
     splits: splits.length ? splits : undefined,
   };
+}
+
+
+/** Pending offsets must name one existing expense category before acceptance. */
+export function hasValidOffsetCategory(
+  tx: Pick<Transaction, 'type' | 'amount' | 'categoryId'>,
+  categories: Record<string, Category>, groups: Record<string, CategoryGroup>,
+): boolean {
+  if (entryKindOf(tx) !== 'refund-payment') return true;
+  const category = tx.categoryId ? categories[tx.categoryId] : undefined;
+  return !!category && groups[category.groupId]?.kind === 'expense';
 }

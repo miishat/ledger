@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Transaction } from '../../types/budget';
-import { cashMovement, encodeEntryAmounts, entryKindOf } from './transactionKinds';
+import { cashMovement, encodeEntryAmounts, entryKindOf, hasValidOffsetCategory } from './transactionKinds';
 import { splitParts } from './splits';
 
 const receipt: Transaction = {
@@ -61,4 +61,18 @@ describe('encodeEntryAmounts', () => {
       { categoryId: 'household', amount: -33.34 },
     ]);
   });
+});
+
+
+it('requires an existing expense category only for offsets', () => {
+  const categories = { g: { id: 'g', groupId: 'food', name: 'Groceries', targetAmount: 0 }, s: { id: 's', groupId: 'earn', name: 'Salary', targetAmount: 0 } };
+  const groups = { food: { id: 'food', name: 'Food', kind: 'expense' as const }, earn: { id: 'earn', name: 'Income', kind: 'income' as const } };
+  const offset = { type: 'expense' as const, amount: -40 };
+  expect(hasValidOffsetCategory(offset, categories, groups)).toBe(false);
+  expect(hasValidOffsetCategory({ ...offset, categoryId: 'missing' }, categories, groups)).toBe(false);
+  expect(hasValidOffsetCategory({ ...offset, categoryId: 's' }, categories, groups)).toBe(false);
+  expect(hasValidOffsetCategory({ ...offset, categoryId: 'g' }, categories, groups)).toBe(true);
+  expect(hasValidOffsetCategory({ ...offset, categoryId: 'g' }, categories, {})).toBe(false);
+  expect(hasValidOffsetCategory({ type: 'income', amount: 40 }, categories, groups)).toBe(true);
+  expect(hasValidOffsetCategory({ type: 'expense', amount: 40 }, categories, groups)).toBe(true);
 });

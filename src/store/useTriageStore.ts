@@ -1,3 +1,4 @@
+import { cashMovement, entryKindOf, hasValidOffsetCategory } from '../utils/budget/transactionKinds';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from './storageKeys'
@@ -33,6 +34,7 @@ interface TriageState {
   
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
+  setPendingReceiptTreatment: (id: string, treatment: 'income' | 'refund-payment') => void;
   approveTransaction: (id: string) => void;
   /** Approves every row that is neither flagged as a duplicate nor held back by
    *  a flag. Returns the ids it approved, so the caller can offer to undo the
@@ -261,10 +263,23 @@ export const useTriageStore = create<TriageState>()(
         }));
       },
 
+      setPendingReceiptTreatment: (id, treatment) => {
+        const tx = get().pendingTransactions[id];
+        if (!tx || !(cashMovement(tx) > 0) || entryKindOf(tx) === treatment) return;
+        if (!useBudgetStore.getState().refundsAndPaymentsEnabled &&
+          entryKindOf(tx) !== 'refund-payment' && treatment === 'refund-payment') return;
+        const amount = cashMovement(tx);
+        get().updatePending(id, {
+          type: treatment === 'income' ? 'income' : 'expense',
+          amount: treatment === 'income' ? amount : -amount,
+          categoryId: undefined,
+        });
+      },
+
       approveTransaction: (id) => {
         const state = get();
         const tx = state.pendingTransactions[id];
-        if (!tx || tx.exclusionMatches?.length) return;
+        if (!tx || tx.exclusionMatches?.length || !hasValidOffsetCategory(tx, useBudgetStore.getState().categories, useBudgetStore.getState().categoryGroups)) return;
         useUndoStore.getState().dismissUndo();
         
         // Push to main budget store
@@ -278,7 +293,7 @@ export const useTriageStore = create<TriageState>()(
         });
 
         // Learn the rule if a category is assigned
-        if (tx.categoryId) {
+        if (tx.categoryId && entryKindOf(tx) !== 'refund-payment') {
           state.learnRule(tx.description, tx.categoryId);
         }
 
@@ -297,7 +312,7 @@ export const useTriageStore = create<TriageState>()(
         useUndoStore.getState().dismissUndo();
         const state = get();
         const budgetState = useBudgetStore.getState();
-        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
+        const txs = Object.values(state.pendingTransactions).filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length && hasValidOffsetCategory(tx, budgetState.categories, budgetState.categoryGroups));
 
         txs.forEach((tx) => {
           budgetState.addTransaction({
@@ -309,7 +324,7 @@ export const useTriageStore = create<TriageState>()(
             type: tx.type,
           });
 
-          if (tx.categoryId) {
+          if (tx.categoryId && entryKindOf(tx) !== 'refund-payment') {
             state.learnRule(tx.description, tx.categoryId);
           }
         });
