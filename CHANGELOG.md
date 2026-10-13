@@ -15,6 +15,9 @@ pre-1.0 beta.
 - Import summaries show skipped entries and changed days. Ignored charges can return to review, and possible duplicates show the existing entry with Same charge and Keep both actions.
 - CIBC imports recognize the masked card automatically. Other CSVs let you choose a saved card or account. Import history travels with backups and sync; older transactions without source history remain reviewable.
 
+### Fixed
+- The exclusion-rule popup has a solid background, consistent Title Case labels, and shorter introductory text.
+
 ## [0.11.1-beta] - 2026-10-08
 
 ### Added

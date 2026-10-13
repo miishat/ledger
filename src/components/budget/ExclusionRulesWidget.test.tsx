@@ -6,7 +6,7 @@ import { useUndoStore } from '../../store/useUndoStore'
 const initial=useTriageStore.getState()
 beforeEach(()=>{useTriageStore.setState(initial,true);useUndoStore.getState().dismissUndo()})
 afterEach(cleanup)
-it('shows empty state and opens a blank editor',()=>{render(<ExclusionRulesWidget/>);expect(screen.getByText('No exclusion rules yet')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Add exclusion rule'}));expect(screen.getByLabelText('Rule name')).toHaveValue('')})
+it('shows empty state and opens a blank editor',()=>{render(<ExclusionRulesWidget/>);expect(screen.getByText('No exclusion rules yet')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Add exclusion rule'}));expect(screen.getByLabelText('Rule Name')).toHaveValue('')})
 it('pauses, confirms deletion and offers scoped Undo',()=>{
  useTriageStore.setState({importSources:{a:{id:'a',name:'Card A'}},exclusionRules:{r:{id:'r',revision:1,enabled:true,name:'Payments',sourceId:'a',description:{operator:'exact',value:'PAYMENT'},direction:'in',amount:{operator:'any'},behavior:'review'}}})
  render(<ExclusionRulesWidget/>);fireEvent.click(screen.getByRole('button',{name:'Pause Payments'}));expect(screen.getByText('Paused')).toBeInTheDocument()
@@ -27,7 +27,7 @@ it('retains previous exclusion reason snapshots on pause and edit alone',()=>{
  useTriageStore.setState({pendingTransactions:{a:pending},importRecords:{a:record},importSources:{a:{id:'a',name:'Card A'}},exclusionRules:{r:{id:'r',revision:1,enabled:true,name:'Payments',sourceId:'a',description:{operator:'exact',value:'PAYMENT'},direction:'in',amount:{operator:'any'},behavior:'review'}}})
  render(<ExclusionRulesWidget/>);fireEvent.click(screen.getByRole('button',{name:'Pause Payments'}))
  fireEvent.click(screen.getByRole('button',{name:'Edit Payments'}))
- fireEvent.change(screen.getByLabelText('Original bank description'),{target:{value:'OTHER'}})
+ fireEvent.change(screen.getByLabelText('Original Bank Description'),{target:{value:'OTHER'}})
  fireEvent.click(screen.getByRole('button',{name:'Save Rule'}))
  expect(useTriageStore.getState().importRecords.a).toEqual(record)
  expect(useTriageStore.getState().pendingTransactions.a).toEqual(pending)

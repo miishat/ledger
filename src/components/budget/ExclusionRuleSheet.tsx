@@ -71,23 +71,23 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
     } catch (error) { setSaveError(error instanceof Error ? error.message : 'Unable to save rule') }
   }
   const select = (label: string, value: string, onChange: (value: string) => void, options: {value:string;label:string}[]) => <div role="group" aria-label={label} aria-describedby="exclusion-errors" className="flex flex-col gap-1"><span className="text-[13px] text-text-secondary">{label}</span><ThemedSelect ariaLabel={label} value={value} onChange={onChange} options={options} className="min-h-11" /></div>
-  return <Sheet open={open} onClose={onClose} title="Exclusion Rule" ariaLabel="Exclusion Rule" panelClassName="max-w-xl" contentClassName="flex flex-col gap-4 p-4">
+  return <Sheet open={open} onClose={onClose} title="Exclusion Rule" ariaLabel="Exclusion Rule" panelClassName="w-full max-w-xl rounded-xl border border-border bg-[var(--dropdown-bg)] shadow-2xl" contentClassName="flex flex-col gap-4 p-4">
     <h2 className="hidden desktop:block text-[18px] font-semibold">Exclusion Rule</h2>
-    <p className="text-[14px] text-text-secondary">Keep matching imports out of income and spending totals. You can review or restore them.</p>
+    <p className="text-[14px] text-text-secondary">Exclude matching imports from totals. Restore them anytime.</p>
     {existing && validateExclusionDraft(existing,sources).length > 0 && <p role="alert">Needs correction. Choose valid criteria before saving.</p>}
-    <label className="text-[14px] flex flex-col gap-1">Rule name<input className={inputClass} value={name} onChange={e=>setName(e.target.value)} aria-describedby="exclusion-errors" /></label>
-    {select('Card or account',scope,setScope,[{value:'',label:'Choose a card or account'},{value:'all',label:'All cards/accounts'},...Object.values(sources).map(s=>({value:s.id,label:s.name}))])}
+    <label className="text-[14px] flex flex-col gap-1">Rule Name<input className={inputClass} value={name} onChange={e=>setName(e.target.value)} aria-describedby="exclusion-errors" /></label>
+    {select('Card Or Account',scope,setScope,[{value:'',label:'Choose Card Or Account'},{value:'all',label:'All Cards/Accounts'},...Object.values(sources).map(s=>({value:s.id,label:s.name}))])}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {select('Description match',operator,v=>setOperator(v as typeof operator),[{value:'exact',label:'Exactly matches'},{value:'contains',label:'Contains'},{value:'starts-with',label:'Starts with'}])}
-      {select('Money direction',direction,v=>setDirection(v as typeof direction),[{value:'in',label:'Money in'},{value:'out',label:'Money out'},{value:'either',label:'Either'}])}
+      {select('Description Match',operator,v=>setOperator(v as typeof operator),[{value:'exact',label:'Exactly Matches'},{value:'contains',label:'Contains'},{value:'starts-with',label:'Starts With'}])}
+      {select('Money Direction',direction,v=>setDirection(v as typeof direction),[{value:'in',label:'Money In'},{value:'out',label:'Money Out'},{value:'either',label:'Either'}])}
     </div>
-    <label className="text-[14px] flex flex-col gap-1">Original bank description<input className={inputClass} value={text} onChange={e=>setText(e.target.value)} aria-describedby="exclusion-errors" /></label>
+    <label className="text-[14px] flex flex-col gap-1">Original Bank Description<input className={inputClass} value={text} onChange={e=>setText(e.target.value)} aria-describedby="exclusion-errors" /></label>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {select('Amount match',amountOperator,v=>setAmountOperator(v as typeof amountOperator),[{value:'any',label:'Any amount'},{value:'exact',label:'Exact amount'},{value:'between',label:'Between amounts'}])}
-      {select('Behavior',behavior,v=>setBehavior(v as typeof behavior),[{value:'review',label:'Review matches'},{value:'automatic',label:'Automatically exclude'}])}
+      {select('Amount Match',amountOperator,v=>setAmountOperator(v as typeof amountOperator),[{value:'any',label:'Any Amount'},{value:'exact',label:'Exact Amount'},{value:'between',label:'Between Amounts'}])}
+      {select('Behavior',behavior,v=>setBehavior(v as typeof behavior),[{value:'review',label:'Review Matches'},{value:'automatic',label:'Automatically Exclude'}])}
     </div>
-    {amountOperator !== 'any' && <label className="text-[14px] flex flex-col gap-1">{amountOperator === 'exact' ? 'Amount' : 'Minimum amount'}<input className={inputClass} inputMode="decimal" value={amountText} onChange={e=>setAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
-    {amountOperator === 'between' && <label className="text-[14px] flex flex-col gap-1">Maximum amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
+    {amountOperator !== 'any' && <label className="text-[14px] flex flex-col gap-1">{amountOperator === 'exact' ? 'Amount' : 'Minimum Amount'}<input className={inputClass} inputMode="decimal" value={amountText} onChange={e=>setAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
+    {amountOperator === 'between' && <label className="text-[14px] flex flex-col gap-1">Maximum Amount<input className={inputClass} inputMode="decimal" value={maxAmountText} onChange={e=>setMaxAmountText(e.target.value)} aria-describedby="exclusion-errors" /></label>}
     <div id="exclusion-errors">{[...errors, ...(saveError ? [saveError] : [])].map(error=><p key={error} role="alert" className="text-[13px] text-error">{error}</p>)}</div>
     <p className="text-[13px] text-text-secondary">{behavior === 'automatic' ? 'Matching new imports will be excluded automatically and kept in Excluded imports. Possible duplicates still need review.' : 'Matches will wait for your decision and stay out of Accept All.'}</p>
     {preview ? <ExclusionRulePreview preview={preview} criteriaKey={JSON.stringify(draft) + amountText + maxAmountText} /> : <p className="text-[13px] text-text-secondary">Draft preview unavailable. Enter valid criteria to preview matching imports.</p>}
@@ -98,6 +98,3 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
     <div className="flex flex-wrap justify-end gap-2"><button type="button" className="min-h-11 px-3" onClick={onClose}>Cancel</button><button type="button" className="min-h-11 px-3 rounded-md bg-accent text-bg-primary disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
   </Sheet>
 }
-
-
-
