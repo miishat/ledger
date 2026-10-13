@@ -1,6 +1,6 @@
 # Transaction Exclusion Patterns Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Use inline execution unless the user chooses delegation. This document authorizes planning only; implementation starts after the user's execution instruction.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. Use inline execution unless the user chooses delegation. The user authorized subagent-driven execution; all tasks and reviews are complete.
 
 **Goal:** Let users define predictable, source-scoped import exclusions, preview their effects, and recover excluded occurrences without duplicates or silent changes to accepted spending.
 
@@ -91,7 +91,7 @@ Store tests reset `useTriageStore`, `useBudgetStore` and `useUndoStore` to captu
 
 **Interfaces produced:** `ExclusionRuleDraft`, `ExclusionRule`, `ExclusionMatch`, `ExclusionPreview`, `cashMovementCents`, `validateExclusionDraft`. No evaluation of imports yet.
 
-- [ ] Add contracts:
+- [x] Add contracts:
 
 ```ts
 export type ExclusionRuleDraft = {
@@ -121,7 +121,7 @@ export type ExclusionPreview = {
 
 In `ImportRecord` add `exclusionMatches?: ExclusionMatch[]`, `exclusionOverride?: 'include'`, `ignoreReason?: 'rule' | 'card-payment' | 'manual'`. In `TriageTransaction` add `exclusionMatches?: ExclusionMatch[]`. In `ImportReport` add optional `excludedIds?: string[]` for backward compatibility with old persisted reports and existing callers.
 
-- [ ] Write a failing direction/validation test:
+- [x] Write a failing direction/validation test:
 
 ```ts
 it('distinguishes refunds from purchases and rejects inverted cent ranges', () => {
@@ -136,8 +136,8 @@ it('distinguishes refunds from purchases and rejects inverted cent ranges', () =
 
 Define `draft` as a valid Card A exact PAYMENT rule and `sources = { a: { id: 'a', name: 'Card A' } }` in this test file. Add tests for missing source, empty name/text, zero, NaN, unsafe integer cents and valid inclusive boundaries.
 
-- [ ] Run `npm test -- --run src/utils/budget/exclusionRules.test.ts`; expect a missing exported helper or missing module failure, not a fixture/setup failure.
-- [ ] Implement helper and validation with explicit errors:
+- [x] Run `npm test -- --run src/utils/budget/exclusionRules.test.ts`; expect a missing exported helper or missing module failure, not a fixture/setup failure.
+- [x] Implement helper and validation with explicit errors:
 
 ```ts
 export const cashMovementCents = (row: Pick<TriageTransaction, 'type' | 'amount'>) =>
@@ -160,7 +160,7 @@ export function validateExclusionDraft(draft: ExclusionRuleDraft,
 
 Validate operator/direction/behavior unions at the persistence boundary before executing imported rules; invalid persisted rules must be inert and shown as needing correction, never broadened by a fallback. Test malformed restored rules.
 
-- [ ] Add persisted `exclusionRules: Record<string, ExclusionRule>` with initial `{}`. Bump only triage persist version to 3. Export `migrateTriageState(persisted: unknown, version: number)` and wire it as `migrate`:
+- [x] Add persisted `exclusionRules: Record<string, ExclusionRule>` with initial `{}`. Bump only triage persist version to 3. Export `migrateTriageState(persisted: unknown, version: number)` and wire it as `migrate`:
 
 ```ts
 export function migrateTriageState(persisted: unknown, version: number) {
@@ -174,8 +174,8 @@ export function migrateTriageState(persisted: unknown, version: number) {
 
 Version-2 history must survive intact; the current migration that initializes history on every migration cannot remain. Keep version-0/1 behavior. New optional record fields need no fabricated past reason.
 
-- [ ] Test versions 0, 1, 2 and 3 round-trip via `persist.rehydrate`, including old pending rows and accepted/ignored daily snapshots. Run `npm test -- --run src/utils/budget/exclusionRules.test.ts src/store/useTriageStore.test.ts`; expect all selected tests pass.
-- [ ] Stage only this task's files and commit `feat: define exclusion rule contracts and preserve import migration`.
+- [x] Test versions 0, 1, 2 and 3 round-trip via `persist.rehydrate`, including old pending rows and accepted/ignored daily snapshots. Run `npm test -- --run src/utils/budget/exclusionRules.test.ts src/store/useTriageStore.test.ts`; expect all selected tests pass.
+- [x] Stage only this task's files and commit `feat: define exclusion rule contracts and preserve import migration`.
 
 ## Task 2: Pure matching and inspectable previews
 
@@ -183,7 +183,7 @@ Version-2 history must survive intact; the current migration that initializes hi
 
 **Consumes:** Task 1 contracts and validation. **Produces:** `matchesExclusionRule(rule, original, sourceId): boolean`, `evaluateExclusionRules(rules, original, sourceId): ExclusionMatch[]`, `previewExclusionRule(draft, records, pending): ExclusionPreview`.
 
-- [ ] Write failing operator/source tests:
+- [x] Write failing operator/source tests:
 
 ```ts
 it('matches original text with precise scope and normalized whitespace', () => {
@@ -199,8 +199,8 @@ it('matches original text with precise scope and normalized whitespace', () => {
 
 Add isolated tests for contains contiguous phrase, starts-with position, punctuation/accents, paused rule, negative-expense refund, zero direction, exact/range inclusive cents and source-null intentional global rule. A pending edited description must not affect preview.
 
-- [ ] Run the focused test file; expect missing matching exports.
-- [ ] Implement matcher using the exact contracts:
+- [x] Run the focused test file; expect missing matching exports.
+- [x] Implement matcher using the exact contracts:
 
 ```ts
 const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase()
@@ -230,7 +230,7 @@ export function evaluateExclusionRules(rules: ExclusionRule[], original: TriageT
 
 Call validation before supplying rules to this helper; add exhaustive union validation so unsupported runtime operators cannot accidentally become starts-with/between.
 
-- [ ] Implement preview: turn draft into an enabled temporary rule; filter `records` to decisions other than duplicate and matching originals; build rows from originals; determine ambiguity using the current pending row's duplicate field, override from the record, and current decision. Count rows and absolute directional cents separately. `eligiblePendingCount` includes pending matches without include override; possible duplicates are eligible for a review hold but never automatic exclusion. Count legacy unavailable pending rows where `!tx.importRecordId`; don't include them in match totals. Sort by date descending then record ID, without mutating inputs.
+- [x] Implement preview: turn draft into an enabled temporary rule; filter `records` to decisions other than duplicate and matching originals; build rows from originals; determine ambiguity using the current pending row's duplicate field, override from the record, and current decision. Count rows and absolute directional cents separately. `eligiblePendingCount` includes pending matches without include override; possible duplicates are eligible for a review hold but never automatic exclusion. Count legacy unavailable pending rows where `!tx.importRecordId`; don't include them in match totals. Sort by date descending then record ID, without mutating inputs.
 
 ```ts
 const summary = rows.reduce((a, row) => ({
@@ -245,7 +245,7 @@ const summary = rows.reduce((a, row) => ({
   acceptedCount: 0, ignoredCount: 0, eligiblePendingCount: 0 })
 ```
 
-- [ ] Add preview tests proving two original $5 coffees count twice, a confirmed alias does not count again, accepted matches are read-only, amounts don't cancel each other, and legacy unavailable counts are explicit. Run the focused file to green; commit `feat: match and preview source-scoped exclusion rules`.
+- [x] Add preview tests proving two original $5 coffees count twice, a confirmed alias does not count again, accepted matches are read-only, amounts don't cancel each other, and legacy unavailable counts are explicit. Run the focused file to green; commit `feat: match and preview source-scoped exclusion rules`.
 
 ## Task 3: New-import evaluation and accurate summaries
 
@@ -253,7 +253,7 @@ const summary = rows.reduce((a, row) => ({
 
 **Consumes:** `matchImport` result and Task 2 evaluator. **Produces:** `applyImportExclusions(pending, records, rules): { pending: TriageTransaction[]; records: Record<string, ImportRecord>; excludedIds: string[] }`. Call only on newly returned pending rows, not the entire inbox.
 
-- [ ] Write failing integration tests: automatic match creates ignored history without budget entry; review match remains pending and is absent from approveAll results; repeated excluded upload returns one skip and zero new exclusions; different source is not held; possible duplicate with automatic match stays pending; overlapping review+automatic rules prefer review.
+- [x] Write failing integration tests: automatic match creates ignored history without budget entry; review match remains pending and is absent from approveAll results; repeated excluded upload returns one skip and zero new exclusions; different source is not held; possible duplicate with automatic match stays pending; overlapping review+automatic rules prefer review.
 
 ```ts
 it('retains automatically excluded originals across repeat uploads', () => {
@@ -272,8 +272,8 @@ it('retains automatically excluded originals across repeat uploads', () => {
 
 `saveExclusionRule` is introduced as part of this task with signature `(draft: ExclusionRuleDraft, options?: { id?: string; applyPending?: boolean }): string`; pending application is implemented in Task 4. Reject `applyPending: true` until Task 4 rather than silently ignoring it.
 
-- [ ] Run selected tests and verify failures are missing behavior.
-- [ ] Implement the pure transform:
+- [x] Run selected tests and verify failures are missing behavior.
+- [x] Implement the pure transform:
 
 ```ts
 export function applyImportExclusions(pending: TriageTransaction[],
@@ -299,9 +299,9 @@ In `importTransactions`, pass `result.pending` and `result.records` through this
 
 Implement `saveExclusionRule` validation before mutation, UUID on creation, revision increment on edits, preserve enabled state on edit. Invalid sources/drafts throw the first explicit error and write nothing. Filter invalid persisted rules out before evaluation.
 
-- [ ] Update `approveAll` and the UI's acceptable-count predicate to require `!tx.exclusionMatches?.length` in addition to existing flag/duplicate checks. Do not automatically approve a held row through plain store approval; Task 4 provides an explicit override action.
-- [ ] Initialize CSV aggregate `excludedIds: []` and concatenate `result.excludedIds ?? []`. Define report `addedIds` as all newly recorded occurrences, including excluded; display sent-to-review count as added minus excluded. Skipped and excluded counters remain distinct. Add multi-source aggregation test.
-- [ ] Run `npm test -- --run src/utils/budget/applyImportExclusions.test.ts src/store/useTriageStore.test.ts src/components/budget/CSVUploader.test.tsx src/utils/budget/importHistory.test.ts`. Commit `feat: evaluate exclusions after import occurrence matching`.
+- [x] Update `approveAll` and the UI's acceptable-count predicate to require `!tx.exclusionMatches?.length` in addition to existing flag/duplicate checks. Do not automatically approve a held row through plain store approval; Task 4 provides an explicit override action.
+- [x] Initialize CSV aggregate `excludedIds: []` and concatenate `result.excludedIds ?? []`. Define report `addedIds` as all newly recorded occurrences, including excluded; display sent-to-review count as added minus excluded. Skipped and excluded counters remain distinct. Add multi-source aggregation test.
+- [x] Run `npm test -- --run src/utils/budget/applyImportExclusions.test.ts src/store/useTriageStore.test.ts src/components/budget/CSVUploader.test.tsx src/utils/budget/importHistory.test.ts`. Commit `feat: evaluate exclusions after import occurrence matching`.
 
 ## Task 4: Manual resolution, rule lifecycle, explicit pending application and Undo
 
@@ -320,7 +320,7 @@ excludeExclusionMatches(ids: string[]): string[] // returns actual ignored recor
 
 `restoreImportRecord(id)` retains its existing signature, now clears user holds and adds include override. Existing `rejectTransaction(id)` retains its signature and records rule/card/manual reason from the pending row.
 
-- [ ] Write RED tests for sticky inclusion, restoration with same ID, pause/edit/delete preserving history/reasons, applying pending without modifying accepted rows, ordinary rejection not learning a rule, and stale Undo after reimport. Add a test where restoration plus Discard All invalidates dependent aliases using existing cancellation behavior.
+- [x] Write RED tests for sticky inclusion, restoration with same ID, pause/edit/delete preserving history/reasons, applying pending without modifying accepted rows, ordinary rejection not learning a rule, and stale Undo after reimport. Add a test where restoration plus Discard All invalidates dependent aliases using existing cancellation behavior.
 
 ```ts
 it('restores the same occurrence without reapplying active rules', () => {
@@ -336,8 +336,8 @@ it('restores the same occurrence without reapplying active rules', () => {
 })
 ```
 
-- [ ] Run `npm test -- --run src/store/triageExclusions.test.ts` and confirm behavioral failures.
-- [ ] Implement scoped transitions. `includeExclusionMatch` looks up a sourced pending record, sets `exclusionOverride: 'include'`, clears row/record user-rule matches, leaves duplicate fields and built-in flag unchanged. It does not approve. Plain approve refuses user-rule-held rows; the explicit Include then Approve flow handles them.
+- [x] Run `npm test -- --run src/store/triageExclusions.test.ts` and confirm behavioral failures.
+- [x] Implement scoped transitions. `includeExclusionMatch` looks up a sourced pending record, sets `exclusionOverride: 'include'`, clears row/record user-rule matches, leaves duplicate fields and built-in flag unchanged. It does not approve. Plain approve refuses user-rule-held rows; the explicit Include then Approve flow handles them.
 
 ```ts
 includeExclusionMatch: (id) => set(state => {
@@ -361,13 +361,13 @@ Implement `restoreImportRecord` for ignored records by preserving original, cons
 
 For Save-plus-apply, validate the draft/source first, assemble the next rule set, evaluate eligible pending rows before `set`, and commit rules/records/pending in one update. Disabled rule edits stay disabled. Reject nonexistent edit IDs instead of creating replacements.
 
-- [ ] Add pause/delete methods that mutate only the rule set. Store snapshot names/revisions remain after a rule disappears. No past budget mutation, restoration or hold-clearing side effect.
-- [ ] Preserve metadata during `addPending`: start from previous record metadata; set decision pending, clear duplicate links as current Undo semantics require, retain original, restored include override and previous reason snapshots as appropriate. Undo must restore the pre-action scoped row and record snapshots, including missing optional fields, not rebuild them from the current rules. Invalidate old Undo on every new store action affecting import decisions/rules; UI installs the fresh offer after the action. Never restore the entire store from a snapshot.
+- [x] Add pause/delete methods that mutate only the rule set. Store snapshot names/revisions remain after a rule disappears. No past budget mutation, restoration or hold-clearing side effect.
+- [x] Preserve metadata during `addPending`: start from previous record metadata; set decision pending, clear duplicate links as current Undo semantics require, retain original, restored include override and previous reason snapshots as appropriate. Undo must restore the pre-action scoped row and record snapshots, including missing optional fields, not rebuild them from the current rules. Invalidate old Undo on every new store action affecting import decisions/rules; UI installs the fresh offer after the action. Never restore the entire store from a snapshot.
 
 Use `useUndoStore.offerUndo` with captured affected pending rows and `ImportRecord`s, and merge only those IDs on Undo. Rule save Undo also restores the prior rule or removes the newly created ID. A subsequent import dismisses that closure, as it does today. Do not create a persisted closure.
 
-- [ ] Add backup/rehydration test containing a paused rule, revision snapshot, ignored record and include override. Verify the existing `ledger-triage` storage key handles all fields without new backup registry keys. Confirm sync service passes the same persisted payload; extend its tests without adding a new remote service.
-- [ ] Run `npm test -- --run src/store/triageExclusions.test.ts src/store/useTriageStore.test.ts src/utils/backup.test.ts src/utils/syncService.test.ts src/utils/budget/importHistory.test.ts`. Commit `feat: resolve and restore exclusion decisions safely`.
+- [x] Add backup/rehydration test containing a paused rule, revision snapshot, ignored record and include override. Verify the existing `ledger-triage` storage key handles all fields without new backup registry keys. Confirm sync service passes the same persisted payload; extend its tests without adding a new remote service.
+- [x] Run `npm test -- --run src/store/triageExclusions.test.ts src/store/useTriageStore.test.ts src/utils/backup.test.ts src/utils/syncService.test.ts src/utils/budget/importHistory.test.ts`. Commit `feat: resolve and restore exclusion decisions safely`.
 
 ## Task 5: Rule editor, preview and management
 
@@ -384,8 +384,8 @@ type ExclusionRuleSheetProps = {
 // ExclusionRulesWidget has no props and opens ExclusionRuleSheet.
 ```
 
-- [ ] Before building UI, show a simple mockup on the actual Transactions/Setup route for user review, consistent with surrounding widgets. Show row entry point, compact rule editor and collapsed excluded history. Preserve the agreed small surface; user review of this plan does not select an elaborate replacement screen.
-- [ ] Write failing UI tests for row defaults, cancel with no writes, form errors, original-text preview after display-name edits, exact/contains/starts-with selection, explicit global scope, preview count changes, unchecked pending-apply default, and automatic-mode explanatory copy.
+- [x] Before building UI, show a simple mockup on the actual Transactions/Setup route for user review, consistent with surrounding widgets. Show row entry point, compact rule editor and collapsed excluded history. Preserve the agreed small surface; user review of this plan does not select an elaborate replacement screen.
+- [x] Write failing UI tests for row defaults, cancel with no writes, form errors, original-text preview after display-name edits, exact/contains/starts-with selection, explicit global scope, preview count changes, unchecked pending-apply default, and automatic-mode explanatory copy.
 
 ```tsx
 it('does not save or apply on cancel', () => {
@@ -398,8 +398,8 @@ it('does not save or apply on cancel', () => {
 })
 ```
 
-- [ ] Run the three component test files to RED.
-- [ ] Implement controlled draft initialization on editor open or editing-target change. When `seedRecordId` exists, read only `importRecords[id].original` and source. Missing seed/source reports Source information unavailable; do not guess a scoped rule from a legacy row. A blank Add rule sheet uses empty name/text and a required scope placeholder, then maps the explicit All cards/accounts option to null.
+- [x] Run the three component test files to RED.
+- [x] Implement controlled draft initialization on editor open or editing-target change. When `seedRecordId` exists, read only `importRecords[id].original` and source. Missing seed/source reports Source information unavailable; do not guess a scoped rule from a legacy row. A blank Add rule sheet uses empty name/text and a required scope placeholder, then maps the explicit All cards/accounts option to null.
 
 Amount parsing must preserve invalid user input instead of coercing it to zero:
 
@@ -487,9 +487,9 @@ Automatic copy: Matching new imports will be excluded automatically and kept in 
 
 `save` builds/validates current draft, calls `saveExclusionRule(draft, { id: ruleId, applyPending })`, catches errors for inline display, then closes only on success. Never write while changing form fields. When applyPending is selected, show the total eligible pending count across the next enabled rule set, including the drafted rule, and explain that all current rules will be reapplied; do not present the drafted rule's own preview count as the total affected count.
 
-- [ ] Preview component uses `moneyInCents / 100` and `moneyOutCents / 100` with existing `formatMoney`. Render count, separate movement totals, pending/accepted/ignored counts, preview coverage note, explicit no-matches state, legacy unavailable note and first 20 matched rows with Show 20 more. Each row shows original description, date, source name, decision and identity/override badges. Preview is read-only; no selection of accepted entries.
-- [ ] Management widget shows name, source, human-readable conditions and Review/Automatic plus Active/Paused status. Add labeled Edit, Pause/Resume and Delete actions. Delete uses existing ConfirmDialog with copy Deleting this rule stops future matches. Previous exclusions remain available to restore. Include empty state No exclusion rules yet. No drag-to-reorder control.
-- [ ] Place ExclusionRulesWidget after CategorizationRulesWidget on Setup. Test it renders once and preserves the existing tabs. Run component and Budgeting tests; commit `feat: add exclusion rule editing and preview`.
+- [x] Preview component uses `moneyInCents / 100` and `moneyOutCents / 100` with existing `formatMoney`. Render count, separate movement totals, pending/accepted/ignored counts, preview coverage note, explicit no-matches state, legacy unavailable note and first 20 matched rows with Show 20 more. Each row shows original description, date, source name, decision and identity/override badges. Preview is read-only; no selection of accepted entries.
+- [x] Management widget shows name, source, human-readable conditions and Review/Automatic plus Active/Paused status. Add labeled Edit, Pause/Resume and Delete actions. Delete uses existing ConfirmDialog with copy Deleting this rule stops future matches. Previous exclusions remain available to restore. Include empty state No exclusion rules yet. No drag-to-reorder control.
+- [x] Place ExclusionRulesWidget after CategorizationRulesWidget on Setup. Test it renders once and preserves the existing tabs. Run component and Budgeting tests; commit `feat: add exclusion rule editing and preview`.
 
 ## Task 6: Review actions, persistent excluded history and import report
 
@@ -497,7 +497,7 @@ Automatic copy: Matching new imports will be excluded automatically and kept in 
 
 **Consumes:** Store methods from Task 4 and editor from Task 5. **Produces:** complete user flow without reliance on the latest report.
 
-- [ ] Write RED tests: rule reason visible, held row not counted in Accept All, Include clears only user hold, Exclude captures reason, possible duplicate not in batch, creation seed uses original record, persistent history survives lastImport null and deletion of rule, restored row same ID, prior card/ignored history visible.
+- [x] Write RED tests: rule reason visible, held row not counted in Accept All, Include clears only user hold, Exclude captures reason, possible duplicate not in batch, creation seed uses original record, persistent history survives lastImport null and deletion of rule, restored row same ID, prior card/ignored history visible.
 
 ```tsx
 it('can restore a rule exclusion without a recent upload report', () => {
@@ -510,8 +510,8 @@ it('can restore a rule exclusion without a recent upload report', () => {
 })
 ```
 
-- [ ] Run targeted UI files to RED.
-- [ ] Extend triage cards with matching snapshot names and explicit Exclude and Include this transaction buttons. Include removes the user hold only; category selection and existing Approve/duplicate actions still work afterward. Never clear card-payment flags implicitly. Keep Same charge/Keep both on ambiguous rows. Exclude similar transactions opens one shared ExclusionRuleSheet with seed record ID; legacy rows display Source information unavailable rather than silently drafting a source.
+- [x] Run targeted UI files to RED.
+- [x] Extend triage cards with matching snapshot names and explicit Exclude and Include this transaction buttons. Include removes the user hold only; category selection and existing Approve/duplicate actions still work afterward. Never clear card-payment flags implicitly. Keep Same charge/Keep both on ambiguous rows. Exclude similar transactions opens one shared ExclusionRuleSheet with seed record ID; legacy rows display Source information unavailable rather than silently drafting a source.
 
 ```tsx
 {tx.exclusionMatches?.length ? <div className="flex flex-col gap-2">
@@ -527,10 +527,10 @@ it('can restore a rule exclusion without a recent upload report', () => {
 
 `excludeWithUndo` and `includeWithUndo` capture affected row/record snapshots before calling the store action; install a fresh Undo entry afterward. Batch Exclude matches selects only sourced held nonduplicate rows, uses the same action once and offers one Undo. Update every acceptable-count/Accept All selector to the same hold predicate so labels and store behavior agree.
 
-- [ ] Implement ExcludedImportsWidget as collapsed `<details>` on Transactions, after the inbox and before TransactionListWidget. Query all `importRecords` with decision ignored; no dependence on lastImport. Sort date descending and ID ascending; render 50 at a time with Show 50 more. Show source, original date/description/amount, reason and rule snapshot names. Allow Restore to review with an accessible name containing description. Use 44px controls, wrapping text and `min-w-0`; no horizontal table.
-- [ ] Restoration uses the Task 4 action, provides Undo scoped to that record and focuses/announces the new review entry. If the restored row was a built-in card payment, show that flag in the inbox. The ignored decision disappears from excluded history when pending.
-- [ ] ImportSummary reads `excludedIds ?? []`, displays e.g. 3 new transactions sent to review. 8 excluded by your rules. Keep skipped count separate. Offer View excluded imports as an in-page navigation action that switches to Transactions and opens/focuses the history details. Use a stable component ID and existing search-param tab setter; do not query fragile text labels to locate the section. Last-import skipped ignored entries use the updated same-ID restoration method.
-- [ ] Run `npm test -- --run src/components/budget/TriageInboxWidget.test.tsx src/components/budget/ImportSummary.test.tsx src/components/budget/ExcludedImportsWidget.test.tsx src/pages/Budgeting.test.tsx src/store/triageExclusions.test.ts`. Commit `feat: review and recover excluded transaction imports`.
+- [x] Implement ExcludedImportsWidget as collapsed `<details>` on Transactions, after the inbox and before TransactionListWidget. Query all `importRecords` with decision ignored; no dependence on lastImport. Sort date descending and ID ascending; render 50 at a time with Show 50 more. Show source, original date/description/amount, reason and rule snapshot names. Allow Restore to review with an accessible name containing description. Use 44px controls, wrapping text and `min-w-0`; no horizontal table.
+- [x] Restoration uses the Task 4 action, provides Undo scoped to that record and focuses/announces the new review entry. If the restored row was a built-in card payment, show that flag in the inbox. The ignored decision disappears from excluded history when pending.
+- [x] ImportSummary reads `excludedIds ?? []`, displays e.g. 3 new transactions sent to review. 8 excluded by your rules. Keep skipped count separate. Offer View excluded imports as an in-page navigation action that switches to Transactions and opens/focuses the history details. Use a stable component ID and existing search-param tab setter; do not query fragile text labels to locate the section. Last-import skipped ignored entries use the updated same-ID restoration method.
+- [x] Run `npm test -- --run src/components/budget/TriageInboxWidget.test.tsx src/components/budget/ImportSummary.test.tsx src/components/budget/ExcludedImportsWidget.test.tsx src/pages/Budgeting.test.tsx src/store/triageExclusions.test.ts`. Commit `feat: review and recover excluded transaction imports`.
 
 ## Task 7: End-to-end behavior and release validation
 
@@ -538,7 +538,7 @@ it('can restore a rule exclusion without a recent upload report', () => {
 
 **Consumes:** All prior tasks. **Produces:** desktop/phone/keyboard proof, validated changelog and a reviewable branch.
 
-- [ ] Add browser tests using the existing disclaimer initialization, CSV upload and Budgeting tab patterns in `e2e/import-overlap.spec.ts`. Use fresh browser storage per test and reload without clearing it mid-test.
+- [x] Add browser tests using the existing disclaimer initialization, CSV upload and Budgeting tab patterns in `e2e/import-overlap.spec.ts`. Use fresh browser storage per test and reload without clearing it mid-test.
 
 ```ts
 for (const width of [1280, 375]) {
@@ -568,11 +568,11 @@ for (const width of [1280, 375]) {
 
 This first test proves save defaults to future imports. Extend it with UI-only selection of automatic mode and explicit pending application, then assert Excluded imports, review coffee, restore transfer, reload/reupload and confirm counts. ThemedSelect exposes a button/listbox, not a native select. Use existing label/role interactions and meaningful visible state waits; move the mouse away before keyboard menu tests to avoid hover selecting a different option.
 
-- [ ] Add separate tests for: review-first batch exclusion+Undo; automatic exclusion over a new overlapping file; another card unaffected; edited bank-label preview stability; exact-vs-contains operator; two identical real purchases; changed-day possible duplicate held; pause/delete affecting only future imports; Include override persisting through reload/reapply; phone sheet focus/scroll and 320px/932x430 no overflow; keyboard-only create/cancel/restore.
-- [ ] Run `npm test -- --run src/utils/budget/exclusionRules.test.ts src/utils/budget/applyImportExclusions.test.ts src/store/triageExclusions.test.ts src/store/useTriageStore.test.ts src/components/budget/ExclusionRuleSheet.test.tsx src/components/budget/ExclusionRulePreview.test.tsx src/components/budget/ExclusionRulesWidget.test.tsx src/components/budget/ExcludedImportsWidget.test.tsx src/components/budget/TriageInboxWidget.test.tsx src/components/budget/ImportSummary.test.tsx src/components/budget/CSVUploader.test.tsx src/utils/backup.test.ts src/utils/syncService.test.ts`. Expect all selected tests pass.
-- [ ] Run `npm run build`, then `npm run e2e -- e2e/import-exclusions.spec.ts e2e/import-overlap.spec.ts --project=chromium`. Ensure port 4173 belongs to this worktree's preview. If occupied by another project, use a temporary local Playwright config on a free port and remove it afterward; do not stop an unrelated server. Expect all feature tests pass.
-- [ ] Run `npm run verify` once on the completed feature. Expected: lint, unit tests, build, bundle/eager/type-scale guards and browser suite pass with only existing configured skips. Diagnose actual failures; do not increase global timeouts or weaken assertions. Record counts and skipped tests from actual output rather than copying historical counts.
-- [ ] Add these bullets under 0.11.2-beta Added only after the behavior exists and passes:
+- [x] Add separate tests for: review-first batch exclusion+Undo; automatic exclusion over a new overlapping file; another card unaffected; edited bank-label preview stability; exact-vs-contains operator; two identical real purchases; changed-day possible duplicate held; pause/delete affecting only future imports; Include override persisting through reload/reapply; phone sheet focus/scroll and 320px/932x430 no overflow; keyboard-only create/cancel/restore.
+- [x] Run `npm test -- --run src/utils/budget/exclusionRules.test.ts src/utils/budget/applyImportExclusions.test.ts src/store/triageExclusions.test.ts src/store/useTriageStore.test.ts src/components/budget/ExclusionRuleSheet.test.tsx src/components/budget/ExclusionRulePreview.test.tsx src/components/budget/ExclusionRulesWidget.test.tsx src/components/budget/ExcludedImportsWidget.test.tsx src/components/budget/TriageInboxWidget.test.tsx src/components/budget/ImportSummary.test.tsx src/components/budget/CSVUploader.test.tsx src/utils/backup.test.ts src/utils/syncService.test.ts`. Expect all selected tests pass.
+- [x] Run `npm run build`, then `npm run e2e -- e2e/import-exclusions.spec.ts e2e/import-overlap.spec.ts --project=chromium`. Ensure port 4173 belongs to this worktree's preview. If occupied by another project, use a temporary local Playwright config on a free port and remove it afterward; do not stop an unrelated server. Expect all feature tests pass.
+- [x] Run `npm run verify` once on the completed feature. Expected: lint, unit tests, build, bundle/eager/type-scale guards and browser suite pass with only existing configured skips. Diagnose actual failures; do not increase global timeouts or weaken assertions. Record counts and skipped tests from actual output rather than copying historical counts.
+- [x] Add these bullets under 0.11.2-beta Added only after the behavior exists and passes:
 
 ```md
 - User-defined exclusion rules match original bank descriptions by card or account, with a preview and optional direction and amount conditions.
@@ -580,8 +580,8 @@ This first test proves save defaults to future imports. Extend it with UI-only s
 ```
 
 Keep package.json/package-lock version unchanged. Do not claim accepted transactions can be retroactively excluded.
-- [ ] Commit `test: verify transaction exclusion workflows and document release`. Request code review using the applicable review skill at execution time, fix material findings and rerun the checks affected by any final change. A review request can use a subagent only if that skill/user explicitly authorizes delegation.
-- [ ] Confirm `git diff --check`, targeted tests after final changes, `git status --short` and current branch. Leave main, push, PR and deployment untouched. Open the dev preview from this worktree with npm_package_version=0.11.2-beta and a free port; show the implemented rule flow without modifying real user data.
+- [x] Commit `test: verify transaction exclusion workflows and document release`. Request code review using the applicable review skill at execution time, fix material findings and rerun the checks affected by any final change. A review request can use a subagent only if that skill/user explicitly authorizes delegation.
+- [x] Confirm `git diff --check`, targeted tests after final changes, `git status --short` and current branch. Leave main, push, PR and deployment untouched. Open the dev preview from this worktree with npm_package_version=0.11.2-beta and a free port; show the implemented rule flow without modifying real user data.
 
 ## Coverage map and self-review
 
@@ -599,7 +599,7 @@ Keep package.json/package-lock version unchanged. Do not claim accepted transact
 | Migration, backup and sync | 1, 4 |
 | Keyboard, mobile, release notes and full gate | 5, 7 |
 
-Self-review performed against the research recommendations: no accepted-history mutation; restoration and duplicate identity remain separate; all shared method/type names are defined above; absent report fields are backward compatible; version-2 import history is preserved; explicit save/apply semantics and rule conflict precedence are fixed. Tasks 1 through 7 are pending. No application changes or test runs are represented as completed by this plan.
+Self-review performed against the research recommendations: no accepted-history mutation; restoration and duplicate identity remain separate; all shared method/type names are defined above; absent report fields are backward compatible; version-2 import history is preserved; explicit save/apply semantics and rule conflict precedence are fixed. Tasks 1 through 7 are complete. Validation and review results are recorded below.
 
 ## Execution handoff
 
@@ -607,3 +607,15 @@ Self-review performed against the research recommendations: no accepted-history 
 2. **Inline execution:** use executing-plans in this session, implementing task by task with checkpoints.
 
 Implementation must start by reading this plan, inspecting the actual branch state and reviewing the small UI mockup. Do not skip the migration/Undo/occurrence tests to accelerate visible UI work.
+
+
+## Execution record
+
+Implemented on codex/transaction-import-history through commit 398539f. The user selected subagent-driven execution and approved the compact UI layout. Each task received a separate spec and quality review; the whole branch received final review and re-review, with no outstanding Critical, Important or Minor findings.
+
+- Full project gate before the final narrow UI refinements: lint, 223 unit files / 1,845 tests, build, bundle/eager/type-scale checks, and 276 browser tests passed; 5 configured browser tests skipped.
+- Final affected verification after refinements: 13 component tests, 14 import browser scenarios, TypeScript, lint and build passed. Final bundle, eager graph and type-scale checks passed again.
+- Browser coverage includes desktop, phone, narrow and short-wide layouts; native keyboard history toggle; source scoping; overlap counts; rule precedence; manual inclusion; restoration; cancellation; and complete Discard All Undo.
+- Changelog includes exclusions under 0.11.2-beta. Package and lock versions remain 0.11.2-beta.
+- Detailed task reports, review findings, validation logs and sample-data screenshots are retained locally in .superpowers/sdd/2026-10-12-transaction-exclusions/.
+- Main checkout is preserved. No merge, push or deployment performed. The development preview uses port 5176 from this worktree.
