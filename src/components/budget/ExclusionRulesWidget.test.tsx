@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 import { afterEach, beforeEach, it, expect } from 'vitest'
 import { ExclusionRulesWidget } from './ExclusionRulesWidget'
 import { useTriageStore } from '../../store/useTriageStore'
@@ -6,7 +6,19 @@ import { useUndoStore } from '../../store/useUndoStore'
 const initial=useTriageStore.getState()
 beforeEach(()=>{useTriageStore.setState(initial,true);useUndoStore.getState().dismissUndo()})
 afterEach(cleanup)
-it('shows empty state and opens a blank editor',()=>{render(<ExclusionRulesWidget/>);expect(screen.getByText('No exclusion rules yet')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Add exclusion rule'}));expect(screen.getByLabelText('Rule Name')).toHaveValue('')})
+it('carries the inline description and account into the rule editor without saving',()=>{
+ useTriageStore.setState({importSources:{a:{id:'a',name:'Card A'}}})
+ render(<ExclusionRulesWidget/>)
+ fireEvent.change(screen.getByLabelText('Exclusion Description Match'),{target:{value:'Savings transfer'}})
+ fireEvent.click(screen.getByRole('button',{name:'Exclusion Card or Account'}))
+ fireEvent.click(screen.getByRole('option',{name:'Card A'}))
+ fireEvent.click(screen.getByRole('button',{name:'Add exclusion rule'}))
+ const editor=within(screen.getByRole('dialog',{name:'Exclusion Rule'}))
+ expect(editor.getByLabelText('Original Bank Description')).toHaveValue('Savings transfer')
+ expect(editor.getByRole('button',{name:'Card or Account'})).toHaveTextContent('Card A')
+ expect(useTriageStore.getState().exclusionRules).toEqual({})
+})
+it('shows empty state and opens a blank editor',()=>{render(<ExclusionRulesWidget/>);expect(screen.getByText('No rules created yet.')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Add exclusion rule'}));expect(screen.getByLabelText('Rule Name')).toHaveValue('')})
 it('pauses, confirms deletion and offers scoped Undo',()=>{
  useTriageStore.setState({importSources:{a:{id:'a',name:'Card A'}},exclusionRules:{r:{id:'r',revision:1,enabled:true,name:'Payments',sourceId:'a',description:{operator:'exact',value:'PAYMENT'},direction:'in',amount:{operator:'any'},behavior:'review'}}})
  render(<ExclusionRulesWidget/>);fireEvent.click(screen.getByRole('button',{name:'Pause Payments'}));expect(screen.getByText('Paused')).toBeInTheDocument()

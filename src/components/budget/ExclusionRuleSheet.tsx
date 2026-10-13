@@ -9,7 +9,7 @@ import type { ExclusionRuleDraft } from '../../types/exclusionRules'
 import { cashMovementCents, evaluateExclusionRules, previewExclusionRule, validateExclusionDraft } from '../../utils/budget/exclusionRules'
 import { captureTriageUndo } from '../../utils/budget/triageUndo'
 
-export type ExclusionRuleSheetProps = { open: boolean; onClose: () => void; ruleId?: string; seedRecordId?: string }
+export type ExclusionRuleSheetProps = { open: boolean; onClose: () => void; ruleId?: string; seedRecordId?: string; initialDraft?: ExclusionRuleDraft }
 const inputClass = 'min-h-11 w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md p-2 text-[14px] font-normal text-[var(--color-text-primary)] focus:border-[var(--color-accent)] transition-colors'
 function parseAmountCents(text: string): number | null {
   if (!/^\d+(?:\.\d{1,2})?$/.test(text.trim())) return null
@@ -21,7 +21,7 @@ function parseAmountCents(text: string): number | null {
 export function ExclusionRuleSheet(props: ExclusionRuleSheetProps) {
   return props.open ? <RuleForm key={`${props.ruleId ?? ''}:${props.seedRecordId ?? ''}`} {...props} /> : null
 }
-function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetProps) {
+function RuleForm({ open, onClose, ruleId, seedRecordId, initialDraft }: ExclusionRuleSheetProps) {
   const sources = useTriageStore(s => s.importSources)
   const records = useTriageStore(s => s.importRecords)
   const pending = useTriageStore(s => s.pendingTransactions)
@@ -29,7 +29,7 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
   const existing = ruleId ? rules[ruleId] : undefined
   const seed = seedRecordId ? records[seedRecordId] : undefined
   const unavailable = !!seedRecordId && (!seed || !sources[seed.sourceId])
-  const initial: ExclusionRuleDraft = existing ?? {
+  const initial: ExclusionRuleDraft = existing ?? initialDraft ?? {
     name: seed?.original.description ?? '', sourceId: seed?.sourceId ?? '',
     description: { operator: 'exact', value: seed?.original.description ?? '' },
     direction: seed ? (cashMovementCents(seed.original) > 0 ? 'in' : cashMovementCents(seed.original) < 0 ? 'out' : 'either') : 'either',
@@ -101,7 +101,7 @@ function RuleForm({ open, onClose, ruleId, seedRecordId }: ExclusionRuleSheetPro
     <label className="flex items-center gap-2 text-[12px] font-medium text-text-secondary"><Checkbox checked={applyPending} onChange={setApplyPending} ariaLabel="Apply current rules to transactions awaiting review" />Apply current rules to transactions awaiting review</label>
     {applyPending && (matchingCount === null ? <p className="text-[13px] text-text-secondary">Pending application preview unavailable until this draft is valid.</p> : <p className="text-[13px] text-text-secondary">All current enabled rules, including this draft if active, will be reapplied to {checked.length} transactions awaiting review. {matchingCount} pending imports match the next enabled rule set. Existing holds may be cleared. Included overrides stay included.</p>)}
     <p className="text-[13px] text-text-secondary">Already accepted transactions will stay unchanged.</p>
-    <div className="pt-2 mt-2 border-t border-[var(--color-border)] flex gap-2"><button type="button" className="min-h-11 px-4 py-3 rounded-md text-[14px] font-medium text-text-secondary hover:text-text-primary transition-colors" onClick={onClose}>Cancel</button><button type="button" className="flex-1 min-h-11 py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
+    <div className="pt-2 mt-2 border-t border-[var(--color-border)] flex gap-2"><button type="button" className="flex-1 min-h-11 py-3 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50" disabled={errors.length>0} onClick={save}>Save Rule</button></div>
     </div>
   </Sheet>
 }

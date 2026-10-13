@@ -20,6 +20,10 @@ function seed() {
   store.deleteExclusionRule(ruleId)
   useTriageStore.setState({lastImport:null})
 }
+it('hides the history bar when no entries are excluded', () => {
+  const { container } = render(<ExcludedImportsWidget />)
+  expect(container.querySelector('details')).toBeNull()
+})
 it('keeps the collapsed history summary in the tab order without a recent report', () => {
   seed()
   const { container, rerender } = render(<ExcludedImportsWidget />)
@@ -33,13 +37,14 @@ it('keeps the collapsed history summary in the tab order without a recent report
 it('restores a rule exclusion with no recent report or surviving rule and offers exact Undo', () => {
   seed()
   const original = useTriageStore.getState().importRecords.a
-  render(<ExcludedImportsWidget />)
+  const { container } = render(<ExcludedImportsWidget />)
   fireEvent.click(screen.getByText(/Excluded imports/))
   expect(screen.getByText(/Rule exclusion.*Payments/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name:'Restore PAYMENT to review'}))
   expect(useTriageStore.getState().pendingTransactions.a.id).toBe('a')
   expect(useTriageStore.getState().importRecords.a.exclusionOverride).toBe('include')
   expect(screen.getByRole('status')).toHaveTextContent('PAYMENT restored to review')
+  expect(container.querySelector('details')).toBeNull()
   useUndoStore.getState().runUndo()
   expect(useTriageStore.getState().importRecords.a).toEqual(original)
   expect(useTriageStore.getState().pendingTransactions.a).toBeUndefined()

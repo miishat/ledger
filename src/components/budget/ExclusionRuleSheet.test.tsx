@@ -19,7 +19,7 @@ it('uses bank originals and scoped row defaults; cancel never writes', () => {
  expect(screen.getByLabelText('Apply current rules to transactions awaiting review')).not.toBeChecked()
  expect(screen.getByText('1 matching import')).toBeInTheDocument()
  fireEvent.change(screen.getByLabelText('Rule Name'),{target:{value:'My payments'}})
- fireEvent.click(screen.getByRole('button',{name:'Cancel'}))
+ fireEvent.click(screen.getByRole('button',{name:'Close'}))
  expect(useTriageStore.getState().exclusionRules).toEqual({}); expect(useTriageStore.getState().pendingTransactions.a).toBeDefined(); expect(onClose).toHaveBeenCalledOnce()
 })
 it('requires explicit scope and preserves invalid decimal text', () => {

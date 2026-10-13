@@ -129,7 +129,7 @@ it('places one exclusion rules widget in Setup and preserves the tabs', () => {
 it('opens and focuses excluded history from the report on another tab', async () => {
   const triageBefore = useTriageStore.getState()
   try {
-    useTriageStore.setState({...triageBefore, lastImport:{addedIds:['a'],excludedIds:['a'],skippedIds:[],changedDays:[]}})
+    useTriageStore.setState({...triageBefore, importRecords:{a:{id:'a',sourceId:'card',decision:'ignored',original:{id:'a',date:'2026-06-10',amount:50,description:'Savings',type:'expense'}}}, lastImport:{addedIds:['a'],excludedIds:['a'],skippedIds:[],changedDays:[]}})
     render(<MemoryRouter initialEntries={['/?tab=overview']}><Budgeting /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button',{name:'View excluded imports'}))
     const details = document.getElementById('excluded-imports') as HTMLDetailsElement
@@ -137,5 +137,5 @@ it('opens and focuses excluded history from the report on another tab', async ()
     expect(details.open).toBe(true)
     expect(details.querySelector('summary')).toHaveFocus()
     expect(screen.getByRole('tab',{name:'Transactions'})).toHaveAttribute('aria-selected','true')
-  } finally { useTriageStore.setState(triageBefore, true) }
+  } finally { cleanup(); useTriageStore.setState(triageBefore, true) }
 })

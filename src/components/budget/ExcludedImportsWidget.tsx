@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useTriageStore } from '../../store/useTriageStore'
 import { captureTriageUndo } from '../../utils/budget/triageUndo'
 
@@ -11,14 +12,15 @@ export function ExcludedImportsWidget({ focusRequest = 0 }: { focusRequest?: num
   const [announcement, setAnnouncement] = useState('')
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
+  const excluded = Object.values(records).filter(record => record.decision === 'ignored')
+    .sort((a, b) => b.original.date.localeCompare(a.original.date) || a.id.localeCompare(b.id))
+  const hasExcluded = excluded.length > 0
   useEffect(() => {
     if (!focusRequest || !detailsRef.current) return
     detailsRef.current.open = true
     summaryRef.current?.focus()
     detailsRef.current.scrollIntoView?.({ block: 'nearest' })
-  }, [focusRequest])
-  const excluded = Object.values(records).filter(record => record.decision === 'ignored')
-    .sort((a, b) => b.original.date.localeCompare(a.original.date) || a.id.localeCompare(b.id))
+  }, [focusRequest, hasExcluded])
   const restore = (id: string) => {
     const offer = captureTriageUndo({pendingIds:[id], recordIds:[id]})
     useTriageStore.getState().restoreImportRecord(id)
@@ -26,12 +28,11 @@ export function ExcludedImportsWidget({ focusRequest = 0 }: { focusRequest?: num
     setAnnouncement(`${records[id].original.description} restored to review`)
     requestAnimationFrame(() => document.getElementById(`import-review-${id}`)?.focus())
   }
-  return <div className="min-w-0">
+  return <>
     <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
-    <details id={EXCLUDED_IMPORTS_ID} ref={detailsRef} className="min-w-0 rounded-lg border border-border bg-bg-secondary p-3">
-      <summary ref={summaryRef} tabIndex={0} className="min-h-11 cursor-pointer text-[14px] font-medium text-text-primary">Excluded imports ({excluded.length})</summary>
+    {hasExcluded && <details id={EXCLUDED_IMPORTS_ID} ref={detailsRef} className="group min-w-0 rounded-lg border border-border bg-bg-secondary p-3">
+      <summary ref={summaryRef} tabIndex={0} className="min-h-11 flex items-center gap-2 list-none cursor-pointer text-[14px] font-medium text-text-primary"><ChevronRight size={16} aria-hidden="true" className="transition-transform group-open:rotate-90" />Excluded imports ({excluded.length})</summary>
       <p className="text-[13px] text-text-secondary mb-3">Excluded and ignored bank entries stay in your import history. Restore sends an entry back to review.</p>
-      {excluded.length === 0 && <p className="text-[13px] text-text-secondary">No excluded imports.</p>}
       <ul className="space-y-2 min-w-0">
         {excluded.slice(0, limit).map(record => <li key={record.id} className="min-w-0 rounded-md border border-border p-3 flex flex-col gap-2">
           <div className="min-w-0 break-words">
@@ -43,6 +44,6 @@ export function ExcludedImportsWidget({ focusRequest = 0 }: { focusRequest?: num
         </li>)}
       </ul>
       {excluded.length > limit && <button onClick={() => setLimit(limit + 50)} className="min-h-11 px-3 text-accent">Show 50 more</button>}
-    </details>
-  </div>
+    </details>}
+  </>
 }

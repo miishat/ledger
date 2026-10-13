@@ -17,6 +17,7 @@ pre-1.0 beta.
 
 ### Fixed
 - The exclusion-rule popup matches the Add Transaction dialog style, with a solid background, consistent title-case labels, and shorter introductory text.
+- Exclusion rule management uses a compact description/account row and bordered list. The popup closes from its header, and excluded-import history stays hidden when empty.
 
 ## [0.11.1-beta] - 2026-10-08
 
