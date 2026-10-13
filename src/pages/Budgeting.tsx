@@ -12,6 +12,7 @@ import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
 import { ImportSummary } from '../components/budget/ImportSummary';
+import { ExcludedImportsWidget } from '../components/budget/ExcludedImportsWidget';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
 import { ExclusionRulesWidget } from '../components/budget/ExclusionRulesWidget';
 import { TransactionListWidget } from '../components/budget/TransactionListWidget';
@@ -44,6 +45,7 @@ const isBudgetTab = (v: string | null): v is BudgetTab =>
 
 export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [excludedFocusRequest, setExcludedFocusRequest] = useState(0);
   const isDesktop = useIsDesktop();
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
@@ -194,7 +196,7 @@ export const Budgeting: React.FC = () => {
       )}
 
       <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
-      <ImportSummary />
+      <ImportSummary onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} />
 
       <ParadigmBanner selectedMonth={range.to} />
 
@@ -238,6 +240,7 @@ export const Budgeting: React.FC = () => {
       {tab === 'transactions' && (
         <TabPanel id="transactions" className="flex flex-col gap-6">
           <TriageInboxWidget />
+          <ExcludedImportsWidget focusRequest={excludedFocusRequest} />
 
           <TransactionListWidget range={range} />
         </TabPanel>

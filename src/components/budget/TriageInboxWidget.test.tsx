@@ -6,10 +6,12 @@ import { useUndoStore } from '../../store/useUndoStore'
 
 const triageInitial = useTriageStore.getState()
 const budgetInitial = useBudgetStore.getState()
+const undoInitial = useUndoStore.getState()
 
 beforeEach(() => {
   useTriageStore.setState(triageInitial, true)
   useBudgetStore.setState(budgetInitial, true)
+  useUndoStore.setState(undoInitial, true)
 })
 
 describe('TriageInboxWidget', () => {
@@ -210,4 +212,81 @@ describe('TriageInboxWidget negative expenses', () => {
     render(<TriageInboxWidget />)
     expect(screen.getByText('+$100')).toBeInTheDocument()
   })
+})
+
+function seedHeld(duplicate = false, flag = false) {
+  const store = useTriageStore.getState()
+  const sourceId = store.createImportSource('Card A')
+  store.importTransactions([{ id: 'held', date: '2026-06-10', amount: 50, description: 'PAYMENT', type: 'income', ...(flag ? {flag: 'card-payment' as const} : {}) }], sourceId)
+  store.saveExclusionRule({ name: 'Payments', sourceId, description: {operator: 'exact', value: 'PAYMENT'}, direction: 'in', amount: {operator: 'any'}, behavior: 'review' }, { applyPending: true })
+  if (duplicate) store.updatePending('held', {duplicate: 'possible'})
+}
+
+it('shows rule reasons and includes only the user hold with exact Undo', () => {
+  seedHeld(false, true)
+  const before = useTriageStore.getState().importRecords.held
+  render(<TriageInboxWidget />)
+  expect(screen.getByText('Matches exclusion rule: Payments')).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: 'Accept All (0)'})).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: 'Include this transaction'}))
+  expect(useTriageStore.getState().pendingTransactions.held.exclusionMatches).toBeUndefined()
+  expect(useTriageStore.getState().pendingTransactions.held.flag).toBe('card-payment')
+  useUndoStore.getState().runUndo()
+  expect(useTriageStore.getState().importRecords.held).toEqual(before)
+})
+
+it('excludes matching rows with a reason and restores exact metadata on Undo', () => {
+  seedHeld()
+  const before = useTriageStore.getState().importRecords.held
+  render(<TriageInboxWidget />)
+  fireEvent.click(screen.getByRole('button', {name: 'Exclude'}))
+  expect(useTriageStore.getState().importRecords.held.ignoreReason).toBe('rule')
+  useUndoStore.getState().runUndo()
+  expect(useTriageStore.getState().importRecords.held).toEqual(before)
+})
+
+it('keeps possible duplicates outside the exclusion batch', () => {
+  seedHeld(true)
+  render(<TriageInboxWidget />)
+  expect(screen.queryByRole('button', {name: /Exclude matches/})).toBeNull()
+  expect(screen.getByRole('button', {name: 'Same charge'})).toBeInTheDocument()
+})
+
+it('seeds a similar-transactions rule from the original bank description', () => {
+  seedHeld()
+  useTriageStore.getState().updatePending('held', {description: 'Edited merchant'})
+  render(<TriageInboxWidget />)
+  fireEvent.click(screen.getByRole('button', {name: 'Exclude similar transactions'}))
+  expect(screen.getByLabelText('Original bank description')).toHaveValue('PAYMENT')
+})
+
+it('explains why legacy rows cannot create a sourced rule', () => {
+  useTriageStore.getState().addPending([{id:'legacy',date:'2026-06-10',amount:5,description:'Legacy',type:'expense'}])
+  render(<TriageInboxWidget />)
+  expect(screen.getByText('Source information unavailable')).toBeInTheDocument()
+  expect(screen.getByRole('button', {name:'Exclude similar transactions'})).toBeDisabled()
+})
+
+it('batch excludes only sourced held rows and restores their snapshots without touching unrelated work', () => {
+  seedHeld()
+  const store = useTriageStore.getState(), sourceId = store.importRecords.held.sourceId
+  store.importTransactions([{id:'second',date:'2026-06-11',amount:50,description:'PAYMENT',type:'income'}],sourceId)
+  const before = useTriageStore.getState().importRecords
+  store.updatePending('second', {duplicate:'possible'})
+  render(<TriageInboxWidget />)
+  fireEvent.click(screen.getByRole('button',{name:'Exclude matches (1)'}))
+  expect(useTriageStore.getState().pendingTransactions.held).toBeUndefined()
+  expect(useTriageStore.getState().pendingTransactions.second.duplicate).toBe('possible')
+  // Merge an unrelated change without invalidating the fresh Undo.
+  useTriageStore.setState(state => ({pendingTransactions:{...state.pendingTransactions,unrelated:{id:'unrelated',date:'2026-06-12',description:'New',amount:3,type:'expense'}}}))
+  useUndoStore.getState().runUndo()
+  expect(useTriageStore.getState().importRecords.held).toEqual(before.held)
+  expect(useTriageStore.getState().pendingTransactions.unrelated).toBeDefined()
+})
+
+it('keeps unavailable sources out of the batch exclusion action', () => {
+  seedHeld()
+  useTriageStore.setState({importSources:{}})
+  render(<TriageInboxWidget />)
+  expect(screen.queryByRole('button',{name:/Exclude matches/})).toBeNull()
 })

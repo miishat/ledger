@@ -7,13 +7,16 @@ import { useUndoStore } from '../../store/useUndoStore';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { formatMoney } from '../planner/format';
+import { captureTriageUndo } from '../../utils/budget/triageUndo';
+import { ExclusionRuleSheet } from './ExclusionRuleSheet';
+
+const reviewEntryId = (id: string) => `import-review-${id}`;
 
 export const TriageInboxWidget: React.FC = () => {
   const pendingTransactions = useTriageStore((state) => state.pendingTransactions);
   const updatePending = useTriageStore((state) => state.updatePending);
   const approveTransaction = useTriageStore((state) => state.approveTransaction);
   const approveAll = useTriageStore((state) => state.approveAll);
-  const addPending = useTriageStore((state) => state.addPending);
   const rejectTransaction = useTriageStore((state) => state.rejectTransaction);
   const resolveDuplicate = useTriageStore((state) => state.resolveDuplicate);
   const importRecords = useTriageStore((state) => state.importRecords);
@@ -25,6 +28,7 @@ export const TriageInboxWidget: React.FC = () => {
   const deleteTransactions = useBudgetStore((state) => state.deleteTransactions);
   const offerUndo = useUndoStore((state) => state.offerUndo);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [seedRecordId, setSeedRecordId] = useState<string>();
 
   const categories = useBudgetStore((state) => state.categories);
 
@@ -37,24 +41,43 @@ export const TriageInboxWidget: React.FC = () => {
   const cardPayments = txList.filter((tx) => tx.flag === 'card-payment');
   // Recomputed from the list rather than subtracted, because one row can be both
   // a duplicate and flagged, and subtracting both counts would double-count it.
-  const acceptableCount = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length).length;
+  const acceptableRows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
+  const acceptableCount = acceptableRows.length;
+  const held = txList.filter(tx => tx.exclusionMatches?.length && !tx.duplicate && tx.importRecordId && importSources[importRecords[tx.importRecordId]?.sourceId]);
+  const captureRows = (rows: typeof txList) => captureTriageUndo({ pendingIds: rows.map(tx => tx.id), recordIds: rows.flatMap(tx => tx.importRecordId ? [tx.importRecordId] : []) });
+  const offerApprovalUndo = (offer: ReturnType<typeof captureTriageUndo>, ids: string[]) => {
+    offer(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`);
+    const restore = useUndoStore.getState().pending!.undo;
+    offerUndo(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`, () => { deleteTransactions(ids); restore(); });
+  };
+  const excludeWithUndo = (rows: typeof txList) => {
+    const offer = captureRows(rows);
+    const ids = useTriageStore.getState().excludeExclusionMatches(rows.map(tx => tx.id));
+    if (ids.length) offer(`Excluded ${ids.length} transaction${ids.length === 1 ? '' : 's'}`);
+  };
+  const includeWithUndo = (tx: typeof txList[number]) => {
+    const offer = captureRows([tx]);
+    useTriageStore.getState().includeExclusionMatch(tx.id);
+    offer('Included 1 transaction for review');
+  };
 
   const handleAcceptAll = () => {
-    const rows = txList.filter((tx) => !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length);
+    const rows = acceptableRows;
+    const offer = captureRows(rows);
     const ids = approveAll();
-    offerUndo(`Added ${ids.length} transaction${ids.length === 1 ? '' : 's'}`, () => {
-      deleteTransactions(ids);
-      addPending(rows);
-    });
+    if (ids.length) offerApprovalUndo(offer, ids);
   };
 
   const approveWithUndo = (tx: typeof txList[number]) => {
+    if (tx.exclusionMatches?.length) return;
+    const offer = captureRows([tx]);
     approveTransaction(tx.id);
-    offerUndo('Added 1 transaction', () => { deleteTransactions([tx.id]); addPending([tx]); });
+    offerApprovalUndo(offer, [tx.id]);
   };
   const ignoreWithUndo = (tx: typeof txList[number], duplicate = false) => {
+    const offer = captureRows([tx]);
     if (duplicate) resolveDuplicate(tx.id); else rejectTransaction(tx.id);
-    offerUndo(duplicate ? 'Matched 1 duplicate' : 'Ignored 1 charge', () => addPending([tx]));
+    offer(duplicate ? 'Matched 1 duplicate' : 'Ignored 1 charge');
   };
 
   return (
@@ -62,18 +85,18 @@ export const TriageInboxWidget: React.FC = () => {
       <div className="flex flex-wrap justify-end gap-2 mt-2">
         <button
           onClick={() => setConfirmClearOpen(true)}
-          className="text-[13px] font-medium text-error hover:opacity-80 transition-opacity flex items-center gap-1 bg-error/10 px-2 py-1 rounded-md"
+          className="text-[13px] font-medium text-error hover:opacity-80 transition-opacity flex items-center gap-1 bg-error/10 min-h-11 px-3 rounded-md"
         >
           <Trash2 size={14} aria-hidden="true" /> Discard All
         </button>
         {duplicates.length > 0 && (
           <button
             onClick={() => {
-              const rows = duplicates;
+              const offer = captureRows(duplicates);
               rejectDuplicates();
-              offerUndo(`Matched ${rows.length} duplicates`, () => addPending(rows));
+              offer(`Matched ${duplicates.length} duplicates`);
             }}
-            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
+            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border min-h-11 px-3 rounded-md"
           >
             Reject {duplicates.length} duplicate{duplicates.length === 1 ? '' : 's'}
           </button>
@@ -81,18 +104,20 @@ export const TriageInboxWidget: React.FC = () => {
         {cardPayments.length > 0 && (
           <button
             onClick={() => {
-              const rows = cardPayments;
+              const offer = captureRows(cardPayments);
               rejectCardPayments();
-              offerUndo(`Ignored ${rows.length} card payments`, () => addPending(rows));
+              offer(`Ignored ${cardPayments.length} card payments`);
             }}
-            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border px-2 py-1 rounded-md"
+            className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border min-h-11 px-3 rounded-md"
           >
             Reject {cardPayments.length} card payment{cardPayments.length === 1 ? '' : 's'}
           </button>
         )}
+        {held.length > 0 && <button onClick={() => excludeWithUndo(held)} className="min-h-11 px-3 rounded-md border border-border text-text-secondary">Exclude matches ({held.length})</button>}
         <button
           onClick={handleAcceptAll}
-          className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 px-2 py-1 rounded-md"
+          disabled={!acceptableCount}
+          className="text-[13px] font-medium text-[var(--color-accent)] hover:opacity-80 transition-opacity flex items-center gap-1 bg-[var(--color-accent)]/10 min-h-11 px-3 rounded-md"
         >
           <Check size={14} /> Accept All ({acceptableCount})
         </button>
@@ -102,7 +127,7 @@ export const TriageInboxWidget: React.FC = () => {
           const existing = tx.duplicateRecordId ? importRecords[tx.duplicateRecordId]?.original :
             tx.duplicateTransactionId ? transactions[tx.duplicateTransactionId] ?? pendingTransactions[tx.duplicateTransactionId] : undefined;
           return (
-          <div key={tx.id} className="flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
+          <div key={tx.id} id={reviewEntryId(tx.id)} tabIndex={-1} className="min-w-0 flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
             <div className="flex justify-between items-start">
               <div className="min-w-0 break-words">
                 <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{tx.description}</p>
@@ -128,7 +153,17 @@ export const TriageInboxWidget: React.FC = () => {
             {existing && <p className="text-[13px] text-text-secondary break-words">
               Existing: {existing.description} · {existing.date} · ${existing.amount.toFixed(2)}
             </p>}
-            
+            {tx.exclusionMatches?.length ? <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-[13px] text-text-secondary break-words">Matches exclusion rule: {tx.exclusionMatches.map(match => match.name).join(', ')}</p>
+              <div className="flex flex-wrap gap-2">
+                {!tx.duplicate && <button className="min-h-11 px-3 rounded-md border border-border text-text-secondary" onClick={() => excludeWithUndo([tx])}>Exclude</button>}
+                <button className="min-h-11 px-3 rounded-md border border-border text-accent" onClick={() => includeWithUndo(tx)}>Include this transaction</button>
+              </div>
+            </div> : null}
+            <div className="min-w-0">
+              <button disabled={!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]} onClick={() => setSeedRecordId(tx.importRecordId)} className="min-h-11 px-3 rounded-md border border-border text-accent disabled:opacity-50">Exclude similar transactions</button>
+              {(!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]) && <p className="text-[12px] text-text-secondary mt-1">Source information unavailable</p>}
+            </div>
             <div className="flex items-center gap-2 mt-1">
               <ThemedSelect
                 value={tx.categoryId || ''}
@@ -143,6 +178,7 @@ export const TriageInboxWidget: React.FC = () => {
               
               {!tx.duplicate && <button
                 onClick={() => approveWithUndo(tx)}
+                disabled={!!tx.exclusionMatches?.length}
                 className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
                 title="Approve"
                 aria-label={`Approve ${tx.description}`}
@@ -160,7 +196,7 @@ export const TriageInboxWidget: React.FC = () => {
             </div>
             {tx.duplicate && <div className="flex flex-wrap gap-2 text-[13px]">
               <button onClick={() => ignoreWithUndo(tx, true)} className="min-h-11 px-3 rounded border border-border text-accent">Same charge</button>
-              <button onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent">Keep both</button>
+              <button disabled={!!tx.exclusionMatches?.length} onClick={() => approveWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-accent disabled:opacity-50">Keep both</button>
               <button onClick={() => ignoreWithUndo(tx)} className="min-h-11 px-3 rounded border border-border text-text-secondary">Ignore this charge</button>
             </div>}
           </div>
@@ -174,14 +210,15 @@ export const TriageInboxWidget: React.FC = () => {
         tone="danger"
         onConfirm={() => {
           const cleared = txList;
+          const offer = captureRows(cleared);
           clearAll();
-          offerUndo(`Cleared ${cleared.length} pending transaction${cleared.length === 1 ? '' : 's'}`, () =>
-            addPending(cleared),
-          );
+          offer(`Cleared ${cleared.length} pending transaction${cleared.length === 1 ? '' : 's'}`);
           setConfirmClearOpen(false);
         }}
         onCancel={() => setConfirmClearOpen(false)}
       />
+      <ExclusionRuleSheet open={!!seedRecordId} seedRecordId={seedRecordId} onClose={() => setSeedRecordId(undefined)} />
     </WidgetWrapper>
   );
 };
+

@@ -2,6 +2,7 @@ import { cleanup, render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Budgeting } from './Budgeting'
+import { useTriageStore } from '../store/useTriageStore'
 import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
 
 function renderBudget() {
@@ -123,4 +124,18 @@ it('places one exclusion rules widget in Setup and preserves the tabs', () => {
   const category = screen.getByText('Categorization Rules (0)')
   const exclusions = screen.getByText('Exclusion Rules (0)')
   expect(category.compareDocumentPosition(exclusions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
+
+it('opens and focuses excluded history from the report on another tab', async () => {
+  const triageBefore = useTriageStore.getState()
+  try {
+    useTriageStore.setState({...triageBefore, lastImport:{addedIds:['a'],excludedIds:['a'],skippedIds:[],changedDays:[]}})
+    render(<MemoryRouter initialEntries={['/?tab=overview']}><Budgeting /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button',{name:'View excluded imports'}))
+    const details = document.getElementById('excluded-imports') as HTMLDetailsElement
+    expect(details).toBeInTheDocument()
+    expect(details.open).toBe(true)
+    expect(details.querySelector('summary')).toHaveFocus()
+    expect(screen.getByRole('tab',{name:'Transactions'})).toHaveAttribute('aria-selected','true')
+  } finally { useTriageStore.setState(triageBefore, true) }
 })
