@@ -422,7 +422,7 @@ describe('Refunds & Payments entry', () => {
       fireEvent.click(screen.getAllByRole('button', { name: 'Slice category' })[1])
       fireEvent.click(screen.getByRole('option', { name: 'Dining' }))
     }
-    expect(screen.getAllByText('Reduces Groceries spending by '+(remainder ? '$40.00' : '$60.00')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Reduces Groceries spending by '+(remainder ? '$100.00' : '$60.00'))).toHaveLength(1)
     save()
     const saved = Object.values(useBudgetStore.getState().transactions)[0]
     expect(saved.amount).toBe(-100)
@@ -553,7 +553,7 @@ it.each(['parent', 'slice'])('rejects unsafe cent integers for %s values', field
   expect(screen.getByRole('alert')).toHaveTextContent('Enter an amount greater than zero')
 })
 
-it('shows the same rounded split reductions and parent remainder that it saves', () => {
+it('combines rounded split reductions and the parent remainder by category in the preview', () => {
   seed()
   useBudgetStore.setState({ categories: { ...useBudgetStore.getState().categories, dining: { id: 'dining', groupId: 'ge', name: 'Dining', targetAmount: 0 } } })
   render(<TransactionModal isOpen onClose={() => {}} />)
@@ -565,9 +565,9 @@ it('shows the same rounded split reductions and parent remainder that it saves',
   amounts.forEach(input => fireEvent.change(input, { target: { value: '0.335' } }))
   fireEvent.click(screen.getAllByRole('button', { name: 'Slice category' })[1])
   fireEvent.click(screen.getByRole('option', { name: 'Dining' }))
-  expect(screen.getByText('Reduces Groceries spending by $0.34')).toBeInTheDocument()
+  expect(screen.getAllByText('Reduces Groceries spending by $0.66')).toHaveLength(1)
   expect(screen.getByText('Reduces Dining spending by $0.34')).toBeInTheDocument()
-  expect(screen.getByText('Reduces Groceries spending by $0.32')).toBeInTheDocument()
+  expect(screen.queryByText('Reduces Groceries spending by $0.32')).not.toBeInTheDocument()
   expect(screen.getByText(/\$0.32 left to allocate/)).toBeInTheDocument()
   fireEvent.submit(screen.getByRole('button', { name: 'Add Transaction' }).closest('form')!)
   const saved = Object.values(useBudgetStore.getState().transactions)[0]

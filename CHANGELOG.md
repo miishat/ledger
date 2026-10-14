@@ -6,6 +6,9 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Added
+- Added Refunds & Payments to apply incoming money against expense categories, with a Settings option to hide the entry controls.
+
 ## [0.11.2-beta] - 2026-10-12
 
 ### Added

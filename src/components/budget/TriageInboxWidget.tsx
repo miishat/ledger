@@ -190,16 +190,18 @@ export const TriageInboxWidget: React.FC = () => {
             {!categoryReady && offsetReady && <p className="text-[12px] text-text-secondary">Review this category before accepting. Choose a valid category or Uncategorized.</p>}
             {!offsetReady && <p className="text-[12px] text-text-secondary">Choose an expense category before accepting this payment</p>}
             <div className="flex items-center gap-2 mt-1">
-              <ThemedSelect
-                value={selectedCategory || ''}
-                onChange={(v) => updatePending(tx.id, { categoryId: v })}
-                className="flex-1 min-w-0 text-[12px]"
-                ariaLabel={`Category for ${tx.description}`}
-                options={[
-                  { value: '', label: 'Uncategorized' },
-                  ...matchingCategories.map(cat => ({ value: cat.id, label: cat.name })),
-                ]}
-              />
+              <div className="flex-1 min-w-0">
+                <ThemedSelect
+                  value={selectedCategory || ''}
+                  onChange={(v) => updatePending(tx.id, { categoryId: v })}
+                  className="flex-1 min-w-0 text-[12px]"
+                  ariaLabel={`Category for ${tx.description}`}
+                  options={[
+                    { value: '', label: 'Uncategorized' },
+                    ...matchingCategories.map(cat => ({ value: cat.id, label: cat.name })),
+                  ]}
+                />
+              </div>
               
               {!tx.duplicate && <button
                 onClick={() => approveWithUndo(tx)}

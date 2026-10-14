@@ -88,6 +88,17 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
 
   const normalized = normalizeEntryAmounts(amount, isSplit ? splits.filter(slice => slice.amount !== 0 || !!slice.categoryId) : []);
   const remaining = normalized.remaining;
+  const reductionByCategory = new Map<string, number>();
+  if (!normalized.invalidAmount && !normalized.invalidAllocation && remaining >= 0) {
+    const parts = isSplit
+      ? [...normalized.splits, ...(remaining > 0 ? [{ categoryId: category, amount: remaining }] : [])]
+      : [{ categoryId: category, amount: normalized.amount }];
+    for (const part of parts) {
+      if (part.categoryId && categoryList.some(cat => cat.id === part.categoryId) && part.amount > 0) {
+        reductionByCategory.set(part.categoryId, round2((reductionByCategory.get(part.categoryId) ?? 0) + part.amount));
+      }
+    }
+  }
 
   const peopleSuggestions = React.useMemo(() => sharedPeople(transactions), [transactions]);
 
@@ -258,7 +269,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
                   Use this payment to reduce expenses instead of settling the shared bill.
                 </label>
               </>}
-              {!normalized.invalidAmount && !normalized.invalidAllocation && remaining >= 0 && (isSplit ? [...normalized.splits, ...(remaining > 0 ? [{ categoryId: category, amount: remaining }] : [])] : [{ categoryId: category, amount: normalized.amount }]).map((part, i) => categoryList.some(cat => cat.id === part.categoryId) && round2(part.amount) > 0 && <p key={i}>Reduces {categories[part.categoryId!].name} spending by {formatMoneyWithCents(round2(part.amount))}</p>)}
+              {[...reductionByCategory].map(([categoryId, reduction]) => <p key={categoryId}>Reduces {categories[categoryId].name} spending by {formatMoneyWithCents(reduction)}</p>)}
             </div>
           )}
           <div className="flex flex-col gap-2">
@@ -391,18 +402,20 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               <div className="flex flex-col gap-2 pl-1 border-l-2 border-[var(--color-border)] ml-1">
                 {splits.map((slice, i) => (
                   <div key={i} className="flex flex-wrap items-center gap-2">
-                    <ThemedSelect
-                      ariaLabel="Slice category"
-                      value={slice.categoryId ?? ''}
-                      onChange={(v) =>
-                        setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, categoryId: v } : s)))
-                      }
-                      className="flex-1 text-[12px]"
-                      options={[
-                        { value: '', label: 'Uncategorized' },
-                        ...categoryList.map((cat) => ({ value: cat.id, label: cat.name })),
-                      ]}
-                    />
+                    <div className="min-w-0 flex-1 basis-36">
+                      <ThemedSelect
+                        ariaLabel="Slice category"
+                        value={slice.categoryId ?? ''}
+                        onChange={(v) =>
+                          setSplits((cur) => cur.map((s, j) => (j === i ? { ...s, categoryId: v } : s)))
+                        }
+                        className="flex-1 text-[12px]"
+                        options={[
+                          { value: '', label: 'Uncategorized' },
+                          ...categoryList.map((cat) => ({ value: cat.id, label: cat.name })),
+                        ]}
+                      />
+                    </div>
                     <NumberInput
                       id={`tx-split-amount-${i}`}
                       value={slice.amount}

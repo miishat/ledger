@@ -3,6 +3,46 @@ import { buildBackup, restoreBackup, BACKUP_VERSION, type BackupEnvelope, backup
 import { STORAGE_KEYS } from '../store/storageKeys'
 import { useAccountsStore } from '../store/useAccountsStore'
 import { useMarketDataStore } from '../store/useMarketDataStore'
+import { useBudgetStore } from '../store/useBudgetStore'
+import { monthlyExpenseTotal, monthlyIncomeTotal } from '../store/budgetSelectors'
+
+describe('Refunds & Payments backup compatibility', () => {
+  beforeEach(() => localStorage.clear())
+
+  it.each([false, true])('retains preference %s and signed allocations through restore and rehydration', async enabled => {
+    const transactions = {
+      purchase: { id: 'purchase', date: '2026-10-01', type: 'expense' as const, amount: 60, description: 'Purchase', categoryId: 'food' },
+      receipt: { id: 'receipt', date: '2026-10-13', type: 'expense' as const, amount: -100, description: 'Receipt', categoryId: 'food', splits: [{ categoryId: 'other', amount: -30 }] },
+    }
+    const payload = { version: 5, state: { transactions, refundsAndPaymentsEnabled: enabled,
+      categoryGroups: { expenses: { id: 'expenses', name: 'Expenses', kind: 'expense' } },
+      categories: { food: { id: 'food', groupId: 'expenses', name: 'Groceries', targetAmount: 100 }, other: { id: 'other', groupId: 'expenses', name: 'Other', targetAmount: 100 } },
+    } }
+    localStorage.setItem(STORAGE_KEYS.budget, JSON.stringify(payload))
+    const backup = buildBackup()
+    expect(backup.version).toBe(2)
+    expect(backup.data[STORAGE_KEYS.budget]).toEqual(payload)
+    localStorage.clear()
+    restoreBackup(backup)
+    await useBudgetStore.persist.rehydrate()
+    const state = useBudgetStore.getState()
+    expect(state.refundsAndPaymentsEnabled).toBe(enabled)
+    expect(state.transactions).toEqual(transactions)
+    expect(monthlyExpenseTotal(state.transactions, '2026-10')).toBe(-40)
+    expect(monthlyIncomeTotal(state.transactions, '2026-10')).toBe(0)
+  })
+
+  it('defaults an older v4 backup to enabled without changing transactions', async () => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: false })
+    const transactions = { old: { id: 'old', date: '2026-09-01', type: 'expense', amount: -40, description: 'Old receipt' } }
+    restoreBackup({ app: 'ledger', version: 2, exportedAt: '', data: {
+      [STORAGE_KEYS.budget]: { version: 4, state: { transactions, categories: {}, categoryGroups: {} } },
+    } })
+    await useBudgetStore.persist.rehydrate()
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(true)
+    expect(useBudgetStore.getState().transactions).toEqual(transactions)
+  })
+})
 
 describe('backup', () => {
   beforeEach(() => localStorage.clear())

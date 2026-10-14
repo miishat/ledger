@@ -4,6 +4,94 @@ import { seedApp } from './seed'
 const DISCLAIMER_ACK_KEY = 'ledger-disclaimer-ack'
 const BUDGET_KEY = 'ledger-budget'
 
+test('Refunds & Payments phone entry, cards, import review and Settings stay usable', async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    const date = new Date().toISOString().slice(0, 7) + '-04'
+    localStorage.setItem('ledger-budget', JSON.stringify({ version: 5, state: {
+      refundsAndPaymentsEnabled: true,
+      categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' } },
+      categories: { groceries: { id: 'groceries', groupId: 'food', name: 'Household groceries and pantry supplies', targetAmount: 100 } },
+      transactions: { receipt: { id: 'receipt', date, amount: -100, description: 'Phone receipt', categoryId: 'groceries', type: 'expense' } },
+    } }))
+  })
+  await page.goto('/#/budget')
+  const originalViewport = page.viewportSize()!
+  const viewports = originalViewport.height < 500 ? [originalViewport] : [{ width: 320, height: 700 }, { width: 375, height: 812 }]
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
+    await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
+    const card = page.getByRole('button', { name: 'Edit Phone receipt', exact: true }).filter({ visible: true })
+    await expect(card).toContainText('+$100')
+    const cardContainer = page.getByTestId('transaction-card-receipt')
+    await expect(cardContainer).toContainText('Refunds & Payments')
+    await expect.poll(() => cardContainer.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-card-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+    await page.getByRole('button', { name: 'Add Transaction', exact: true }).first().click()
+    const panel = page.locator('[data-testid="sheet-panel"][data-state="open"]')
+    for (const name of ['Expense', 'Income', 'Refunds & Payments']) {
+      const choice = panel.getByRole('button', { name, exact: true })
+      expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    }
+    const payment = panel.getByRole('button', { name: 'Refunds & Payments', exact: true })
+    await payment.focus()
+    await payment.press('Enter')
+    await expect(payment).toBeFocused()
+    await expect(payment).toHaveAttribute('aria-pressed', 'true')
+    await panel.getByLabel('Amount', { exact: true }).fill('40')
+    await panel.evaluate(el => { el.scrollTop = 0 })
+    await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-form-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+    await panel.getByLabel('Split across categories').check()
+    await panel.getByLabel('Slice amount', { exact: true }).fill('20')
+    await panel.getByRole('button', { name: 'Slice category', exact: true }).click()
+    await page.getByRole('option', { name: 'Household groceries and pantry supplies', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: 'Select an option', exact: true })).toBeHidden()
+    await expect(panel.getByText('Reduces Household groceries and pantry supplies spending by $40.00', { exact: true })).toHaveCount(1)
+    await expect(panel.getByText('Reduces Household groceries and pantry supplies spending by $20.00', { exact: true })).toHaveCount(0)
+    await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await panel.getByLabel('Slice amount', { exact: true }).scrollIntoViewIfNeeded()
+    for (const name of ['Add a slice', 'Remove slice']) {
+      const box = (await panel.getByRole('button', { name, exact: true }).boundingBox())!
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.width).toBeGreaterThanOrEqual(44)
+    }
+    await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-split-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+    await page.keyboard.press('Escape')
+    await page.getByTestId('mobile-topbar').getByRole('button', { name: 'Settings', exact: true }).tap()
+    const toggle = panel.getByLabel('Refunds & Payments', { exact: true })
+    await toggle.focus()
+    await toggle.press('Space')
+    await expect(toggle).not.toBeChecked()
+    await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-settings-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Add Transaction', exact: true }).first().click()
+    await expect(panel.getByRole('button', { name: 'Refunds & Payments', exact: true })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await card.click()
+    await expect(panel).toContainText('This saved payment still counts.')
+    await page.keyboard.press('Escape')
+    await page.getByTestId('mobile-topbar').getByRole('button', { name: 'Settings', exact: true }).click()
+    await toggle.check()
+    await page.keyboard.press('Escape')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
+  const date = new Date().toISOString().slice(0, 7) + '-05'
+  await page.locator('input[type=file][accept=".csv"]').setInputFiles({ name: 'phone.csv', mimeType: 'text/csv', buffer: Buffer.from(`${date},Phone bank receipt,,40.00,1234********5678`) })
+  const treatment = page.getByRole('button', { name: 'Treatment for Phone bank receipt', exact: true })
+  await treatment.click()
+  await page.getByRole('option', { name: 'Refunds & Payments', exact: true }).click()
+  await page.getByRole('button', { name: 'Category for Phone bank receipt', exact: true }).click()
+  await page.getByRole('option', { name: 'Household groceries and pantry supplies', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Select an option', exact: true })).toBeHidden()
+  const approve = page.getByRole('button', { name: 'Approve Phone bank receipt', exact: true })
+  expect((await approve.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  const row = treatment.locator('xpath=ancestor::div[starts-with(@id,"import-review-")]')
+  await expect.poll(() => row.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+  await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-import-${testInfo.project.name}.png`, fullPage: true })
+  await approve.click()
+  await expect(approve).toBeHidden()
+})
+
 // Same shape as e2e/a11y-mobile.spec.ts's SEED_TRANSACTIONS, so both suites
 // exercise the same populated card list instead of an empty state.
 const SEED_TRANSACTIONS: Record<string, unknown> = {
