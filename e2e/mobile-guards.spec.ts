@@ -84,9 +84,25 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
   await page.getByRole('option', { name: 'Household groceries and pantry supplies', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Select an option', exact: true })).toBeHidden()
   const approve = page.getByRole('button', { name: 'Approve Phone bank receipt', exact: true })
-  expect((await approve.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   const row = treatment.locator('xpath=ancestor::div[starts-with(@id,"import-review-")]')
-  await expect.poll(() => row.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
+    await expect(treatment).toContainText('Refunds & Payments')
+    await approve.scrollIntoViewIfNeeded()
+    await expect(approve).toBeInViewport()
+    expect((await approve.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    await expect.poll(() => row.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await expect.poll(() => row.evaluate(el => {
+      const bounds = el.getBoundingClientRect()
+      return [...el.querySelectorAll('button')].filter(button => {
+        const rect = button.getBoundingClientRect()
+        return rect.left < bounds.left - 0.5 || rect.right > bounds.right + 0.5
+          || rect.left < -0.5 || rect.right > innerWidth + 0.5
+      }).map(button => button.getAttribute('aria-label') || button.textContent?.trim())
+    })).toEqual([])
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-import-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+  }
   await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-import-${testInfo.project.name}.png`, fullPage: true })
   await approve.click()
   await expect(approve).toBeHidden()
