@@ -10,5 +10,3 @@ function mode(form,kind){form.dataset.mode=kind;for(const b of form.querySelecto
 for(const form of document.querySelectorAll('form')){for(const b of form.querySelectorAll('[data-kind]'))b.onclick=()=>mode(form,b.dataset.kind);form.oninput=()=>update(form);form.querySelector('.split').onchange=e=>{form.querySelector('.split-fields').hidden=!e.target.checked;update(form)};form.onsubmit=e=>{e.preventDefault();const feedback=form.querySelector('.feedback');feedback.hidden=false;feedback.textContent='Preview only. No transaction was saved.'};form.querySelector('.cancel').onclick=()=>{const feedback=form.querySelector('.feedback');feedback.hidden=false;feedback.textContent='Preview only. No changes were saved.'}}
 document.getElementById('enabled').onchange=e=>{for(const form of document.querySelectorAll('form')){form.querySelector('.refund').hidden=!e.target.checked;if(!e.target.checked&&form.dataset.mode==='refund')mode(form,'expense');if(e.target.checked)mode(form,'refund')}document.getElementById('setting-status').textContent=e.target.checked?'Enabled for new transactions':'Off for new transactions. Saved payments still count.'};
 </script></body></html>
-
-
