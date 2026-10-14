@@ -34,6 +34,87 @@ async function edit(page: Page, description: string) {
   return page.getByTestId('sheet-panel')
 }
 
+for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 }, { width: 375, height: 812 }, { width: 750, height: 340 }]) {
+  test(`actual net-credit chart and category disclosure at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    for (const creditOnly of [false, true]) {
+      await page.evaluate(onlyCredit => {
+        const now = new Date()
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-04`
+        localStorage.setItem('ledger-budget', JSON.stringify({ version: 5, state: {
+          refundsAndPaymentsEnabled: false,
+          categoryGroups: { income: { id: 'income', name: 'Income', kind: 'income' }, housing: { id: 'housing', name: 'Housing', kind: 'expense' }, shopping: { id: 'shopping', name: 'Shopping', kind: 'expense' } },
+          categories: { salary: { id: 'salary', groupId: 'income', name: 'Salary', targetAmount: 0 }, rent: { id: 'rent', groupId: 'housing', name: 'Rent', targetAmount: 500 }, shopping: { id: 'shopping', groupId: 'shopping', name: 'Shopping', targetAmount: 100 } },
+          transactions: {
+            ...(!onlyCredit ? { salary: { id: 'salary', date, type: 'income', amount: 1000, description: 'Salary', categoryId: 'salary' }, rent: { id: 'rent', date, type: 'expense', amount: 500, description: 'Rent', categoryId: 'rent' } } : {}),
+            purchase: { id: 'purchase', date, type: 'expense', amount: 60, description: 'Shopping purchase', categoryId: 'shopping' },
+            refund: { id: 'refund', date, type: 'expense', amount: -100, description: 'Shopping refund', categoryId: 'shopping' },
+          },
+        } }))
+      }, creditOnly)
+      await page.reload()
+      await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+      const incomeCard = page.getByRole('heading', { name: 'Income', exact: true }).locator('xpath=../..')
+      await expect(incomeCard).toContainText(creditOnly ? '$0' : '$1,000')
+      await expect(incomeCard).not.toContainText('$1,040')
+      const flow = page.getByRole('img', { name: /^Cash flow this period:/ })
+      await expect(flow).toHaveAttribute('aria-label', creditOnly
+        ? 'Cash flow this period: $0 income across 0 sources plus $40 expense credits across 1 groups into $0 of positive net expenses across 0 groups, leaving $40 net remaining'
+        : 'Cash flow this period: $1,000 income across 1 sources plus $40 expense credits across 1 groups into $500 of positive net expenses across 1 groups, leaving $540 net remaining')
+      await flow.scrollIntoViewIfNeeded()
+      const svg = flow.locator('svg.recharts-surface')
+      await expect(svg).toBeVisible()
+      await expect(svg.locator('text').filter({ hasText: /^Shopping credit$/ })).toBeVisible()
+      await expect(svg.locator('text').filter({ hasText: /^Net remaining$/ })).toBeVisible()
+      await expect(svg.locator('g title')).toHaveText(creditOnly
+        ? ['Shopping credit', 'Available funds', 'Net remaining']
+        : ['Salary', 'Shopping credit', 'Available funds', 'Housing', 'Net remaining'])
+      const links = svg.locator('path[stroke-width]')
+      await expect(links).toHaveCount(creditOnly ? 2 : 4)
+      const widths = await links.evaluateAll(paths => paths.map(path => Number(path.getAttribute('stroke-width'))))
+      expect(widths.every(width => Number.isFinite(width) && width > 0)).toBe(true)
+      expect(widths[0] / widths[1]).toBeCloseTo(creditOnly ? 1 : 25, 2)
+      if (!creditOnly) expect(widths[3] / widths[2]).toBeCloseTo(540 / 500, 2)
+      expect(await links.evaluateAll(paths => paths.every(path => !/NaN|Infinity/.test(path.getAttribute('d') || '')))).toBe(true)
+      const flowCard = page.getByRole('heading', { name: 'Cash Flow', exact: true }).locator('xpath=../..')
+      await expect(flowCard).not.toContainText('No transactions this month.')
+      await expect.poll(() => flowCard.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+      const clippedLabels = await svg.locator('text').evaluateAll(labels => labels.filter(label => {
+        const bounds = label.ownerSVGElement!.getBoundingClientRect()
+        const text = label.getBoundingClientRect()
+        return text.left < bounds.left - 0.5 || text.right > bounds.right + 0.5
+      }).map(label => label.textContent))
+      expect(clippedLabels).toEqual([])
+      await svg.locator('g title').filter({ hasText: /^Shopping credit$/ }).locator('..').locator('rect').hover()
+      await expect(flow.locator('.recharts-tooltip-wrapper')).toContainText('$40')
+      await svg.locator('g title').filter({ hasText: /^Net remaining$/ }).locator('..').locator('rect').hover()
+      await expect(flow.locator('.recharts-tooltip-wrapper')).toContainText(creditOnly ? '$40' : '$540')
+      await flowCard.screenshot({ path: `.superpowers/sdd/screenshots/refund-cashflow-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
+      await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+      const shoppingInput = page.locator('input[value="Shopping"]')
+      const category = shoppingInput.locator('xpath=../..')
+      await expect(category).toContainText('$40.00 net credit')
+      const disclosure = category.locator('summary')
+      await disclosure.scrollIntoViewIfNeeded()
+      await disclosure.focus()
+      await disclosure.press('Enter')
+      await expect(category.locator('details')).toHaveAttribute('open', '')
+      await expect(category.locator('details p')).toHaveText('$60.00 purchases · $100.00 refunds & payments')
+      await expect.poll(() => category.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+      const disclosureBounds = await category.locator('details, details p, summary').evaluateAll(elements => elements.filter(el => {
+        const bounds = el.getBoundingClientRect()
+        return el.scrollWidth > el.clientWidth + 1 || bounds.left < -0.5 || bounds.right > innerWidth + 0.5
+      }).map(el => ({ tag: el.tagName, text: el.textContent })))
+      expect(disclosureBounds).toEqual([])
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      await disclosure.blur()
+      const categoryGroup = shoppingInput.locator('xpath=ancestor::div[contains(@class,"break-inside-avoid")][1]')
+      await expect.poll(() => categoryGroup.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+      await categoryGroup.screenshot({ path: `.superpowers/sdd/screenshots/refund-category-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
+    }
+  })
+}
+
 test('manual split payment saves signed amounts and stays editable after disabling and backup restore', async ({ page }) => {
   await page.getByRole('button', { name: 'Add Transaction', exact: true }).first().click()
   const panel = page.getByTestId('sheet-panel')
