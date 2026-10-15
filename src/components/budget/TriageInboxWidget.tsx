@@ -134,11 +134,12 @@ export const TriageInboxWidget: React.FC = () => {
           const categoryReady = hasValidPendingCategory(tx, categories, categoryGroups);
           const matchingCategories = categoryList.filter(cat => categoryGroups[cat.groupId]?.kind === tx.type);
           const selectedCategory = matchingCategories.some(cat => cat.id === tx.categoryId) ? tx.categoryId : '';
+          const canCreateExclusion = !!tx.importRecordId && !!importSources[importRecords[tx.importRecordId]?.sourceId];
           const existing = tx.duplicateRecordId ? importRecords[tx.duplicateRecordId]?.original :
             tx.duplicateTransactionId ? transactions[tx.duplicateTransactionId] ?? pendingTransactions[tx.duplicateTransactionId] : undefined;
           return (
           <div key={tx.id} id={reviewEntryId(tx.id)} tabIndex={-1} className="min-w-0 flex flex-col p-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] gap-2">
-            <div className="flex justify-between items-start">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] desktop:grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-x-3 gap-y-2">
               <div className="min-w-0 break-words">
                 <p className="text-[14px] font-medium text-[var(--color-text-primary)]">{tx.description}</p>
                 {tx.importSourceId && <p className="text-[12px] text-text-secondary">{importSources[tx.importSourceId]?.name}</p>}
@@ -156,7 +157,12 @@ export const TriageInboxWidget: React.FC = () => {
                   )}
                 </p>
               </div>
-              <span className={`shrink-0 text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
+              <button
+                disabled={!canCreateExclusion}
+                onClick={() => setSeedRecordId(tx.importRecordId)}
+                className="order-3 col-span-2 justify-self-start min-h-11 -ml-3 px-3 rounded-md text-[13px] text-accent hover:bg-accent/10 disabled:opacity-50 desktop:order-none desktop:col-span-1 desktop:ml-0 desktop:border desktop:border-border desktop:whitespace-nowrap"
+              >Exclude similar transactions</button>
+              <span className={`order-2 desktop:order-none min-h-11 flex items-center shrink-0 text-[14px] font-bold ${tx.type === 'income' ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
                 {cashMovement(tx) > 0 ? `+${formatMoney(cashMovement(tx))}` : formatMoney(cashMovement(tx))}
               </span>
             </div>
@@ -170,56 +176,59 @@ export const TriageInboxWidget: React.FC = () => {
                 <button className="min-h-11 px-3 rounded-md border border-border text-accent" onClick={() => includeWithUndo(tx)}>Include this transaction</button>
               </div>
             </div> : null}
-            <div className="min-w-0">
-              <button disabled={!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]} onClick={() => setSeedRecordId(tx.importRecordId)} className="min-h-11 px-3 rounded-md border border-border text-accent disabled:opacity-50">Exclude similar transactions</button>
-              {(!tx.importRecordId || !importSources[importRecords[tx.importRecordId]?.sourceId]) && <p className="text-[12px] text-text-secondary mt-1">Source information unavailable</p>}
-            </div>
+            {!canCreateExclusion && <p className="text-[12px] text-text-secondary">Source information unavailable</p>}
             {cashMovement(tx) > 0 && <div className="flex flex-col gap-1 min-w-0">
               <p className="text-[12px] text-text-secondary">Changing treatment clears the category. Review your category before accepting.</p>
-              <ThemedSelect value={kind} ariaLabel={`Treatment for ${tx.description}`}
-                onChange={value => {
-                  if (value !== kind) setPendingReceiptTreatment(tx.id, value as 'income' | 'refund-payment');
-                }}
-                options={[
-                  { value: 'income', label: 'Income' },
-                  ...(refundsAndPaymentsEnabled || kind === 'refund-payment' ? [{ value: 'refund-payment', label: 'Refunds & Payments' }] : []),
-                ]} />
               {kind === 'refund-payment' && <p className="text-[12px] text-text-secondary">Reduces spending in one expense category. You can split this payment after acceptance in the transaction editor.</p>}
               {kind === 'refund-payment' && !refundsAndPaymentsEnabled && <p className="text-[12px] text-text-secondary">Refunds & Payments is off for new transactions. This saved payment still counts.</p>}
             </div>}
             {!categoryReady && offsetReady && <p className="text-[12px] text-text-secondary">Review this category before accepting. Choose a valid category or Uncategorized.</p>}
             {!offsetReady && <p className="text-[12px] text-text-secondary">Choose an expense category before accepting this payment</p>}
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex-1 min-w-0">
-                <ThemedSelect
-                  value={selectedCategory || ''}
-                  onChange={(v) => updatePending(tx.id, { categoryId: v })}
-                  className="flex-1 min-w-0 text-[12px]"
-                  ariaLabel={`Category for ${tx.description}`}
-                  options={[
-                    { value: '', label: 'Uncategorized' },
-                    ...matchingCategories.map(cat => ({ value: cat.id, label: cat.name })),
-                  ]}
-                />
+            <div className="flex flex-col desktop:flex-row gap-2 min-w-0 mt-1">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {cashMovement(tx) > 0 && <div className="flex-1 min-w-0 desktop:flex-none desktop:w-[210px]">
+                  <ThemedSelect value={kind} ariaLabel={`Treatment for ${tx.description}`}
+                    className="min-w-0 !min-h-11 !text-[13px]"
+                    onChange={value => {
+                      if (value !== kind) setPendingReceiptTreatment(tx.id, value as 'income' | 'refund-payment');
+                    }}
+                    options={[
+                      { value: 'income', label: 'Income' },
+                      ...(refundsAndPaymentsEnabled || kind === 'refund-payment' ? [{ value: 'refund-payment', label: 'Refunds & Payments' }] : []),
+                    ]} />
+                </div>}
+                <div className="flex-1 min-w-0">
+                  <ThemedSelect
+                    value={selectedCategory || ''}
+                    onChange={(v) => updatePending(tx.id, { categoryId: v })}
+                    className="min-w-0 !min-h-11 !text-[13px]"
+                    ariaLabel={`Category for ${tx.description}`}
+                    options={[
+                      { value: '', label: 'Uncategorized' },
+                      ...matchingCategories.map(cat => ({ value: cat.id, label: cat.name })),
+                    ]}
+                  />
+                </div>
               </div>
-              
-              {!tx.duplicate && <button
-                onClick={() => approveWithUndo(tx)}
-                disabled={!!tx.exclusionMatches?.length || !categoryReady}
-                className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
-                title="Approve"
-                aria-label={`Approve ${tx.description}`}
-              >
-                <Check size={16} />
-              </button>}
-              {!tx.duplicate && <button
-                onClick={() => ignoreWithUndo(tx)}
-                className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
-                title="Reject/Delete"
-                aria-label={`Ignore ${tx.description}`}
-              >
-                <X size={16} />
-              </button>}
+              <div className="flex gap-2 justify-end shrink-0">
+                {!tx.duplicate && <button
+                  onClick={() => approveWithUndo(tx)}
+                  disabled={!!tx.exclusionMatches?.length || !categoryReady}
+                  className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
+                  title="Approve"
+                  aria-label={`Approve ${tx.description}`}
+                >
+                  <Check size={16} />
+                </button>}
+                {!tx.duplicate && <button
+                  onClick={() => ignoreWithUndo(tx)}
+                  className="h-11 w-11 shrink-0 flex items-center justify-center rounded bg-error/10 text-error hover:bg-error/20 transition-colors"
+                  title="Reject/Delete"
+                  aria-label={`Ignore ${tx.description}`}
+                >
+                  <X size={16} />
+                </button>}
+              </div>
             </div>
             {tx.duplicate && <div className="flex flex-wrap gap-2 text-[13px]">
               <button onClick={() => ignoreWithUndo(tx, true)} className="min-h-11 px-3 rounded border border-border text-accent">Same charge</button>

@@ -14,6 +14,7 @@
 - Default enabled for both fresh installs and existing users. Explicit `false` survives migration, reload, backup, and restore.
 - Any incoming transaction may be intentionally classified as an offset. Eligibility is not restricted to refunds or proven repayments.
 - The user authorized subagent-driven implementation and approved the desktop/phone preview on October 13, 2026. Push, merge, and release actions remain pending.
+- October 14 triage decision: use prototype B from `f50daeb`. Put the real Exclude similar transactions action beside the amount on desktop and below metadata on phones. Incoming treatment and category controls share one row at every width, with flexible widths and truncated labels. Outgoing rows retain category only. Approve and Ignore sit on a separate right-aligned row on phones. Preserve all validation, helper warnings, source restrictions, and exclusion behavior. Prototype code stays out of production.
 - Use the approved preview: Expense and Income share the first choice row; Refunds & Payments occupies the full second row. Preserve surrounding form anatomy and existing fields.
 - Preserve unrelated checkout changes. Execute in an isolated worktree after reading using-git-worktrees.
 - Do not use em dashes. Do not select Astra unless explicitly requested. Implementation, review, research, and test execution use medium reasoning effort or lower.

@@ -173,6 +173,7 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
   test(`keyboard create cancel and collapsed history restore at ${width}x${height}`, async ({ page }) => {
     await start(page, width, height)
     await upload(page, row('2026-06-10', 'Savings'))
+    await expect(pendingRow(page, 'Savings')).toBeVisible()
     const rulesBeforeCancel = await persistedRuleCount(page)
     await page.mouse.move(0, 0)
     await page.getByRole('tab', { name: 'Setup', exact: true }).click()
