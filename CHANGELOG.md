@@ -6,12 +6,11 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
-### Added
-- Added Refunds & Payments to apply incoming money against expense categories, with a Settings option to hide the entry controls.
-
 ## [0.11.2-beta] - 2026-10-12
 
 ### Added
+- Refunds & Payments applies incoming money against selected expense categories without counting it as income. It is enabled by default and can be turned off in Settings.
+- Incoming imports can be reviewed as income or Refunds & Payments, with category credits reflected in spending totals and cash flow.
 - User-defined exclusion rules match original bank descriptions by card or account, with a preview and optional direction and amount conditions.
 - Matching imports can wait for review or be excluded automatically. Excluded entries retain their reasons and can return to review without creating duplicate charges.
 - Overlapping transaction CSV imports remember the original charges and review decisions for each card or account. Repeated days skip already handled entries while preserving multiple identical purchases.
@@ -19,6 +18,7 @@ pre-1.0 beta.
 - CIBC imports recognize the masked card automatically. Other CSVs let you choose a saved card or account. Import history travels with backups and sync; older transactions without source history remain reviewable.
 
 ### Fixed
+- Import review cards keep Exclude similar transactions in the header and incoming treatment and category controls together, with a compact phone layout.
 - The exclusion-rule popup matches the Add Transaction dialog style, with a solid background, consistent title-case labels, and shorter introductory text.
 - The exclusion-rule popup uses a compact form with optional filters, match preview, and guidance. Pending application shows the count for all enabled rules when selected, and invalid fields show errors after interaction or save.
 - Exclusion rule management uses a compact description/account row and bordered list. The popup closes from its header, and excluded-import history stays hidden when empty.
