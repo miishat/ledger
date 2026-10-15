@@ -30,7 +30,7 @@
 
 Settings gains a Transactions section with a **Refunds & Payments** checkbox and helper text: "Let money received reduce spending in an expense category. Turning this off hides the option for new transactions; saved payments still count."
 
-The transaction form normally offers Expense, Income, and Refunds & Payments. Keep Expense as the default choice. For the third choice, use positive Amount input, expense-only categories, optional existing split controls, date, description, tags, and notes. Show: "Reduces spending in the selected category. This amount will not count as income."
+The transaction form normally offers Expense, Income, and Refunds & Payments. Keep Expense as the default choice. For the third choice, use positive Amount input, expense-only categories, optional existing split controls, date, description, tags, and notes. Per user review on October 14, omit the generic explanatory description. Retain amount-specific reduction previews and conditional warnings, and hide the message container when it has no content.
 
 Once an amount and category are valid, show "Reduces Groceries spending by $40.00" using `formatMoney`. For a split, show each category's allocated reduction and the remainder's category. Avoid an extra wizard or required person/purchase field. No separate toggle in Transactions is needed because the feature starts enabled.
 

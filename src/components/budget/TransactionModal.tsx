@@ -258,9 +258,8 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             ))}
           </div>
           {validationError && <p role="alert" className="text-[12px] text-error">{validationError}</p>}
-          {type === 'refund-payment' && (
+          {type === 'refund-payment' && (!enabled || !!initialTransaction?.reimbursement || reductionByCategory.size > 0) && (
             <div className="flex flex-col gap-2 text-[12px] text-[var(--color-text-secondary)]">
-              <p>Reduces spending in the selected category. This amount will not count as income.</p>
               {!enabled && <p>Refunds &amp; Payments is off for new transactions. This saved payment still counts.</p>}
               {initialTransaction?.reimbursement && <>
                 <p>This payment currently settles a shared bill. Using it to reduce expenses will stop settling that balance. Shared bills already count only your share, so this can reduce spending again.</p>
