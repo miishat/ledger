@@ -7,7 +7,7 @@ import { useEffect } from 'react'
  *  visual viewport shrinks. A tall sheet therefore keeps its full height
  *  and puts its lower fields behind the keyboard. visualViewport reports
  *  the real usable height on both iOS and Android, so sheets can cap
- *  themselves against it.
+ *  and position themselves against it (--app-viewport-top is its offset).
  *
  *  Mount once, from Layout. No-op where visualViewport is unsupported, in
  *  which case the sheet's dvh fallback applies. */
@@ -18,6 +18,8 @@ export function useViewportHeight(): void {
 
     const publish = () => {
       document.documentElement.style.setProperty('--app-viewport-height', `${vv.height}px`)
+      // iOS also scrolls the layout viewport when a field is focused, so the visible area can start below 0.
+      document.documentElement.style.setProperty('--app-viewport-top', `${vv.offsetTop}px`)
     }
 
     publish()

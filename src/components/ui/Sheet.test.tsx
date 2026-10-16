@@ -268,6 +268,14 @@ describe('Sheet', () => {
     expect(panel.style.maxHeight).toContain('--app-viewport-height')
   })
 
+  it('keeps the mobile sheet inside the visual viewport so the keyboard cannot cover it', () => {
+    setMatchMedia(false) // mobile
+    render(<Sheet open onClose={() => {}} ariaLabel="Test sheet"><p>body</p></Sheet>)
+    const wrapper = screen.getByTestId('sheet-panel').parentElement!
+    expect(wrapper.style.top).toContain('--app-viewport-top')
+    expect(wrapper.style.height).toContain('--app-viewport-height')
+  })
+
   it('gives an opted-in close button a 44px hit area', () => {
     setMatchMedia(false)
     render(<Sheet open onClose={() => {}} showClose ariaLabel="Test sheet"><p>body</p></Sheet>)

@@ -379,9 +379,14 @@ export const Sheet: React.FC<SheetProps> = ({
     if (shouldDismissOnDragEnd(offsetY, offsetY / seconds)) onClose()
   }
 
+  // The wrapper follows the visual viewport, not the layout one: with the keyboard open the
+  // layout viewport is unchanged, so a bottom-anchored sheet would sit behind the keyboard.
   return createPortal(
     mounted && (
-      <div className="fixed inset-0 z-50 flex items-end justify-center">
+      <div
+        className="fixed inset-x-0 z-50 flex items-end justify-center"
+        style={{ top: 'var(--app-viewport-top, 0px)', height: 'var(--app-viewport-height, 100%)' }}
+      >
         {scrim}
         <div
           {...commonPanelProps}
