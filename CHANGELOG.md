@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the Raise vs Inflation tool puts the three inputs first, then a single result card with the Real Raise, the Nominal Raise, the Real Change and the verdict, tinted to match.
 - On phones, the Emergency Fund tool shows how much is funded first, as a percentage with a progress bar and a savings-of-target line, then the Target Fund and Gap to Close, then the months presets and inputs in a tidy grid.
 - On phones, the Debt Payoff tool shows the debt-free time first with Total Interest and the saving against the other strategy, then the strategy toggle and extra payment. Debts are listed in the order they will be paid off, with the first one tagged Pay First, and each opens in place to edit or remove.
 - On phones, the Mortgage tool shows the payment (or the maximum home price) first with its two supporting figures, then the inputs in a tidy grid with equal-height fields. Payment and Affordability, and Monthly and Biweekly, are full-width toggles, extra payments are compact cards with a clear Add button, and the affordability note moved behind an Estimation Details row.
