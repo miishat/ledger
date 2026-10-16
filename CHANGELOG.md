@@ -6,6 +6,15 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.11.3-beta] - 2026-10-15
+
+### Changed
+- On phones, Budgeting > Transactions has a rebuilt layout with a compact search and category selectors, and the gaps match the Overview and Insights tabs.
+- On phones, Budgeting > Setup is split into Targets, Categories and Rules sections instead of a scaled-down desktop page.
+- Categories can be added to any group and groups can be added from the Categories section. Removing a category or an empty group asks for confirmation first, and can be undone.
+- Categorization and exclusion rules use full-width phone forms with 44px controls, and the empty Reallocation History card no longer shows as a blank box.
+- The month and import controls sit closer to the Budgeting tabs on phones.
+
 ## [0.11.2-beta] - 2026-10-12
 
 ### Added
