@@ -1,150 +1,38 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from 'recharts'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { useIsDesktop } from '../../hooks/useMediaQuery'
-import {
-  acceleratedBiweeklySchedule, amortizationSchedule, amortizationScheduleWithExtras, monthlyPayment, principalFromPayment,
-  scheduleTotalInterest, type ExtraPayment,
-} from '../../utils/finance/amortization'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { scheduleTotalInterest, type ExtraPayment } from '../../utils/finance/amortization'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { ThemedSelect } from '../ui/ThemedSelect'
-import { formatMoney, formatMoneyCompact } from './format'
-import { chartTooltipStyles } from '../../utils/chartTheme'
-import { ChartFigure } from '../ui/ChartFigure'
-import { ChartLegend } from '../ui/ChartLegend'
-
-const TOOL_ID = 'mortgage'
-const DEFAULTS = {
-  mode: 'payment' as string,
-  frequency: 'monthly' as string,
-  price: 600000,
-  downPct: 20,
-  ratePct: 4.5,
-  years: 25,
-  // affordability mode
-  income: 120000,
-  gdsPct: 39,
-  propertyTaxMonthly: 350,
-  extras: '[]' as string,
-}
-const HEATING_MONTHLY = 150 // CMHC GDS convention
+import { formatMoney } from './format'
+import { MortgageChart } from './MortgageChart'
+import { MortgageCalculatorMobile } from './MortgageCalculatorMobile'
+import { HEATING_MONTHLY, useMortgageCalculator } from './useMortgageCalculator'
 
 export const MortgageCalculator: React.FC = () => {
-  const isDesktop = useIsDesktop()
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-  const mode = inputs.mode as 'payment' | 'affordability'
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const m = useMortgageCalculator()
+  if (isPhone) return <MortgageCalculatorMobile m={m} />
 
-  const extras: ExtraPayment[] = React.useMemo(() => {
-    try { return JSON.parse((inputs.extras as unknown as string) || '[]') } catch { return [] }
-  }, [inputs.extras])
-  const setExtras = (next: ExtraPayment[]) => setInput(TOOL_ID, 'extras', JSON.stringify(next))
-
-  const downPayment = inputs.price * (inputs.downPct / 100)
-  const principal = inputs.price - downPayment
-  const payment = monthlyPayment(principal, inputs.ratePct, inputs.years)
-  const schedule = amortizationSchedule(principal, inputs.ratePct, inputs.years)
-  const scheduleWithExtras = amortizationScheduleWithExtras(principal, inputs.ratePct, inputs.years, extras)
-  const interestSaved = scheduleTotalInterest(schedule) - scheduleTotalInterest(scheduleWithExtras)
-  const monthsSaved = schedule.length - scheduleWithExtras.length
-
-  const frequency = inputs.frequency as 'monthly' | 'biweekly'
-  const biweeklySchedule = frequency === 'biweekly'
-    ? acceleratedBiweeklySchedule(principal, inputs.ratePct, inputs.years)
-    : null
-  const biweeklyMonths = biweeklySchedule ? Math.round((biweeklySchedule.length / 26) * 12) : 0
-  const biweeklyInterestSaved = biweeklySchedule
-    ? scheduleTotalInterest(schedule) - scheduleTotalInterest(biweeklySchedule)
-    : 0
-
-  const chartData = schedule
-    .filter((p) => p.month % 12 === 0)
-    .map((p) => {
-      const year = p.month / 12
-      return {
-        year,
-        baseline: Math.round(p.balance),
-        ...(frequency === 'monthly'
-          ? { withExtras: Math.round(scheduleWithExtras.find((q) => q.month === p.month)?.balance ?? 0) }
-          : { biweekly: Math.round(biweeklySchedule!.find((q) => q.period === year * 26)?.balance ?? 0) }),
-      }
-    })
-  const emphasizeBaseline = frequency === 'monthly' && extras.length === 0
-
-  // Only monthly-with-extras and biweekly draw a second area; the default
-  // (monthly, no extras) chart has one series and names it in the axis and
-  // heading alone, matching every other single-series chart in the app.
-  const secondSeriesLegend =
-    frequency === 'monthly' && extras.length > 0
-      ? [
-          { name: 'Original schedule', color: 'var(--text-secondary)' },
-          { name: 'With extra payments', color: 'var(--accent)' },
-        ]
-      : frequency === 'biweekly'
-        ? [
-            { name: 'Monthly schedule', color: 'var(--text-secondary)' },
-            { name: 'Biweekly accelerated', color: 'var(--accent)' },
-          ]
-        : []
-
-  // Recharts' Tooltip trigger="click" listens for a native click event, but a
-  // tap on a phone does not reliably synthesize one on the SVG surface. This
-  // bridges touch to click on touchend (when a tap is known to have
-  // completed, not touchstart, which fires before it's known whether the
-  // gesture is a tap or the start of a scroll), and calls preventDefault to
-  // suppress the browser's own trailing synthetic click, so a single tap
-  // fires exactly one click rather than two (ours plus the browser's ghost
-  // click), which would otherwise open then immediately re-toggle the
-  // tooltip on every tap.
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
-  const TAP_MOVE_THRESHOLD_PX = 10
-
-  const handleChartTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0]
-    if (!touch) return
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
-  }
-
-  const handleChartTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    const start = touchStartRef.current
-    touchStartRef.current = null
-    const touch = e.changedTouches[0]
-    if (!start || !touch) return
-    const movedX = Math.abs(touch.clientX - start.x)
-    const movedY = Math.abs(touch.clientY - start.y)
-    if (movedX > TAP_MOVE_THRESHOLD_PX || movedY > TAP_MOVE_THRESHOLD_PX) return
-    e.preventDefault()
-    const target = document.elementFromPoint(touch.clientX, touch.clientY)
-    target?.dispatchEvent(new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-    }))
-  }
-
-  const housingBudget = (inputs.income * (inputs.gdsPct / 100)) / 12 - inputs.propertyTaxMonthly - HEATING_MONTHLY
-  const affordablePrincipal = Math.max(0, principalFromPayment(housingBudget, inputs.ratePct, inputs.years))
-  const affordablePrice = affordablePrincipal + downPayment
+  const {
+    inputs, set, setInput, mode, frequency, extras, setExtras, downPayment, payment, schedule, scheduleWithExtras,
+    interestSaved, monthsSaved, biweeklyMonths, biweeklyInterestSaved, housingBudget, affordablePrincipal, affordablePrice,
+  } = m
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
-          {(['payment', 'affordability'] as const).map((m) => (
+          {(['payment', 'affordability'] as const).map((k) => (
             <button
-              key={m}
-              onClick={() => setInput(TOOL_ID, 'mode', m)}
+              key={k}
+              onClick={() => setInput('mode', k)}
               className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
-                mode === m ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
+                mode === k ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
               }`}
             >
-              {m === 'payment' ? 'Payment' : 'Affordability'}
+              {k === 'payment' ? 'Payment' : 'Affordability'}
             </button>
           ))}
         </div>
@@ -153,7 +41,7 @@ export const MortgageCalculator: React.FC = () => {
             {(['monthly', 'biweekly'] as const).map((f) => (
               <button
                 key={f}
-                onClick={() => setInput(TOOL_ID, 'frequency', f)}
+                onClick={() => setInput('frequency', f)}
                 className={`px-3 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${
                   frequency === f ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary hover:text-text-primary'
                 }`}
@@ -229,54 +117,7 @@ export const MortgageCalculator: React.FC = () => {
             </>
           )}
 
-          <div
-            className="themed-card rounded-lg p-4 h-[240px] desktop:h-[300px] flex flex-col"
-            onTouchStart={handleChartTouchStart}
-            onTouchEnd={handleChartTouchEnd}
-          >
-            <ChartFigure
-              label={`Mortgage balance from year 1 to year ${chartData.length}, starting at ${formatMoneyCompact(chartData[0]?.baseline ?? 0)} and ending at ${formatMoneyCompact(chartData[chartData.length - 1]?.baseline ?? 0)}`}
-              className="w-full flex-1 min-h-0"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }} accessibilityLayer={false}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                  <XAxis
-                    dataKey="year"
-                    stroke="var(--text-secondary)"
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                    // 25 ticks crammed the axis at every width. Keep the ends
-                    // and let Recharts drop what will not fit between them.
-                    interval="preserveStartEnd"
-                    minTickGap={24}
-                    label={{ value: 'Year', position: 'insideBottom', offset: -12, fill: 'var(--text-secondary)', fontSize: 12 }}
-                  />
-                  <YAxis
-                    stroke="var(--text-secondary)"
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                    width={72}
-                    // Raw "600000" was the only unformatted axis in the app.
-                    tickFormatter={(v) => formatMoneyCompact(Number(v))}
-                    label={{ value: 'Balance', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)', fontSize: 12 }}
-                  />
-                  <Tooltip
-                    trigger={isDesktop ? 'hover' : 'click'}
-                    formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
-                    {...chartTooltipStyles}
-                  />
-                  <Area type="monotone" dataKey="baseline" stroke={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'}
-                    fill={emphasizeBaseline ? 'var(--accent)' : 'var(--text-secondary)'} fillOpacity={emphasizeBaseline ? 0.25 : 0.12} />
-                  {frequency === 'monthly' && extras.length > 0 && (
-                    <Area type="monotone" dataKey="withExtras" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
-                  )}
-                  {frequency === 'biweekly' && (
-                    <Area type="monotone" dataKey="biweekly" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.25} />
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartFigure>
-            {secondSeriesLegend.length > 0 && <ChartLegend items={secondSeriesLegend} />}
-          </div>
+          <MortgageChart m={m} />
         </>
       ) : (
         <>
