@@ -26,16 +26,16 @@ export function ExclusionRulesWidget() {
       setDeleting(null); setError('')
     } catch (e) {setError(e instanceof Error ? e.message : 'Unable to update rule')}
   }
-  return <WidgetWrapper title={`Exclusion Rules (${Object.keys(rules).length})`}>
+  return <WidgetWrapper title={`Exclusion Rules (${Object.keys(rules).length})`} className="max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none max-md:!p-0">
     <div className="flex flex-col gap-4 mt-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap max-md:flex-col gap-2">
         <label htmlFor="exclusion-description-input" className="sr-only">Exclusion Description Match</label>
-        <input id="exclusion-description-input" type="text" placeholder="Description Match (e.g. TRANSFER TO SAVINGS)" value={newDescription} onChange={e=>setNewDescription(e.target.value)} className="flex-1 min-w-[140px] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]" />
+        <input id="exclusion-description-input" type="text" placeholder="Description Match (e.g. TRANSFER TO SAVINGS)" value={newDescription} onChange={e=>setNewDescription(e.target.value)} className="flex-1 min-w-[140px] max-md:min-h-11 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded px-3 py-1.5 text-[14px] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]" />
         <ThemedSelect ariaLabel="Exclusion Card or Account" value={newSource} onChange={setNewSource} className="w-full sm:w-48" options={[{value:'',label:'Select Account...'},{value:'all',label:'All Cards/Accounts'},...Object.values(sources).map(source=>({value:source.id,label:source.name}))]} />
-        <button type="button" className="min-h-11 px-3 py-1.5 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md hover:opacity-90 transition-opacity flex items-center justify-center" onClick={()=>setEditor({initialDraft:{name:newDescription.trim(),sourceId:newSource==='all'?null:newSource,description:{operator:'exact',value:newDescription.trim()},direction:'either',amount:{operator:'any'},behavior:'review'}})} aria-label="Add exclusion rule"><Plus size={16} aria-hidden="true" /></button>
+        <button type="button" className="min-h-11 px-3 py-1.5 max-md:gap-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md hover:opacity-90 transition-opacity flex items-center justify-center" onClick={()=>setEditor({initialDraft:{name:newDescription.trim(),sourceId:newSource==='all'?null:newSource,description:{operator:'exact',value:newDescription.trim()},direction:'either',amount:{operator:'any'},behavior:'review'}})} aria-label="Add exclusion rule"><Plus size={16} aria-hidden="true" /><span className="md:hidden text-[14px] font-semibold">Add rule</span></button>
       </div>
       {error && <p role="alert" className="text-error">{error}</p>}
-      <div className="flex flex-col max-h-[240px] desktop:max-h-[300px] overflow-y-auto border border-[var(--color-border)] rounded-md">
+      <div className="flex flex-col max-h-[240px] desktop:max-h-[300px] max-md:max-h-none overflow-y-auto border border-[var(--color-border)] rounded-md">
         {Object.keys(rules).length === 0 && <div className="p-4 text-center text-[13px] text-[var(--color-text-secondary)]">No rules created yet.</div>}
         {Object.entries(rules).map(([id,rule])=>{
           const invalid = !rule || rule.id!==id || !Number.isSafeInteger(rule.revision) || rule.revision<1 || validateExclusionDraft(rule,sources).length>0

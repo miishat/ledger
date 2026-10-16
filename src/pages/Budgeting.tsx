@@ -29,7 +29,8 @@ import { OwedToMeWidget } from '../components/budget/OwedToMeWidget';
 import { SavingsRateWidget } from '../components/budget/SavingsRateWidget';
 import { useBudgetStore } from '../store/useBudgetStore';
 import { PageHeader, TopBarAction } from '../components/ui/PageHeader';
-import { useIsDesktop } from '../hooks/useMediaQuery';
+import { useIsDesktop, useMediaQuery } from '../hooks/useMediaQuery';
+import { BudgetSetupMobile } from '../components/budget/BudgetSetupMobile';
 
 type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
 
@@ -47,6 +48,8 @@ export const Budgeting: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [excludedFocusRequest, setExcludedFocusRequest] = useState(0);
   const isDesktop = useIsDesktop();
+  // Phone widths get a separate Setup layout; mounting only one avoids duplicate form ids.
+  const isPhone = !useMediaQuery('(min-width: 768px)');
   const categories = useBudgetStore((state) => state.categories);
   const seedDefaults = useBudgetStore((state) => state.seedDefaults);
 
@@ -189,7 +192,7 @@ export const Budgeting: React.FC = () => {
           row at the top of the page. Rendered here or in the desktop header,
           never both, so CSVUploader's dialog exists once. */}
       {!isDesktop && (
-        <div data-testid="budget-phone-controls" className="flex flex-wrap items-center justify-between gap-2">
+        <div data-testid="budget-phone-controls" className="flex flex-wrap items-center justify-between gap-2 -mb-[22px]">
           {phoneMonthStepper}
           <CSVUploader />
         </div>
@@ -248,12 +251,18 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'setup' && (
         <TabPanel id="setup" className="flex flex-col gap-6">
-          <CategoryManagerWidget selectedMonth={range.to} />
+          {isPhone ? (
+            <BudgetSetupMobile selectedMonth={range.to} />
+          ) : (
+            <>
+              <CategoryManagerWidget selectedMonth={range.to} />
 
-          <ReallocationHistory selectedMonth={range.to} />
+              <ReallocationHistory selectedMonth={range.to} />
 
-          <CategorizationRulesWidget />
-          <ExclusionRulesWidget />
+              <CategorizationRulesWidget />
+              <ExclusionRulesWidget />
+            </>
+          )}
         </TabPanel>
       )}
 
