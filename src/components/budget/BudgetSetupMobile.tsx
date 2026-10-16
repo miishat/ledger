@@ -11,6 +11,7 @@ import { amountForCategory } from '../../utils/budget/splits';
 import { NumberInput } from '../ui/NumberInput';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { Sheet } from '../ui/Sheet';
 import { CategorizationRulesWidget } from './CategorizationRulesWidget';
 import { ExclusionRulesWidget } from './ExclusionRulesWidget';
 import { ReallocationHistory } from './ReallocationHistory';
@@ -19,6 +20,12 @@ import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions';
 import type { BudgetClass, BudgetingParadigm, Category } from '../../types/budget';
 
 const BUDGET_CLASSES: BudgetClass[] = ['need', 'want', 'savings'];
+const PARADIGM_OPTIONS: { value: BudgetingParadigm; label: string }[] = [
+  { value: 'Ledger Custom', label: 'Ledger Custom' },
+  { value: 'Zero-Based', label: 'Zero-Based' },
+  { value: 'Target-Based', label: 'Target-Based' },
+  { value: '50/30/20', label: '50/30/20 Rule' },
+];
 const SEGMENTS = ['Targets', 'Categories', 'Rules'] as const;
 type Segment = (typeof SEGMENTS)[number];
 
@@ -46,6 +53,7 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
   const offerUndo = useUndoStore((s) => s.offerUndo);
   const [segment, setSegment] = useState<Segment>('Targets');
   const [coverTarget, setCoverTarget] = useState<{ id: string; overage: number } | null>(null);
+  const [paradigmInfoOpen, setParadigmInfoOpen] = useState(false);
   const [removing, setRemoving] = useState<{ kind: 'category' | 'group'; id: string } | null>(null);
 
   const [year, month] = selectedMonth.split('-').map(Number);
@@ -120,26 +128,33 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
 
   const targetsPane = (
     <div className="flex flex-col gap-3">
-      <Card className="p-3 flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <span className="flex-1 text-[13px] text-text-secondary">Paradigm</span>
+      <Card>
+        <div className="p-3">
+        <div className="flex items-center gap-1">
+          <span className="text-[13px] text-text-secondary">Paradigm</span>
+          <button
+            type="button"
+            aria-label="About budgeting paradigms"
+            aria-haspopup="dialog"
+            onClick={() => setParadigmInfoOpen(true)}
+            className="min-w-[44px] min-h-[44px] -mx-2 flex items-center justify-center text-accent rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-accent flex items-center justify-center font-serif italic font-bold text-[13px]" aria-hidden="true">i</span>
+          </button>
+          <div className="flex-1" />
           <ThemedSelect
             ariaLabel="Paradigm"
             value={paradigm}
             onChange={(v) => state.setParadigm(v as BudgetingParadigm)}
             className="min-w-[150px]"
-            options={[
-              { value: 'Ledger Custom', label: 'Ledger Custom' },
-              { value: 'Zero-Based', label: 'Zero-Based' },
-              { value: 'Target-Based', label: 'Target-Based' },
-              { value: '50/30/20', label: '50/30/20 Rule' },
-            ]}
+            options={PARADIGM_OPTIONS}
           />
         </div>
-        <p className="text-[12px] text-text-secondary">{PARADIGM_DESCRIPTIONS[paradigm]}</p>
-        <p className="text-[13px] text-text-secondary">
-          Total monthly budget: <span className="font-semibold text-text-primary">{formatMoney(totalMonthlyBudget(categories, categoryGroups))}</span>
-        </p>
+        </div>
+        <div className="flex items-center justify-between bg-bg-primary/60 border-t border-border px-3 min-h-[48px]">
+          <span className="text-[13px] text-text-secondary">Total Monthly Budget</span>
+          <span className="text-[16px] font-semibold tabular-nums">{formatMoney(totalMonthlyBudget(categories, categoryGroups))}</span>
+        </div>
       </Card>
       {groups.filter((g) => !g.isIncome).map(({ group, rows, planned }) => (
         <Card key={group.id}>
@@ -266,6 +281,16 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
       {segment === 'Categories' && categoriesPane}
       {segment === 'Rules' && rulesPane}
 
+            <Sheet open={paradigmInfoOpen} onClose={() => setParadigmInfoOpen(false)} ariaLabel="Budgeting paradigms">
+        <div className="flex flex-col divide-y divide-border">
+          {PARADIGM_OPTIONS.map((o) => (
+            <div key={o.value} className="py-2.5 first:pt-0 last:pb-0">
+              <b className={`text-[13px] ${o.value === paradigm ? 'text-accent' : ''}`}>{o.label}</b>
+              <p className="text-[12px] text-text-secondary mt-0.5">{PARADIGM_DESCRIPTIONS[o.value]}</p>
+            </div>
+          ))}
+        </div>
+      </Sheet>
       <ConfirmDialog
         open={removing !== null}
         title={removing?.kind === 'group' ? 'Remove Group?' : 'Remove Category?'}

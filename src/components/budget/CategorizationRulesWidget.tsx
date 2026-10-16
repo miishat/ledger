@@ -54,10 +54,10 @@ export const CategorizationRulesWidget: React.FC = () => {
           <button
             onClick={handleAdd}
             disabled={!newDesc.trim() || !newCatId}
-            aria-label="Add rule"
+            aria-label="Add Rule"
             className="px-3 py-1.5 max-md:min-h-11 max-md:gap-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center"
           >
-            <Plus size={16} /><span className="md:hidden text-[14px] font-semibold">Add rule</span>
+            <Plus size={16} /><span className="md:hidden text-[14px] font-semibold">Add Rule</span>
           </button>
         </div>
 

@@ -29,7 +29,7 @@ describe('BudgetSetupMobile', () => {
     render(<BudgetSetupMobile selectedMonth="2026-10" />)
     expect(screen.getByRole('tab', { name: 'Targets' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Groceries')).toBeInTheDocument()
-    expect(screen.getByText(/Total monthly budget/)).toBeInTheDocument()
+    expect(screen.getByText(/Total Monthly Budget/)).toBeInTheDocument()
   })
 
   it('adds a category from the group card', () => {
@@ -69,5 +69,16 @@ describe('BudgetSetupMobile', () => {
     open('Rules')
     expect(screen.getByText(/Categorization Rules/)).toBeInTheDocument()
     expect(screen.getByText(/Exclusion Rules/)).toBeInTheDocument()
+  })
+
+  it('moves the paradigm description behind an info button that lists every paradigm', () => {
+    render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    expect(screen.queryByText(/Freeform tracking/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'About budgeting paradigms' }))
+    const dialog = screen.getByRole('dialog', { name: 'Budgeting paradigms' })
+    expect(within(dialog).getByText(/Freeform tracking/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/Every dollar gets a job/)).toBeInTheDocument()
+    expect(within(dialog).getByText('Ledger Custom')).toHaveClass('text-accent')
+    expect(within(dialog).queryByText(/current/)).not.toBeInTheDocument()
   })
 })
