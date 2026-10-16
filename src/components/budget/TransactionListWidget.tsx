@@ -9,6 +9,7 @@ import { formatMoney } from '../planner/format';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Checkbox } from '../ui/Checkbox';
+import { ShowMoreButton } from '../ui/ShowMoreButton';
 import { inRange, type MonthRange } from '../../utils/budget/period';
 import { useUndoStore } from '../../store/useUndoStore';
 import { cashMovement, entryKindOf } from '../../utils/budget/transactionKinds';
@@ -149,28 +150,37 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded, txList.length > 0]);
 
-  // Cards are taller than table rows and carry a 12px gap. This is an
-  // estimate, which is why the overscan below is generous: computeWindow
-  // degrades to rendering everything when the container is unmeasured, so a
-  // wrong estimate costs scroll smoothness, never correctness.
-  const CARD_HEIGHT = 116;
-  const cardScrollRef = useRef<HTMLDivElement>(null);
-  const [cardScrollTop, setCardScrollTop] = useState(0);
-  const [cardViewportHeight, setCardViewportHeight] = useState(0);
+  // The phone list is grouped by day and rendered in plain page flow, so it is
+  // capped rather than windowed: the cap keeps a multi-year import from mounting
+  // thousands of rows, and "Show all" lifts it on demand.
+  const PHONE_ROW_CAP = 120;
+  const [phoneShowAll, setPhoneShowAll] = useState(false);
+  const phoneRows = phoneShowAll ? txList : txList.slice(0, PHONE_ROW_CAP);
+  const dayGroups: { date: string; items: Transaction[] }[] = [];
+  for (const tx of phoneRows) {
+    const last = dayGroups[dayGroups.length - 1];
+    if (last && last.date === tx.date) last.items.push(tx);
+    else dayGroups.push({ date: tx.date, items: [tx] });
+  }
 
-  useEffect(() => {
-    const el = cardScrollRef.current;
-    if (el && el.clientHeight !== cardViewportHeight) setCardViewportHeight(el.clientHeight);
-  }, [cardViewportHeight]);
+  // Category chips are built from the period itself (not the search or the
+  // current chip), so picking a chip never makes the other chips vanish.
+  const phoneChips = (() => {
+    const counts = new Map<string, number>();
+    for (const tx of Object.values(transactions)) {
+      if (!inRange(tx.date, range)) continue;
+      for (const part of splitParts(tx)) {
+        const id = part.categoryId || 'uncategorized';
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .map(([id]) => ({ id, label: id === 'uncategorized' ? 'Uncategorized' : categories[id]?.name ?? 'Unknown' }));
+  })();
 
-  const cardWindow = computeWindow({
-    scrollTop: cardScrollTop,
-    viewportHeight: cardViewportHeight,
-    rowHeight: CARD_HEIGHT,
-    totalRows: txList.length,
-    overscan: 6,
-  });
-  const visibleCards = txList.slice(cardWindow.startIndex, cardWindow.endIndex);
+  const formatDay = (iso: string) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   const toggleRow = (id: string) =>
     setSelectedIds((current) =>
@@ -194,11 +204,11 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
 
   const wrapperClass = isExpanded
     ? "fixed inset-4 z-50 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col shadow-2xl animate-fade-in"
-    : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[240px] desktop:min-h-[300px]";
+    : "mt-8 bg-bg-secondary border border-border rounded-xl p-6 flex flex-col min-h-[240px] desktop:min-h-[300px] max-md:mt-0 max-md:bg-transparent max-md:border-0 max-md:rounded-none max-md:p-0 max-md:min-h-0";
 
   return (
     <div className={wrapperClass}>
-      <div className="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b border-border pb-4">
+      <div className="hidden md:flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b border-border pb-4">
         <h2 className="text-[18px] font-semibold text-text-primary">All Transactions</h2>
         <div className="flex flex-wrap items-center gap-3 min-w-0">
           <div className="relative">
@@ -240,7 +250,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         </div>
       </div>
       {selected.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border border-accent/40 bg-accent/10">
+        <div className="max-md:hidden flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg border border-accent/40 bg-accent/10">
           <span className="text-[13px] font-medium text-text-primary">{selected.length} selected</span>
           {mixedTypes ? <span className="text-[13px] text-text-secondary">Select only income or only expenses to change categories.</span> : <ThemedSelect
             ariaLabel="Category for selected"
@@ -279,7 +289,7 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
         </div>
       )}
       {txList.length === 0 ? (
-        <div className="flex-grow flex items-center justify-center">
+        <div className="hidden md:flex flex-grow items-center justify-center">
           {needle || selectedCategoryId ? (
             <EmptyState
               icon={Search}
@@ -424,97 +434,92 @@ export const TransactionListWidget: React.FC<TransactionListWidgetProps> = ({ ra
               </tbody>
             </table>
           </div>
-          <div
-            data-testid="transactions-cards"
-            ref={cardScrollRef}
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              setCardScrollTop(el.scrollTop);
-              if (el.clientHeight !== cardViewportHeight) setCardViewportHeight(el.clientHeight);
-            }}
-            className="md:hidden flex flex-col gap-3 max-h-[70dvh] overflow-y-auto"
-          >
-            {cardWindow.padTop > 0 && (
-              <div aria-hidden="true" style={{ height: cardWindow.padTop }} />
-            )}
-            {visibleCards.map(tx => {
-              const { amountClass, amountText, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
-              return (
-              <div
-                key={tx.id}
-                data-testid={`transaction-card-${tx.id}`}
-                className="themed-card rounded-lg p-3 flex flex-col gap-2"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span onClick={(e) => e.stopPropagation()} className="mt-1 shrink-0">
-                    <Checkbox
-                      ariaLabel="Select transaction"
-                      checked={selectedSet.has(tx.id)}
-                      onChange={() => toggleRow(tx.id)}
-                    />
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Edit ${tx.description}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingTransaction(tx);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter' && e.key !== ' ') return
-                      // Space would otherwise scroll the card list out from under
-                      // the focused card.
-                      e.preventDefault()
-                      setEditingTransaction(tx)
-                    }}
-                    className="flex items-center justify-between flex-1 min-w-0 text-left bg-transparent border-0 p-0 m-0 font-inherit text-inherit cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-                  >
-                    <span className="text-[14px] font-medium text-text-primary truncate">{tx.description}</span>
-                    <span className={`text-[14px] font-medium tabular-nums whitespace-nowrap ml-2 ${amountClass}`}>
-                      {amountText}
-                    </span>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteWithUndo([tx]);
-                    }}
-                    aria-label="Delete transaction"
-                    className="p-3 -m-1 text-text-secondary hover:text-error transition-colors rounded-md hover:bg-bg-primary shrink-0"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between text-[12px] text-text-secondary">
-                  <span>{tx.date}</span>
-                  <span className="flex items-center">
-                    <span className="px-2 py-1 bg-bg-primary border border-border rounded-md">
-                      {categoryLabel}
-                    </span>
-                    {badge && (
-                      <span className="ml-1 px-2 py-1 bg-accent/10 text-accent rounded-md text-[12px]">{badge}</span>
-                    )}
-                    {tags.map((tag) => (
-                      <span key={tag} className="ml-1 px-2 py-1 bg-bg-primary border border-border rounded-md text-[12px] text-text-secondary">
-                        #{tag}
-                      </span>
-                    ))}
-                    {hasNote && (
-                      <span className="ml-1 text-[12px] text-text-secondary" title="Has a note" aria-label="Has a note">
-                        ✎
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
-              );
-            })}
-            {cardWindow.padBottom > 0 && (
-              <div aria-hidden="true" style={{ height: cardWindow.padBottom }} />
-            )}
-          </div>
         </div>
       )}
+
+      <div data-testid="transactions-cards" className="md:hidden">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Find a transaction"
+          placeholder="Search transactions"
+          className="h-10 w-full px-3 text-[14px] rounded-lg bg-bg-secondary border border-border text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
+        />
+        {phoneChips.length > 0 && (
+          <div role="group" aria-label="Filter by category" className="flex gap-1.5 overflow-x-auto mt-3 pb-3 -mx-1 px-1">
+            {[{ id: '', label: 'All' }, ...phoneChips].map((chip) => {
+              const on = selectedCategoryId === chip.id;
+              return (
+                <button
+                  key={chip.id || 'all'}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setSelectedCategoryId(chip.id)}
+                  className={`shrink-0 px-3 min-h-[44px] rounded-full border text-[12px] whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    on ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary bg-bg-primary'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {txList.length === 0 ? (
+          <div className="py-10">
+            {needle || selectedCategoryId ? (
+              <EmptyState icon={Search} message="No matching transactions" hint="Try a different search or clear the category filter." />
+            ) : (
+              <EmptyState icon={Receipt} message="No transactions yet" hint="Import a CSV or add one manually to see it here." />
+            )}
+          </div>
+        ) : (
+          <div id="transactions-phone-list" className="-mx-1">
+            {dayGroups.map((group) => (
+              <section key={group.date} aria-label={formatDay(group.date)}>
+                <div className="flex justify-between px-3 py-1.5 text-[11.5px] uppercase tracking-wide text-text-secondary bg-bg-secondary border-y border-border">
+                  <span>{formatDay(group.date)}</span>
+                  <span className="tabular-nums">{formatMoney(group.items.reduce((sum, tx) => sum + cashMovement(tx), 0))}</span>
+                </div>
+                {group.items.map((tx) => {
+                  const { amountClass, amountText, categoryLabel, badge, tags, hasNote } = getTransactionDisplay(tx);
+                  return (
+                    <button
+                      key={tx.id}
+                      type="button"
+                      data-testid={`transaction-card-${tx.id}`}
+                      aria-label={`Edit ${tx.description}`}
+                      onClick={() => setEditingTransaction(tx)}
+                      className="w-full min-h-[56px] flex items-center gap-3 px-3 py-3 text-left bg-transparent border-0 border-b border-border font-inherit cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                    >
+                      <span className="flex-1 min-w-0">
+                        <span className="block truncate text-[14px] text-text-primary">{tx.description}</span>
+                        <span className="block truncate text-[12px] text-text-secondary">
+                          {categoryLabel}
+                          {badge && <> · <span className="text-accent">{badge}</span></>}
+                          {tags.map((tag) => ` · #${tag}`)}
+                          {hasNote && <span aria-label="Has a note"> ✎</span>}
+                        </span>
+                      </span>
+                      <span className={`tabular-nums font-semibold text-[14px] whitespace-nowrap ${amountClass}`}>{amountText}</span>
+                    </button>
+                  );
+                })}
+              </section>
+            ))}
+            {txList.length > PHONE_ROW_CAP && (
+              <ShowMoreButton
+                total={txList.length}
+                noun="transactions"
+                expanded={phoneShowAll}
+                onToggle={() => setPhoneShowAll((v) => !v)}
+                controls="transactions-phone-list"
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       <TransactionModal
         isOpen={!!editingTransaction}

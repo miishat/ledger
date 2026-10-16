@@ -87,37 +87,51 @@ describe('TransactionListWidget mobile layout', () => {
     expect(classes).toContain('reveal-on-hover')
   })
 
-  it('renders a mobile card list alongside the desktop table with matching values and reachable actions', () => {
+  it('renders a day-grouped phone list alongside the desktop table, with the edit action reachable', () => {
     useBudgetStore.setState({
       transactions: {
-        tx1: {
-          id: 'tx1',
-          date: '2026-07-03',
-          amount: 42,
-          description: 'Coffee',
-          type: 'expense',
-        },
+        tx1: { id: 'tx1', date: '2026-07-03', amount: 42, description: 'Coffee', type: 'expense' },
+        tx2: { id: 'tx2', date: '2026-07-03', amount: 8, description: 'Bagel', type: 'expense' },
       },
     })
     const { container } = render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
 
-    const cards = container.querySelector('[data-testid="transactions-cards"]')
-    expect(cards).not.toBeNull()
-    expect(cards?.textContent).toContain('Coffee')
-    expect(cards?.textContent).toContain('$42')
+    const list = container.querySelector('[data-testid="transactions-cards"]')
+    expect(list).not.toBeNull()
+    const scope = within(list as HTMLElement)
+    expect(scope.getByText('Coffee')).toBeInTheDocument()
+    expect(scope.getByText(/\$42/)).toBeInTheDocument()
+    // One header per day, carrying that day's net.
+    expect(scope.getAllByRole('region').length).toBe(1)
+    expect(scope.getByText(/\$50/)).toBeInTheDocument()
 
-    const cardScope = within(cards as HTMLElement)
-    const deleteBtn = cardScope.getByLabelText('Delete transaction')
-    expect(deleteBtn).toBeVisible()
-
-    // ≥44px tap target: padding classes that yield at least a 44x44 box around the icon
-    const delClasses = deleteBtn.className.split(/\s+/)
-    expect(delClasses.some((c) => /^p-(3|3\.5|4)$/.test(c))).toBe(true)
-
-    // Edit remains reachable: clicking the card's description/amount button opens the edit modal
-    const editTrigger = cardScope.getByRole('button', { name: /Edit Coffee/ })
-    fireEvent.click(editTrigger)
+    // The phone list has no per-row controls; the edit modal is the action surface.
+    expect(scope.queryByLabelText('Delete transaction')).toBeNull()
+    fireEvent.click(scope.getByRole('button', { name: /Edit Coffee/ }))
     expect(screen.getByDisplayValue('Coffee')).toBeInTheDocument()
+  })
+
+  it('filters the phone list with category chips built from the period', () => {
+    useBudgetStore.setState({
+      categoryGroups: { food: { id: 'food', name: 'Food', kind: 'expense' } },
+      categories: {
+        groceries: { id: 'groceries', groupId: 'food', name: 'Groceries', targetAmount: 0 },
+        dining: { id: 'dining', groupId: 'food', name: 'Dining', targetAmount: 0 },
+      },
+      transactions: {
+        a: { id: 'a', date: '2026-07-03', amount: 42, categoryId: 'groceries', description: 'Loblaws', type: 'expense' },
+        b: { id: 'b', date: '2026-07-04', amount: 9, categoryId: 'dining', description: 'Cafe', type: 'expense' },
+      },
+    })
+    render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
+    const phone = within(screen.getByTestId('transactions-cards'))
+    fireEvent.click(phone.getByRole('button', { name: 'Dining' }))
+    expect(phone.getByText('Cafe')).toBeInTheDocument()
+    expect(phone.queryByText('Loblaws')).toBeNull()
+    // The other chips stay put so the user can switch without clearing first.
+    expect(phone.getByRole('button', { name: 'Groceries' })).toBeInTheDocument()
+    fireEvent.click(phone.getByRole('button', { name: 'All' }))
+    expect(phone.getByText('Loblaws')).toBeInTheDocument()
   })
 })
 
@@ -157,7 +171,8 @@ describe('TransactionListWidget search', () => {
     seedThree()
     render(<TransactionListWidget range={{ from: '2026-07', to: '2026-07' }} />)
     fireEvent.change(screen.getByLabelText('Search transactions'), { target: { value: 'zzzz' } })
-    expect(screen.getByText('No matching transactions')).toBeInTheDocument()
+    // Desktop and phone layouts both render in jsdom; each shows its own message.
+    expect(screen.getAllByText('No matching transactions').length).toBeGreaterThan(0)
   })
 
   it('states the full transaction count in the Delete all confirmation, not the filtered count', () => {

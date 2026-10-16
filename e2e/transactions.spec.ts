@@ -82,5 +82,7 @@ test('renders a long transaction list on mobile without mounting every card', as
 
   const cards = page.locator('[data-testid="transactions-cards"] [data-testid^="transaction-card-"]')
   await expect(cards.first()).toBeVisible()
-  expect(await cards.count()).toBeLessThan(60)
+  // The phone list is capped, not windowed: 120 rows mount until "Show all".
+  expect(await cards.count()).toBe(120)
+  await expect(page.getByRole('button', { name: 'Show all 1200 transactions' })).toBeVisible()
 })
