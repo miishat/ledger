@@ -86,9 +86,9 @@ const accentBtn = 'bg-accent/10 text-accent';
 
 const Badge: React.FC<{ tx: Tx }> = ({ tx }) => (
   <>
-    {tx.duplicate && <span className="px-1.5 py-0.5 rounded-md text-[11px] bg-error/10 text-error">{tx.duplicate === 'exact' ? 'already imported' : 'possible duplicate'}</span>}
-    {tx.flag === 'card-payment' && <span className="px-1.5 py-0.5 rounded-md text-[11px] bg-error/10 text-error">card payment</span>}
-    {!!tx.exclusionMatches?.length && <span className="px-1.5 py-0.5 rounded-md text-[11px] bg-accent/10 text-accent">rule match</span>}
+    {tx.duplicate && <span className="px-1.5 py-0.5 rounded-md text-meta bg-error/10 text-error">{tx.duplicate === 'exact' ? 'already imported' : 'possible duplicate'}</span>}
+    {tx.flag === 'card-payment' && <span className="px-1.5 py-0.5 rounded-md text-meta bg-error/10 text-error">card payment</span>}
+    {!!tx.exclusionMatches?.length && <span className="px-1.5 py-0.5 rounded-md text-meta bg-accent/10 text-accent">rule match</span>}
   </>
 );
 
