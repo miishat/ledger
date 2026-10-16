@@ -65,7 +65,7 @@ function useTriageReview() {
     : tx.duplicateTransactionId ? transactions[tx.duplicateTransactionId] ?? s.pendingTransactions[tx.duplicateTransactionId] : undefined);
   const canExclude = (tx: Tx | undefined) => !!tx?.importRecordId && !!s.importSources[s.importRecords[tx.importRecordId]?.sourceId];
   const matching = (tx: Tx) => catList.filter((c) => categoryGroups[c.groupId]?.kind === tx.type);
-  const selected = (tx: Tx) => (matching(tx).some((c) => c.id === tx.categoryId) ? tx.categoryId : '');
+  const selected = (tx: Tx) => (matching(tx).some((c) => c.id === tx.categoryId) ? tx.categoryId ?? '' : '');
   const catName = (tx: Tx) => categories[selected(tx)]?.name;
   const note = (tx: Tx): string | null => {
     const ex = existingOf(tx);
