@@ -31,6 +31,8 @@ import { useBudgetStore } from '../store/useBudgetStore';
 import { PageHeader, TopBarAction } from '../components/ui/PageHeader';
 import { useIsDesktop, useMediaQuery } from '../hooks/useMediaQuery';
 import { BudgetSetupMobile } from '../components/budget/BudgetSetupMobile';
+import { TriageInboxMobile } from '../components/budget/TriageInboxMobile';
+import { ImportSummaryMobile } from '../components/budget/ImportSummaryMobile';
 
 type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
 
@@ -199,7 +201,7 @@ export const Budgeting: React.FC = () => {
       )}
 
       <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
-      <ImportSummary onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} />
+      {isPhone ? <ImportSummaryMobile onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} /> : <ImportSummary onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} />}
 
       <ParadigmBanner selectedMonth={range.to} />
 
@@ -242,7 +244,7 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'transactions' && (
         <TabPanel id="transactions" className="flex flex-col gap-6">
-          <TriageInboxWidget />
+          {isPhone ? <TriageInboxMobile /> : <TriageInboxWidget />}
           <ExcludedImportsWidget focusRequest={excludedFocusRequest} />
 
           <TransactionListWidget range={range} />

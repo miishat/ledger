@@ -189,7 +189,7 @@ describe('TriageInboxWidget card payments', () => {
   it('rejects only the flagged rows via the header button', () => {
     seedFlagged()
     render(<TriageInboxWidget />)
-    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 card payment' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 Card Payment' }))
     expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['a'])
   })
 
@@ -198,7 +198,7 @@ describe('TriageInboxWidget card payments', () => {
     const sourceId = store.createImportSource('Card A')
     store.importTransactions([{ id: 'payment', date: '2026-06-10', amount: 50, description: 'Payment', type: 'income', flag: 'card-payment' }], sourceId)
     render(<TriageInboxWidget />)
-    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 card payment' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reject 1 Card Payment' }))
     expect(useTriageStore.getState().importRecords.payment.decision).toBe('ignored')
     useUndoStore.getState().runUndo()
     expect(useTriageStore.getState().importRecords.payment.decision).toBe('pending')
@@ -211,7 +211,7 @@ describe('TriageInboxWidget card payments', () => {
       },
     })
     render(<TriageInboxWidget />)
-    expect(screen.queryByRole('button', { name: /card payment/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /card payment/i })).not.toBeInTheDocument()
   })
 
   it('counts a row that is both duplicate and flagged only once', () => {

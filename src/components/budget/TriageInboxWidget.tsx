@@ -115,7 +115,7 @@ export const TriageInboxWidget: React.FC = () => {
             }}
             className="text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors border border-border min-h-11 px-3 rounded-md"
           >
-            Reject {cardPayments.length} card payment{cardPayments.length === 1 ? '' : 's'}
+            Reject {cardPayments.length} Card Payment{cardPayments.length === 1 ? '' : 's'}
           </button>
         )}
         {held.length > 0 && <button onClick={() => excludeWithUndo(held)} className="min-h-11 px-3 rounded-md border border-border text-text-secondary">Exclude matches ({held.length})</button>}

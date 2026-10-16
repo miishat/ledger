@@ -14,6 +14,9 @@ pre-1.0 beta.
 - Categories can be added to any group and groups can be added from the Categories section. Removing a category or an empty group asks for confirmation first, and can be undone.
 - Categorization and exclusion rules use full-width phone forms with 44px controls, and the empty Reallocation History card no longer shows as a blank box.
 - The month and import controls sit closer to the Budgeting tabs on phones.
+- On phones, the Setup Paradigm card has an info button that explains every budgeting paradigm, shows the Total Monthly Budget in its own band, and Add Group is a full-width accent button.
+- On phones, the Triage Inbox is a compact list. Tap a row to review it, use Select to accept, ignore or set a category for several rows at once, and find Reject Card Payments and Discard All in the overflow menu.
+- On phones, the message after an import is a compact card with To Review, Skipped and Excluded rows. Tap Skipped or Excluded for the list, and use the info button for charges that earlier imports had but the new file does not.
 
 ## [0.11.2-beta] - 2026-10-12
 
