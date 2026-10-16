@@ -77,22 +77,24 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
   }
   const date = new Date().toISOString().slice(0, 7) + '-05'
   await page.locator('input[type=file][accept=".csv"]').setInputFiles({ name: 'phone.csv', mimeType: 'text/csv', buffer: Buffer.from(`${date},Phone bank receipt,,40.00,1234********5678`) })
-  const treatment = page.getByRole('button', { name: 'Treatment for Phone bank receipt', exact: true })
+  // The phone Triage Inbox keeps rows slim; treatment, category and Approve live in the row's review sheet.
+  await page.getByTestId('triage-inbox-mobile').getByText('Phone bank receipt', { exact: true }).click()
+  const sheet = page.getByRole('dialog', { name: 'Review transaction' })
+  const treatment = sheet.getByRole('button', { name: 'Treatment for Phone bank receipt', exact: true })
   await treatment.click()
   await page.getByRole('option', { name: 'Refunds & Payments', exact: true }).click()
-  await page.getByRole('button', { name: 'Category for Phone bank receipt', exact: true }).click()
+  await sheet.getByRole('button', { name: 'Category for Phone bank receipt', exact: true }).click()
   await page.getByRole('option', { name: 'Household groceries and pantry supplies', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Select an option', exact: true })).toBeHidden()
-  const approve = page.getByRole('button', { name: 'Approve Phone bank receipt', exact: true })
-  const row = treatment.locator('xpath=ancestor::div[starts-with(@id,"import-review-")]')
+  const approve = sheet.getByRole('button', { name: 'Approve', exact: true })
   for (const viewport of viewports) {
     await page.setViewportSize(viewport)
     await expect(treatment).toContainText('Refunds & Payments')
     await approve.scrollIntoViewIfNeeded()
     await expect(approve).toBeInViewport()
     expect((await approve.boundingBox())!.height).toBeGreaterThanOrEqual(44)
-    await expect.poll(() => row.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
-    await expect.poll(() => row.evaluate(el => {
+    await expect.poll(() => sheet.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await expect.poll(() => sheet.evaluate(el => {
       const bounds = el.getBoundingClientRect()
       return [...el.querySelectorAll('button')].filter(button => {
         const rect = button.getBoundingClientRect()
@@ -105,7 +107,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
   }
   await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-import-${testInfo.project.name}.png`, fullPage: true })
   await approve.click()
-  await expect(approve).toBeHidden()
+  await expect(sheet).toBeHidden()
 })
 
 // Same shape as e2e/a11y-mobile.spec.ts's SEED_TRANSACTIONS, so both suites

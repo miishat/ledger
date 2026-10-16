@@ -91,26 +91,35 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
       await expect(flow.locator('.recharts-tooltip-wrapper')).toContainText(creditOnly ? '$40' : '$540')
       await flowCard.screenshot({ path: `.superpowers/sdd/screenshots/refund-cashflow-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
       await page.getByRole('tab', { name: 'Setup', exact: true }).click()
-      const shoppingInput = page.locator('input[value="Shopping"]')
-      const category = shoppingInput.locator('xpath=../..')
-      await expect(category).toContainText('$40.00 net credit')
-      const disclosure = category.locator('summary')
-      await disclosure.scrollIntoViewIfNeeded()
-      await disclosure.focus()
-      await disclosure.press('Enter')
-      await expect(category.locator('details')).toHaveAttribute('open', '')
-      await expect(category.locator('details p')).toHaveText('$60.00 purchases · $100.00 refunds & payments')
-      await expect.poll(() => category.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
-      const disclosureBounds = await category.locator('details, details p, summary').evaluateAll(elements => elements.filter(el => {
-        const bounds = el.getBoundingClientRect()
-        return el.scrollWidth > el.clientWidth + 1 || bounds.left < -0.5 || bounds.right > innerWidth + 0.5
-      }).map(el => ({ tag: el.tagName, text: el.textContent })))
-      expect(disclosureBounds).toEqual([])
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-      await disclosure.blur()
-      const categoryGroup = shoppingInput.locator('xpath=ancestor::div[contains(@class,"break-inside-avoid")][1]')
-      await expect.poll(() => categoryGroup.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
-      await categoryGroup.screenshot({ path: `.superpowers/sdd/screenshots/refund-category-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
+      if (viewport.width < 768) {
+        // Phone Setup shows the net credit and the purchases / refunds split inline on the category row.
+        const row = page.getByTestId('budget-setup-mobile').locator('span.flex-1.min-w-0').filter({ hasText: /^Shopping/ })
+        await expect(row).toContainText('$40.00 net credit')
+        await expect(row).toContainText('$60.00 purchases · $100.00 refunds & payments')
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      } else {
+        await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+        const shoppingInput = page.locator('input[value="Shopping"]')
+        const category = shoppingInput.locator('xpath=../..')
+        await expect(category).toContainText('$40.00 net credit')
+        const disclosure = category.locator('summary')
+        await disclosure.scrollIntoViewIfNeeded()
+        await disclosure.focus()
+        await disclosure.press('Enter')
+        await expect(category.locator('details')).toHaveAttribute('open', '')
+        await expect(category.locator('details p')).toHaveText('$60.00 purchases · $100.00 refunds & payments')
+        await expect.poll(() => category.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+        const disclosureBounds = await category.locator('details, details p, summary').evaluateAll(elements => elements.filter(el => {
+          const bounds = el.getBoundingClientRect()
+          return el.scrollWidth > el.clientWidth + 1 || bounds.left < -0.5 || bounds.right > innerWidth + 0.5
+        }).map(el => ({ tag: el.tagName, text: el.textContent })))
+        expect(disclosureBounds).toEqual([])
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+        await disclosure.blur()
+        const categoryGroup = shoppingInput.locator('xpath=ancestor::div[contains(@class,"break-inside-avoid")][1]')
+        await expect.poll(() => categoryGroup.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+        await categoryGroup.screenshot({ path: `.superpowers/sdd/screenshots/refund-category-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
+      }
     }
   })
 }

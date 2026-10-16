@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 }, { width: 375, height: 812 }, { width: 932, height: 430 }]) {
+for (const viewport of [{ width: 1280, height: 900 }, { width: 932, height: 430 }]) {
   test(`triage header exclusion and incoming controls fit at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport)
     await page.addInitScript(() => localStorage.setItem('ledger-disclaimer-ack', new Date().toISOString()))
@@ -55,5 +55,43 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
       scroller.style.overflow = 'visible'
     })
     await receipt.screenshot({ path: `.superpowers/sdd/screenshots/triage-B-${viewport.width}.png` })
+  })
+}
+
+// Phones use the slim Triage Inbox: one line per charge, with the controls in a review sheet.
+for (const viewport of [{ width: 320, height: 700 }, { width: 375, height: 812 }]) {
+  test(`phone triage rows and review sheet fit at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    await page.addInitScript(() => localStorage.setItem('ledger-disclaimer-ack', new Date().toISOString()))
+    await page.goto('./#/budget')
+    await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
+    await page.locator('input[type=file]').setInputFiles({ name: 'triage.csv', mimeType: 'text/csv', buffer: Buffer.from([
+      '2026-10-06,INTERAC E-TRANSFER RECEIVED,,40.00,1234********5678',
+      '2026-10-01,SQ *6IXTY WINGS KANATA Kanata ON,14.00,,1234********5678',
+    ].join('\n')) })
+    const inbox = page.getByTestId('triage-inbox-mobile')
+    await expect(inbox.getByText('2 to Review')).toBeVisible()
+    const receipt = page.locator('[id^="import-review-"]').filter({ hasText: 'INTERAC E-TRANSFER RECEIVED' })
+    await expect(receipt).toBeVisible()
+    expect(await receipt.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await receipt.getByText('INTERAC E-TRANSFER RECEIVED', { exact: true }).click()
+    const sheet = page.getByRole('dialog', { name: 'Review transaction' })
+    const treatment = sheet.getByRole('button', { name: 'Treatment for INTERAC E-TRANSFER RECEIVED' })
+    const category = sheet.getByRole('button', { name: 'Category for INTERAC E-TRANSFER RECEIVED' })
+    await expect(treatment).toBeVisible()
+    await expect(category).toBeVisible()
+    expect((await treatment.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    expect((await category.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    expect(await sheet.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
+    await treatment.click()
+    await page.getByRole('option', { name: 'Refunds & Payments', exact: true }).click()
+    await expect(sheet.getByText('Choose an expense category first')).toBeVisible()
+    await expect(sheet.getByRole('button', { name: 'Approve', exact: true })).toBeDisabled()
+    await sheet.getByRole('button', { name: 'Exclude Similar Transactions', exact: true }).click()
+    const editor = page.getByRole('dialog', { name: 'Exclusion Rule', exact: true })
+    await expect(editor.getByLabel('Bank Description')).toHaveValue('INTERAC E-TRANSFER RECEIVED')
+    await page.keyboard.press('Escape')
+    await expect(editor).toBeHidden()
   })
 }

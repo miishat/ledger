@@ -34,7 +34,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 375, height: 812 
       const reloaded = await fresh.newPage()
       await reloaded.goto(page.url())
       await reloaded.getByRole('tab', { name: 'Transactions', exact: true }).click()
-      await reloaded.getByLabel('Search transactions').fill('Split regression dinner')
+      await reloaded.locator('input[type=search]:visible').fill('Split regression dinner')
       await reloaded.getByRole('button', { name: 'Edit Split regression dinner', exact: true }).filter({ visible: true }).click()
       const editor = reloaded.getByTestId('sheet-panel')
       await expect(editor.getByLabel('Your share')).toHaveValue('60')

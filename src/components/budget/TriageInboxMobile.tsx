@@ -195,7 +195,7 @@ export const TriageInboxMobile: React.FC = () => {
           const on = sel.has(tx.id);
           const warn = !t.ready(tx);
           return (
-            <div key={tx.id} className={`flex items-center ${on ? 'bg-accent/10' : ''}`}>
+            <div key={tx.id} id={`import-review-${tx.id}`} tabIndex={-1} className={`flex items-center ${on ? 'bg-accent/10' : ''}`}>
               {selecting && (
                 <button role="checkbox" aria-checked={on} aria-label={`Select ${tx.description}`} onClick={() => toggle(tx.id)} className="h-14 w-12 shrink-0 flex items-center justify-center">
                   <span className={`h-6 w-6 rounded-full border flex items-center justify-center ${on ? 'bg-accent border-accent text-bg-primary' : 'border-border'}`}>{on && <Check size={14} />}</span>

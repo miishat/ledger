@@ -7,6 +7,26 @@ const accept = (page: Page, count: number) => page.getByRole('button', { name: `
 const editor = (page: Page) => page.getByRole('dialog', { name: 'Exclusion Rule', exact: true })
 const pendingRow = (page: Page, description: string) => page.locator('[id^="import-review-"]').filter({ has: page.getByText(description, { exact: true }) })
 const persistedRuleCount = (page: Page) => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ledger-triage')!).state.exclusionRules).length)
+const isPhone = (page: Page) => (page.viewportSize()?.width ?? 1280) < 768
+// Desktop cards carry the Exclude button inline; on a phone it lives in the row's review sheet.
+async function openExclude(page: Page, description: string) {
+  if (isPhone(page)) {
+    await pendingRow(page, description).first().getByText(description, { exact: true }).click()
+    await page.getByRole('dialog', { name: 'Review transaction' }).getByRole('button', { name: 'Exclude Similar Transactions', exact: true }).click()
+  } else {
+    await pendingRow(page, description).first().getByRole('button', { name: 'Exclude similar transactions', exact: true }).click()
+  }
+}
+// The phone Setup tab splits into Targets, Categories and Rules; the exclusion rules sit under Rules.
+async function openRules(page: Page) {
+  await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+  if (isPhone(page)) {
+    await page.getByRole('tablist', { name: 'Setup sections' }).getByRole('tab', { name: 'Rules', exact: true }).click()
+    // The undo toast floats over the rule buttons on a phone, so dismiss it first.
+    const dismiss = page.getByRole('button', { name: 'Dismiss undo', exact: true })
+    if (await dismiss.count()) await dismiss.click()
+  }
+}
 async function start(page: Page, width = 1280, height = 812) {
   await page.setViewportSize({ width, height })
   await page.addInitScript(() => {
@@ -24,7 +44,7 @@ async function select(page: Page, label: string, option: string) {
   await page.getByRole('option', { name: option, exact: true }).click()
 }
 async function rule(page: Page, description: string, name: string, automatic = false, apply = false) {
-  await pendingRow(page, description).first().getByRole('button', { name: 'Exclude similar transactions', exact: true }).click()
+  await openExclude(page, description)
   await expect(editor(page).getByLabel('Bank Description')).toHaveValue(description)
   await editor(page).getByLabel('Rule Name').fill(name)
   if (automatic) await select(page, 'Behavior', 'Automatically Exclude')
@@ -54,7 +74,7 @@ for (const width of [1280, 375]) {
     await upload(page, file)
     await rule(page, 'TRANSFER TO SAVINGS', 'Savings transfer')
     await expect(accept(page, 2)).toBeVisible()
-    await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+    await openRules(page)
     await page.getByRole('button', { name: 'Edit Savings transfer', exact: true }).click()
     await select(page, 'Behavior', 'Automatically Exclude')
     await editor(page).getByLabel('Also Apply to Pending').check()
@@ -68,14 +88,15 @@ for (const width of [1280, 375]) {
     await page.getByRole('button', { name: 'Restore TRANSFER TO SAVINGS to review', exact: true }).click()
     await expect(accept(page, 2)).toBeVisible()
     await reopen(page)
-    await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+    await openRules(page)
     await page.getByRole('button', { name: 'Edit Savings transfer', exact: true }).click()
     await editor(page).getByLabel('Also Apply to Pending').check()
     await editor(page).getByRole('button', { name: 'Save Rule', exact: true }).click()
   await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
     await expect(accept(page, 2)).toBeVisible()
     await upload(page, file)
-    await expect(page.getByRole('status').filter({ hasText: 'previously handled' })).toHaveText(/2 previously handled transactions skipped/)
+    if (isPhone(page)) await expect(page.getByTestId('import-summary-mobile').getByRole('button', { name: /Skipped/ })).toContainText('2')
+    else await expect(page.getByRole('status').filter({ hasText: 'previously handled' })).toHaveText(/2 previously handled transactions skipped/)
     await expect(accept(page, 2)).toBeVisible()
     await accept(page, 2).click()
     expect(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('ledger-budget')!).state.transactions).length)).toBe(2)
@@ -94,7 +115,7 @@ test('review-first exclusion batches Undo, Include override and Discard All Undo
   await pendingRow(page, 'Savings').first().getByRole('button', { name: 'Include this transaction', exact: true }).click()
   await expect(accept(page, 2)).toBeVisible()
   await reopen(page)
-  await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+  await openRules(page)
     await page.getByRole('button', { name: 'Edit Savings review', exact: true }).click()
   await editor(page).getByLabel('Also Apply to Pending').check()
   await editor(page).getByRole('button', { name: 'Save Rule', exact: true }).click()
@@ -134,12 +155,12 @@ test('pausing and deleting rules affect future imports and retain exclusion reas
   await start(page)
   await upload(page, row('2026-06-10', 'Savings'))
   await rule(page, 'Savings', 'Savings auto', true, true)
-  await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+  await openRules(page)
   await page.getByRole('button', { name: 'Pause Savings auto', exact: true }).click()
   await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
   await upload(page, row('2026-07-10', 'Savings'))
   await expect(accept(page, 1)).toBeVisible()
-  await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+  await openRules(page)
   await page.getByRole('button', { name: 'Delete Savings auto', exact: true }).click()
   await page.getByRole('dialog', { name: 'Delete Exclusion Rule' }).getByRole('button', { name: 'Delete Rule', exact: true }).click()
   await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
@@ -176,7 +197,7 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
     await expect(pendingRow(page, 'Savings')).toBeVisible()
     const rulesBeforeCancel = await persistedRuleCount(page)
     await page.mouse.move(0, 0)
-    await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+    await openRules(page)
     await tabTo(page, page.getByRole('button', { name: 'Add exclusion rule', exact: true }))
     await page.keyboard.press('Enter')
     await expect(editor(page)).toBeVisible()
@@ -190,8 +211,12 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
     await expect(editor(page)).toBeHidden()
     expect(await persistedRuleCount(page)).toBe(rulesBeforeCancel)
     await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
-    await tabTo(page, pendingRow(page, 'Savings').getByRole('button', { name: 'Exclude similar transactions', exact: true }))
-    await page.keyboard.press('Enter')
+    if (isPhone(page)) {
+      await openExclude(page, 'Savings')
+    } else {
+      await tabTo(page, pendingRow(page, 'Savings').getByRole('button', { name: 'Exclude similar transactions', exact: true }))
+      await page.keyboard.press('Enter')
+    }
     await expect(editor(page)).toBeVisible()
     await tabTo(page, editor(page).getByLabel('Rule Name'))
     await page.keyboard.press('ControlOrMeta+A')
