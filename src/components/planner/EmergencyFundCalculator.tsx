@@ -1,25 +1,17 @@
 import React from 'react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { useBudgetStore } from '../../store/useBudgetStore'
-import { averageMonthlyExpenses } from '../../store/budgetSelectors'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { EmergencyFundMobile } from './EmergencyFundMobile'
+import { EMERGENCY_TOOL_ID, PRESET_MONTHS, useEmergencyFund } from './useEmergencyFund'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
-const TOOL_ID = 'emergency-fund'
-const DEFAULTS = { monthlyExpenses: 3000, targetMonths: 6, currentSavings: 5000 }
-const PRESET_MONTHS = [3, 6, 12]
-
 export const EmergencyFundCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-  const transactions = useBudgetStore((s) => s.transactions)
-
-  const budgetAvg = averageMonthlyExpenses(transactions, 3)
-  const target = inputs.monthlyExpenses * inputs.targetMonths
-  const gap = Math.max(0, target - inputs.currentSavings)
-  const progress = target > 0 ? Math.min(1, inputs.currentSavings / target) : 0
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useEmergencyFund()
+  if (isPhone) return <EmergencyFundMobile s={state} />
+  const { inputs, setInput, set, budgetAvg, target, gap, progress } = state
+  const TOOL_ID = EMERGENCY_TOOL_ID
 
   return (
     <div className="flex flex-col gap-6">
