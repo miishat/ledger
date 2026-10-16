@@ -6,6 +6,9 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- On phones, the Currency Converter shows the answer first ("100 USD is CAD 141.61") with the rate and a refresh button, then one card for the amount, the From and To currencies with a swap button, and the rate date. Rate Details is a single collapsed line showing when the rate was fetched, with the manual override inside.
+
 ## [0.11.3-beta] - 2026-10-15
 
 ### Changed
