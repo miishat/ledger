@@ -3,8 +3,10 @@ import { Plus, Trash2 } from 'lucide-react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { minPaymentFor, simulatePayoff, type Debt, type DebtType, type PayoffStrategy } from '../../utils/finance/debtPayoff'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { minPaymentFor, type Debt, type DebtType } from '../../utils/finance/debtPayoff'
+import { DebtPayoffMobile } from './DebtPayoffMobile'
+import { formatMonths, useDebtPayoff } from './useDebtPayoff'
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
@@ -12,30 +14,6 @@ import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
-
-const TOOL_ID = 'debt-payoff'
-const DEFAULT_DEBTS: Debt[] = [
-  { id: 'd1', name: 'Credit Card', balance: 5000, aprPct: 21.99, type: 'creditCard' },
-  { id: 'd2', name: 'Car Loan', balance: 12000, aprPct: 7.5, type: 'loan', loanMode: 'term', termYears: 4 },
-]
-const DEFAULTS = { debtsJson: JSON.stringify(DEFAULT_DEBTS), extraMonthly: 200, strategy: 'avalanche' as string }
-
-/** Debts stored before v0.4 have no type: treat them as loans with their
- *  saved payment, so nothing changes until the user edits them. */
-function parseDebts(json: string): Debt[] {
-  try {
-    const arr = JSON.parse(json)
-    if (!Array.isArray(arr)) return []
-    return arr.map((d) => ({ type: 'loan', loanMode: 'payment', ...d }))
-  } catch {
-    return []
-  }
-}
-
-function formatMonths(m: number | null): string {
-  if (m === null) return 'Never (payments too low)'
-  return `${Math.floor(m / 12)}y ${m % 12}m`
-}
 
 const MinPaymentDisplay: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div>
@@ -47,32 +25,12 @@ const MinPaymentDisplay: React.FC<{ label: string; value: number }> = ({ label, 
 )
 
 export const DebtPayoffCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const debts = parseDebts(inputs.debtsJson as string)
-  const strategy = inputs.strategy as PayoffStrategy
-  const saveDebts = (next: Debt[]) => setInput(TOOL_ID, 'debtsJson', JSON.stringify(next))
-  const updateDebt = (id: string, patch: Partial<Debt>) =>
-    saveDebts(debts.map((d) => (d.id === id ? { ...d, ...patch } : d)))
-  const changeType = (d: Debt, type: DebtType) => {
-    if (type === 'loan') {
-      updateDebt(d.id, {
-        type,
-        loanMode: d.loanMode ?? 'payment',
-        minPayment: d.minPayment ?? Math.max(10, Math.round(minPaymentFor(d, d.balance))),
-      })
-    } else {
-      updateDebt(d.id, { type })
-    }
-  }
-
-  const chosen = simulatePayoff(debts, inputs.extraMonthly, strategy)
-  const other = simulatePayoff(debts, inputs.extraMonthly, strategy === 'avalanche' ? 'snowball' : 'avalanche')
-  const chartData = chosen.series.map((p, i) => ({
-    month: p.month,
-    [strategy]: Math.round(p.total),
-    ...(other.series[i] ? { [strategy === 'avalanche' ? 'snowball' : 'avalanche']: Math.round(other.series[i].total) } : {}),
-  }))
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useDebtPayoff()
+  if (isPhone) return <DebtPayoffMobile s={state} />
+  const {
+    debts, strategy, extraMonthly, saveDebts, updateDebt, changeType, setExtra, setStrategy, chosen, other, chartData,
+  } = state
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,11 +127,11 @@ export const DebtPayoffCalculator: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-        <CalculatorField label="Extra Monthly Payment" prefix="$" step={25} value={inputs.extraMonthly} onChange={(v) => setInput(TOOL_ID, 'extraMonthly', v)} />
+        <CalculatorField label="Extra Monthly Payment" prefix="$" step={25} value={extraMonthly} onChange={setExtra} />
         <SelectField
           label="Strategy"
           value={strategy}
-          onChange={(v) => setInput(TOOL_ID, 'strategy', v)}
+          onChange={setStrategy}
           options={[
             { value: 'avalanche', label: 'Avalanche (Highest APR First)' },
             { value: 'snowball', label: 'Snowball (Smallest Balance First)' },
