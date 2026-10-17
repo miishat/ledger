@@ -78,7 +78,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
         className="w-full flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 8 }} accessibilityLayer={false}>
+          <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
             <XAxis
               dataKey="year"
@@ -88,7 +88,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
               // and let Recharts drop what will not fit between them.
               interval="preserveStartEnd"
               minTickGap={24}
-              label={{ value: 'Year', position: 'insideBottom', offset: -12, fill: 'var(--text-secondary)', fontSize: 12 }}
+              tickFormatter={(v) => `${v}y`}
             />
             <YAxis
               stroke="var(--text-secondary)"
@@ -96,7 +96,6 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
               width={72}
               // Raw "600000" was the only unformatted axis in the app.
               tickFormatter={(v) => formatMoneyCompact(Number(v))}
-              label={{ value: 'Balance', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)', fontSize: 12 }}
             />
             <Tooltip
               trigger={isDesktop ? 'hover' : 'click'}
