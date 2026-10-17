@@ -939,9 +939,15 @@ for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as con
     // Prove the guard inspects real lists: wait for the cards it polices so
     // an empty or still-loading main cannot pass vacuously.
     if (name === 'budgeting') {
+      // Income sources sit in a fold, so open it; the spending donut is a capped legend, not a list.
+      await page.locator('summary', { hasText: 'Income' }).click()
       await expect(page.getByRole('group', { name: 'Income sources' })).toBeVisible()
-      await expect(page.getByRole('group', { name: 'Expense categories' })).toBeVisible()
     } else {
+      // The account folds start closed, so open them or there are no rows to inspect.
+      const folds = page.locator('details[data-widget-id] > summary')
+      for (let i = 0; i < await folds.count(); i++) {
+        if (!(await folds.nth(i).evaluate((el) => (el.parentElement as HTMLDetailsElement).open))) await folds.nth(i).click()
+      }
       await expect(page.locator('[data-testid^="account-row-"]').first()).toBeVisible()
     }
     const nested = await page.evaluate(() =>

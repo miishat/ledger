@@ -18,13 +18,31 @@ describe('Budgeting header (mobile de-duplication)', () => {
     expect(screen.getByRole('button', { name: 'Time period' })).toBeInTheDocument()
   })
 
-  it('renders the range dropdown on desktop only so a phone shows one month control', () => {
+  it('renders the range dropdown on desktop and a Time Period button on a phone', () => {
     renderBudget()
     expect(screen.getByRole('button', { name: 'Time period' }).closest('[data-period-dropdown]')).toBeTruthy()
     cleanup()
     setMatchMedia(false)
     renderBudget()
     expect(screen.queryByRole('button', { name: 'Time period' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Time Period' }).closest('[data-testid="budget-phone-controls"]')).toBeTruthy()
+  })
+
+  it('lets a phone pick a range from the Time Period sheet and go back to a month', () => {
+    setMatchMedia(false)
+    renderBudget()
+    fireEvent.click(screen.getByRole('button', { name: 'Time Period' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(
+      ['This Month', 'Last Month', 'Last 3 Months', 'Last 6 Months', 'Last 12 Months', 'Year to Date'],
+    )
+    fireEvent.click(screen.getByRole('option', { name: 'Last 3 Months' }))
+    const row = screen.getByTestId('budget-phone-controls')
+    expect(row).toHaveTextContent('Last 3 Months')
+    expect(screen.queryByLabelText('Previous Month')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Time Period' }))
+    expect(screen.getByRole('option', { name: 'Last 3 Months' })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('option', { name: 'This Month' }))
+    expect(screen.getByLabelText('Previous Month')).toBeInTheDocument()
   })
 
   // The arrows keep a 44px touch target at the mobile base width and shrink

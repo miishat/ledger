@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { monthKeyOf, rangeOf, shiftMonthKey, type Period, type PeriodPreset } from '../utils/budget/period';
+import { monthKeyOf, rangeOf, shiftMonthKey, type Period } from '../utils/budget/period';
 import { Tabs, type TabItem } from '../components/ui/Tabs';
 import { TabPanel } from '../components/ui/TabPanel';
 import { ThemedSelect } from '../components/ui/ThemedSelect';
@@ -33,6 +33,9 @@ import { useIsDesktop, useMediaQuery } from '../hooks/useMediaQuery';
 import { BudgetSetupMobile } from '../components/budget/BudgetSetupMobile';
 import { TriageInboxMobile } from '../components/budget/TriageInboxMobile';
 import { ImportSummaryMobile } from '../components/budget/ImportSummaryMobile';
+import { BudgetOverviewMobile } from '../components/budget/BudgetOverviewMobile';
+import { TimePeriodButton } from '../components/budget/TimePeriodButton';
+import { periodChoices, periodChoiceValue, periodFromChoice, presetLabel } from '../components/budget/periodChoices';
 
 type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
 
@@ -79,6 +82,13 @@ export const Budgeting: React.FC = () => {
   const formattedMonth = period.kind === 'month'
     ? new Date(`${period.month}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : `${range.from} to ${range.to}`;
+
+  const choices = periodChoices(period, currentMonth, formattedMonth);
+  const choiceValue = periodChoiceValue(period, currentMonth);
+  const chooseValue = (v: string) => {
+    const next = periodFromChoice(v, currentMonth);
+    if (next) setPeriod(next);
+  };
 
   React.useEffect(() => {
     if (Object.keys(categories).length === 0) {
@@ -157,24 +167,10 @@ export const Budgeting: React.FC = () => {
             <div data-period-dropdown>
               <ThemedSelect
                 ariaLabel="Time period"
-                value={period.kind === 'month' ? (period.month === currentMonth ? 'thisMonth' : 'pickedMonth') : period.preset}
-                onChange={(v) => {
-                  if (v === 'thisMonth') setPeriod({ kind: 'month', month: currentMonth });
-                  else if (v === 'lastMonth') setPeriod({ kind: 'month', month: shiftMonthKey(currentMonth, -1) });
-                  else if (v !== 'pickedMonth') setPeriod({ kind: 'preset', preset: v as PeriodPreset });
-                }}
+                value={choiceValue}
+                onChange={chooseValue}
                 className="h-10 text-[13px]"
-                options={[
-                  ...(period.kind === 'month' && period.month !== currentMonth
-                    ? [{ value: 'pickedMonth', label: formattedMonth }]
-                    : []),
-                  { value: 'thisMonth', label: 'This month' },
-                  { value: 'lastMonth', label: 'Last month' },
-                  { value: 'last3', label: 'Last 3 months' },
-                  { value: 'last6', label: 'Last 6 months' },
-                  { value: 'last12', label: 'Last 12 months' },
-                  { value: 'ytd', label: 'Year to date' },
-                ]}
+                options={choices}
               />
             </div>
             {monthStepper}
@@ -195,8 +191,11 @@ export const Budgeting: React.FC = () => {
           never both, so CSVUploader's dialog exists once. */}
       {!isDesktop && (
         <div data-testid="budget-phone-controls" className="flex flex-wrap items-center justify-between gap-2 -mb-[22px]">
-          {phoneMonthStepper}
-          <CSVUploader />
+          {period.kind === 'month' ? phoneMonthStepper : <span className="px-3 text-[15px] font-medium">{presetLabel(period.preset)}</span>}
+          <div className="flex items-center">
+            <TimePeriodButton choices={choices} value={choiceValue} onChange={chooseValue} />
+            <CSVUploader />
+          </div>
         </div>
       )}
 
@@ -207,6 +206,7 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'overview' && (
         <TabPanel id="overview" className="flex flex-col gap-6">
+          {!isDesktop ? <BudgetOverviewMobile range={range} /> : (<>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <IncomeWidget range={range} />
             <ExpenseWidget range={range} />
@@ -225,6 +225,7 @@ export const Budgeting: React.FC = () => {
           <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
+          </>)}
         </TabPanel>
       )}
 
