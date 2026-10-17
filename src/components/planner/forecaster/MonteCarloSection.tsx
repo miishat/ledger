@@ -54,7 +54,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
     <div className="flex flex-col gap-4">
       {props.phone ? (
         <div className="rounded-lg border border-border bg-bg-primary/40 p-4">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             <p className="text-[12px] uppercase tracking-wide text-text-secondary">Median Outcome</p>
             {props.medianInfo ? <span className="-my-3">{props.medianInfo}</span> : null}
           </div>
