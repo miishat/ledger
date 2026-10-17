@@ -73,6 +73,13 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         { name: 'Actual', color: 'var(--text-primary)' },
       ]
 
+  // On a phone the goal name is not drawn on the chart: a 12px label above a line near the left edge was clipped
+  // by the top of the plot and ran under the line. Each reachable goal is named in the legend instead.
+  const reachable = goalMarkers.filter((g) => g.month !== null)
+  const legend = centered
+    ? [...legendItems, ...reachable.map((g) => ({ name: `Goal: ${g.label}`, color: 'var(--accent)', opacity: 0.6 }))]
+    : legendItems
+
   return (
     <div className={`themed-card rounded-lg ${centered ? 'p-3' : 'p-4'} h-[380px] flex flex-col`}>
       <ChartFigure
@@ -80,7 +87,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         className="flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={centered ? PHONE_CHART_MARGIN : undefined} accessibilityLayer={false}>
+        <ComposedChart data={data} margin={centered ? PHONE_CHART_MARGIN : { top: 24, right: 5, bottom: 5, left: 5 }} accessibilityLayer={false}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
@@ -118,21 +125,19 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             </>
           )}
           <Line type="monotone" dataKey="actual" stroke="var(--text-primary)" strokeWidth={2} dot={false} name="Actual" />
-          {goalMarkers
-            .filter((g) => g.month !== null)
-            .map((g) => (
-              <ReferenceLine
-                key={g.label}
-                x={g.month as number}
-                stroke="var(--accent)"
-                strokeDasharray="2 4"
-                label={{ value: g.label, fill: 'var(--accent)', fontSize: 11, position: 'top' }}
-              />
-            ))}
+          {reachable.map((g) => (
+            <ReferenceLine
+              key={g.label}
+              x={g.month as number}
+              stroke="var(--accent)"
+              strokeDasharray="2 4"
+              label={centered ? undefined : { value: g.label, fill: 'var(--accent)', fontSize: 12, position: 'top' }}
+            />
+          ))}
         </ComposedChart>
       </ResponsiveContainer>
       </ChartFigure>
-      <ChartLegend centered={centered} items={legendItems} />
+      <ChartLegend centered={centered} items={legend} />
     </div>
   )
 }

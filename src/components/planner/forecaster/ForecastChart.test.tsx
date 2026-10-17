@@ -32,3 +32,19 @@ describe('ForecastChart legend', () => {
     expect(screen.getByText('Projected (real)')).toBeInTheDocument()
   })
 })
+
+describe('ForecastChart goal names', () => {
+  const goals = [{ label: 'Initial Milestone', month: 6, amount: 106000 }, { label: 'Out of Reach', month: null, amount: 9e9 }]
+
+  it('names each reachable goal in the legend on a phone, not on the chart', () => {
+    render(<ForecastChart centered points={points} history={[]} showReal={false} view="line" goalMarkers={goals} />)
+    expect(screen.getByText('Goal: Initial Milestone')).toBeInTheDocument()
+    expect(screen.queryByText('Goal: Out of Reach')).toBeNull()
+    expect(document.querySelector('.recharts-reference-line text')).toBeNull()
+  })
+
+  it('keeps the goal name off the legend on desktop, where it is labelled on the line', () => {
+    render(<ForecastChart points={points} history={[]} showReal={false} view="line" goalMarkers={goals} />)
+    expect(screen.queryByText('Goal: Initial Milestone')).toBeNull()
+  })
+})
