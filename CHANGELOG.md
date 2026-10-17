@@ -6,6 +6,8 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.26.3-beta] - 2026-10-17
+
 ### Changed
 - On phones, Edit Compensation Package opens straight onto a card with the live total and the stock ticker and price, then Base & Cash, Equity and Benefits as tabs with one labelled card per topic and the Save button always pinned, instead of a title row above long single-column fields.
 - On phones, the Compensation page leads with a donut and the total, with one-tap Current Year / Next 1 Year and Gross / After-Tax toggles that show both options. The after-tax figures, notice and Salary & Tax link appear only while After-Tax is on, the breakdown switches between Annualized and Monthly Cash Flow, the stock price and CAD conversion sit in one organised card, and the equity chart's legend is centred with the share valuation behind an info icon. "Unvested remaining" is now "Unvested Remaining" everywhere.
