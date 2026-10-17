@@ -64,10 +64,10 @@ export const RentVsBuyMobile: React.FC<{ s: RentVsBuyState }> = ({ s }) => {
         <CostBar name={`Buying by Year ${lastYear}`} value={buyCost} max={max} lower={buyCost < rentCost} />
       </div>
 
-      <div role="group" aria-label="Horizon presets" className="flex gap-2">
+      <div role="group" aria-label="Horizon presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
         {HORIZON_PRESETS.map((y) => (
           <button key={y} aria-pressed={inputs.horizonYears === y} onClick={() => setInput(RENT_BUY_TOOL_ID, 'horizonYears', y)}
-            className={`flex-1 min-h-11 rounded-xl border text-[14px] font-medium ${inputs.horizonYears === y ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'}`}>{y} yrs</button>
+            className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${inputs.horizonYears === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
         ))}
       </div>
 

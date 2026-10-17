@@ -121,9 +121,9 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
   const forecastTab = (
     <>
       <Hero label={`Projected Net Worth in ${settings.years} Years${settings.showReal ? " (Today's Dollars)" : ''}`} value={formatMoney(finalValue)} />
-      <div role="group" aria-label="Years presets" className="flex gap-2">
+      <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
         {YEAR_PRESETS.map((y) => (
-          <button key={y} aria-pressed={settings.years === y} onClick={() => setSetting('years', y)} className={`flex-1 ${chip(settings.years === y)}`}>{y} yrs</button>
+          <button key={y} aria-pressed={settings.years === y} onClick={() => setSetting('years', y)} className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${settings.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
         ))}
       </div>
       {startFields}

@@ -46,10 +46,10 @@ export const CompoundInterestMobile: React.FC<{ s: CompoundInterestState }> = ({
         </div>
       </div>
 
-      <div role="group" aria-label="Years presets" className="flex gap-2">
+      <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
         {YEAR_PRESETS.map((y) => (
           <button key={y} aria-pressed={inputs.years === y} onClick={() => setInput(COMPOUND_TOOL_ID, 'years', y)}
-            className={`flex-1 min-h-11 rounded-xl border text-[14px] font-medium ${inputs.years === y ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-secondary'}`}>{y} yrs</button>
+            className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${inputs.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
         ))}
       </div>
 

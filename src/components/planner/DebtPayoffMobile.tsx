@@ -88,6 +88,8 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
 
   return (
     <div data-testid="debt-payoff-mobile" className="flex flex-col gap-4">
+      <Seg name="Strategy" value={strategy} onChange={s.setStrategy}
+        options={[{ value: 'avalanche', label: 'Avalanche (Highest)' }, { value: 'snowball', label: 'Snowball (Smallest)' }]} />
       <div className="rounded-2xl border border-accent/50 bg-accent/10 p-4" role="status" aria-live="polite">
         <p className="text-[13px] text-text-secondary">Debt-free in</p>
         <p className="text-[30px] font-semibold text-accent leading-tight">{formatMonths(chosen.months)}</p>
@@ -98,8 +100,6 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
           <p className="text-[16px] font-semibold tabular-nums">{delta >= 0 ? `Saves ${formatMoney(delta)}` : `Costs ${formatMoney(-delta)} More`}</p></div>
       </div>
 
-      <Seg name="Strategy" value={strategy} onChange={s.setStrategy}
-        options={[{ value: 'avalanche', label: 'Avalanche (Highest)' }, { value: 'snowball', label: 'Snowball (Smallest)' }]} />
       <Field id="debt-extra" label="Extra Monthly Payment" prefix="$" value={s.extraMonthly} onChange={s.setExtra} />
 
       <div className="rounded-2xl border border-border bg-bg-secondary">
