@@ -18,7 +18,7 @@ it('leads with the future cost and the purchasing power change', () => {
 
 it('changes the years with a preset and the direction with the toggle', () => {
   render(<Harness />)
-  fireEvent.click(screen.getByRole('button', { name: '20' }))
+  fireEvent.click(screen.getByRole('button', { name: '20 yrs' }))
   expect(screen.getByText('Cost in 20 Years')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: "Future $ → Today's Value" }))
   expect(screen.getByText("Worth in Today's Dollars")).toBeInTheDocument()

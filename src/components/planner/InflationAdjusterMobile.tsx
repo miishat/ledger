@@ -50,17 +50,14 @@ export const InflationAdjusterMobile: React.FC<{ s: InflationAdjusterState }> = 
 
       <Field id="inflation-amount" label={toFuture ? 'Amount Today' : 'Future Amount'} prefix="$" value={inputs.amount} onChange={set('amount')} />
 
-      <div className="flex flex-col gap-1">
-        <span className={lab}>Years</span>
-        <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
-          {YEAR_PRESETS.map((y) => (
-            <button key={y} aria-pressed={inputs.years === y} onClick={() => setInput(INFLATION_TOOL_ID, 'years', y)}
-              className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${inputs.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y}</button>
-          ))}
-        </div>
+      <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
+        {YEAR_PRESETS.map((y) => (
+          <button key={y} aria-pressed={inputs.years === y} onClick={() => setInput(INFLATION_TOOL_ID, 'years', y)}
+            className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${inputs.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
+        ))}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field id="inflation-years" label="Custom Years" suffix="yrs" max={80} value={inputs.years} onChange={set('years')} />
+        <Field id="inflation-years" label="Years" suffix="yrs" max={80} value={inputs.years} onChange={set('years')} />
         <Field id="inflation-rate" label="Annual Inflation" suffix="%" value={inputs.inflationPct} onChange={set('inflationPct')} />
       </div>
     </div>

@@ -71,9 +71,6 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
   return (
     <div data-testid="mortgage-mobile" className="flex flex-col gap-4">
       <Seg name="Mode" value={mode} onChange={(v) => m.setInput('mode', v)} options={[{ value: 'payment', label: 'Payment' }, { value: 'affordability', label: 'Affordability' }]} />
-      {mode === 'payment' && (
-        <Seg name="Frequency" value={frequency} onChange={(v) => m.setInput('frequency', v)} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'biweekly', label: 'Biweekly Accelerated' }]} />
-      )}
 
       <div className="rounded-2xl border border-accent/50 bg-accent/10 p-4" role="status" aria-live="polite">
         <p className="text-[13px] text-text-secondary">{hero.label}</p>
@@ -85,6 +82,10 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3">{fields.map((f) => <Field key={f.label} f={f} />)}</div>
+
+      {mode === 'payment' && (
+        <Seg name="Frequency" value={frequency} onChange={(v) => m.setInput('frequency', v)} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'biweekly', label: 'Biweekly Accelerated' }]} />
+      )}
 
       {affordability && (
         <div className="rounded-xl border border-border bg-bg-secondary">
