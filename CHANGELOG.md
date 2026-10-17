@@ -6,7 +6,7 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
-## [0.11.4-beta] - 2026-10-17
+## [0.26.2-beta] - 2026-10-17
 
 ### Changed
 - On phones, the Emergency Fund budget button reads "Use My Budget Average ($X/mo)" and only looks selected once your expenses match it, the Raise vs Inflation verdict has no trailing full stop, and Forecaster Plan rows show Projected and Lands in a tinted result line.
@@ -29,7 +29,7 @@ pre-1.0 beta.
 - On phones, the Mortgage tool shows the payment (or the maximum home price) first with its two supporting figures, then the inputs in a tidy grid with equal-height fields. Payment and Affordability, and Monthly and Biweekly, are full-width toggles, extra payments are compact cards with a clear Add button, and the affordability note moved behind an Estimation Details row.
 - On phones, the Currency Converter shows the answer first ("100 USD is CAD 141.61") with the rate and a refresh button, then one card for the amount, the From and To currencies with a swap button, and the rate date. Rate Details is a single collapsed line showing when the rate was fetched, with the manual override inside.
 
-## [0.11.3-beta] - 2026-10-15
+## [0.26.1-beta] - 2026-10-15
 
 ### Changed
 - On phones, Budgeting > Transactions has a rebuilt layout with a compact search and category selectors, and the gaps match the Overview and Insights tabs.
@@ -41,7 +41,7 @@ pre-1.0 beta.
 - On phones, the Triage Inbox is a compact list. Tap a row to review it, use Select to accept, ignore or set a category for several rows at once, and find Reject Card Payments and Discard All in the overflow menu.
 - On phones, the message after an import is a compact card with To Review, Skipped and Excluded rows. Tap Skipped or Excluded for the list, and use the info button for charges that earlier imports had but the new file does not.
 
-## [0.11.2-beta] - 2026-10-12
+## [0.26.0-beta] - 2026-10-12
 
 ### Added
 - Refunds & Payments applies incoming money against selected expense categories without counting it as income. It is enabled by default and can be turned off in Settings.
@@ -58,7 +58,7 @@ pre-1.0 beta.
 - The exclusion-rule popup uses a compact form with optional filters, match preview, and guidance. Pending application shows the count for all enabled rules when selected, and invalid fields show errors after interaction or save.
 - Exclusion rule management uses a compact description/account row and bordered list. The popup closes from its header, and excluded-import history stays hidden when empty.
 
-## [0.11.1-beta] - 2026-10-08
+## [0.25.0-beta] - 2026-10-08
 
 ### Added
 - Import CIBC credit card CSVs directly, with no column mapping. Purchases count as expenses, refunds reduce spending, and recognized card payments are held for review. Invalid rows report an error instead of importing a partial file.
@@ -74,7 +74,7 @@ pre-1.0 beta.
 ### Note
 - Saved net worth history remains in CAD as originally recorded. Earlier points may have treated foreign balances as CAD and are not recalculated.
 
-## [0.11.0-beta] - 2026-10-03
+## [0.24.0-beta] - 2026-10-03
 
 Ledger on a phone now follows one written set of layout rules
 (`docs/mobile-layout-rules.md`) instead of being the desktop layout stacked
@@ -106,7 +106,7 @@ into a single column.
 - Closing About this tool on a phone returns focus to the button below the results instead of dropping it
 - A phone sheet that was closed while scrolled no longer reopens with a stale fade at its top edge
 
-## [0.10.1-beta] - 2026-09-27
+## [0.23.1-beta] - 2026-09-27
 
 ### Changed
 - Aurora Gradient cards now have a subtle emerald-to-sky-to-violet gradient
@@ -121,7 +121,7 @@ into a single column.
 - The Compensation package editor can scroll to all of its content on shorter desktop windows instead of clipping it inside the dialog
 - Refresh Price in Compensation now clears a manual stock price override and fetches a live price. If the live price is unavailable, the old override label disappears and the page explains what happened
 
-## [0.10.0-beta] - 2026-08-31
+## [0.23.0-beta] - 2026-08-31
 
 The remediation of a full engineering audit, plus the portfolio redesign that
 preceded it. The headline is a sync bug that could destroy data: pulling from a
@@ -157,7 +157,7 @@ and the app loads a fifth less code.
 - The portfolio total no longer outgrows its column on a tablet, and now has room for an eight figure amount rather than only the value it happened to be designed against
 - Screen readers can navigate the Investments and Compensation pages by heading again: both skipped a level, which breaks the outline those tools rely on
 
-## [0.9.7-beta] - 2026-08-27
+## [0.22.0-beta] - 2026-08-27
 
 A sixth theme, Gilded Bloom, and the round of interface fixes that living
 with it turned up.
@@ -176,7 +176,7 @@ with it turned up.
 - The desktop sidebar no longer shows a stray horizontal scrollbar along its bottom edge. It affected every theme, on any display scaled so that a one pixel border renders as a fraction of a pixel
 - The figures in the Allocation legend no longer sit flush against its scrollbar, which made the last digit of each amount read as cut off
 
-## [0.9.6-beta] - 2026-08-25
+## [0.21.0-beta] - 2026-08-25
 
 Support for Chase credit card statements, and the groundwork refunds needed in
 order to be recorded honestly.
@@ -196,7 +196,7 @@ order to be recorded honestly.
 - A month whose refunds outweigh its spending no longer shows a broken figure in the Monthly Summary, and an expense group in the same position is now left out of the Cash Flow chart instead of being drawn as a flow that cannot exist
 - A budget progress bar can no longer render backwards when refunds exceed what was spent in a category, while the figure beside it still correctly reads as the negative amount it is
 
-## [0.9.5-beta] - 2026-08-22
+## [0.20.0-beta] - 2026-08-22
 
 A desktop and tablet pass. The previous release fixed the phone experience; an audit of the
 same app on a laptop, a desktop monitor and an iPad found a separate set of problems, and
@@ -234,7 +234,7 @@ this release closes them.
 - Charts had no description for screen readers and were announced as an unnamed application
 - Table headings were not linked to their columns, so a screen reader could not tell you which column a figure belonged to
 
-## [0.9.4-beta] - 2026-08-20
+## [0.19.1-beta] - 2026-08-20
 
 ### Changed
 - Mobile navigation: Search and Settings now live in a new top bar on phones, so the bottom bar can give all five sections (Dashboard, Budgeting, Investments, Planner, Compensation) full-width tabs instead of squeezing in a sixth. Compensation no longer gets cut off
@@ -252,7 +252,7 @@ this release closes them.
 - The undo and update-available notifications could sit partly behind the bottom navigation bar on a phone with a home indicator; they now clear it
 - The Mortgage chart's tooltip stopped responding to mouse hover on desktop after enabling tap support on phones; hover is restored on desktop while tap still works on phones
 
-## [0.9.3-beta] - 2026-08-18
+## [0.19.0-beta] - 2026-08-18
 
 ### Added
 - Drive sync: an automatic sync option in Settings. Once you have synced manually at least once in a browser session, Ledger keeps that device current in the background, but only when there is nothing to decide, pulling or pushing on your behalf when the two sides agree cleanly. Anything that could overwrite work done on another device still stops and waits for you to resolve it in Settings, exactly as manual sync always has. Automatic sync uploads the same snapshot manual sync does, including any market data API key you have entered.
@@ -268,7 +268,7 @@ this release closes them.
 - The demo data banner could keep showing after demo data was cleared, or fail to reappear after demo data was loaded again in the same session, in a few sequences involving undo. It now tracks the same underlying state every code path that can change it, including undo, so it always matches whether sample data is actually loaded
 - Several labels dimmed with reduced opacity, such as helper text and secondary figures, fell below the WCAG AA contrast minimum in the default theme. They are now shown at full opacity
 
-## [0.9.2-beta] - 2026-08-17
+## [0.18.0-beta] - 2026-08-17
 
 ### Added
 - Demo mode, in Settings under Backup: load a sample two months of transactions to see what a populated Ledger looks like before you enter your own. A banner marks it while it is on, the sample records never reach a backup file or a Drive sync, and clearing it removes only the sample records so anything you entered yourself survives. If you already have transactions, loading it asks first and offers an undo
@@ -288,7 +288,7 @@ this release closes them.
 - Several small labels were too faint to meet the contrast minimum in the default theme: the version number in the sidebar, the help line under Drive sync, and the placeholder in the market data API key box
 - Every page carried two top-level headings, one from the sidebar and one from the page itself, which made screen reader navigation ambiguous. The sidebar brand is no longer a heading
 
-## [0.9.1-beta] - 2026-08-15
+## [0.17.0-beta] - 2026-08-15
 
 ### Added
 - Salary & Tax: an RRSP Efficiency block next to your deductions. It shows how much of your income sits in each marginal band, what sheltering each band would save, and the contribution that clears your top band
@@ -306,7 +306,7 @@ this release closes them.
 - Salary & Tax: the federal and provincial bracket ladders always showed a horizontal scrollbar, because the gaps between segments pushed the row past its own width. The segments now share the space and the ladders fit without scrolling at every income. Where a band is too narrow for its full figures, such as on a phone, its caption shortens to $0 to $54k rather than running into the band beside it
 - Planner: the Rent vs Buy chart's explanatory caption was rendering outside the chart card
 
-## [0.9.0-beta] - 2026-08-15
+## [0.16.0-beta] - 2026-08-15
 
 ### Added
 - Budgeting: a transaction can be split across several categories, so one shop that was part groceries and part household counts as both. Every budget figure, the 50/30/20 split and the category charts follow the slices
@@ -322,7 +322,7 @@ this release closes them.
 ### Fixed
 - A widget that hit unexpected data used to blank the whole page. Now it fails inside its own card with a Try again button and the rest of the page keeps working
 
-## [0.8.1-beta] - 2026-08-14
+## [0.15.0-beta] - 2026-08-14
 
 ### Added
 - Budgeting: a search box on the transaction list, matching on description or category name
@@ -338,7 +338,7 @@ this release closes them.
 ### Changed
 - The app is split into one bundle per page instead of a single bundle: the largest chunk that loads up front dropped from 1,229 kB (350 kB gzipped) to 463 kB (143 kB gzipped), so opening it downloads noticeably less before the dashboard appears. The other pages load when you first visit them
 
-## [0.8.0-beta] - 2026-08-13
+## [0.14.0-beta] - 2026-08-13
 
 ### Added
 - Google Drive sync. Push and pull your whole dataset as timestamped JSON snapshots in a `Ledger` folder in your own Drive, using an OAuth client ID you supply in Settings. Snapshots carry a revision number, and the app warns before a push overwrites a newer snapshot from another device or a pull discards unpushed local edits. Retention keeps the most recent 100 snapshots and moves older ones to the Drive bin.
@@ -348,7 +348,7 @@ this release closes them.
 - Backup envelope is now version 2, carrying device and revision metadata. Version 1 backup files still import.
 - Restoring a backup now validates the whole file before writing anything, so a corrupt file cannot leave data half-restored, and it writes only keys the app recognises.
 
-## [0.7.6-beta] - 2026-08-12
+## [0.13.0-beta] - 2026-08-12
 
 ### Added
 - Investments: the Portfolio tab now shows an Account Value card with the true account value from an uploaded PortfolioAnalyst report, including the cash balance and net of any margin loan. It lists the cash sleeve (negative when you are drawn on margin) and the report period, so a margin account no longer looks like it holds only the sum of its positions. A report in a currency other than Canadian dollars is labelled with that currency rather than converted
@@ -369,7 +369,7 @@ this release closes them.
 - Investments: the Portfolio tab's "Value Now" total is now "Holdings Value", since it counts only your positions and never included cash or a margin loan
 - Investments: the allocation donut on the Portfolio tab is noticeably larger
 
-## [0.7.5-beta] - 2026-07-23
+## [0.12.1-beta] - 2026-07-23
 
 ### Fixed
 - Mobile: content at the bottom of long pages is no longer hidden behind the bottom navigation bar. Scrolling to the end now clears the nav, so buttons and captions at the foot of a page are reachable
@@ -384,7 +384,7 @@ this release closes them.
 - Mobile: the Net-Worth Forecaster's Monte Carlo cards stack in one clean column on phones instead of sitting unevenly
 - Dashboard: rearranging widgets by dragging is now a desktop-only feature, since it never worked by touch
 
-## [0.7.4-beta] - 2026-07-22
+## [0.12.0-beta] - 2026-07-22
 
 ### Added
 - Budgeting: a new Savings Rate widget on the Overview tab, with a rate gauge and toggles for a net-savings trend and a saved-versus-spent split. It follows the timeframe you pick above and shows amounts on hover
@@ -395,7 +395,7 @@ this release closes them.
 - Budgeting: annual budget rows no longer show the "set aside by now" line; they show what you have spent and what is left for the year
 - Tooling: eslint now ignores the .claude tooling directory, so lint reports only real application issues
 
-## [0.7.3-beta] - 2026-07-21
+## [0.11.0-beta] - 2026-07-21
 
 ### Added
 - Budgeting: categories can be budgeted annually instead of monthly; a /mo /yr toggle on the Setup tab lets you pick the cadence. Annual categories like vacations are tracked against calendar-year spend in their own Annual budgets section, with a set-aside pace line showing what you should have put aside by now, while still contributing one twelfth to each month's budget total
@@ -410,7 +410,7 @@ this release closes them.
 - Compensation: converted stock prices now display to three decimals instead of overflowing their input box. Full precision is kept for the underlying calculations
 - Investments: portfolio imports (both broker CSVs and PortfolioAnalyst reports) no longer store every foreign-currency position as Canadian dollars. A one-time notice flags holdings imported before this release so you can re-check their currency
 
-## [0.7.2-beta] - 2026-07-19
+## [0.10.0-beta] - 2026-07-19
 
 ### Added
 - Budgeting: shared bills. Mark an expense as shared, set your share (50/33/25% quick buttons), and name who owes you; only your share counts in the budget. An Owed to Me widget tracks per-person balances with one-click settle-up, and income can be marked as a reimbursement so paybacks never inflate your income
@@ -428,7 +428,7 @@ this release closes them.
 - Clicking buttons and inputs no longer draws the browser's default white focus box in dark themes; keyboard navigation shows a themed accent ring instead
 - Luxury theme: Save buttons and RSU preset buttons now use black text on the gold accent for readability
 
-## [0.7.1-beta] - 2026-07-18
+## [0.9.0-beta] - 2026-07-18
 
 ### Added
 - Net-Worth / FIRE Forecaster chart now has a legend naming each series (Projected line, Conservative to Optimistic band, Contributed vs Growth areas, Actual history)
@@ -442,7 +442,7 @@ this release closes them.
 ### Fixed
 - Forecaster: in Real (Today's Dollars) mode the conservative and optimistic scenario bands are now inflation-deflated like the projected line, so the projection no longer dips below its own conservative band
 
-## [0.7.0-beta] - 2026-07-17
+## [0.8.0-beta] - 2026-07-17
 
 ### Added
 - Budget paradigms are now functional: pick Ledger Custom, Zero-Based, Target-Based, or the 50/30/20 Rule in Budget Setup and the Budgeting page enforces it with status banners (unassigned dollars, buffer health, or needs/wants/savings ratios)
@@ -458,7 +458,7 @@ this release closes them.
 - Forecaster: stacked Contributions vs Growth view now respects Real (Today's Dollars) mode; the "today" label stays anchored to the today line; y-axis uses compact labels ($1.5M instead of $1,500,000)
 - Forecaster: Monte Carlo footnote sits inside its card instead of overflowing it
 
-## [0.6.2-beta] - 2026-07-17
+## [0.7.0-beta] - 2026-07-17
 
 ### Added
 - New logo: an L that doubles as chart axes with a rising trend line. In the sidebar next to the wordmark (drawn in the active theme's accent), as the favicon, and in the app icons (gold on black)
