@@ -6,14 +6,12 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.26.4-beta] - 2026-10-17
+
 ### Changed
 - On phones, the Budgeting Insights tab leads with a Spending Alerts banner (tap it to compare each category with its usual spend) and a Coming Up card that groups the next 30 days of recurring charges by week with a total for each. All Recurring Charges (with the ignore and restore controls), Spending Calendar and Category Trends sit in folds below, each under one title. Desktop is unchanged.
 - In Cash Flow, the Savings flow, bar and label are green in every theme (a new success colour that meets AA contrast), instead of the accent colour income uses.
 - A category can be marked as a Bill. On phones, tap the ... on a category in Setup to open its options: Target Covers (One Month or One Year) and Payment (Auto, Bill or Everyday), with what each means behind an info button after Payment. A bill shows a Bill badge and is judged as Due, Paid or Over Budget instead of by pace, so a rent paid on the 1st no longer reads Over Pace. Auto treats a category as a bill when nearly all of its spending is monthly recurring payments; an annual category is a bill only when you mark it. On desktop the choice sits in the category row. The This Month's Budget pace pill on phones counts bills in full from the start of the month.
-
-## [0.26.4-beta] - 2026-10-17
-
-### Changed
 - On phones, Customize Dashboard lists the cards the Dashboard now has: Net Worth and This Month (one switch for all three month widgets), the five account groups, and the cards after them. Only those last cards have arrows, because the others always come first. The explanation sits behind an info icon after the title, which reads "Customize Dashboard".
 - On phones, the Dashboard leads with Net Worth, then one This Month band (Money In, Money Out, Net and the Projected Net), then one fold per account group (Bank, Investment, Others, Receivables, Debts) with its total on the right, all folded until you tap one, with Add, Edit and Delete inside, instead of a separate card for each. Customize still applies: switching off Net Worth, the three month widgets together, or an account group removes it.
 - On phones, Upcoming Vests shows the next vest with a countdown and its total, then the three dates after it, with grants that vest the same day combined.
