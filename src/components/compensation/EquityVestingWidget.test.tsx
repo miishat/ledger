@@ -52,7 +52,7 @@ describe('EquityVestingWidget unvested line', () => {
   it('names the unvested series rather than a cumulative one', async () => {
     addGrant()
     render(<EquityVestingWidget />)
-    await waitFor(() => expect(screen.getAllByText('Unvested remaining').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('Unvested Remaining').length).toBeGreaterThan(0))
     expect(screen.queryByText(/cumulative/i)).toBeNull()
   })
 
@@ -82,13 +82,13 @@ describe('EquityVestingWidget unvested line', () => {
 describe('EquityVestingWidget tooltip', () => {
   const grantPayload = (value: number) => [
     { dataKey: 'g1', name: 'Initial Grant', value, color: '#c9a44c' },
-    { dataKey: 'unvestedRemaining', name: 'Unvested remaining', value: 170880 },
+    { dataKey: 'unvestedRemaining', name: 'Unvested Remaining', value: 170880 },
   ]
 
   it('still answers with the unvested figure in a month where nothing vests', () => {
     render(<CustomEquityTooltip active payload={grantPayload(0)} label="Nov" />)
     expect(screen.getByText('Nov')).toBeInTheDocument()
-    expect(screen.getByText('Unvested remaining')).toBeInTheDocument()
+    expect(screen.getByText('Unvested Remaining')).toBeInTheDocument()
     expect(screen.getByText('$170,880')).toBeInTheDocument()
     expect(screen.queryByText('Initial Grant')).toBeNull()
   })

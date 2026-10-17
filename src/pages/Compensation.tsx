@@ -11,6 +11,7 @@ import { NumberInput } from '../components/ui/NumberInput'
 import { fxKey, todayKey } from '../services/marketData'
 import { useMarketDataStore } from '../store/useMarketDataStore'
 import { useIsDesktop } from '../hooks/useMediaQuery'
+import { CompensationMobile } from '../components/compensation/CompensationMobile'
 
 export const Compensation: React.FC = () => {
   const { setPrimaryPackage, compareMode, toggleCompareMode, timeMode, useCadConversion, toggleCadConversion } =
@@ -52,9 +53,8 @@ export const Compensation: React.FC = () => {
     }
   }
 
-  // Rule 3 of docs/mobile-layout-rules.md: on a phone the total leads and the
-  // price and currency controls follow it. One element, placed in one of two
-  // spots, so its inputs never exist twice.
+  // Desktop only: a phone shows the populated page through CompensationMobile, which has its own
+  // price card, so this toolbar never competes with the total for the top of the screen.
   const priceToolbar = isPopulated && (
     <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -166,96 +166,113 @@ export const Compensation: React.FC = () => {
         }
       />
 
-      {isDesktop && priceToolbar}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <CompHeroWidget className="h-full" />
-        </div>
-
-        <div className="themed-card rounded-xl p-6 flex flex-col gap-4">
-          <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Package Details</h2>
-          {isPopulated ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <label htmlFor="comp-stock-price" className="text-[14px] text-[var(--color-text-secondary)]">
-                  Current Stock Price {useCadConversion ? '(CAD)' : '(USD)'}
-                </label>
-                <div className="flex items-center gap-1">
-                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
-                  <NumberInput
-                    id="comp-stock-price"
-                    value={pkg.companyCurrentPrice ?? 0}
-                    onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
-                    maxDecimals={3}
-                    disabled={useCadConversion}
-                    className="w-28 bg-[var(--color-bg-primary)] border control-border rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right transition-colors disabled:opacity-60"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">
-                  {timeMode === 'current-year' ? 'Blended Base Salary' : 'Current Base Salary'}
-                </span>
-                <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  ${calcAnnualBaseSalary(pkg, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Target Bonus</span>
-                <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {pkg.cashBonusPercent}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">RSU Grants</span>
-                <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {pkg.rsuGrants.length} Active
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">Benefits Match</span>
-                <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                  {pkg.rrspMatchPercent}% RRSP, {pkg.esppContributionPercent}% ESPP
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-              <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
-                No compensation data added yet. Start by adding your current offer or current package.
-              </p>
+      {!isDesktop && isPopulated && (
+        <CompensationMobile
+          equity={<EquityVestingWidget />}
+          compare={
+            <>
               <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+                id="compare-toggle-btn"
+                onClick={toggleCompareMode}
+                className="min-h-[44px] px-4 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-xl text-[14px] font-medium"
               >
-                Add Compensation Package
+                Compare Another Offer
               </button>
-            </div>
-          )}
-        </div>
-      </div>
+              {compareMode && <CompareView />}
+            </>
+          }
+        />
+      )}
+      {(isDesktop || !isPopulated) && (<>
+        {isDesktop && priceToolbar}
 
-      {!isDesktop && priceToolbar}
-
-      {isPopulated && (
-        <>
-          <EquityVestingWidget />
-
-          <div className="flex justify-end">
-            <button
-              id="compare-toggle-btn"
-              onClick={toggleCompareMode}
-              className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
-            >
-              Compare Another Offer
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <CompHeroWidget className="h-full" />
           </div>
 
-          {compareMode && <CompareView />}
-        </>
-      )}
+          <div className="themed-card rounded-xl p-6 flex flex-col gap-4">
+            <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Package Details</h2>
+            {isPopulated ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
+                  <label htmlFor="comp-stock-price" className="text-[14px] text-[var(--color-text-secondary)]">
+                    Current Stock Price {useCadConversion ? '(CAD)' : '(USD)'}
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[14px] font-medium text-[var(--color-text-primary)]">$</span>
+                    <NumberInput
+                      id="comp-stock-price"
+                      value={pkg.companyCurrentPrice ?? 0}
+                      onCommit={(n) => setPrimaryPackage({ companyCurrentPrice: n })}
+                      maxDecimals={3}
+                      disabled={useCadConversion}
+                      className="w-28 bg-[var(--color-bg-primary)] border control-border rounded-md px-2 py-1 text-[14px] font-medium text-[var(--color-text-primary)] text-right transition-colors disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
+                  <span className="text-[14px] text-[var(--color-text-secondary)]">
+                    {timeMode === 'current-year' ? 'Blended Base Salary' : 'Current Base Salary'}
+                  </span>
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                    ${calcAnnualBaseSalary(pkg, timeMode).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
+                  <span className="text-[14px] text-[var(--color-text-secondary)]">Target Bonus</span>
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                    {pkg.cashBonusPercent}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]">
+                  <span className="text-[14px] text-[var(--color-text-secondary)]">RSU Grants</span>
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                    {pkg.rsuGrants.length} Active
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[14px] text-[var(--color-text-secondary)]">Benefits Match</span>
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                    {pkg.rrspMatchPercent}% RRSP, {pkg.esppContributionPercent}% ESPP
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+                <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
+                  No compensation data added yet. Start by adding your current offer or current package.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+                >
+                  Add Compensation Package
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {isPopulated && (
+          <>
+            <EquityVestingWidget />
+
+            <div className="flex justify-end">
+              <button
+                id="compare-toggle-btn"
+                onClick={toggleCompareMode}
+                className="px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
+              >
+                Compare Another Offer
+              </button>
+            </div>
+
+            {compareMode && <CompareView />}
+          </>
+        )}
+      </>)}
 
       <CompensationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>

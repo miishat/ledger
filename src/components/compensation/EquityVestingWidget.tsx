@@ -16,6 +16,8 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { ChartFigure } from '../ui/ChartFigure'
+import { InfoButton } from '../ui/InfoButton'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
 
 const cad = (v: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v)
@@ -67,7 +69,7 @@ export const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProp
 
       {unvested !== undefined && (
         <div className="flex justify-between items-center gap-4 text-[13px] mt-1">
-          <span className="text-[var(--color-text-secondary)]">Unvested remaining</span>
+          <span className="text-[var(--color-text-secondary)]">Unvested Remaining</span>
           <span className="text-[var(--color-text-primary)] font-bold">{cad(unvested)}</span>
         </div>
       )}
@@ -77,6 +79,7 @@ export const CustomEquityTooltip = ({ active, payload, label }: ChartTooltipProp
 
 export function EquityVestingWidget() {
   const { timeMode } = useCompensationStore()
+  const isDesktop = useIsDesktop()
   const { pkg: primaryPackage } = useCompensationDisplay()
 
   const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)', 'var(--chart-6)']
@@ -178,7 +181,12 @@ export function EquityVestingWidget() {
   }
 
   return (
-    <WidgetWrapper title="Equity Vesting Schedule">
+    <WidgetWrapper
+      title="Equity Vesting Schedule"
+      titleAdornment={!isDesktop && (
+        <InfoButton label="About Share Valuation" inline><p>Valued at {cad(primaryPackage.companyCurrentPrice)} per share.</p></InfoButton>
+      )}
+    >
       <div className="flex flex-col gap-4">
         <ChartFigure
           label={`Equity vesting schedule across ${primaryPackage.rsuGrants.length} grants, totalling ${cad(totalScheduleValue)}, with ${cad(Math.max(0, totalScheduleValue - cumulativeVested))} still unvested`}
@@ -224,7 +232,7 @@ export function EquityVestingWidget() {
                 yAxisId="right"
                 type="linear"
                 dataKey="unvestedRemaining"
-                name="Unvested remaining"
+                name="Unvested Remaining"
                 stroke="var(--unvested)"
                 strokeWidth={2}
                 fill="var(--unvested)"
@@ -248,16 +256,18 @@ export function EquityVestingWidget() {
         </ChartFigure>
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-          <ChartLegend items={[
+          <ChartLegend centered={!isDesktop} items={[
             ...primaryPackage.rsuGrants.map((grant, index) => ({
               name: grant.grantName,
               color: COLORS[index % COLORS.length],
             })),
-            { name: 'Unvested remaining', color: 'var(--unvested)' },
+            { name: 'Unvested Remaining', color: 'var(--unvested)' },
           ]} />
-          <span className="text-meta text-[var(--color-text-secondary)]">
-            Valued at {cad(primaryPackage.companyCurrentPrice)} per share
-          </span>
+          {isDesktop && (
+            <span className="text-meta text-[var(--color-text-secondary)]">
+              Valued at {cad(primaryPackage.companyCurrentPrice)} per share
+            </span>
+          )}
         </div>
       </div>
     </WidgetWrapper>

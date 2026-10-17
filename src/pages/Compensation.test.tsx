@@ -99,12 +99,12 @@ describe('Compensation empty state', () => {
 describe('Compensation key figure on a phone', () => {
   afterEach(() => resetMatchMedia())
 
-  it('puts the price and currency toolbar after the total on a phone', () => {
+  it('puts the price and currency card after the total on a phone', () => {
     setMatchMedia(false)
-    render(<MemoryRouter><Compensation /></MemoryRouter>)
-    const hero = screen.getByRole('heading', { name: 'Total Compensation' })
+    const { container } = render(<MemoryRouter><Compensation /></MemoryRouter>)
+    const figure = container.querySelector('[data-key-figure]') as HTMLElement
     const refresh = screen.getByRole('button', { name: /refresh price/i })
-    expect(hero.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(figure.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('keeps the toolbar above the total on desktop', () => {
