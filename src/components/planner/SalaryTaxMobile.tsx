@@ -48,10 +48,12 @@ const About: React.FC = () => (
   </InfoButton>
 )
 
-const WhyRates: React.FC = () => (
-  <InfoButton label="Why Rates Differ" inline>
-    <p>Each row is a slice of taxable income and the tax saved per deducted dollar.</p>
-    <p>Some slices save more because credits and premiums phase in or out there, like the Ontario Health Premium near $200,000.</p>
+/** Marks a slice whose rate is higher than the slices around it, which is where a premium or
+ *  credit phases in (for example the Ontario Health Premium near $200,000). */
+const WhyHigher: React.FC = () => (
+  <InfoButton label="Why This Rate Is Higher" inline>
+    <p>A premium or credit phases in or out on this slice of income, such as the Ontario Health Premium near $200,000.</p>
+    <p>Each dollar deducted here saves more than your bracket rate.</p>
   </InfoButton>
 )
 
@@ -161,20 +163,29 @@ const Ladder: React.FC<{ title?: string; brackets: Bracket[]; income: number }> 
 const RrspCompact: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
   const slices = marginalSlices(s.income, s.province, s.deductibleRrsp, s.inputs.fhsa)
   const top = slices[0]
+  const shown = slices.slice(0, 3)
   if (!top || top.rate <= 0) return <p className="text-[13px] text-text-secondary">You pay no income tax at this income, so an RRSP deduction saves nothing this year.</p>
   const used = s.room !== null && s.room > 0 ? Math.min((top.amount / s.room) * 100, 100) : null
   return (
     <div className="flex flex-col gap-3">
       <StatStrip items={[['Saved Per $1', `${top.rate.toFixed(1)}%`], [`${formatMoney(top.amount)} RRSP Saves`, formatMoney(top.taxSaved)]]} />
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-3 text-[12px] text-text-secondary px-1"><span className="w-14">Rate</span><span className="flex-1">Income in Slice</span><span>Tax Saved</span><WhyRates /></div>
-        {slices.slice(0, 3).map((x, i) => (
-          <div key={x.from} className={`flex items-center gap-3 rounded-lg px-3 min-h-10 text-[13px] ${i === 0 ? 'bg-accent/10 border border-accent/50' : 'bg-bg-primary/40'}`}>
-            <span className={`w-11 font-semibold ${i === 0 ? 'text-accent' : ''}`}>{x.rate.toFixed(1)}%</span>
-            <span className="flex-1 tabular-nums">{formatMoney(x.amount)}</span>
-            <span className="tabular-nums">{formatMoney(x.taxSaved)}</span>
-          </div>
-        ))}
+        <div className="flex items-center gap-3 text-[12px] text-text-secondary px-1"><span className="w-14">Rate</span><span className="flex-1">Income in Slice</span><span>Tax Saved</span></div>
+        {shown.map((x, i) => {
+          const above = shown[i - 1]
+          const below = shown[i + 1]
+          const higher = (above !== undefined || below !== undefined)
+            && (above === undefined || x.rate > above.rate)
+            && (below === undefined || x.rate > below.rate)
+            && (above !== undefined && below !== undefined || x.amount <= 1000)
+          return (
+            <div key={x.from} className={`flex items-center gap-3 rounded-lg px-3 min-h-10 text-[13px] ${i === 0 ? 'bg-accent/10 border border-accent/50' : 'bg-bg-primary/40'}`}>
+              <span className={`w-11 font-semibold ${i === 0 ? 'text-accent' : ''}`}>{x.rate.toFixed(1)}%</span>
+              <span className="flex-1 flex items-center tabular-nums">{formatMoney(x.amount)}{higher && <WhyHigher />}</span>
+              <span className="tabular-nums">{formatMoney(x.taxSaved)}</span>
+            </div>
+          )
+        })}
       </div>
       {used !== null ? (
         <div className="flex flex-col gap-1.5">

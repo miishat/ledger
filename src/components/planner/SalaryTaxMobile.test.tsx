@@ -59,8 +59,21 @@ it('switches the bracket ladder between Federal and Provincial', () => {
 it('folds RRSP Efficiency with the income in its top slice, and explains differing rates', () => {
   render(<Harness />)
   expect(screen.getByText(/^\$[\d,]+ in Slice$/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Why Rates Differ' }))
+})
+
+it('adds a Why This Rate Is Higher button only on the slice where a premium phases in', () => {
+  usePlannerStore.getState().setInput('salary-tax', 'income', 230000)
+  usePlannerStore.getState().setInput('salary-tax', 'rrsp', 20000)
+  render(<Harness />)
+  expect(screen.getAllByRole('button', { name: 'Why This Rate Is Higher' })).toHaveLength(1)
+  fireEvent.click(screen.getByRole('button', { name: 'Why This Rate Is Higher' }))
   expect(screen.getByText(/Ontario Health Premium near/)).toBeInTheDocument()
+})
+
+it('has no Why This Rate Is Higher button when the slice rates only step down', () => {
+  usePlannerStore.getState().setInput('salary-tax', 'income', 150000)
+  render(<Harness />)
+  expect(screen.queryByRole('button', { name: 'Why This Rate Is Higher' })).not.toBeInTheDocument()
 })
 
 it('keeps the provincial premium lines inside the marginal rate info button', () => {
