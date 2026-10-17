@@ -6,6 +6,9 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- On phones, the Planner page lists each section's tools as a divided list of names with icons and chevrons, without the one-line descriptions.
+
 ## [0.26.2-beta] - 2026-10-17
 
 ### Changed

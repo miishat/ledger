@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PLANNER_TOOLS } from '../components/planner/toolRegistry'
 import { Planner } from './Planner'
 import { PlannerTool } from './PlannerTool'
+import { resetMatchMedia, setMatchMedia } from '../test-utils/matchMedia'
 
 function renderAt(path: string) {
   return render(
@@ -31,6 +32,24 @@ describe('Planner hub', () => {
       'href',
       `/planner/${first.id}`
     )
+  })
+})
+
+describe('Planner hub on a phone', () => {
+  afterEach(() => resetMatchMedia())
+
+  it('lists every tool by name as a link, without the descriptions', () => {
+    setMatchMedia(false)
+    renderAt('/planner')
+    for (const tool of PLANNER_TOOLS) {
+      expect(screen.getByRole('link', { name: tool.name })).toHaveAttribute('href', `/planner/${tool.id}`)
+      expect(screen.queryByText(tool.description)).not.toBeInTheDocument()
+    }
+  })
+
+  it('keeps the descriptions on desktop', () => {
+    renderAt('/planner')
+    expect(screen.getByText(PLANNER_TOOLS[0].description)).toBeInTheDocument()
   })
 })
 
