@@ -939,8 +939,8 @@ for (const [name, hash] of [['dashboard', ''], ['budgeting', '#/budget']] as con
     // Prove the guard inspects real lists: wait for the cards it polices so
     // an empty or still-loading main cannot pass vacuously.
     if (name === 'budgeting') {
-      // The donut legend is capped and the category budgets are the one list, so wait for it.
-      await expect(page.getByRole('group', { name: 'Category budgets' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Income sources' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Expense categories' })).toBeVisible()
     } else {
       // The account folds start closed, so open them or there are no rows to inspect.
       const folds = page.locator('details[data-widget-id] > summary')
