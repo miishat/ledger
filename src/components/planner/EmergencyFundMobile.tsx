@@ -50,8 +50,12 @@ export const EmergencyFundMobile: React.FC<{ s: EmergencyFundState }> = ({ s }) 
         <Field id="ef-savings" label="Current Savings" prefix="$" value={inputs.currentSavings} onChange={set('currentSavings')} />
       </div>
       {budgetAvg > 0 && (
-        <button onClick={() => setInput(EMERGENCY_TOOL_ID, 'monthlyExpenses', Math.round(budgetAvg))} className="min-h-11 rounded-xl border border-border text-[13px] text-accent px-3 text-left">
-          Use my budget avg ({formatMoney(budgetAvg)}/mo)
+        <button
+          onClick={() => setInput(EMERGENCY_TOOL_ID, 'monthlyExpenses', Math.round(budgetAvg))}
+          aria-pressed={inputs.monthlyExpenses === Math.round(budgetAvg)}
+          className={`min-h-11 rounded-xl border text-[13px] font-medium px-3 text-left ${inputs.monthlyExpenses === Math.round(budgetAvg) ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-primary bg-bg-secondary'}`}
+        >
+          Use My Budget Average ({formatMoney(budgetAvg)}/mo)
         </button>
       )}
     </div>

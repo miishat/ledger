@@ -202,12 +202,15 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
     </div>
   )
   const readout = (label: string, value: string) => (
-    <div className="flex flex-col gap-1 min-w-0"><span className={lab}>{label}</span><span className="min-h-12 flex items-center text-[16px] font-medium text-text-primary">{value}</span></div>
+    <div className="rounded-lg bg-accent/10 px-3 py-2 flex items-center justify-between gap-3">
+      <span className="text-[13px] text-text-secondary">{label}</span>
+      <span className="text-[14px] font-semibold text-accent text-right">{value}</span>
+    </div>
   )
 
   const planTab = (
     <>
-      <Hero label="Goals and Life Events" value={`${goals.length} goals, ${events.length} events`} />
+      <Hero label="Goals and Life Events" value={`${goals.length} ${goals.length === 1 ? 'goal' : 'goals'}, ${events.length} ${events.length === 1 ? 'event' : 'events'}`} />
       <div className="rounded-2xl border border-border bg-bg-secondary p-3 flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <div className="flex-1"><p className="text-[14px] font-medium">Goals{goals.length > 0 && <span className="text-text-secondary font-normal"> ({goals.length})</span>}</p>
@@ -221,10 +224,8 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
               {nameField(`goal-name-${i}`, 'Goal', g.label, (v) => upGoal(g.id, { label: v }))}
               {trash('Remove goal', () => saveGoals(goals.filter((x) => x.id !== g.id)))}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field id={`goal-amount-${i}`} label="Amount" prefix="$" value={g.amount} onChange={(v) => upGoal(g.id, { amount: v })} />
-              {readout('Projected', formatMonthsOut(monthsToReach(points, g.amount)))}
-            </div>
+            <Field id={`goal-amount-${i}`} label="Amount" prefix="$" value={g.amount} onChange={(v) => upGoal(g.id, { amount: v })} />
+            {readout('Projected', formatMonthsOut(monthsToReach(points, g.amount)))}
           </div>
         ))}
       </div>

@@ -8,7 +8,7 @@ export type VerdictTone = 'raise' | 'lost' | 'wash'
 
 export function verdictFor(real: number): { tone: VerdictTone; text: string } {
   if (real > 0.25) {
-    return { tone: 'raise', text: `A real raise: your purchasing power grew ${real.toFixed(2)}%.` }
+    return { tone: 'raise', text: `A real raise: your purchasing power grew ${real.toFixed(2)}%` }
   }
   if (real < -0.25) {
     return {
