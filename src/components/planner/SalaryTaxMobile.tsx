@@ -256,10 +256,10 @@ export const SalaryTaxMobile: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
           ? <Ladder brackets={FEDERAL_BRACKETS} income={t.taxableIncome} />
           : <Ladder brackets={PROVINCIAL_TAX[province].brackets} income={t.provincialTaxableIncome} />}
         <div className="flex flex-col gap-1">
-          <p className="text-[13px] leading-relaxed">
-            Federal {breakdown.federal.toFixed(2)}% + Provincial {breakdown.provincialBase.toFixed(2)}%
+          <p className="text-[12px] whitespace-nowrap overflow-x-auto">
+            Fed {breakdown.federal.toFixed(2)}% + Prov {breakdown.provincialBase.toFixed(2)}%
             {breakdown.surtax > 0 && ` + ON surtax ${breakdown.surtax.toFixed(2)}%`}
-            {s.adjustmentPercent !== '0.00' && ` ${breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments ${s.adjustmentPercent}%`}
+            {s.adjustmentPercent !== '0.00' && ` ${breakdown.adjustments < 0 ? '−' : '+'} Adj ${s.adjustmentPercent}%`}
             {' '}<strong>= {breakdown.total.toFixed(2)}%</strong>
           </p>
           <div className="flex items-center"><span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
