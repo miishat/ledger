@@ -49,7 +49,7 @@ it('opens the deferred Customize panel from its visible header action', async ()
   // The deferred module can take longer than the DOM query's default window
   // under the full suite. Wait for that actual prerequisite, not a larger timer.
   await vi.dynamicImportSettled()
-  expect(await screen.findByRole('dialog', { name: 'Customize dashboard' })).toBeInTheDocument()
+  expect(await screen.findByRole('dialog', { name: 'Customize Dashboard' })).toBeInTheDocument()
   expect(screen.getByRole('checkbox', { name: 'Show Net Worth Over Time' })).toBeInTheDocument()
 })
 

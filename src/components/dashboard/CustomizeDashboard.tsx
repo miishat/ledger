@@ -4,6 +4,11 @@ import { Sheet } from '../ui/Sheet'
 import { useDashboardLayoutStore } from '../../store/useDashboardLayoutStore'
 import { DASHBOARD_WIDGET_LABELS } from '../../pages/dashboardWidgets'
 import { Checkbox } from '../ui/Checkbox'
+import { InfoButton } from '../ui/InfoButton'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { CustomizeDashboardMobile } from './CustomizeDashboardMobile'
+
+const NOTE = 'Switch cards off and set their order. This applies to this device only.'
 
 interface CustomizeDashboardProps {
   open: boolean
@@ -18,21 +23,28 @@ export const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ open, on
   const hidden = useDashboardLayoutStore((s) => s.hidden)
   const toggleHidden = useDashboardLayoutStore((s) => s.toggleHidden)
   const moveBy = useDashboardLayoutStore((s) => s.moveBy)
+  const isDesktop = useIsDesktop()
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
       desktop="modal"
-      ariaLabel="Customize dashboard"
-      title="Customize dashboard"
+      ariaLabel="Customize Dashboard"
+      title={
+        <span className="flex items-center gap-1">
+          Customize Dashboard
+          <InfoButton label="About Customize Dashboard" inline><p>{NOTE}</p></InfoButton>
+        </span>
+      }
       panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)]"
       contentClassName="flex flex-col gap-1 p-4"
     >
-      <p className="text-[13px] text-text-secondary mb-2">
+      {!isDesktop && <CustomizeDashboardMobile orderedIds={orderedIds} />}
+      {isDesktop && <p className="text-[13px] text-text-secondary mb-2">
         Switch widgets off and set their order. This applies to this device only.
-      </p>
-      {orderedIds.map((id, i) => {
+      </p>}
+      {isDesktop && orderedIds.map((id, i) => {
         const label = DASHBOARD_WIDGET_LABELS[id] ?? id
         return (
           <div key={id} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-bg-secondary">
