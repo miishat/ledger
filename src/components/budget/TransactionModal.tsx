@@ -10,6 +10,8 @@ import { formatMoney, formatMoneyWithCents } from '../planner/format';
 import { sharedPeople } from '../../utils/budget/sharedExpenses';
 import { entryKindOf, encodeEntryAmounts, type TransactionEntryKind } from '../../utils/budget/transactionKinds';
 import { splitRemainder, round2 } from '../../utils/budget/splits';
+import { TransactionFormMobile } from './TransactionFormMobile';
+import { useIsDesktop } from '../../hooks/useMediaQuery';
 
 import type { Transaction, TransactionSplit } from '../../types/budget';
 
@@ -51,6 +53,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
   const categoryGroups = useBudgetStore((state) => state.categoryGroups);
   const transactions = useBudgetStore((state) => state.transactions);
 
+  const isDesktop = useIsDesktop();
   const enabled = useBudgetStore(state => state.refundsAndPaymentsEnabled);
   const [type, setType] = useState<TransactionEntryKind>(initialTransaction ? entryKindOf(initialTransaction) : 'expense');
   const [settlementAcknowledged, setSettlementAcknowledged] = useState(false);
@@ -232,6 +235,81 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
     }
   };
 
+  const refundNotice = (
+    type === 'refund-payment' && (!enabled || !!initialTransaction?.reimbursement || reductionByCategory.size > 0) && (
+            <div className="flex flex-col gap-2 text-[12px] text-[var(--color-text-secondary)]">
+              {!enabled && <p>Refunds &amp; Payments is off for new transactions. This saved payment still counts.</p>}
+              {initialTransaction?.reimbursement && <>
+                <p>This payment currently settles a shared bill. Using it to reduce expenses will stop settling that balance. Shared bills already count only your share, so this can reduce spending again.</p>
+                <label className="flex items-start gap-2">
+                  <Checkbox checked={settlementAcknowledged} onChange={setSettlementAcknowledged} ariaLabel="Use this payment to reduce expenses instead of settling the shared bill." />
+                  Use this payment to reduce expenses instead of settling the shared bill.
+                </label>
+              </>}
+              {[...reductionByCategory].map(([categoryId, reduction]) => <p key={categoryId}>Reduces {categories[categoryId].name} spending by {formatMoneyWithCents(reduction)}</p>)}
+            </div>
+          )
+  );
+
+  const amountHint = negativeAmountTyped ? <p className="text-[12px] text-[var(--color-text-secondary)]">Use Refunds &amp; Payments for money received.</p> : null;
+
+  if (!isDesktop) {
+    return (
+      <TransactionFormMobile
+        editing={!!initialTransaction}
+        type={type}
+        onTypeChange={handleTypeChange}
+        showRefundOption={!!(enabled || (initialTransaction && entryKindOf(initialTransaction) === 'refund-payment'))}
+        validationError={validationError}
+        notice={refundNotice}
+        amount={amount}
+        onAmountCommit={(v) => { setAmount(v); if (v > 0) setAmountError(null); }}
+        onAmountText={(text) => {
+          setNegativeAmountTyped(text.startsWith('-'));
+          if (Number.isNaN(parseFloat(text))) setAmount(0);
+        }}
+        amountError={amountError}
+        amountHint={amountHint}
+        isShared={isShared}
+        onSharedChange={(checked) => {
+          setIsShared(checked);
+          setSharedError(null);
+          if (checked && totalPaid === 0 && amount > 0) setTotalPaid(amount);
+        }}
+        totalPaid={totalPaid}
+        onTotalPaidChange={setTotalPaid}
+        onSharePreset={(f) => setAmount(Math.round(totalPaid * f * 100) / 100)}
+        sharedWith={sharedWith}
+        onSharedWithChange={setSharedWith}
+        sharedError={sharedError}
+        isReimbursement={isReimbursement}
+        onReimbursementChange={setIsReimbursement}
+        reimbursementFrom={reimbursementFrom}
+        onReimbursementFromChange={setReimbursementFrom}
+        category={category}
+        onCategoryChange={setCategory}
+        categoryOptions={[{ value: '', label: 'Uncategorized' }, ...categoryList.map((cat) => ({ value: cat.id, label: cat.name }))]}
+        isSplit={isSplit}
+        onSplitChange={setIsSplit}
+        splits={splits}
+        onSplitsChange={setSplits}
+        remaining={remaining}
+        allocationInvalid={normalized.invalidAmount || normalized.invalidAllocation}
+        tagsText={tagsText}
+        onTagsChange={setTagsText}
+        note={note}
+        onNoteChange={setNote}
+        date={date}
+        onDateChange={setDate}
+        description={description}
+        onDescriptionChange={setDescription}
+        peopleList={<datalist id="shared-people">{peopleSuggestions.map((p) => <option key={p} value={p} />)}</datalist>}
+        onSubmit={handleSubmit}
+        onDelete={handleDelete}
+      />
+    );
+  }
+
   return (
     <>
         <div className="hidden desktop:flex items-center justify-between p-4 border-b border-[var(--color-border)]">
@@ -258,19 +336,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
             ))}
           </div>
           {validationError && <p role="alert" className="text-[12px] text-error">{validationError}</p>}
-          {type === 'refund-payment' && (!enabled || !!initialTransaction?.reimbursement || reductionByCategory.size > 0) && (
-            <div className="flex flex-col gap-2 text-[12px] text-[var(--color-text-secondary)]">
-              {!enabled && <p>Refunds &amp; Payments is off for new transactions. This saved payment still counts.</p>}
-              {initialTransaction?.reimbursement && <>
-                <p>This payment currently settles a shared bill. Using it to reduce expenses will stop settling that balance. Shared bills already count only your share, so this can reduce spending again.</p>
-                <label className="flex items-start gap-2">
-                  <Checkbox checked={settlementAcknowledged} onChange={setSettlementAcknowledged} ariaLabel="Use this payment to reduce expenses instead of settling the shared bill." />
-                  Use this payment to reduce expenses instead of settling the shared bill.
-                </label>
-              </>}
-              {[...reductionByCategory].map(([categoryId, reduction]) => <p key={categoryId}>Reduces {categories[categoryId].name} spending by {formatMoneyWithCents(reduction)}</p>)}
-            </div>
-          )}
+          {refundNotice}
           <div className="flex flex-col gap-2">
             <label htmlFor="tx-amount" className="text-[12px] font-medium leading-none text-[var(--color-text-secondary)]">
               {type === 'expense' && isShared ? 'Your share' : 'Amount'}
@@ -292,7 +358,7 @@ function TransactionForm({ onClose, initialTransaction }: TransactionFormProps) 
               }`}
               placeholder="0.00"
             />
-            {negativeAmountTyped && <p className="text-[12px] text-[var(--color-text-secondary)]">Use Refunds &amp; Payments for money received.</p>}
+            {amountHint}
             {amountError && (
               <p id="tx-amount-error" role="alert" className="text-[12px] text-error">
                 {amountError}
@@ -541,7 +607,8 @@ export function TransactionModal({ isOpen, onClose, initialTransaction }: Transa
       onClose={onClose}
       desktop="modal"
       ariaLabel={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
-      title={initialTransaction ? 'Edit Transaction' : 'Add Transaction'}
+      // The phone Add form has its own pinned Add Transaction button, so no title row above it.
+      title={initialTransaction ? 'Edit Transaction' : undefined}
       panelClassName="w-full max-w-md bg-[var(--color-bg-primary)] desktop:rounded-xl shadow-lg border border-[var(--color-border)] desktop:overflow-hidden"
     >
       <TransactionForm key={initialTransaction?.id ?? 'new'} onClose={onClose} initialTransaction={initialTransaction} />

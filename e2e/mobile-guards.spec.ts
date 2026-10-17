@@ -40,6 +40,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
     await panel.getByLabel('Amount', { exact: true }).fill('40')
     await panel.evaluate(el => { el.scrollTop = 0 })
     await page.screenshot({ path: `.superpowers/sdd/screenshots/refund-form-${testInfo.project.name}-${viewport.width}.png`, fullPage: true })
+    await panel.getByRole('button', { name: 'Split', exact: true }).click()
     await panel.getByLabel('Split across categories').check()
     await panel.getByLabel('Slice amount', { exact: true }).fill('20')
     await panel.getByRole('button', { name: 'Slice category', exact: true }).click()
@@ -49,7 +50,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
     await expect(panel.getByText('Reduces Household groceries and pantry supplies spending by $20.00', { exact: true })).toHaveCount(0)
     await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
     await panel.getByLabel('Slice amount', { exact: true }).scrollIntoViewIfNeeded()
-    for (const name of ['Add a slice', 'Remove slice']) {
+    for (const name of ['Add a Slice', 'Remove slice']) {
       const box = (await panel.getByRole('button', { name, exact: true }).boundingBox())!
       expect(box.height).toBeGreaterThanOrEqual(44)
       expect(box.width).toBeGreaterThanOrEqual(44)
