@@ -125,7 +125,7 @@ const AccountRow: React.FC<{ account: Account; cad: number | null | undefined; o
   </div>
 )
 
-const GroupFold: React.FC<{ group: (typeof GROUPS)[number]; color: string; defaultOpen: boolean; onAdd: () => void; onEdit: (a: Account) => void }> = ({ group, color, defaultOpen, onAdd, onEdit }) => {
+const GroupFold: React.FC<{ group: (typeof GROUPS)[number]; color: string; onAdd: () => void; onEdit: (a: Account) => void }> = ({ group, color, onAdd, onEdit }) => {
   const accounts = useAccountsStore((s) => s.accounts)
   const removeAccount = useAccountsStore((s) => s.removeAccount)
   const addAccount = useAccountsStore((s) => s.addAccount)
@@ -137,7 +137,7 @@ const GroupFold: React.FC<{ group: (typeof GROUPS)[number]; color: string; defau
   const total = valuation.totals[group.type]
 
   return (
-    <details data-widget-id={group.widgetId} open={defaultOpen} className="themed-card rounded-2xl group">
+    <details data-widget-id={group.widgetId} className="themed-card rounded-2xl group">
       <summary className="flex items-center gap-3 px-4 min-h-14 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
         <span className="flex-1 min-w-0 text-[15px] font-semibold text-text-primary">
@@ -185,7 +185,6 @@ const AccountFolds: React.FC<{ groups: typeof GROUPS }> = ({ groups }) => {
   const [modal, setModal] = useState<{ type: AccountType; editing: Account | null } | null>(null)
   const [modalOpenedBefore, setModalOpenedBefore] = useState(false)
   const open = (type: AccountType, editing: Account | null) => { setModalOpenedBefore(true); setModal({ type, editing }) }
-  // The first group that has something in it starts open.
   const first = groups.find((g) => accounts.some((a) => a.type === g.type)) ?? groups[0]
 
   return (
@@ -196,7 +195,6 @@ const AccountFolds: React.FC<{ groups: typeof GROUPS }> = ({ groups }) => {
           key={g.type}
           group={g}
           color={FOLD_COLORS[GROUPS.findIndex((x) => x.type === g.type)]}
-          defaultOpen={g.type === first.type}
           onAdd={() => open(g.type, null)}
           onEdit={(a) => open(a.type, a)}
         />

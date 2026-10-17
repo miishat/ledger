@@ -36,11 +36,11 @@ describe('DashboardMobile', () => {
     expect(screen.getByText('Other widgets')).toBeInTheDocument()
   })
 
-  it('opens the first group that has accounts and keeps the others folded with their totals showing', () => {
+  it('keeps every group folded with its total showing', () => {
     seed([acc('i1', 'TFSA', 'investment', 5000), acc('d1', 'Visa', 'debt', 200)])
     const { container } = renderCards()
     const fold = (id: string) => container.querySelector(`details[data-widget-id="${id}"]`) as HTMLDetailsElement
-    expect(fold('investment-accounts').open).toBe(true)
+    expect(fold('investment-accounts').open).toBe(false)
     expect(fold('debt').open).toBe(false)
     expect(fold('debt').querySelector('summary')).toHaveTextContent('Debts & Liabilities')
     expect(fold('debt').querySelector('summary')).toHaveTextContent('$200.00')
@@ -91,7 +91,7 @@ describe('DashboardMobile', () => {
     expect(await screen.findByRole('dialog', { name: 'Edit Account' })).toBeInTheDocument()
   })
 
-  it('adds to the open group and deletes with an undo offer', async () => {
+  it('adds to a group and deletes with an undo offer', async () => {
     seed([acc('b1', 'Chequing', 'bank', 10)])
     renderCards()
     fireEvent.click(screen.getByRole('button', { name: 'Add Bank Account' }))

@@ -6,14 +6,17 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.26.4-beta] - 2026-10-17
+
 ### Changed
 - On phones, Customize Dashboard lists the cards the Dashboard now has: Net Worth and This Month (one switch for all three month widgets), the five account groups, and the cards after them. Only those last cards have arrows, because the others always come first. The explanation sits behind an info icon after the title, which reads "Customize Dashboard".
-- On phones, the Dashboard leads with Net Worth, then one This Month band (Money In, Money Out, Net and the Projected Net), then one fold per account group (Bank, Investment, Others, Receivables, Debts) with its total on the right, opening the first group that has accounts, with Add, Edit and Delete inside, instead of a separate card for each. Customize still applies: switching off Net Worth, the three month widgets together, or an account group removes it.
+- On phones, the Dashboard leads with Net Worth, then one This Month band (Money In, Money Out, Net and the Projected Net), then one fold per account group (Bank, Investment, Others, Receivables, Debts) with its total on the right, all folded until you tap one, with Add, Edit and Delete inside, instead of a separate card for each. Customize still applies: switching off Net Worth, the three month widgets together, or an account group removes it.
 - On phones, Upcoming Vests shows the next vest with a countdown and its total, then the three dates after it, with grants that vest the same day combined.
 - On phones, Portfolio shows the value, the all-time gain, and your best and weakest holding. How old the prices are sits behind an info button after the title, worded like "Stale Market Data (Last Updated: 21 Minutes Ago)".
 - On phones, Top Goal shows the goal's name and percent, a progress bar, then Now, Left and Goal, with a View All link to the Forecaster and the explanation behind an info button.
 - On phones, This Month's Budget, Portfolio, Top Goal and Upcoming Vests empty cards read "No Transactions Available", "No Holdings Available", "No Goal Set" and "No Upcoming Vests Available", with the explanation behind an info button after the title and a larger action button. Upcoming Vests rows are bigger.
 - Empty-state action buttons are 44px tall with rounder corners everywhere, and "Edit history" in Net Worth Over Time is "Edit History". The currency support note under that chart is gone.
+- On phones, This Month's Budget leads with a Daily Spent Limit (what is left of your targets divided by the days remaining), an Ahead of Pace or On Pace pill beside it, and a bar with a tick for today, captioned with the amount spent and the day of the month. Desktop keeps the left-of-targets layout.
 
 ### Fixed
 - On phones, the goal name in the Net Worth Forecaster chart was clipped by the top of the chart and ran under its line. It is now a 12px chip inside the chart beside the line, on the left when the goal is late in the forecast. On desktop the chart has room above it so the label on the line is no longer cut off, and it is 12px.

@@ -5,9 +5,12 @@ import { useBudgetStore, getMonthlyBudgetStats } from '../../../store/useBudgetS
 import { formatMoney } from '../../planner/format'
 import { EmptyState } from '../../ui/EmptyState'
 import { InfoButton } from '../../ui/InfoButton'
+import { useIsDesktop } from '../../../hooks/useMediaQuery'
+import { BudgetPaceMobile } from './BudgetPaceMobile'
 
 export const BudgetHealthWidget: React.FC = () => {
   const budgetState = useBudgetStore()
+  const phone = !useIsDesktop()
 
   if (Object.keys(budgetState.transactions).length === 0) {
     return (
@@ -29,13 +32,13 @@ export const BudgetHealthWidget: React.FC = () => {
 
   return (
     <WidgetWrapper title="This Month's Budget">
-      <div className="flex flex-col gap-1 mt-2">
+      {phone ? <BudgetPaceMobile stats={stats} now={now} /> : (<div className="flex flex-col gap-1 mt-2">
         <span className={`text-[28px] font-bold ${stats.remaining >= 0 ? 'text-accent' : 'text-error'}`}>
           {formatMoney(stats.remaining)}
         </span>
         <span className="text-[12px] text-text-secondary">left of targets · {formatMoney(stats.spent)} spent</span>
         <span className="text-[12px] text-text-secondary">{formatMoney(stats.unallocated)} unallocated</span>
-      </div>
+      </div>)}
     </WidgetWrapper>
   )
 }
