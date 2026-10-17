@@ -1,50 +1,20 @@
 import React from 'react'
 import { ArrowLeftRight, RefreshCw } from 'lucide-react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { CURRENCIES, fxKey, todayKey, useFxRate, type Currency } from '../../services/marketData'
-import { FRANKFURTER_CURRENCIES } from '../../services/marketData/providers/fxRouter'
-import { useMarketDataStore } from '../../store/useMarketDataStore'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { ResultCard } from './ResultCard'
 import { NumberInput } from '../ui/NumberInput'
-
-const TOOL_ID = 'currency-converter'
-const DEFAULTS = { amount: 100, from: 'USD' as string, to: 'CAD' as string, date: '' as string }
-
-const CURRENCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
-
-function formatAmount(n: number, currency: string): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency', currency, currencyDisplay: 'code',
-  }).format(n)
-}
+import { CurrencyConverterMobile } from './CurrencyConverterMobile'
+import { CURRENCY_OPTIONS, formatAmount, useCurrencyConverter } from './useCurrencyConverter'
 
 export const CurrencyConverter: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const c = useCurrencyConverter()
+  if (isPhone) return <CurrencyConverterMobile c={c} />
 
-  const from = inputs.from as Currency
-  const to = inputs.to as Currency
-  // er-api (BDT pairs) has no historical rates: drop the date for those pairs.
-  const historicalSupported = FRANKFURTER_CURRENCIES.has(from) && FRANKFURTER_CURRENCIES.has(to)
-  const date = historicalSupported ? inputs.date || undefined : undefined
-  const fx = useFxRate(from, to, date)
-
-  const overrideKey = fxKey(from, to, date ?? todayKey())
-  const override = useMarketDataStore((s) => s.overrides[overrideKey])
-  const setOverride = useMarketDataStore((s) => s.setOverride)
-  const clearOverride = useMarketDataStore((s) => s.clearOverride)
-
-  const rate = override ?? fx.data?.value.rate
-  const converted = rate !== undefined ? inputs.amount * rate : undefined
-
-  const swap = () => {
-    setInput(TOOL_ID, 'from', to)
-    setInput(TOOL_ID, 'to', from)
-  }
-
+  const { inputs, from, to, rate, converted, fx, override, historicalSupported, set, swap } = c
   const sourceLabel =
     override !== undefined
       ? 'manual override'
@@ -55,8 +25,8 @@ export const CurrencyConverter: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
-        <CalculatorField label={`Amount (${from})`} step={10} value={inputs.amount} onChange={(v) => setInput(TOOL_ID, 'amount', v)} />
-        <SelectField label="From" value={from} onChange={(v) => setInput(TOOL_ID, 'from', v)} options={CURRENCY_OPTIONS} />
+        <CalculatorField label={`Amount (${from})`} step={10} value={inputs.amount} onChange={(v) => set('amount', v)} />
+        <SelectField label="From" value={from} onChange={(v) => set('from', v)} options={CURRENCY_OPTIONS} />
         <button
           onClick={swap}
           className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors"
@@ -64,12 +34,12 @@ export const CurrencyConverter: React.FC = () => {
         >
           <ArrowLeftRight className="w-4 h-4" /> Swap
         </button>
-        <SelectField label="To" value={to} onChange={(v) => setInput(TOOL_ID, 'to', v)} options={CURRENCY_OPTIONS} />
+        <SelectField label="To" value={to} onChange={(v) => set('to', v)} options={CURRENCY_OPTIONS} />
         <label className="flex flex-col gap-1">
           <span className="text-[13px] font-medium text-text-secondary">Rate Date (Optional)</span>
           <ThemedDatePicker
             value={inputs.date as string}
-            onChange={(v) => setInput(TOOL_ID, 'date', v)}
+            onChange={(v) => set('date', v)}
           />
         </label>
         <button
@@ -106,13 +76,13 @@ export const CurrencyConverter: React.FC = () => {
               value={override ?? 0}
               placeholder={fx.data?.value.rate.toFixed(4) ?? ''}
               onCommit={(v) => {
-                if (v > 0) setOverride(overrideKey, v)
+                if (v > 0) c.setOverride(v)
               }}
             />
           </label>
           {override !== undefined && (
             <button
-              onClick={() => clearOverride(overrideKey)}
+              onClick={c.clearOverride}
               className="px-3 py-2 rounded-lg border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors"
             >
               Clear Override, Use Live

@@ -6,6 +6,29 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.11.4-beta] - 2026-10-17
+
+### Changed
+- On phones, the Emergency Fund budget button reads "Use My Budget Average ($X/mo)" and only looks selected once your expenses match it, the Raise vs Inflation verdict has no trailing full stop, and Forecaster Plan rows show Projected and Lands in a tinted result line.
+- On phones, the Inflation Adjuster year options read N yrs without a title, the Mortgage Monthly or Biweekly Accelerated selector sits under the inputs with the chart above Extra Payments, and the summary strips in Emergency Fund, Debt Payoff and Mortgage are centred.
+- On phones, Compound Interest shows the future value with a contributed and growth bar, quick year options (10, 20, 30, 40), the inputs in a grid, and a chart with its legend centred inside the chart card.
+- On phones, Savings Goal puts the Solve For options in a one-tap row, then only the inputs that apply, then the result.
+- On phones, the chart legends in the Mortgage and Debt Payoff tools are centred inside their chart cards.
+- On phones, Rent vs Buy shows the verdict with both costs side by side, quick horizon options (5, 10, 15, 25), the cumulative chart, and the inputs folded into Renting, Buying and Assumptions. The cost note now sits behind a "How This Is Calculated" info button.
+- On phones, the Net Worth / FIRE Forecaster is split into Forecast, FIRE, Risk and Plan tabs, each under its own headline figure. Forecast keeps the essentials in view and folds Inflation, Step-Up, Spread and Events under More Assumptions. Risk shows the chance of reaching your FI number once, with the simulation note behind an info button.
+- On phones, the quick year options in Compound Interest, Inflation Adjuster, Rent vs Buy and the Forecaster use the same segmented style as Emergency Fund, Debt Payoff puts its Avalanche or Snowball choice first, and the Forecaster Plan tab lists goals and life events in the same add-and-edit rows as the Mortgage extra payments.
+- On phones, Salary & Tax shows income and province as one summary line, a Year, Month or Biweekly selector over the net pay, where the gross goes, then Total Tax, Marginal and Effective. Contributions, Tax Brackets (a Federal or Provincial ladder with the marginal breakdown) and RRSP Efficiency (the income in each saving slice) are folded below, and the tax year and calculation notes sit behind info buttons.
+- On phones, the Planner charts (Compound Interest, Mortgage, Debt Payoff, Rent vs Buy and the Forecaster) use a slim value axis with compact amounts ($450k) and tighter card padding, so the plot fills the card instead of leaving an empty strip on the left. In Mortgage, the extra payments tip sits behind an info button next to the title.
+- Compound Interest chart axes show compact amounts ($1.5M), and Mortgage and Currency Converter labels use Title Case (Time Saved, Max Home Price, Live or Stale rate).
+- In the Forecaster charts, the "today" label is gone, legends read Conservative to Optimistic Band, Median Outcome and 10th-90th Percentile Range, and the shaded-band swatches are faded so they no longer match the line colour.
+- On phones, the Rate & Return Converter has a From and To row with a swap button, then the rate and compounding (or the start value, end value and years), then the result.
+- On phones, the Inflation Adjuster shows the converted amount first, then a purchasing power bar, then year presets (5, 10, 20, 30) with the amount, years and inflation fields.
+- On phones, the Raise vs Inflation tool puts the three inputs first, then a single result card with the Real Raise, the Nominal Raise, the Real Change and the verdict, tinted to match.
+- On phones, the Emergency Fund tool shows how much is funded first, as a percentage with a progress bar and a savings-of-target line, then the Target Fund and Gap to Close, then the months presets and inputs in a tidy grid.
+- On phones, the Debt Payoff tool shows the debt-free time first with Total Interest and the saving against the other strategy, then the strategy toggle and extra payment. Debts are listed in the order they will be paid off, with the first one tagged Pay First, and each opens in place to edit or remove.
+- On phones, the Mortgage tool shows the payment (or the maximum home price) first with its two supporting figures, then the inputs in a tidy grid with equal-height fields. Payment and Affordability, and Monthly and Biweekly, are full-width toggles, extra payments are compact cards with a clear Add button, and the affordability note moved behind an Estimation Details row.
+- On phones, the Currency Converter shows the answer first ("100 USD is CAD 141.61") with the rate and a refresh button, then one card for the amount, the From and To currencies with a swap button, and the rate date. Rate Details is a single collapsed line showing when the rate was fetched, with the manual override inside.
+
 ## [0.11.3-beta] - 2026-10-15
 
 ### Changed

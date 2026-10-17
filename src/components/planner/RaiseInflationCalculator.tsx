@@ -1,28 +1,11 @@
 import React from 'react'
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { nominalRaisePct, realRaisePct } from '../../utils/finance/raise'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { RaiseInflationMobile } from './RaiseInflationMobile'
+import { useRaiseInflation, type VerdictTone } from './useRaiseInflation'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
-
-const TOOL_ID = 'raise-inflation'
-const DEFAULTS = { oldSalary: 100000, newSalary: 105000, inflationPct: 3 }
-
-type VerdictTone = 'raise' | 'lost' | 'wash'
-
-function verdictFor(real: number): { tone: VerdictTone; text: string } {
-  if (real > 0.25) {
-    return { tone: 'raise', text: `A real raise: your purchasing power grew ${real.toFixed(2)}%.` }
-  }
-  if (real < -0.25) {
-    return {
-      tone: 'lost',
-      text: `Not a real raise. Inflation ate it. You're down ${Math.abs(real).toFixed(2)}% in purchasing power.`,
-    }
-  }
-  return { tone: 'wash', text: 'A wash: your raise roughly matches inflation.' }
-}
 
 const TONE_STYLES: Record<VerdictTone, { banner: string; icon: string }> = {
   raise: { banner: 'border-accent/50 bg-accent/10', icon: 'text-accent' },
@@ -37,15 +20,10 @@ const TONE_ICONS: Record<VerdictTone, React.ElementType> = {
 }
 
 export const RaiseInflationCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-
-  const nominal = nominalRaisePct(inputs.oldSalary, inputs.newSalary)
-  const real = realRaisePct(nominal, inputs.inflationPct)
-  const realDollars = inputs.oldSalary * (real / 100)
-
-  const { tone, text: verdict } = verdictFor(real)
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useRaiseInflation()
+  if (isPhone) return <RaiseInflationMobile s={state} />
+  const { inputs, set, nominal, real, realDollars, tone, verdict } = state
   const ToneIcon = TONE_ICONS[tone]
 
   return (

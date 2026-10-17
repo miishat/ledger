@@ -8,6 +8,7 @@ import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
 import { ChartLegend } from '../../ui/ChartLegend'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from '../phoneChart'
 
 interface GoalMarker {
   label: string
@@ -21,6 +22,7 @@ interface ForecastChartProps {
   showReal: boolean
   view: 'line' | 'stacked'
   goalMarkers: GoalMarker[]
+  centered?: boolean
 }
 
 function monthsAgo(date: string): number {
@@ -29,7 +31,7 @@ function monthsAgo(date: string): number {
   return (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth())
 }
 
-export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, showReal, view, goalMarkers }) => {
+export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, showReal, view, goalMarkers, centered }) => {
   const past = history
     .map((h) => ({ month: monthsAgo(h.date), actual: h.value }))
     .filter((p) => p.month < 0)
@@ -60,12 +62,9 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
   const legendItems = view === 'line'
     ? [
         { name: projectedLabel, color: 'var(--accent)' },
-        // The band itself renders as a low-opacity accent area over an
-        // opaque background fill, so it reads as pale, not solid. ChartLegend's
-        // swatch has no opacity slot, so this shows the band's base colour at
-        // full strength, the same simplification already noted for
-        // MonteCarloSection's percentile band.
-        { name: 'Conservative to Optimistic band', color: 'var(--accent)' },
+        // The band renders as a low-opacity accent area, so its swatch is faded
+        // too: at full strength it would match the Projected line's swatch.
+        { name: 'Conservative to Optimistic Band', color: 'var(--accent)', opacity: 0.3 },
         { name: 'Actual', color: 'var(--text-primary)' },
       ]
     : [
@@ -75,13 +74,13 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
       ]
 
   return (
-    <div className="themed-card rounded-lg p-4 h-[380px] flex flex-col">
+    <div className={`themed-card rounded-lg ${centered ? 'p-3' : 'p-4'} h-[380px] flex flex-col`}>
       <ChartFigure
         label={`Net worth forecast, ${projectedLabel.toLowerCase()} to reach ${formatMoneyCompact(future[future.length - 1]?.projected ?? 0)} by ${(future[future.length - 1]?.month ?? 0) / 12} years out`}
         className="flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} accessibilityLayer={false}>
+        <ComposedChart data={data} margin={centered ? PHONE_CHART_MARGIN : undefined} accessibilityLayer={false}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
@@ -90,7 +89,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             tickFormatter={(m: number) => `${(m / 12).toFixed(0)}y`}
             {...axisProps}
           />
-          <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} {...axisProps} />
+          <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} {...axisProps} {...(centered ? PHONE_Y_AXIS : {})} />
           <Tooltip
             labelFormatter={(m) => {
               const month = Number(m)
@@ -105,7 +104,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             }}
             {...chartTooltipStyles}
           />
-          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" label={{ value: 'today', fill: 'var(--text-secondary)', fontSize: 11, position: 'insideTopLeft' }} />
+          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" />
           {view === 'line' ? (
             <>
               <Area type="monotone" dataKey="optimistic" stroke="none" fill="var(--accent)" fillOpacity={0.12} name="Optimistic" />
@@ -133,7 +132,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         </ComposedChart>
       </ResponsiveContainer>
       </ChartFigure>
-      <ChartLegend items={legendItems} />
+      <ChartLegend centered={centered} items={legendItems} />
     </div>
   )
 }

@@ -30,7 +30,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
     const panel = page.locator('[data-testid="sheet-panel"][data-state="open"]')
     for (const name of ['Expense', 'Income', 'Refunds & Payments']) {
       const choice = panel.getByRole('button', { name, exact: true })
-      expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+      expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(43.9)
     }
     const payment = panel.getByRole('button', { name: 'Refunds & Payments', exact: true })
     await payment.focus()

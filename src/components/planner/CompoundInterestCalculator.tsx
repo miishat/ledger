@@ -8,33 +8,21 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { futureValue, growthSeries } from '../../utils/finance/compound'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { CompoundInterestMobile } from './CompoundInterestMobile'
+import { useCompoundInterest } from './useCompoundInterest'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 
-const TOOL_ID = 'compound-interest'
-const DEFAULTS: Record<string, number> = { principal: 10000, monthlyContribution: 500, annualRatePct: 7, years: 20 }
-
 export const CompoundInterestCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-
-  const months = Math.max(1, Math.round(inputs.years * 12))
-  const fv = futureValue(inputs.principal, inputs.annualRatePct, months, inputs.monthlyContribution)
-  const contributed = inputs.principal + inputs.monthlyContribution * months
-  const chartData = growthSeries(inputs.principal, inputs.annualRatePct, inputs.monthlyContribution, months)
-    .filter((p) => p.month % 12 === 0)
-    .map((p) => ({
-      year: p.month / 12,
-      contributed: Math.round(p.contributed),
-      growth: Math.round(Math.max(0, p.growth)),
-    }))
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useCompoundInterest()
+  if (isPhone) return <CompoundInterestMobile s={state} />
+  const { inputs, set, fv, contributed, chartData } = state
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,7 +47,7 @@ export const CompoundInterestCalculator: React.FC = () => {
           <AreaChart data={chartData} accessibilityLayer={false}>
             <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
             <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
+            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} />
             <Tooltip
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
               {...chartTooltipStyles}
