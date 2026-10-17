@@ -2,33 +2,22 @@ import React from 'react'
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { rentVsBuy } from '../../utils/finance/rentVsBuy'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
-
-const TOOL_ID = 'rent-vs-buy'
-const DEFAULTS = {
-  monthlyRent: 2200, rentIncreasePct: 3,
-  price: 600000, downPct: 20, ratePct: 4.5, amortYears: 25,
-  propertyTaxPct: 0.8, maintenancePct: 1, opportunityPct: 5,
-  horizonYears: 15,
-}
+import { RentVsBuyMobile } from './RentVsBuyMobile'
+import { useRentVsBuy } from './useRentVsBuy'
 
 export const RentVsBuyCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
+  const state = useRentVsBuy()
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const { inputs, set, result: r, chartData, last } = state
 
-  const r = rentVsBuy(inputs)
-  const chartData = r.series.map((p) => ({
-    year: p.year, Renting: Math.round(p.rentCost), Buying: Math.round(p.buyCost),
-  }))
-  const last = r.series[r.series.length - 1]
+  if (isPhone) return <RentVsBuyMobile s={state} />
 
   return (
     <div className="flex flex-col gap-6">

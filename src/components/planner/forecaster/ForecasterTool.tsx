@@ -2,8 +2,6 @@ import React, { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Settings2 } from 'lucide-react'
 import { useAccountsStore, type NetWorthSnapshot } from '../../../store/useAccountsStore'
-import { buildForecast, type LumpSum } from '../../../utils/finance/forecast'
-import { coastFiNumber, fiNumber, monthsToReach } from '../../../utils/finance/fire'
 import { CalculatorField } from '../CalculatorField'
 import { ResultCard } from '../ResultCard'
 import { formatMoney } from '../format'
@@ -11,16 +9,12 @@ import { ForecastChart } from './ForecastChart'
 import { ListEditor } from './ListEditor'
 import { MonteCarloSection } from './MonteCarloSection'
 import { useForecasterSettings, type Goal, type LifeEvent } from './useForecasterSettings'
+import { monthsToReach } from '../../../utils/finance/fire'
+import { buildForecastModel, formatMonthsOut, type ForecasterData } from './forecastModel'
+import { ForecasterMobile } from './ForecasterMobile'
+import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import { Sheet } from '../../ui/Sheet'
 import { TaxYearNotice } from '../../ui/TaxYearNotice'
-
-function formatMonthsOut(m: number | null): string {
-  if (m === null) return 'Beyond horizon'
-  if (m === 0) return 'Reached'
-  const d = new Date()
-  d.setMonth(d.getMonth() + m)
-  return `${d.toLocaleDateString('en-CA', { month: 'short', year: 'numeric' })} (${Math.floor(m / 12)}y ${m % 12}m)`
-}
 
 /** Toggle between an auto-fed value and a manual field. */
 const AutoField: React.FC<{
@@ -55,10 +49,14 @@ const AutoField: React.FC<{
 )
 
 export const ForecasterTool: React.FC = () => {
-  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax } = useForecasterSettings()
+  const data = useForecasterSettings()
+  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved, compTax } = data
   const history = useAccountsStore((s) => s.history)
   const gearRef = useRef<HTMLButtonElement>(null)
   const [taxOpen, setTaxOpen] = useState(false)
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+
+  if (isPhone) return <ForecasterMobile data={data} />
 
   return (
     <div className="flex flex-col gap-6">
@@ -194,33 +192,9 @@ export const ForecasterTool: React.FC = () => {
   )
 }
 
-type ForecasterData = ReturnType<typeof useForecasterSettings>
-
 const ForecasterResults: React.FC<{ data: ForecasterData; history: NetWorthSnapshot[]; startBalance: number }> = ({ data, history, startBalance }) => {
-  const { settings, setSetting, events, saveEvents, goals, saveGoals, autoFeed, resolved } = data
-  const eventLumps: LumpSum[] = events.map((e) => ({
-    month: Math.max(1, Math.round(e.yearsFromNow * 12)),
-    amount: e.amount,
-    label: e.label,
-  }))
-  const lumps = [...autoFeed.compLumps, ...eventLumps]
-
-  const points = buildForecast({
-    startBalance,
-    monthlySavings: resolved.monthlySavings,
-    annualReturnPct: settings.annualReturnPct,
-    annualInflationPct: settings.inflationPct,
-    contributionStepUpPct: settings.stepUpPct,
-    years: settings.years,
-    lumpSums: lumps,
-    scenarioSpreadPct: settings.spreadPct,
-    monthlyDrag: autoFeed.debtDrag ?? undefined,
-  })
-
-  const fi = fiNumber(settings.annualSpending, settings.withdrawalRatePct)
-  const fiMonth = monthsToReach(points, fi)
-  const coast = coastFiNumber(fi, settings.annualReturnPct, settings.years)
-  const goalMarkers = goals.map((g) => ({ label: g.label, month: monthsToReach(points, g.amount), amount: g.amount }))
+  const { settings, setSetting, events, saveEvents, goals, saveGoals, resolved } = data
+  const { lumps, points, fi, fiMonth, coast, goalMarkers } = buildForecastModel(data, startBalance)
 
   return <>
       <ForecastChart

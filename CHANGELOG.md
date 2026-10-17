@@ -10,6 +10,9 @@ pre-1.0 beta.
 - On phones, Compound Interest shows the future value with a contributed and growth bar, quick year options (10, 20, 30, 40), the inputs in a grid, and a chart with its legend centred inside the chart card.
 - On phones, Savings Goal puts the Solve For options in a one-tap row, then only the inputs that apply, then the result.
 - On phones, the chart legends in the Mortgage and Debt Payoff tools are centred inside their chart cards.
+- On phones, Rent vs Buy shows the verdict with both costs side by side, quick horizon options (5, 10, 15, 25), the cumulative chart, and the inputs folded into Renting, Buying and Assumptions. The cost note now sits behind a "How This Is Calculated" info button.
+- On phones, the Net Worth / FIRE Forecaster is split into Forecast, FIRE, Risk and Plan tabs, each under its own headline figure. Forecast keeps the essentials in view and folds Inflation, Step-Up, Spread and Events under More Assumptions. Risk shows the chance of reaching your FI number once, with the simulation note behind an info button.
+- In the Forecaster charts, the "today" label is gone, legends read Conservative to Optimistic Band, Median Outcome and 10th-90th Percentile Range, and the shaded-band swatches are faded so they no longer match the line colour.
 - On phones, the Rate & Return Converter has a From and To row with a swap button, then the rate and compounding (or the start value, end value and years), then the result.
 - On phones, the Inflation Adjuster shows the converted amount first, then a purchasing power bar, then year presets (5, 10, 20, 30) with the amount, years and inflation fields.
 - On phones, the Raise vs Inflation tool puts the three inputs first, then a single result card with the Real Raise, the Nominal Raise, the Real Change and the verdict, tinted to match.

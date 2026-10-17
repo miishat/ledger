@@ -4,6 +4,8 @@ interface ChartLegendItem {
   name: string
   color: string
   value?: string
+  /** Swatch opacity, for a series drawn as a translucent area. */
+  opacity?: number
 }
 
 /** The legend pattern from AllocationBars, extracted so every multi-series
@@ -21,7 +23,7 @@ export const ChartLegend: React.FC<{ items: ChartLegendItem[]; centered?: boolea
   <ul className={`flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 list-none p-0${centered ? ' justify-center' : ''}`}>
     {items.map((item) => (
       <li key={item.name} className="inline-flex items-center gap-1.5 text-meta text-text-secondary">
-        <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: item.color }} aria-hidden="true" />
+        <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: item.color, opacity: item.opacity }} aria-hidden="true" />
         <span className="tabular-nums">
           {item.name}
           {item.value ? ` · ${item.value}` : ''}

@@ -21,6 +21,8 @@ interface MonteCarloSectionProps {
   lumpSums: LumpSum[]
   target: number
   onStdDevChange: (v: number) => void
+  /** Phone layout: centred legend, no simulation note and no chance card (the phone headline shows both). */
+  phone?: boolean
 }
 
 export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
@@ -50,7 +52,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
         <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
-        <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
+        {!props.phone && <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />}
         <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
       </div>
       <div className="themed-card rounded-lg p-4">
@@ -73,13 +75,15 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
             </ComposedChart>
           </ResponsiveContainer>
         </ChartFigure>
-        <ChartLegend items={[
-          { name: 'Median outcome', color: 'var(--accent)', value: formatMoney(bands[bands.length - 1]?.p50 ?? 0) },
-          { name: '10th-90th percentile range', color: 'var(--accent)' },
+        <ChartLegend centered={props.phone} items={[
+          { name: 'Median Outcome', color: 'var(--accent)', value: formatMoney(bands[bands.length - 1]?.p50 ?? 0) },
+          { name: '10th-90th Percentile Range', color: 'var(--accent)', opacity: 0.3 },
         ]} />
-        <p className="text-[12px] text-text-secondary mt-2">
-          500 seeded simulations. Shaded band spans the 10th to 90th percentile.
-        </p>
+        {!props.phone && (
+          <p className="text-[12px] text-text-secondary mt-2">
+            500 seeded simulations. Shaded band spans the 10th to 90th percentile.
+          </p>
+        )}
       </div>
     </div>
   )

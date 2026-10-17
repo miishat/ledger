@@ -21,6 +21,7 @@ interface ForecastChartProps {
   showReal: boolean
   view: 'line' | 'stacked'
   goalMarkers: GoalMarker[]
+  centered?: boolean
 }
 
 function monthsAgo(date: string): number {
@@ -29,7 +30,7 @@ function monthsAgo(date: string): number {
   return (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth())
 }
 
-export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, showReal, view, goalMarkers }) => {
+export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, showReal, view, goalMarkers, centered }) => {
   const past = history
     .map((h) => ({ month: monthsAgo(h.date), actual: h.value }))
     .filter((p) => p.month < 0)
@@ -60,12 +61,9 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
   const legendItems = view === 'line'
     ? [
         { name: projectedLabel, color: 'var(--accent)' },
-        // The band itself renders as a low-opacity accent area over an
-        // opaque background fill, so it reads as pale, not solid. ChartLegend's
-        // swatch has no opacity slot, so this shows the band's base colour at
-        // full strength, the same simplification already noted for
-        // MonteCarloSection's percentile band.
-        { name: 'Conservative to Optimistic band', color: 'var(--accent)' },
+        // The band renders as a low-opacity accent area, so its swatch is faded
+        // too: at full strength it would match the Projected line's swatch.
+        { name: 'Conservative to Optimistic Band', color: 'var(--accent)', opacity: 0.3 },
         { name: 'Actual', color: 'var(--text-primary)' },
       ]
     : [
@@ -105,7 +103,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             }}
             {...chartTooltipStyles}
           />
-          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" label={{ value: 'today', fill: 'var(--text-secondary)', fontSize: 11, position: 'insideTopLeft' }} />
+          <ReferenceLine x={0} stroke="var(--text-secondary)" strokeDasharray="4 4" />
           {view === 'line' ? (
             <>
               <Area type="monotone" dataKey="optimistic" stroke="none" fill="var(--accent)" fillOpacity={0.12} name="Optimistic" />
@@ -133,7 +131,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         </ComposedChart>
       </ResponsiveContainer>
       </ChartFigure>
-      <ChartLegend items={legendItems} />
+      <ChartLegend centered={centered} items={legendItems} />
     </div>
   )
 }
