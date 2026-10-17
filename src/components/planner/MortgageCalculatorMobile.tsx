@@ -101,6 +101,8 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
         </div>
       )}
 
+      {mode === 'payment' && <MortgageChart m={m} />}
+
       {showExtras && (
         <div className="rounded-2xl border border-border bg-bg-secondary p-3 flex flex-col gap-3">
           <div className="flex items-center gap-2">
@@ -135,8 +137,6 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
           ))}
         </div>
       )}
-
-      {mode === 'payment' && <MortgageChart m={m} />}
     </div>
   )
 }
