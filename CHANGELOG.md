@@ -40,7 +40,7 @@ pre-1.0 beta.
 - On phones, the Tool Overview popup shows the how-to first, then an Inputs list where each input is a row that opens to its description, instead of one long block of name and description lines.
 - On phones, the Planner page lists each section's tools as a divided list of names with icons and chevrons, without the one-line descriptions.
 
-## [0.26.2-beta] - 2026-10-17
+## [0.26.2-beta] - 2026-10-14
 
 ### Changed
 - On phones, the Emergency Fund budget button reads "Use My Budget Average ($X/mo)" and only looks selected once your expenses match it, the Raise vs Inflation verdict has no trailing full stop, and Forecaster Plan rows show Projected and Lands in a tinted result line.
