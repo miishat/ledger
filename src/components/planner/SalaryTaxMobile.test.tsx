@@ -70,3 +70,10 @@ it('keeps the provincial premium lines inside the marginal rate info button', ()
   expect(screen.getByText(/Included in Provincial Tax/)).toBeInTheDocument()
   expect(screen.getByText(/Ontario Health Premium/)).toBeInTheDocument()
 })
+
+it('puts the marginal rate calculation inside the info button, not on the page', () => {
+  render(<Harness />)
+  expect(screen.queryByText(/Fed \d/)).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'How To Read These Rates' }))
+  expect(screen.getByText(/Fed \d+\.\d+% \+ Prov/)).toBeInTheDocument()
+})
