@@ -187,7 +187,10 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
             return (
               <div key={cat.id} className="flex flex-wrap items-center gap-2 px-3.5 py-2 border-b border-border last:border-0">
                 <span className="flex-1 min-w-0">
-                  <span className="block truncate text-[14px]">{cat.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="truncate text-[14px]">{cat.name}</span>
+                    {group.kind === 'expense' && isBillCategory(cat, detectedBills) && <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[12px] font-semibold text-accent">Bill</span>}
+                  </span>
                   <span className={`block text-[12px] ${over ? 'text-error' : 'text-text-secondary'}`}>
                     {spent < 0 ? `${formatMoneyWithCents(-spent)} net credit` : `${formatMoney(spent)} spent`}
                     {over && ` (${formatMoney(spent - target)} over)`}
@@ -198,7 +201,6 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
                     </span>
                   )}
                 </span>
-                {group.kind === 'expense' && isBillCategory(cat, detectedBills) && <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-[12px] font-semibold text-accent">Bill</span>}
                 {targetInput(cat)}
                 {group.kind === 'expense' ? (
                   <>
