@@ -7,7 +7,6 @@ import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
 import { UndoToast } from './ui/UndoToast'
-import { WhatsNewModal } from './ui/WhatsNewModal'
 import { CommandPalette } from './CommandPalette'
 import { ShortcutsHelp } from './ui/ShortcutsHelp'
 import { ErrorBoundary } from './ErrorBoundary'
@@ -25,6 +24,10 @@ import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
 import { useViewportHeight } from '../hooks/useViewportHeight'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+
+// CHANGELOG.md is imported raw by the modal, so the modal is split out of the entry chunk.
+const WhatsNewModal = React.lazy(() => import('./ui/WhatsNewModal').then((m) => ({ default: m.WhatsNewModal })))
+
 
 export const Layout: React.FC = () => {
   const { theme } = useThemeStore()
@@ -58,6 +61,9 @@ export const Layout: React.FC = () => {
   const [disclaimerOpen, setDisclaimerOpen] = useState(!disclaimerAcked)
   // What's New waits until the disclaimer has been acknowledged.
   const [whatsNewOpen, setWhatsNewOpen] = useState(shouldShowNews && disclaimerAcked)
+  // Mounted from the first time it opens and then kept, so the sheet still animates closed.
+  const [whatsNewMounted, setWhatsNewMounted] = useState(whatsNewOpen)
+  if (whatsNewOpen && !whatsNewMounted) setWhatsNewMounted(true)
 
   const closeDisclaimer = () => {
     setDisclaimerOpen(false)
@@ -375,7 +381,11 @@ export const Layout: React.FC = () => {
       </nav>
 
       <UpdateToast needRefresh={swUpdate.needRefresh} onRefresh={swUpdate.refresh} />
-      <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} onOpenDisclaimer={() => setDisclaimerOpen(true)} swUpdate={swUpdate} />
+      {whatsNewMounted && (
+        <Suspense fallback={null}>
+          <WhatsNewModal isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} onOpenDisclaimer={() => setDisclaimerOpen(true)} swUpdate={swUpdate} />
+        </Suspense>
+      )}
       <DisclaimerModal isOpen={disclaimerOpen} requireAck={!disclaimerAcked} onClose={closeDisclaimer} />
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
