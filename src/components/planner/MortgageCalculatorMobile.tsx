@@ -78,7 +78,7 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
       </div>
       <div className="rounded-2xl border border-border bg-bg-secondary grid grid-cols-2 divide-x divide-border">
         {stats.map((x) => (
-          <div key={x.label} className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">{x.label}</p><p className="text-[16px] font-semibold tabular-nums">{x.value}</p></div>
+          <div key={x.label} className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">{x.label}</p><p className="text-[16px] font-semibold tabular-nums">{x.value}</p></div>
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3">{fields.map((f) => <Field key={f.label} f={f} />)}</div>
@@ -133,7 +133,7 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
       {showExtras && extras.length > 0 && (
         <div className="rounded-2xl border border-border bg-bg-secondary grid grid-cols-3 divide-x divide-border">
           {[['Interest Saved', formatMoney(m.interestSaved)], ['Time Saved', `${Math.floor(m.monthsSaved / 12)}y ${m.monthsSaved % 12}m`], ['New Payoff', `${Math.floor(m.scheduleWithExtras.length / 12)}y ${m.scheduleWithExtras.length % 12}m`]].map(([l, v]) => (
-            <div key={l} className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">{l}</p><p className="text-[15px] font-semibold tabular-nums break-words">{v}</p></div>
+            <div key={l} className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">{l}</p><p className="text-[15px] font-semibold tabular-nums break-words">{v}</p></div>
           ))}
         </div>
       )}

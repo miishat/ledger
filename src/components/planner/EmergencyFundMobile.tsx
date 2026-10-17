@@ -35,8 +35,8 @@ export const EmergencyFundMobile: React.FC<{ s: EmergencyFundState }> = ({ s }) 
         </div>
       </div>
       <div className="rounded-2xl border border-border bg-bg-secondary grid grid-cols-2 divide-x divide-border">
-        <div className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">Target Fund</p><p className="text-[16px] font-semibold tabular-nums break-words">{formatMoney(target)}</p></div>
-        <div className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">Gap to Close</p><p className="text-[16px] font-semibold tabular-nums break-words">{formatMoney(gap)}</p></div>
+        <div className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">Target Fund</p><p className="text-[16px] font-semibold tabular-nums break-words">{formatMoney(target)}</p></div>
+        <div className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">Gap to Close</p><p className="text-[16px] font-semibold tabular-nums break-words">{formatMoney(gap)}</p></div>
       </div>
       <div role="group" aria-label="Months of cover" className="flex bg-bg-secondary border border-border rounded-xl p-1">
         {PRESET_MONTHS.map((m) => (

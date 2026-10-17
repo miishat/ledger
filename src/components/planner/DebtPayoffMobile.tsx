@@ -96,8 +96,8 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
         <p className="text-[30px] font-semibold text-accent leading-tight">{formatMonths(chosen.months)}</p>
       </div>
       <div className="rounded-2xl border border-border bg-bg-secondary grid grid-cols-2 divide-x divide-border">
-        <div className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">Total Interest</p><p className="text-[16px] font-semibold tabular-nums">{formatMoney(chosen.totalInterest)}</p></div>
-        <div className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">vs {cap(otherStrategy)}</p>
+        <div className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">Total Interest</p><p className="text-[16px] font-semibold tabular-nums">{formatMoney(chosen.totalInterest)}</p></div>
+        <div className="p-3 min-w-0 text-center"><p className="text-[12px] text-text-secondary">vs {cap(otherStrategy)}</p>
           <p className="text-[16px] font-semibold tabular-nums">{delta >= 0 ? `Saves ${formatMoney(delta)}` : `Costs ${formatMoney(-delta)} More`}</p></div>
       </div>
 
