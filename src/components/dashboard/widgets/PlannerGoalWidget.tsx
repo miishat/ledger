@@ -6,12 +6,15 @@ import { useAccountValuation } from '../../../hooks/useAccountValuation'
 import { formatMoney } from '../../planner/format'
 import { EmptyState } from '../../ui/EmptyState'
 import { InfoButton } from '../../ui/InfoButton'
+import { useIsDesktop } from '../../../hooks/useMediaQuery'
+import { TopGoalMobile } from './TopGoalMobile'
 
 interface Goal { id: string; label: string; amount: number }
 
 export const PlannerGoalWidget: React.FC = () => {
   const goalsJson = usePlannerStore((s) => s.inputs['forecaster']?.goalsJson)
   const { netWorth } = useAccountValuation()
+  const isDesktop = useIsDesktop()
 
   let goals: Goal[] = []
   try {
@@ -43,6 +46,7 @@ export const PlannerGoalWidget: React.FC = () => {
       </div>
     </WidgetWrapper>
   )
+  if (!isDesktop) return <TopGoalMobile label={top.label} amount={top.amount} netWorth={netWorth} others={goals.length - 1} />
   const progress = top.amount > 0 ? Math.min(1, netWorth / top.amount) : 0
 
   return (
