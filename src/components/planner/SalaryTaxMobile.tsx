@@ -55,10 +55,11 @@ const WhyRates: React.FC = () => (
   </InfoButton>
 )
 
-const BracketsInfo: React.FC = () => (
+const BracketsInfo: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
   <InfoButton label="How To Read These Rates">
     <p>The filled part of each bar is the income inside that bracket.</p>
     <p>Marginal percentages also reflect pension deductions and tax credits, so they can differ from the bracket rates.</p>
+    {children}
   </InfoButton>
 )
 
@@ -261,16 +262,19 @@ export const SalaryTaxMobile: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
             {s.adjustmentPercent !== '0.00' && ` ${breakdown.adjustments < 0 ? '−' : '+'} Provincial adjustments ${s.adjustmentPercent}%`}
             {' '}<strong>= {breakdown.total.toFixed(2)}%</strong>
           </p>
-          <div className="flex items-center"><span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span><BracketsInfo /></div>
-        </div>
-        {hasProvincialLines && (
-          <div className="text-[12px] leading-relaxed text-text-secondary">
+          <div className="flex items-center"><span className="text-[12px] uppercase tracking-wide text-text-secondary">Marginal Rate Breakdown</span>
+            <BracketsInfo>
+              {hasProvincialLines && (
+          <p>
             <span className="mr-1">Included in Provincial Tax:</span>
             {s.annualOntarioPremium > 0 && <span>Ontario Health Premium <strong className="font-medium text-text-primary">{formatMoney(s.annualOntarioPremium)}</strong></span>}
             {s.annualOntarioReduction > 0 && <>{s.annualOntarioPremium > 0 ? '; ' : ''}<span>Ontario tax reduction <strong className="font-medium text-text-primary">{formatMoney(-s.annualOntarioReduction)}</strong></span></>}
             {s.annualReductionLabel && t.provincialAdjustments < 0 && <span>{s.annualReductionLabel} <strong className="font-medium text-text-primary">{formatMoney(t.provincialAdjustments)}</strong></span>}
+          </p>
+          )}
+            </BracketsInfo>
           </div>
-        )}
+        </div>
       </Fold>
 
       <Fold title="RRSP Efficiency" summary={`${formatMoney(topSlice?.amount ?? 0)} in Slice`}><RrspCompact s={s} /></Fold>

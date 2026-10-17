@@ -62,3 +62,11 @@ it('folds RRSP Efficiency with the income in its top slice, and explains differi
   fireEvent.click(screen.getByRole('button', { name: 'Why Rates Differ' }))
   expect(screen.getByText(/Ontario Health Premium near/)).toBeInTheDocument()
 })
+
+it('keeps the provincial premium lines inside the marginal rate info button', () => {
+  render(<Harness />)
+  expect(screen.queryByText(/Included in Provincial Tax/)).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'How To Read These Rates' }))
+  expect(screen.getByText(/Included in Provincial Tax/)).toBeInTheDocument()
+  expect(screen.getByText(/Ontario Health Premium/)).toBeInTheDocument()
+})
