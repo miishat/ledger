@@ -17,8 +17,8 @@ interface ChartLegendItem {
  *
  *  The swatch is aria-hidden: it carries no information the name does not,
  *  and announcing "image" before every series name is noise. */
-export const ChartLegend: React.FC<{ items: ChartLegendItem[] }> = ({ items }) => (
-  <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 list-none p-0">
+export const ChartLegend: React.FC<{ items: ChartLegendItem[]; centered?: boolean }> = ({ items, centered }) => (
+  <ul className={`flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 list-none p-0${centered ? ' justify-center' : ''}`}>
     {items.map((item) => (
       <li key={item.name} className="inline-flex items-center gap-1.5 text-meta text-text-secondary">
         <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: item.color }} aria-hidden="true" />

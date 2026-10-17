@@ -114,7 +114,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
           </AreaChart>
         </ResponsiveContainer>
       </ChartFigure>
-      {secondSeriesLegend.length > 0 && <ChartLegend items={secondSeriesLegend} />}
+      {secondSeriesLegend.length > 0 && <ChartLegend items={secondSeriesLegend} centered={!isDesktop} />}
     </div>
   )
 }

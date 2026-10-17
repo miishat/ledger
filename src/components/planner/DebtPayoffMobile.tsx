@@ -131,8 +131,9 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
         ))}
       </div>
 
+      <div className="themed-card rounded-lg p-4 h-[280px] flex flex-col">
       <ChartFigure label={`Remaining debt balance by month comparing avalanche and snowball strategies, debt-free in ${formatMonths(chosen.months)} on the chosen (${strategy}) strategy`}
-        className="themed-card rounded-lg p-4 h-[240px]">
+        className="w-full flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} accessibilityLayer={false}>
             <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
@@ -144,7 +145,8 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
           </LineChart>
         </ResponsiveContainer>
       </ChartFigure>
-      {other.series.length > 0 && <ChartLegend items={[{ name: 'Avalanche', color: 'var(--accent)' }, { name: 'Snowball', color: 'var(--text-secondary)' }]} />}
+      {other.series.length > 0 && <ChartLegend centered items={[{ name: 'Avalanche', color: 'var(--accent)' }, { name: 'Snowball', color: 'var(--text-secondary)' }]} />}
+      </div>
     </div>
   )
 }

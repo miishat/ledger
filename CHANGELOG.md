@@ -7,6 +7,9 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, Compound Interest shows the future value with a contributed and growth bar, quick year options (10, 20, 30, 40), the inputs in a grid, and a chart with its legend centred inside the chart card.
+- On phones, Savings Goal puts the Solve For options in a one-tap row, then only the inputs that apply, then the result.
+- On phones, the chart legends in the Mortgage and Debt Payoff tools are centred inside their chart cards.
 - On phones, the Rate & Return Converter has a From and To row with a swap button, then the rate and compounding (or the start value, end value and years), then the result.
 - On phones, the Inflation Adjuster shows the converted amount first, then a purchasing power bar, then year presets (5, 10, 20, 30) with the amount, years and inflation fields.
 - On phones, the Raise vs Inflation tool puts the three inputs first, then a single result card with the Real Raise, the Nominal Raise, the Real Change and the verdict, tinted to match.
