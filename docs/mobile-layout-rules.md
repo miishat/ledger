@@ -162,17 +162,17 @@ cue that a page scrolls.
 Guards: `e2e/mobile-guards.spec.ts`, "main has no visible scrollbar on a
 phone"; `e2e/desktop-guards.spec.ts`, "main keeps its scrollbar on desktop".
 
-## 11. About this tool is shown once, then waits below
+## 11. Tool Overview is shown once, then waits below
 
-Every planner tool has an About this tool sheet. On a phone it appears once per
-tool as a dismissible notice above the tool, and afterwards as a centered button
+Every planner tool has a Tool Overview sheet. On a phone it appears once per
+tool as a dismissible "New Here? Read the Tool Overview" banner above the tool, and afterwards as a centered button
 below the results (`PhoneToolPage`). Which tools have been seen is kept on the
-device and is not backed up or synced. After the notice goes (Got it, or the
+device and is not backed up or synced. After the notice goes (Dismiss, or the
 sheet opened from it closing) focus moves to the bottom button, which is always
 present.
 
-Guards: `e2e/mobile-guards.spec.ts`, "about this tool: first-visit notice, then
-a centred button after the results" and "about this tool: focus returns to the
+Guards: `e2e/mobile-guards.spec.ts`, "tool overview: first-visit notice, then
+a centred button after the results" and "tool overview: focus returns to the
 bottom button after the notice path closes".
 
 ## Deliberately not done

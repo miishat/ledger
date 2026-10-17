@@ -79,7 +79,7 @@ describe('PlannerTool header on a phone', () => {
     setMatchMedia(false)
     const slot = mountSlot()
     const { container } = renderTool(slot)
-    const info = within(container).getAllByRole('button', { name: 'About this tool' })[0]
+    const info = within(container).getAllByRole('button', { name: /Tool Overview/ })[0]
     expect(info.className).toMatch(/min-h-\[44px\]/)
     fireEvent.click(info)
     expect(screen.getByTestId('sheet-panel')).toHaveTextContent(tool.info.howTo)
@@ -104,12 +104,12 @@ describe('PlannerTool header on desktop', () => {
     expect(h1.className).toContain('text-[24px]')
     expect(h1.className).not.toContain('sr-only')
     expect(container.querySelector('header')).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'About this tool' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tool Overview/ })).toBeInTheDocument()
   })
 })
 
-describe('PlannerTool about-this-tool on a phone', () => {
-  const sentence = 'You can find this again at the bottom of the page, after the results.'
+describe('PlannerTool tool-overview on a phone', () => {
+  const sentence = 'New Here? Read the Tool Overview'
   beforeEach(() => {
     localStorage.clear()
     resetToolIntroMemory()
@@ -117,17 +117,17 @@ describe('PlannerTool about-this-tool on a phone', () => {
   })
   afterEach(() => resetMatchMedia())
 
-  it('shows the first-visit notice with the bottom-of-page sentence and Got it', () => {
+  it('shows the first-visit notice with a Dismiss button', () => {
     renderTool(null)
     expect(screen.getByText(sentence)).toBeInTheDocument()
-    const gotIt = screen.getByRole('button', { name: 'Got it' })
+    const gotIt = screen.getByRole('button', { name: 'Dismiss' })
     expect(gotIt.className).toMatch(/min-h-\[44px\]/)
-    expect(screen.getAllByRole('button', { name: 'About this tool' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /Tool Overview/ })).toHaveLength(2)
   })
 
-  it('does not return after Got it, on remount, but still shows for another tool', () => {
+  it('does not return after Dismiss, on remount, but still shows for another tool', () => {
     const first = renderTool(null)
-    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(screen.queryByText(sentence)).toBeNull()
     first.unmount()
     const second = renderTool(null)
@@ -145,17 +145,17 @@ describe('PlannerTool about-this-tool on a phone', () => {
 
   it('opening the info marks the tool as seen', () => {
     const first = renderTool(null)
-    fireEvent.click(screen.getAllByRole('button', { name: 'About this tool' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: /Tool Overview/ })[0])
     expect(screen.getByTestId('sheet-panel')).toHaveTextContent(tool.info.howTo)
     first.unmount()
     renderTool(null)
     expect(screen.queryByText(sentence)).toBeNull()
   })
 
-  it('always has one centred About this tool button after the results', () => {
+  it('always has one centred Tool Overview button after the results', () => {
     renderTool(null)
-    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
-    const buttons = screen.getAllByRole('button', { name: 'About this tool' })
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    const buttons = screen.getAllByRole('button', { name: /Tool Overview/ })
     expect(buttons).toHaveLength(1)
     const bottom = buttons[0]
     expect(bottom.className).toMatch(/min-h-\[44px\]/)
@@ -168,7 +168,7 @@ describe('PlannerTool about-this-tool on a phone', () => {
   })
 })
 
-describe('PlannerTool about-this-tool focus on a phone', () => {
+describe('PlannerTool tool-overview focus on a phone', () => {
   beforeEach(() => {
     localStorage.clear()
     resetToolIntroMemory()
@@ -177,38 +177,38 @@ describe('PlannerTool about-this-tool focus on a phone', () => {
   afterEach(() => resetMatchMedia())
 
   const bottomButton = () => {
-    const all = screen.getAllByRole('button', { name: 'About this tool' })
+    const all = screen.getAllByRole('button', { name: /Tool Overview/ })
     return all[all.length - 1]
   }
 
-  it('moves focus to the bottom button after Got it', () => {
+  it('moves focus to the bottom button after Dismiss', () => {
     renderTool(null)
-    const gotIt = screen.getByRole('button', { name: 'Got it' })
+    const gotIt = screen.getByRole('button', { name: 'Dismiss' })
     gotIt.focus()
     fireEvent.click(gotIt)
-    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull()
     expect(document.activeElement).toBe(bottomButton())
   })
 
   it('moves focus to the bottom button after the info sheet opened from the notice closes', async () => {
     renderTool(null)
-    const fromNotice = screen.getAllByRole('button', { name: 'About this tool' })[0]
+    const fromNotice = screen.getAllByRole('button', { name: /Tool Overview/ })[0]
     fromNotice.focus()
     fireEvent.click(fromNotice)
     expect(screen.getByTestId('sheet-panel')).toBeInTheDocument()
     fireEvent.keyDown(window, { key: 'Escape' })
-    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull()
     expect(document.activeElement).toBe(bottomButton())
   })
 })
 
-describe('PlannerTool about-this-tool on desktop', () => {
+describe('PlannerTool tool-overview on desktop', () => {
   it('has no notice and no bottom button', () => {
     localStorage.clear()
     resetToolIntroMemory()
     renderTool(null)
-    expect(screen.queryByText(/bottom of the page/)).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull()
-    expect(screen.getAllByRole('button', { name: 'About this tool' })).toHaveLength(1)
+    expect(screen.queryByText(/New Here/)).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull()
+    expect(screen.getAllByRole('button', { name: /Tool Overview/ })).toHaveLength(1)
   })
 })

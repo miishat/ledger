@@ -537,7 +537,7 @@ test('phone sheets show no visible Close button and still dismiss on Escape and 
 
   await page.goto('/#/planner/mortgage')
   // First visit shows the notice and the bottom button; either opens the same sheet.
-  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  await page.getByRole('button', { name: /Tool Overview/ }).first().click()
   await expect(panel).toBeVisible()
   await expectNoVisibleClose(panel)
   await page.keyboard.press('Escape')
@@ -670,7 +670,7 @@ test('a planner tool names itself in the top bar and frees the first screen', as
   // The in-page breadcrumb and big title are gone, so the form starts high.
   // The old header put the first field 236px below the bar at 375px wide. The
   // mortgage form opens with two rows of mode toggles of its own (96px). The
-  // permanent 44px "About this tool" row is gone: the first visit shows a
+  // permanent 44px "Tool Overview" row is gone: the first visit shows a
   // dismissible notice, which is measured separately below, and once it is
   // dismissed the form is 230 minus that row's height or less below the bar.
   await expect(page.getByRole('link', { name: 'Back to Planner' })).toHaveCount(0)
@@ -678,8 +678,8 @@ test('a planner tool names itself in the top bar and frees the first screen', as
   const field = page.locator('main input').first()
   await expect(field).toBeVisible()
   const withNotice = Math.round((await field.boundingBox())!.y - (barBox.y + barBox.height))
-  await page.getByRole('button', { name: 'Got it' }).click()
-  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Dismiss' }).click()
+  await expect(page.getByRole('button', { name: 'Dismiss' })).toHaveCount(0)
   const offset = (await field.boundingBox())!.y - (barBox.y + barBox.height)
   test.info().annotations.push({ type: 'first-field-offset-below-bar', description: `dismissed ${Math.round(offset)}, with notice ${withNotice}` })
   expect(offset).toBeLessThan(190)
@@ -693,30 +693,30 @@ test('a planner tool names itself in the top bar and frees the first screen', as
   await expect(page).toHaveURL(/#\/planner$/)
 })
 
-// "About this tool" shows once per tool as a dismissible notice, then lives after the
+// "Tool Overview" shows once per tool as a dismissible notice, then lives after the
 // results: centred, 44px tall, the last interactive element of the page, same sheet.
-test('about this tool: first-visit notice, then a centred button after the results', async ({ page }) => {
+test('tool overview: first-visit notice, then a centred button after the results', async ({ page }) => {
   await page.goto('/#/planner/mortgage')
   await page.waitForLoadState('networkidle')
-  const notice = page.getByText('You can find this again at the bottom of the page, after the results.')
+  const notice = page.getByText('New Here? Read the Tool Overview')
   await expect(notice).toBeVisible()
-  await page.getByRole('button', { name: 'Got it' }).click()
+  await page.getByRole('button', { name: 'Dismiss' }).click()
   await expect(notice).toHaveCount(0)
   // The notice's own buttons are gone, so focus must land on the bottom button, not <body>.
-  await expect(page.getByRole('button', { name: 'About this tool' })).toBeFocused()
+  await expect(page.getByRole('button', { name: /Tool Overview/ })).toBeFocused()
 
   await page.reload()
   await page.waitForLoadState('networkidle')
-  await expect(page.getByRole('button', { name: 'About this tool' })).toHaveCount(1)
-  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Tool Overview/ })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Dismiss' })).toHaveCount(0)
   await expect(notice).toHaveCount(0)
 
   // Another tool still shows its own first-visit notice.
   await page.goto('/#/planner/savings-goal')
-  await expect(page.getByRole('button', { name: 'Got it' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dismiss' })).toBeVisible()
   await page.goto('/#/planner/mortgage')
 
-  const bottom = page.getByRole('button', { name: 'About this tool' })
+  const bottom = page.getByRole('button', { name: /Tool Overview/ })
   await bottom.scrollIntoViewIfNeeded()
   await expect(bottom).toBeInViewport()
   const box = (await bottom.boundingBox())!
@@ -734,7 +734,7 @@ test('about this tool: first-visit notice, then a centred button after the resul
     const last = interactive[interactive.length - 1]
     return (last?.textContent || '').trim()
   })
-  expect(isLast).toBe('About this tool')
+  expect(isLast).toBe('Tool Overview')
 
   await bottom.click()
   const panel = page.getByTestId('sheet-panel')
@@ -745,16 +745,16 @@ test('about this tool: first-visit notice, then a centred button after the resul
 })
 
 // Opening the info from the first-visit notice and closing it must not drop focus on <main>.
-test('about this tool: focus returns to the bottom button after the notice path closes', async ({ page }) => {
+test('tool overview: focus returns to the bottom button after the notice path closes', async ({ page }) => {
   await page.goto('/#/planner/mortgage')
   await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  await page.getByRole('button', { name: /Tool Overview/ }).first().click()
   const panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(panel).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Got it' })).toHaveCount(0)
-  const bottom = page.getByRole('button', { name: 'About this tool' })
+  await expect(page.getByRole('button', { name: 'Dismiss' })).toHaveCount(0)
+  const bottom = page.getByRole('button', { name: /Tool Overview/ })
   await expect(bottom).toHaveCount(1)
   await expect(bottom).toBeFocused()
 })
@@ -821,7 +821,7 @@ test('phone sheet headers scroll away and leave room under the handle', async ({
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
 
-  await page.getByRole('button', { name: 'About this tool' }).first().click()
+  await page.getByRole('button', { name: /Tool Overview/ }).first().click()
   panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
   await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)

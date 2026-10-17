@@ -7,7 +7,8 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
-- On phones, the About this tool popup shows the how-to first, then an Inputs list where each input is a row that opens to its description, instead of one long block of name and description lines.
+- About this tool is now called Tool Overview. On phones, the first visit shows a dismissible "New Here? Read the Tool Overview" banner above the tool with an X to dismiss it, and after that a Tool Overview link sits below the results.
+- On phones, the Tool Overview popup shows the how-to first, then an Inputs list where each input is a row that opens to its description, instead of one long block of name and description lines.
 - On phones, the Planner page lists each section's tools as a divided list of names with icons and chevrons, without the one-line descriptions.
 
 ## [0.26.2-beta] - 2026-10-17

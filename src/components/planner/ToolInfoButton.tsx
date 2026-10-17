@@ -69,7 +69,7 @@ export const ToolInfoButton: React.FC<{ tool: PlannerTool }> = ({ tool }) => {
       <button
         ref={btnRef}
         type="button"
-        aria-label="About this tool"
+        aria-label="Tool Overview"
         onClick={() => setOpen((v) => !v)}
         className="p-1 rounded-full text-text-secondary hover:text-accent transition-colors min-h-[44px] min-w-[44px] desktop:min-h-0 desktop:min-w-0 flex items-center justify-center"
       >
