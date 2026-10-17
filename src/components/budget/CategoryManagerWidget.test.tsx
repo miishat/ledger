@@ -296,3 +296,14 @@ describe('category delete undo', () => {
     expect(useBudgetStore.getState().categoryGroups.g1.name).toBe('Subscriptions')
   })
 })
+
+describe('CategoryManagerWidget bills', () => {
+  it('marks a category as a bill and offers no control on an income category', () => {
+    useBudgetStore.setState({ categories: { c1: { id: 'c1', groupId: 'g1', name: 'Rent', targetAmount: 100 }, c2: { id: 'c2', groupId: 'g2', name: 'Salary', targetAmount: 0 } } })
+    render(<CategoryManagerWidget selectedMonth="2026-07" />)
+    expect(screen.getByRole('button', { name: 'Rent payment Auto' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Rent payment Bill' }))
+    expect(useBudgetStore.getState().categories.c1.billing).toBe('bill')
+    expect(screen.queryByRole('group', { name: 'Salary payment type' })).toBeNull()
+  })
+})

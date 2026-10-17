@@ -20,6 +20,9 @@ export interface Category {
   /** Period targetAmount covers. Absent means 'monthly', so no migration is
    *  needed for categories saved before cadence existed. */
   cadence?: BudgetCadence;
+  /** Whether spending here is one payment (a bill) or spread out. Absent means 'auto': treated as a bill when
+   *  nearly all of it is monthly recurring payments. */
+  billing?: 'auto' | 'bill' | 'everyday';
 }
 
 /** One slice of a split transaction. Stored slices have the same sign as the

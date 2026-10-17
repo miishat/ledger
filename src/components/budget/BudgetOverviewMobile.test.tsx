@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BudgetOverviewMobile } from './BudgetOverviewMobile'
 import { useBudgetStore } from '../../store/useBudgetStore'
 import { setMatchMedia, resetMatchMedia } from '../../test-utils/matchMedia'
@@ -90,5 +90,19 @@ describe('BudgetOverviewMobile', () => {
     renderIt()
     fireEvent.click(screen.getByRole('button', { name: 'Show All 6 Categories' }))
     expect(screen.getByRole('button', { name: 'Show Fewer' })).toBeInTheDocument()
+  })
+
+  it('shows a bill as Paid or Due instead of a pace', () => {
+    useBudgetStore.setState({
+      categories: { rent: { id: 'rent', groupId: 'g1', name: 'Rent', targetAmount: 1000, billing: 'bill' } },
+      transactions: { e1: { id: 'e1', date: '2026-08-01', amount: 1000, description: 'Rent', type: 'expense', categoryId: 'rent' } },
+    } as never)
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 15))
+    renderIt()
+    vi.useRealTimers()
+    const card = screen.getByRole('region', { name: 'Budget vs. Actual' })
+    expect(within(card).queryByText(/Pace/)).toBeNull()
+    expect(within(card).getByText('Paid')).toBeInTheDocument()
   })
 })

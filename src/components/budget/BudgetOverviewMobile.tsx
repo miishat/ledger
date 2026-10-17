@@ -3,7 +3,8 @@ import { formatMoney } from '../planner/format'
 import { foldSmallest } from '../../utils/budget/foldSmallest'
 import { useShowMore } from '../../hooks/useShowMore'
 import type { MonthRange } from '../../utils/budget/period'
-import { useBudgetOverview, type BudgetOverview, type CategoryRow, type Pace } from './useBudgetOverview'
+import { useBudgetOverview, type BudgetOverview, type CategoryRow } from './useBudgetOverview'
+import { isOverRow, type RowPace } from '../../utils/budget/pace'
 import { CashFlowWidget } from './CashFlowWidget'
 import { SavingsRateWidget } from './SavingsRateWidget'
 import { OwedToMeWidget } from './OwedToMeWidget'
@@ -13,7 +14,7 @@ const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--cha
 const sign = (n: number) => `${n >= 0 ? '+' : '-'}${formatMoney(Math.abs(n))}`
 const tone = (n: number) => (n >= 0 ? 'text-accent' : 'text-error')
 const share = (n: number, of: number) => (of > 0 ? Math.max(0, Math.min(1, n / of)) : 0)
-const paceText = (p: Pace) => (p === 'over' ? 'Over Pace' : p === 'under' ? 'Under Pace' : 'On Pace')
+const PACE_TEXT: Record<RowPace, string> = { over: 'Over Pace', under: 'Under Pace', on: 'On Pace', due: 'Due', paid: 'Paid', overBudget: 'Over Budget' }
 
 const Card: React.FC<{ children: React.ReactNode; label: string }> = ({ children, label }) => (
   <section aria-label={label} className="themed-card rounded-2xl p-4">{children}</section>
@@ -56,10 +57,10 @@ const Rows: React.FC<{ rows: CategoryRow[]; showPace: boolean }> = ({ rows, show
       <div key={r.id} className="py-2">
         <div className="flex justify-between gap-2 text-[15px]">
           <span className="text-text-primary truncate">{r.name}</span>
-          <span className={`shrink-0 tabular-nums ${r.pace === 'over' ? 'text-error' : 'text-text-secondary'}`}>{formatMoney(r.spent)} / {formatMoney(r.target)}</span>
+          <span className={`shrink-0 tabular-nums ${isOverRow(r.pace) ? 'text-error' : 'text-text-secondary'}`}>{formatMoney(r.spent)} / {formatMoney(r.target)}</span>
         </div>
-        <div className="mt-1.5"><Bar frac={share(r.spent, r.target)} bad={r.pace === 'over'} /></div>
-        {showPace && <div className={`mt-1 text-meta ${r.pace === 'over' ? 'text-error' : 'text-text-secondary'}`}>{paceText(r.pace)}</div>}
+        <div className="mt-1.5"><Bar frac={share(r.spent, r.target)} bad={isOverRow(r.pace)} /></div>
+        {showPace && <div className={`mt-1 text-meta ${isOverRow(r.pace) ? 'text-error' : 'text-text-secondary'}`}>{PACE_TEXT[r.pace]}</div>}
       </div>
     ))}
   </>

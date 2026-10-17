@@ -211,3 +211,56 @@ describe('BudgetProgressWidget annual negative spend', () => {
     expect(screen.getByText(new RegExp(`${formatMoney(-300).replace('$', '\\$')} / ${formatMoney(2400).replace('$', '\\$')}`))).toBeInTheDocument()
   })
 })
+
+describe('BudgetProgressWidget bills', () => {
+  const rentOn = (dates: string[]) => Object.fromEntries(dates.map((d, i) => [`r${i}`, { id: `r${i}`, date: d, amount: 1100, categoryId: 'rent', description: 'Landlord Rent', type: 'expense' as const }]))
+  const seedRent = (billing?: 'auto' | 'bill' | 'everyday') => useBudgetStore.setState({
+    categoryGroups: { g1: { id: 'g1', name: 'Housing', kind: 'expense' } },
+    categories: { rent: { id: 'rent', groupId: 'g1', name: 'Rent', targetAmount: 1100, ...(billing ? { billing } : {}) } },
+    transactions: rentOn(['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01']),
+    reallocations: {},
+  })
+  const april = { from: '2026-04', to: '2026-04' }
+
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 3, 15)) })
+  afterEach(() => vi.useRealTimers())
+
+  it('shows a rent paid on the 1st as paid, not over pace', () => {
+    seedRent()
+    render(<BudgetProgressWidget range={april} />)
+    expect(screen.getByText(/paid/)).toBeInTheDocument()
+    expect(screen.queryByText(/over pace/)).not.toBeInTheDocument()
+  })
+
+  it('still calls it over pace when the category is set to Everyday', () => {
+    seedRent('everyday')
+    render(<BudgetProgressWidget range={april} />)
+    expect(screen.getByText(/over pace/)).toBeInTheDocument()
+  })
+
+  it('shows a bill that has not been paid yet as due', () => {
+    seedRent('bill')
+    useBudgetStore.setState({ transactions: rentOn(['2026-01-01', '2026-02-01', '2026-03-01']) })
+    render(<BudgetProgressWidget range={april} />)
+    expect(screen.getByText(/due/)).toBeInTheDocument()
+  })
+
+  it('flags a bill that costs more than its target as over budget', () => {
+    seedRent('bill')
+    useBudgetStore.setState({ transactions: { ...rentOn(['2026-04-01']), x: { id: 'x', date: '2026-04-05', amount: 400, categoryId: 'rent', description: 'Late fee', type: 'expense' } } })
+    render(<BudgetProgressWidget range={april} />)
+    expect(screen.getByText(/over budget/)).toBeInTheDocument()
+  })
+
+  it('judges an annual bill against the whole year, so a lump sum is paid rather than over pace', () => {
+    useBudgetStore.setState({
+      categoryGroups: { g1: { id: 'g1', name: 'Insurance', kind: 'expense' } },
+      categories: { ins: { id: 'ins', groupId: 'g1', name: 'Car Insurance', targetAmount: 1200, cadence: 'annual', billing: 'bill' } },
+      transactions: { i1: { id: 'i1', date: '2026-02-10', amount: 1200, categoryId: 'ins', description: 'Insurer', type: 'expense' } },
+      reallocations: {},
+    })
+    render(<BudgetProgressWidget range={april} />)
+    expect(screen.getByText(/paid/)).toBeInTheDocument()
+    expect(screen.queryByText(/over pace/)).not.toBeInTheDocument()
+  })
+})

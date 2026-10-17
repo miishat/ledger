@@ -1,6 +1,7 @@
 import React from 'react'
 import { formatMoney } from '../../planner/format'
 import type { MonthlyBudgetStats } from '../../../store/useBudgetStore'
+import { useBillIds } from '../../../hooks/useBillIds'
 
 interface BudgetPaceMobileProps {
   stats: MonthlyBudgetStats
@@ -8,14 +9,18 @@ interface BudgetPaceMobileProps {
 }
 
 /** Phone body of This Month's Budget: what is safe to spend each day from here, whether spending is ahead of
- *  the calendar, and a bar with a tick for today. `stats.remaining + stats.spent` is the month's total target. */
+ *  the calendar, and a bar with a tick for where spending should be by now (bills count in full, the rest by the day). `stats.remaining + stats.spent` is the month's total target. */
 export const BudgetPaceMobile: React.FC<BudgetPaceMobileProps> = ({ stats, now }) => {
+  const bills = useBillIds()
   const target = stats.remaining + stats.spent
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
   const day = now.getDate()
   const daysLeft = daysInMonth - day + 1
   const spentPct = target > 0 ? Math.min(Math.max(stats.spent / target, 0), 1) * 100 : 0
-  const todayPct = (day / daysInMonth) * 100
+  // Bills are paid in one go, so they count in full from the start; only the rest is spread across the days.
+  const billTarget = Object.values(stats.perCategory).filter((c) => bills.has(c.id)).reduce((sum, c) => sum + c.effectiveTarget, 0)
+  const expected = target > 0 ? Math.min(target, billTarget + (target - billTarget) * (day / daysInMonth)) : 0
+  const todayPct = target > 0 ? (expected / target) * 100 : (day / daysInMonth) * 100
   const ahead = spentPct > todayPct
   const perDay = Math.max(stats.remaining, 0) / daysLeft
 

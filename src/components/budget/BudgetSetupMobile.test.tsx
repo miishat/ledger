@@ -81,4 +81,23 @@ describe('BudgetSetupMobile', () => {
     expect(within(dialog).getByText('Ledger Custom')).toHaveClass('text-accent')
     expect(within(dialog).queryByText(/current/)).not.toBeInTheDocument()
   })
+
+  it('lets a category be marked as a bill, everyday or auto', () => {
+    render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    const group = screen.getByRole('group', { name: 'Groceries payment type' })
+    expect(within(group).getByRole('button', { name: 'Groceries payment Auto' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(within(group).getByRole('button', { name: 'Groceries payment Bill' }))
+    expect(useBudgetStore.getState().categories.c1.billing).toBe('bill')
+    expect(within(group).getByRole('button', { name: 'Groceries payment Bill' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(within(group).getByRole('button', { name: 'Groceries payment Everyday' }))
+    expect(useBudgetStore.getState().categories.c1.billing).toBe('everyday')
+  })
+
+  it('names what Auto found so the choice is not hidden', () => {
+    useBudgetStore.setState({
+      transactions: Object.fromEntries(['2026-06-01', '2026-07-01', '2026-08-01', '2026-09-01'].map((d, i) => [`t${i}`, { id: `t${i}`, date: d, amount: 300, categoryId: 'c1', description: 'Meal Plan', type: 'expense' as const }])),
+    })
+    render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    expect(screen.getByRole('button', { name: 'Groceries payment Auto' })).toHaveTextContent('Auto · Bill')
+  })
 })

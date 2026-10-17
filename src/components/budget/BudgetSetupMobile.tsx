@@ -7,6 +7,8 @@ import { formatMoney, formatMoneyWithCents } from '../planner/format';
 import { categoryExpenseBreakdown } from '../../utils/budget/categoryStats';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
+import { BillToggle } from './BillToggle';
+import { useDetectedBillIds } from '../../hooks/useBillIds';
 import { amountForCategory } from '../../utils/budget/splits';
 import { NumberInput } from '../ui/NumberInput';
 import { ThemedSelect } from '../ui/ThemedSelect';
@@ -49,6 +51,7 @@ interface Props {
  *  the same store, split into three sections so each one is short. */
 export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
   const state = useBudgetStore();
+  const detectedBills = useDetectedBillIds();
   const { transactions, categories, categoryGroups, paradigm, reallocations } = state;
   const offerUndo = useUndoStore((s) => s.offerUndo);
   const [segment, setSegment] = useState<Segment>('Targets');
@@ -196,6 +199,12 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
                 </span>
                 {targetInput(cat)}
                 {cadenceToggle(cat)}
+                {group.kind === 'expense' && (
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span className="text-[12px] text-text-secondary">Payment</span>
+                    <BillToggle large category={cat} detected={detectedBills.has(cat.id)} onChange={(billing) => state.updateCategory(cat.id, { billing })} />
+                  </div>
+                )}
                 {paradigm === 'Zero-Based' && overspend > 0 && (
                   <button type="button" onClick={() => setCoverTarget({ id: cat.id, overage: overspend })} className="min-h-[44px] px-3 rounded-lg border border-error/60 text-error text-[13px] font-medium">
                     Cover

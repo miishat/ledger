@@ -9,6 +9,8 @@ import { formatMoney, formatMoneyWithCents } from '../planner/format';
 import { categoryExpenseBreakdown } from '../../utils/budget/categoryStats';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
+import { BillToggle } from './BillToggle';
+import { useDetectedBillIds } from '../../hooks/useBillIds';
 import { amountForCategory } from '../../utils/budget/splits';
 import type { BudgetingParadigm, BudgetClass } from '../../types/budget';
 import { PARADIGM_DESCRIPTIONS } from './paradigmDescriptions';
@@ -22,6 +24,7 @@ interface CategoryManagerWidgetProps {
 
 export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ selectedMonth }) => {
   const state = useBudgetStore();
+  const detectedBills = useDetectedBillIds();
   const {
     transactions,
     paradigm,
@@ -317,6 +320,11 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                                       {c === 'monthly' ? '/mo' : '/yr'}
                                     </button>
                                   ))}
+                                </div>
+                              )}
+                              {!isIncomeGroup && (
+                                <div className="ml-1">
+                                  <BillToggle category={cat} detected={detectedBills.has(cat.id)} onChange={(billing) => updateCategory(cat.id, { billing })} />
                                 </div>
                               )}
                               <button

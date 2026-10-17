@@ -6,18 +6,17 @@ import { splitParts } from '../../utils/budget/splits'
 import { annualTarget, elapsedMonthsInYear, isAnnual, setAsideExpected } from '../../utils/budget/cadence'
 import { detectRecurring } from '../../utils/budget/recurring'
 import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast'
+import { billPace, paceOf, type RowPace } from '../../utils/budget/pace'
+import { useBillIds } from '../../hooks/useBillIds'
 
-export type Pace = 'over' | 'under' | 'on'
-export interface CategoryRow { id: string; name: string; spent: number; target: number; pace: Pace }
-
-/** Same pace rule as Budget vs. Actual: more than 110% of what is expected by now is over, under 90% is under. */
-const paceOf = (spent: number, expected: number): Pace => (spent > expected * 1.1 ? 'over' : spent < expected * 0.9 ? 'under' : 'on')
+export interface CategoryRow { id: string; name: string; spent: number; target: number; pace: RowPace }
 
 /** Everything the phone Overview shows for a period, from the same rules the desktop widgets use. */
 export function useBudgetOverview(range: MonthRange) {
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
+  const bills = useBillIds()
 
   const inPeriod = Object.values(transactions).filter((t) => inRange(t.date, range))
   const incomeTx = inPeriod.filter((t) => countsAsIncome(t))
@@ -54,7 +53,8 @@ export function useBudgetOverview(range: MonthRange) {
     .map((c) => {
       const spent = spentByCategory.get(c.id) ?? 0
       const target = c.targetAmount * months
-      return { id: c.id, name: c.name, spent, target, pace: paceOf(spent, target * monthFraction) }
+      const pace = bills.has(c.id) && current ? billPace(spent, target) : paceOf(spent, target * monthFraction)
+      return { id: c.id, name: c.name, spent, target, pace }
     })
     .sort((a, b) => b.spent / b.target - a.spent / a.target)
 
@@ -69,7 +69,7 @@ export function useBudgetOverview(range: MonthRange) {
   const annualRows: CategoryRow[] = withTarget.filter(isAnnual).map((c) => {
     const target = annualTarget(c)
     const spent = yearSpent.get(c.id) ?? 0
-    return { id: c.id, name: c.name, spent, target, pace: paceOf(spent, setAsideExpected(target, elapsed)) }
+    return { id: c.id, name: c.name, spent, target, pace: bills.has(c.id) ? billPace(spent, target) : paceOf(spent, setAsideExpected(target, elapsed)) }
   })
 
   const budgeted = totalMonthlyBudget(categories, categoryGroups) * months

@@ -6,17 +6,10 @@ import { totalMonthlyBudget } from '../../store/budgetSelectors'
 import { inRange, isSingleMonth, monthKeyOf, monthsInRange, type MonthRange } from '../../utils/budget/period'
 import { annualTarget, elapsedMonthsInYear, isAnnual, setAsideExpected } from '../../utils/budget/cadence'
 import { splitParts } from '../../utils/budget/splits'
+import { billPace, isOverRow, PACE_LABELS, paceOf, type RowPace } from '../../utils/budget/pace'
+import { useBillIds } from '../../hooks/useBillIds'
 
-type Pace = 'over' | 'under' | 'on'
-
-/** Shared pace rule: >110% of expected is over, <90% is under. */
-function paceOf(spent: number, expected: number): Pace {
-  if (spent > expected * 1.1) return 'over'
-  if (spent < expected * 0.9) return 'under'
-  return 'on'
-}
-
-const paceLabel = (p: Pace) => (p === 'over' ? 'over pace' : p === 'under' ? 'under pace' : 'on pace')
+const paceLabel = (p: RowPace) => PACE_LABELS[p]
 
 // Pace: expected-by-today = target × (day / days-in-month); >110% = over.
 // Pace prorating only applies when the range is exactly the current single month.
@@ -25,6 +18,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
   const transactions = useBudgetStore((s) => s.transactions)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
+  const bills = useBillIds()
 
   const months = monthsInRange(range)
   const currentMonthKey = monthKeyOf(new Date())
@@ -52,7 +46,9 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
       const spent = spentByCategory.get(c.id) ?? 0
       const target = c.targetAmount * months
       const expected = target * monthFraction
-      return { c, spent, target, pace: paceOf(spent, expected) }
+      // A bill is judged on whether it has been paid, not on how far through the month we are.
+      const pace = bills.has(c.id) && isCurrentSingleMonth ? billPace(spent, target) : paceOf(spent, expected)
+      return { c, spent, target, pace }
     })
 
   // Annual rows: calendar-year spend for the year containing range.to,
@@ -77,7 +73,7 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
       const annual = annualTarget(c)
       const spent = yearSpentByCategory.get(c.id) ?? 0
       const expected = setAsideExpected(annual, elapsed)
-      return { c, spent, annual, expected, pace: paceOf(spent, expected) }
+      return { c, spent, annual, expected, pace: bills.has(c.id) ? billPace(spent, annual) : paceOf(spent, expected) }
     })
 
   const budgeted = totalMonthlyBudget(categories, categoryGroups) * months
@@ -115,14 +111,14 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
             <div key={c.id} className="flex flex-col gap-1 text-[13px]">
               <div className="flex justify-between">
                 <span className="text-text-primary">{c.name}</span>
-                <span className={pace === 'over' ? 'text-error' : 'text-text-secondary'}>
+                <span className={isOverRow(pace) ? 'text-error' : 'text-text-secondary'}>
                   {formatMoney(spent)} / {formatMoney(target)}
                   {isCurrentSingleMonth ? ` · ${paceLabel(pace)}` : ''}
                 </span>
               </div>
               <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
                 <div
-                  className={`h-full ${pace === 'over' ? 'bg-error' : 'bg-accent'}`}
+                  className={`h-full ${isOverRow(pace) ? 'bg-error' : 'bg-accent'}`}
                   style={{ width: `${Math.max(0, Math.min(100, (spent / target) * 100))}%` }}
                 />
               </div>
@@ -136,13 +132,13 @@ export const BudgetProgressWidget: React.FC<{ range: MonthRange }> = ({ range })
                 <div key={c.id} className="flex flex-col gap-1 text-[13px]">
                   <div className="flex justify-between">
                     <span className="text-text-primary">{c.name}</span>
-                    <span className={pace === 'over' ? 'text-error' : 'text-text-secondary'}>
+                    <span className={isOverRow(pace) ? 'text-error' : 'text-text-secondary'}>
                       {formatMoney(spent)} / {formatMoney(annual)} · {paceLabel(pace)}
                     </span>
                   </div>
                   <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
                     <div
-                      className={`h-full ${pace === 'over' ? 'bg-error' : 'bg-accent'}`}
+                      className={`h-full ${isOverRow(pace) ? 'bg-error' : 'bg-accent'}`}
                       style={{ width: `${Math.max(0, Math.min(100, (spent / annual) * 100))}%` }}
                     />
                   </div>
