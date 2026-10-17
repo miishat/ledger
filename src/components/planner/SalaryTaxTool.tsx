@@ -1,16 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Info } from 'lucide-react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
 import {
   FEDERAL_BRACKETS,
-  marginalRateBreakdown,
-  ontarioHealthPremium,
-  salaryMarginalRate,
   PROVINCES,
   PROVINCIAL_TAX,
-  takeHomeWithDeductions,
   type Bracket,
-  type Province,
 } from '../../utils/finance/canadaTax'
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
@@ -20,9 +14,10 @@ import { DeductionsBreakdown } from './DeductionsBreakdown'
 import { RrspEfficiencyCard } from './RrspEfficiencyCard'
 import { TaxYearNotice } from '../ui/TaxYearNotice'
 import { Sheet } from '../ui/Sheet'
+import { SALARY_TAX_TOOL_ID, useSalaryTax } from './useSalaryTax'
+import { SalaryTaxMobile } from './SalaryTaxMobile'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 
-const TOOL_ID = 'salary-tax'
-const DEFAULTS = { income: 100000, province: 'ON' as string, rrsp: 0, fhsa: 0, rrspRoom: 0 }
 
 /** Bracket visual: one visually separate segment per bracket, with a rate
  *  label, income-range caption, and accent fill for the portion of income
@@ -88,38 +83,15 @@ export const BracketBar: React.FC<{ title: string; brackets: Bracket[]; income: 
 export const SalaryTaxTool: React.FC = () => {
   const [bracketInfoOpen, setBracketInfoOpen] = useState(false)
   const bracketInfoButtonRef = useRef<HTMLButtonElement>(null)
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const province = inputs.province as Province
-  const income = inputs.income
+  const state = useSalaryTax()
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const {
+    inputs, setInput, province, income, t, breakdown, incomeTax, marginal, effective, enteredRoom,
+    deductibleRrsp, room, annualOntarioPremium, annualOntarioReduction, annualReductionLabel, adjustmentPercent,
+  } = state
+  const TOOL_ID = SALARY_TAX_TOOL_ID
 
-  // One-time seed from the legacy income-tax / take-home-pay saved inputs so
-  // nobody loses their numbers. Legacy entries are read, never deleted.
-  useEffect(() => {
-    const { inputs: all, setInput: set } = usePlannerStore.getState()
-    if (all[TOOL_ID] !== undefined) return
-    const oldTax = all['income-tax']
-    const oldPay = all['take-home-pay']
-    if (oldTax) {
-      if (typeof oldTax.income === 'number') set(TOOL_ID, 'income', oldTax.income)
-      if (typeof oldTax.province === 'string') set(TOOL_ID, 'province', oldTax.province)
-    } else if (oldPay) {
-      if (typeof oldPay.gross === 'number') set(TOOL_ID, 'income', oldPay.gross)
-      if (typeof oldPay.province === 'string') set(TOOL_ID, 'province', oldPay.province)
-    }
-  }, [])
-
-  const enteredRoom = inputs.rrspRoom > 0 ? inputs.rrspRoom : null
-  const deductibleRrsp = enteredRoom === null ? inputs.rrsp : Math.min(inputs.rrsp, enteredRoom)
-  const t = takeHomeWithDeductions(income, province, deductibleRrsp, inputs.fhsa)
-  const breakdown = marginalRateBreakdown(income, province, deductibleRrsp, inputs.fhsa)
-  const adjustmentPercent = Math.abs(breakdown.adjustments).toFixed(2)
-  const incomeTax = t.federal + t.provincial
-  const room = enteredRoom === null ? null : Math.max(0, enteredRoom - inputs.rrsp)
-  const annualOntarioPremium = province === 'ON' ? ontarioHealthPremium(t.provincialTaxableIncome) : 0
-  const annualOntarioReduction = province === 'ON' ? Math.max(0, annualOntarioPremium - t.provincialAdjustments) : 0
-  const annualReductionLabel = province === 'BC' ? 'Annual BC tax reduction'
-    : province === 'AB' ? 'Annual Alberta supplemental credit' : null
+  if (isPhone) return <SalaryTaxMobile s={state} />
 
   return (
     <div className="flex flex-col gap-6">
@@ -144,8 +116,8 @@ export const SalaryTaxTool: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ResultCard label="Total Income Tax" value={formatMoney(incomeTax)} highlight />
-        <ResultCard label="Marginal Rate" value={`${salaryMarginalRate(income, province, deductibleRrsp, inputs.fhsa).toFixed(2)}%`} />
-        <ResultCard label="Effective Rate" value={`${(income > 0 ? incomeTax / income * 100 : 0).toFixed(2)}%`} />
+        <ResultCard label="Marginal Rate" value={`${marginal.toFixed(2)}%`} />
+        <ResultCard label="Effective Rate" value={`${effective.toFixed(2)}%`} />
       </div>
 
       {inputs.rrsp + inputs.fhsa > 0 && (
