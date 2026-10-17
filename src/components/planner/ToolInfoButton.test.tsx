@@ -27,6 +27,20 @@ describe('ToolInfoButton', () => {
     await waitFor(() => expect(queryByTestId('sheet-panel')).toBeNull())
   })
 
+  it('lists each input on a phone as a row that opens to its description', () => {
+    setMatchMedia(false)
+    const tool = getTool('mortgage')!
+    render(<ToolInfoButton tool={tool} />)
+    fireEvent.click(screen.getByLabelText('About this tool'))
+    const panel = screen.getByTestId('sheet-panel')
+    expect(panel).toHaveTextContent(tool.info.howTo)
+    const param = tool.info.params[0]
+    const row = screen.getByText(param.name).closest('details')!
+    expect(row).not.toHaveAttribute('open')
+    expect(row).toHaveTextContent(param.description)
+    expect(panel).not.toHaveTextContent(`${param.name} : `)
+  })
+
   it('gives the info button a mobile hit area', () => {
     render(<ToolInfoButton tool={getTool('mortgage')!} />)
     // Measured 24x24 in the audit, on a control that opens the only

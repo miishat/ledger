@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the About this tool popup shows the how-to first, then an Inputs list where each input is a row that opens to its description, instead of one long block of name and description lines.
 - On phones, the Planner page lists each section's tools as a divided list of names with icons and chevrons, without the one-line descriptions.
 
 ## [0.26.2-beta] - 2026-10-17
