@@ -21,10 +21,14 @@ const Field: React.FC<{ id: string; label: string; info?: React.ReactNode; prefi
   </div>
 )
 
-const Fold: React.FC<{ title: string; summary?: string; open?: boolean; children: React.ReactNode }> = ({ title, summary, open, children }) => (
-  <details className="themed-card rounded-2xl" open={open}>
+/** A collapsible card. `info` is an info button that shows beside the title only while the card is open. */
+const Fold: React.FC<{ title: string; summary?: string; open?: boolean; info?: React.ReactNode; children: React.ReactNode }> = ({ title, summary, open, info, children }) => (
+  <details className="group themed-card rounded-2xl" open={open}>
     <summary className="list-none cursor-pointer min-h-12 px-4 flex items-center justify-between gap-3">
-      <span className="text-[15px] font-semibold">{title}</span>
+      <span className="flex items-center">
+        <span className="text-[15px] font-semibold">{title}</span>
+        {info && <span className="hidden group-open:inline-flex" onClick={(e) => e.preventDefault()}>{info}</span>}
+      </span>
       {summary && <span className="text-[13px] text-text-secondary">{summary}</span>}
     </summary>
     <div className="px-4 pb-4 flex flex-col gap-3">{children}</div>
@@ -192,7 +196,7 @@ const RrspCompact: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
           <div className="h-1.5 rounded bg-bg-primary/60 overflow-hidden" role="progressbar" aria-label="Remaining room used" aria-valuenow={Math.round(used)} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-accent" style={{ width: `${used}%` }} /></div>
           <p className="text-[12px] text-text-secondary">{top.amount <= (s.room ?? 0) ? `Uses ${used.toFixed(0)}% of your ${formatMoney(s.room ?? 0)} remaining CRA room` : `Exceeds your ${formatMoney(s.room ?? 0)} remaining CRA room by ${formatMoney(top.amount - (s.room ?? 0))}`}</p>
         </div>
-      ) : <p className="text-[12px] text-text-secondary">Enter your CRA RRSP deduction limit to compare with available room.</p>}
+      ) : s.room === 0 ? <p className="text-[12px] text-text-secondary">No entered RRSP deduction room remains.</p> : null}
     </div>
   )
 }
@@ -287,7 +291,15 @@ export const SalaryTaxMobile: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
         </div>
       </Fold>
 
-      <Fold title="RRSP Efficiency" summary={`${formatMoney(topSlice?.amount ?? 0)} in Slice`}><RrspCompact s={s} /></Fold>
+      <Fold
+        title="RRSP Efficiency"
+        summary={`${formatMoney(topSlice?.amount ?? 0)} in Slice`}
+        info={s.room === null && topSlice && topSlice.rate > 0
+          ? <InfoButton label="About RRSP Room" inline><p>Enter your CRA RRSP deduction limit to compare with available room.</p></InfoButton>
+          : undefined}
+      >
+        <RrspCompact s={s} />
+      </Fold>
     </div>
   )
 }

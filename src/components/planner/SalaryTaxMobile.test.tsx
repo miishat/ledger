@@ -90,3 +90,16 @@ it('puts the marginal rate calculation inside the info button, not on the page',
   fireEvent.click(screen.getByRole('button', { name: 'How To Read These Rates' }))
   expect(screen.getByText(/Fed \d+\.\d+% \+ Prov/)).toBeInTheDocument()
 })
+
+it('puts the CRA limit prompt behind an info button beside RRSP Efficiency', () => {
+  render(<Harness />)
+  expect(screen.queryByText(/Enter your CRA RRSP deduction limit to compare/)).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'About RRSP Room' }))
+  expect(screen.getByText(/Enter your CRA RRSP deduction limit to compare/)).toBeInTheDocument()
+})
+
+it('drops that info button once a CRA limit is entered', () => {
+  usePlannerStore.getState().setInput('salary-tax', 'rrspRoom', 20000)
+  render(<Harness />)
+  expect(screen.queryByRole('button', { name: 'About RRSP Room' })).not.toBeInTheDocument()
+})
