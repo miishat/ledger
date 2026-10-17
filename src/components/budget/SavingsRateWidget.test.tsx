@@ -36,7 +36,7 @@ describe('SavingsRateWidget', () => {
     seedIncomeExpense()
     render(<SavingsRateWidget range={{ from: '2026-06', to: '2026-06' }} />)
     fireEvent.click(screen.getByText('Trend'))
-    expect(screen.getByText('Net saved per month')).toBeInTheDocument()
+    expect(screen.getByText('Net Saved')).toBeInTheDocument()
   })
 
   it('renders an empty state when the window has no income or expenses', () => {

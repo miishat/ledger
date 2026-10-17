@@ -30,9 +30,9 @@ afterEach(() => resetMatchMedia())
 const renderIt = () => render(<MemoryRouter><BudgetOverviewMobile range={range} /></MemoryRouter>)
 
 describe('BudgetOverviewMobile', () => {
-  it('opens on the Spending donut with the total and each group share', () => {
+  it('opens on the Expense donut with the total and each group share', () => {
     renderIt()
-    const card = screen.getByRole('region', { name: 'Spending' })
+    const card = screen.getByRole('region', { name: 'Expense' })
     expect(within(card).getByText('$1,500')).toBeInTheDocument()
     expect(within(card).getByText('Housing')).toBeInTheDocument()
     expect(within(card).getByText('80%')).toBeInTheDocument()
@@ -40,13 +40,13 @@ describe('BudgetOverviewMobile', () => {
     expect(within(card).getByText('20%')).toBeInTheDocument()
   })
 
-  it('puts the Spending and Income switch under the chart and switches the donut to income', () => {
+  it('puts the Expense and Income switch under the chart and switches the donut to income', () => {
     renderIt()
-    const card = screen.getByRole('region', { name: 'Spending' })
+    const card = screen.getByRole('region', { name: 'Expense' })
     const group = within(card).getByRole('group', { name: 'Chart shows' })
     expect(card.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_CONTAINED_BY).toBeTruthy()
     expect(within(card).getByText('Out').compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(within(group).getByRole('button', { name: 'Spending' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(group).getByRole('button', { name: 'Expense' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(within(group).getByRole('button', { name: 'Income' }))
     const income = screen.getByRole('region', { name: 'Income' })
     expect(within(income).getByText('$4,000')).toBeInTheDocument()
@@ -69,10 +69,26 @@ describe('BudgetOverviewMobile', () => {
     expect(within(card).getByText('$300 / $500')).toBeInTheDocument()
   })
 
-  it('keeps income sources in a fold and says so when a period has none', () => {
+  it('has no separate Income section, since the donut covers it', () => {
+    renderIt()
+    expect(screen.queryByText('Income', { selector: 'summary *, h2' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Income sources' })).toBeNull()
+  })
+
+  it('says so when a period has no expenses or income', () => {
     useBudgetStore.setState({ transactions: {} } as never)
     renderIt()
-    expect(screen.getByText('No spending in this period yet.')).toBeInTheDocument()
+    expect(screen.getByText('No expenses in this period yet.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Income' }))
     expect(screen.getByText('No income in this period yet.')).toBeInTheDocument()
+  })
+
+  it('caps the budget list and names the button in Title Case', () => {
+    const categories: Record<string, unknown> = {}
+    for (let i = 0; i < 6; i++) categories[`c${i}`] = { id: `c${i}`, groupId: 'g1', name: `Cat ${i}`, targetAmount: 100 }
+    useBudgetStore.setState({ categories } as never)
+    renderIt()
+    fireEvent.click(screen.getByRole('button', { name: 'Show All 6 Categories' }))
+    expect(screen.getByRole('button', { name: 'Show Fewer' })).toBeInTheDocument()
   })
 })

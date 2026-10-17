@@ -117,14 +117,12 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
                   width={52}
                   tickFormatter={(v) => formatMoney(Number(v))}
                 />
-                <Tooltip formatter={(value) => [formatMoney(Number(value)), 'Net saved']} {...chartTooltipStyles} />
+                <Tooltip formatter={(value) => [formatMoney(Number(value)), 'Net Saved']} {...chartTooltipStyles} />
                 <Area type="monotone" dataKey="net" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.15} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartFigure>
-          <div className="flex gap-4 mt-2 text-[12px] text-text-secondary">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: 'var(--accent)' }} /> Net saved per month</span>
-          </div>
+          <ChartLegend centered items={[{ name: 'Net Saved', color: 'var(--accent)' }]} />
         </>
       ) : (
         <>
@@ -149,7 +147,7 @@ export const SavingsRateWidget: React.FC<{ range: MonthRange }> = ({ range }) =>
               </BarChart>
             </ResponsiveContainer>
           </ChartFigure>
-          <ChartLegend items={[
+          <ChartLegend centered items={[
             { name: 'Saved', color: 'var(--accent)' },
             { name: 'Spent', color: 'var(--error)' },
           ]} />

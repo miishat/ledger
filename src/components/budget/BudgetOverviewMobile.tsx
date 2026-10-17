@@ -1,9 +1,7 @@
 import React, { useId, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
 import { formatMoney } from '../planner/format'
 import { foldSmallest } from '../../utils/budget/foldSmallest'
-import { PHONE_LIST_LIMIT, useShowMore } from '../../hooks/useShowMore'
-import { ShowMoreButton } from '../ui/ShowMoreButton'
+import { useShowMore } from '../../hooks/useShowMore'
 import type { MonthRange } from '../../utils/budget/period'
 import { useBudgetOverview, type BudgetOverview, type CategoryRow, type Pace } from './useBudgetOverview'
 import { CashFlowWidget } from './CashFlowWidget'
@@ -52,25 +50,6 @@ const Donut: React.FC<{ items: [string, number][]; total: number; top: string; m
   )
 }
 
-/** One list with a share bar per row, capped on a phone and expanded in place. */
-const BarList: React.FC<{ items: [string, number][]; total: number; noun: string; bad?: boolean; label: string }> = ({ items, total, noun, bad, label }) => {
-  const list = useShowMore(items, PHONE_LIST_LIMIT)
-  const listId = useId()
-  return (
-    <div>
-      <div id={listId} role="group" aria-label={label}>
-        {list.visible.map(([name, value]) => (
-          <div key={name} className="py-2">
-            <div className="flex justify-between gap-2 text-[15px]"><span className="text-text-primary truncate">{name}</span><span className="shrink-0 tabular-nums font-medium text-text-primary">{formatMoney(value)}</span></div>
-            <div className="mt-1.5"><Bar frac={share(value, total)} bad={bad} /></div>
-          </div>
-        ))}
-      </div>
-      {list.truncates && <ShowMoreButton total={items.length} noun={noun} expanded={list.expanded} onToggle={list.toggle} controls={listId} />}
-    </div>
-  )
-}
-
 const Rows: React.FC<{ rows: CategoryRow[]; showPace: boolean }> = ({ rows, showPace }) => (
   <>
     {rows.map((r) => (
@@ -107,7 +86,12 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
             </div>
           )}
           <div id={listId} role="group" aria-label="Category budgets"><Rows rows={list.visible} showPace={d.current} /></div>
-          {list.truncates && <ShowMoreButton total={d.rows.length} noun="categories" expanded={list.expanded} onToggle={list.toggle} controls={listId} />}
+          {list.truncates && (
+            <button type="button" onClick={list.toggle} aria-expanded={list.expanded} aria-controls={listId}
+              className="mt-2 w-full min-h-11 rounded-xl border border-border text-[14px] font-medium text-accent">
+              {list.expanded ? 'Show Fewer' : `Show All ${d.rows.length} Categories`}
+            </button>
+          )}
           {d.annualRows.length > 0 && (
             <div className="mt-2 border-t border-border pt-2">
               <p className="text-[12px] uppercase tracking-wide text-text-secondary">Annual Budgets</p>
@@ -123,18 +107,7 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
   )
 }
 
-const Fold: React.FC<{ title: string; figure: string; figureClass: string; children: React.ReactNode }> = ({ title, figure, figureClass, children }) => (
-  <details className="themed-card rounded-2xl group">
-    <summary className="flex items-center gap-3 px-4 min-h-14 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-      <span className="flex-1 min-w-0 text-[15px] font-semibold text-text-primary">{title}</span>
-      <span className={`text-[15px] font-semibold tabular-nums ${figureClass}`}>{figure}</span>
-      <ChevronRight className="w-4 h-4 shrink-0 text-text-secondary transition-transform group-open:rotate-90" aria-hidden="true" />
-    </summary>
-    <div className="px-4 pb-3 border-t border-border pt-2">{children}</div>
-  </details>
-)
-
-/** Phone Budgeting Overview: a donut that switches between Spending and Income (the switch sits under it), then
+/** Phone Budgeting Overview: a donut that switches between Expense and Income (the switch sits under it), then
  *  In, Net and Saved, the budget, the income sources, and the cash flow, savings rate and who owes you. */
 export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range }) => {
   const d = useBudgetOverview(range)
@@ -145,7 +118,7 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
 
   return (
     <div className="flex flex-col gap-4">
-      <Card label={spending ? 'Spending' : 'Income'}>
+      <Card label={spending ? 'Expense' : 'Income'}>
         {total > 0 ? (
           <div className="flex items-center gap-4">
             <Donut items={slices} total={total} top={spending ? 'Out' : 'In'} main={formatMoney(total)} mainClass={spending ? 'text-text-primary' : 'text-accent'} />
@@ -160,10 +133,10 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
             </div>
           </div>
         ) : (
-          <p className="text-[14px] text-text-secondary">No {spending ? 'spending' : 'income'} in this period yet.</p>
+          <p className="text-[14px] text-text-secondary">No {spending ? 'expenses' : 'income'} in this period yet.</p>
         )}
         <div role="group" aria-label="Chart shows" className="mt-4 flex bg-bg-secondary border border-border rounded-xl p-1">
-          {([['out', 'Spending'], ['in', 'Income']] as const).map(([id, label]) => (
+          {([['out', 'Expense'], ['in', 'Income']] as const).map(([id, label]) => (
             <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)}
               className={`flex-1 min-h-11 rounded-lg text-[14px] font-medium ${view === id ? 'bg-accent/15 text-accent' : 'text-text-secondary'}`}>{label}</button>
           ))}
@@ -183,11 +156,6 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
         )}
       </Card>
       <BudgetCard d={d} />
-      <Fold title="Income" figure={formatMoney(d.income)} figureClass="text-accent">
-        {d.sources.length === 0
-          ? <p className="py-2 text-[14px] text-text-secondary">No income in this period yet.</p>
-          : <BarList items={d.sources} total={d.income} noun="sources" label="Income sources" />}
-      </Fold>
       <CashFlowWidget range={range} />
       <SavingsRateWidget range={range} />
       <OwedToMeWidget />
