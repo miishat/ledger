@@ -52,7 +52,7 @@ const Donut: React.FC<{ p: Parts; size: number }> = ({ p, size }) => (
   <div style={{ width: size, height: size }} className="shrink-0" role="img" aria-label={`Total annual compensation split as ${p.rows.map((r) => `${r.name} ${cad(r.value)}`).join(', ')}`}>
     <ResponsiveContainer width="100%" height="100%">
       <PieChart accessibilityLayer={false}>
-        <Pie data={p.rows} dataKey="value" innerRadius="64%" outerRadius="92%" paddingAngle={3} stroke="none" isAnimationActive={false}>
+        <Pie data={p.rows} dataKey="value" innerRadius="64%" outerRadius="92%" paddingAngle={3} stroke="none" isAnimationActive={false} rootTabIndex={-1}>
           {p.rows.map((r, i) => <Cell key={i} fill={r.color} />)}
         </Pie>
       </PieChart>

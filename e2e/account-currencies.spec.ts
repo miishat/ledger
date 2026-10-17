@@ -62,7 +62,7 @@ const group = async (page: Page, id: 'bank' | 'debt') => {
   return card
 }
 const addAccount = async (page: Page) => {
-  await (await group(page, 'bank')).getByRole('button', { name: 'Add', exact: true }).click()
+  await (await group(page, 'bank')).getByRole('button', { name: onPhone(page) ? 'Add Bank Account' : 'Add', exact: true }).click()
 }
 
 for (const width of [1280, 375]) {
@@ -149,7 +149,7 @@ test('compact row controls reveal on keyboard focus and remain usable', async ({
 
 test('creates USD on desktop and confirms edits only after explicit approval', async ({ page }) => {
   await seed(page, [bank('cad', 1000)], { rate: 1.35 })
-  await widget(page, 'bank').getByRole('button', { name: 'Add', exact: true }).click()
+  await widget(page, 'bank').getByRole('button', { name: onPhone(page) ? 'Add Bank Account' : 'Add', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Add Account' })
   await expect(dialog.getByRole('button', { name: 'Currency' })).toHaveText('CAD')
   await dialog.getByLabel('Name / Description').fill('New Dollar Account')

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Locator } from '@playwright/test'
 import { seedApp } from './seed'
 
 for (const viewport of [{ width: 1280, height: 900 }, { width: 375, height: 812 }]) {
@@ -6,16 +6,27 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 375, height: 812 
     test.use({ viewport })
     test.beforeEach(async ({ page }) => { await seedApp(page) })
 
+    // A phone puts shared bill controls behind the Details tabs and words them differently.
+    const phone = viewport.width < 768
+    const sharedTab = (panel: Locator) => panel.getByRole('group', { name: 'Details' }).getByRole('button', { name: 'Shared Bill', exact: true })
+    const totalPaid = (panel: Locator) => panel.getByLabel(phone ? 'Total Paid' : 'Total I paid')
+
     test('percentage and manual shares persist and display after saving', async ({ page }) => {
       await page.goto('/#/budget')
       await page.getByRole('button', { name: 'Add Transaction', exact: true }).first().click()
       const panel = page.getByTestId('sheet-panel')
       await panel.getByLabel('Amount', { exact: true }).fill('120')
-      await panel.getByLabel('Shared bill', { exact: true }).check()
-      await expect(panel.getByLabel('Total I paid')).toHaveValue('120')
-      await panel.getByRole('button', { name: 'My share 50%' }).click()
+      if (phone) {
+        await sharedTab(panel).click()
+        await panel.getByRole('switch', { name: 'Paid for Others' }).check()
+      } else {
+        await panel.getByLabel('Shared bill', { exact: true }).check()
+      }
+      await expect(totalPaid(panel)).toHaveValue('120')
+      if (phone) await panel.getByRole('group', { name: 'My share' }).getByRole('button', { name: '50%' }).click()
+      else await panel.getByRole('button', { name: 'My share 50%' }).click()
       await expect(panel.getByLabel('Your share')).toHaveValue('60')
-      await panel.getByLabel('Shared with', { exact: true }).fill('Alex')
+      await panel.getByLabel(phone ? 'Shared With' : 'Shared with', { exact: true }).fill('Alex')
       await panel.getByLabel('Description (Optional)', { exact: true }).fill('Split regression dinner')
       await panel.getByRole('button', { name: 'Add Transaction', exact: true }).click()
       await expect(panel).not.toBeVisible()
@@ -38,7 +49,8 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 375, height: 812 
       await reloaded.getByRole('button', { name: 'Edit Split regression dinner', exact: true }).filter({ visible: true }).click()
       const editor = reloaded.getByTestId('sheet-panel')
       await expect(editor.getByLabel('Your share')).toHaveValue('60')
-      await expect(editor.getByLabel('Total I paid')).toHaveValue('120')
+      if (phone) await sharedTab(editor).click()
+      await expect(totalPaid(editor)).toHaveValue('120')
       await editor.getByLabel('Your share').fill('45')
       await editor.getByRole('button', { name: 'Save Changes' }).click()
       const editButton = reloaded.getByRole('button', { name: 'Edit Split regression dinner', exact: true }).filter({ visible: true })
@@ -49,7 +61,8 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 375, height: 812 
       }
       await editButton.click()
       await expect(editor.getByLabel('Your share')).toHaveValue('45')
-      await expect(editor.getByLabel('Total I paid')).toHaveValue('120')
+      if (phone) await sharedTab(editor).click()
+      await expect(totalPaid(editor)).toHaveValue('120')
       await fresh.close()
     })
   })
