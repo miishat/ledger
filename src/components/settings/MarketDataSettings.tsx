@@ -8,11 +8,11 @@ export const MarketDataStatusBadge: React.FC = () => {
   const apiKey = useMarketDataStore((s) => s.apiKey)
   return apiKey ? (
     <span className="text-meta px-2 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap">
-      Key active …{apiKey.slice(-3)}
+      Key Active …{apiKey.slice(-3)}
     </span>
   ) : (
     <span className="text-meta px-2 py-0.5 rounded-full bg-bg-primary/50 text-text-secondary whitespace-nowrap">
-      No key
+      No Key
     </span>
   )
 }
@@ -44,7 +44,7 @@ export const MarketDataSection: React.FC = () => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={apiKey ? 'Replace API key…' : 'Paste API key…'}
+          placeholder={apiKey ? 'Replace API Key…' : 'Paste API Key…'}
           className="flex-1 min-w-0 px-3 py-2 rounded-md border border-border bg-bg-primary/50 text-text-primary text-sm placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         />
         <button
@@ -66,7 +66,7 @@ export const MarketDataSection: React.FC = () => {
       <details className="text-[13px] group">
         <summary className="flex items-center gap-1 cursor-pointer text-accent hover:underline list-none [&::-webkit-details-marker]:hidden select-none">
           <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" aria-hidden="true" />
-          How to get a free key
+          How to Get a Free Key
         </summary>
         <ol className="mt-2 text-text-secondary list-decimal list-inside flex flex-col gap-1.5">
           <li>

@@ -24,7 +24,7 @@ describe('SettingsSheet', () => {
   it('renders the section cards and the about footer', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     expect(screen.getByText('Appearance')).toBeInTheDocument()
-    expect(screen.getByText('Market data')).toBeInTheDocument()
+    expect(screen.getByText('Market Data')).toBeInTheDocument()
     expect(screen.getByText('Backup')).toBeInTheDocument()
     expect(screen.getByText('Sync')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /What's New/ })).toBeInTheDocument()
@@ -66,21 +66,37 @@ describe('SettingsSheet phone layout', () => {
     expect(row).toContainElement(action)
   })
 
-  it('every section card shares one padding class and has a heading', () => {
+  it('every section is a fold with a title, and only Appearance starts open', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
-    const sections = Array.from(document.querySelectorAll('section'))
-    expect(sections).toHaveLength(6)
-    for (const s of sections) {
-      expect(s.className).toBe(sections[0].className)
-      expect(s.className).toMatch(/\bp-3\b/)
-      expect(s.querySelector('h3')).not.toBeNull()
-    }
+    const folds = Array.from(document.querySelectorAll<HTMLDetailsElement>('details.themed-card'))
+    expect(folds.map((d) => d.querySelector('summary > span:nth-child(2)')!.textContent)).toEqual([
+      'Appearance', 'Market Data', 'Transactions', 'Backup', 'Sync', 'Reminders',
+    ])
+    expect(folds.map((d) => d.open)).toEqual([true, false, false, false, false, false])
+  })
+
+  it('shows each section state on its row: theme name, key status, refunds', () => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: true })
+    render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
+    expect(screen.getAllByText('Luxury Dark').length).toBeGreaterThan(0)
+    expect(screen.getByText('No Key')).toBeInTheDocument()
+    expect(screen.getByText('Refunds Enabled')).toBeInTheDocument()
+  })
+
+  it('turns Refunds & Payments on and off with a switch', () => {
+    useBudgetStore.setState({ refundsAndPaymentsEnabled: true })
+    render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
+    const toggle = screen.getByRole('switch', { name: 'Refunds & Payments' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(toggle)
+    expect(useBudgetStore.getState().refundsAndPaymentsEnabled).toBe(false)
+    expect(screen.getByText('Refunds Disabled')).toBeInTheDocument()
   })
 
   it('the full-width actions share the Reminders action height, radius and border', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
     const reference = screen.getByRole('button', { name: 'Enable reminders' }).className
-    for (const name of ['Load demo data', 'Save client ID']) {
+    for (const name of ['Load demo data', 'Save Client ID']) {
       const cls = screen.getByRole('button', { name }).className
       for (const token of ['min-h-[44px]', 'rounded-md', 'border', 'border-border', 'px-3']) {
         expect(cls.split(/\s+/)).toContain(token)
@@ -89,9 +105,9 @@ describe('SettingsSheet phone layout', () => {
     }
   })
 
-  it('Save client ID reads as disabled without dropping below readable contrast', () => {
+  it('Save Client ID reads as disabled without dropping below readable contrast', () => {
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
-    const save = screen.getByRole('button', { name: 'Save client ID' })
+    const save = screen.getByRole('button', { name: 'Save Client ID' })
     expect(save).toBeDisabled()
     expect(save.className).toMatch(/disabled:border-dashed/)
     expect(save.className).toMatch(/disabled:opacity-70/)
@@ -104,14 +120,20 @@ describe('SettingsSheet phone layout', () => {
     expect(screen.getByRole('dialog', { name: 'Settings' })).toBeInTheDocument()
   })
 
-  it('every section leads with a one-line description on phones, none on desktop', () => {
+  it('has no section descriptions on a phone: the explanations sit behind info buttons', () => {
     const { unmount } = render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
-    expect(screen.getByText('Pick a theme for the whole app.')).toBeInTheDocument()
-    expect(screen.getByText('Save, restore or try sample data.')).toBeInTheDocument()
+    expect(screen.queryByText('Pick a theme for the whole app.')).toBeNull()
+    expect(screen.queryByText('Save, restore or try sample data.')).toBeNull()
+    expect(screen.queryByText(/Sync through your own Google Drive/)).toBeNull()
+    expect(screen.getByLabelText('About Google Client ID')).toBeInTheDocument()
+    expect(screen.getByLabelText('About Refunds & Payments')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('About Google Client ID'))
+    expect(screen.getByText(/Sync through your own Google Drive/)).toBeInTheDocument()
     unmount()
     setMatchMedia(true)
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
-    expect(screen.queryByText('Pick a theme for the whole app.')).toBeNull()
+    expect(screen.getByText(/Sync through your own Google Drive/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('About Google Client ID')).toBeNull()
     expect(screen.getByRole('button', { name: 'Enable reminders' }).className).toMatch(/text-accent/)
   })
 })

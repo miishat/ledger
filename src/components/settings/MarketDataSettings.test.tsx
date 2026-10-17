@@ -15,7 +15,7 @@ describe('MarketDataSection', () => {
 
   it('collapses setup instructions behind a disclosure', () => {
     render(<MarketDataSection />)
-    const details = screen.getByText('How to get a free key').closest('details')!
+    const details = screen.getByText('How to Get a Free Key').closest('details')!
     expect(details.open).toBe(false)
     expect(screen.getByRole('link', { name: 'Get a free API key' })).toHaveAttribute(
       'href',
@@ -27,14 +27,14 @@ describe('MarketDataSection', () => {
 describe('MarketDataStatusBadge', () => {
   beforeEach(() => useMarketDataStore.getState().clearApiKey())
 
-  it('shows No key when unset', () => {
+  it('shows No Key when unset', () => {
     render(<MarketDataStatusBadge />)
-    expect(screen.getByText('No key')).toBeInTheDocument()
+    expect(screen.getByText('No Key')).toBeInTheDocument()
   })
 
   it('shows key tail when set', () => {
     useMarketDataStore.getState().setApiKey('demo-key-x3P')
     render(<MarketDataStatusBadge />)
-    expect(screen.getByText(/Key active …x3P/)).toBeInTheDocument()
+    expect(screen.getByText(/Key Active …x3P/)).toBeInTheDocument()
   })
 })

@@ -40,7 +40,7 @@ interface SheetProps {
 }
 
 const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  'button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
 
 // The hidden phone Close button (sr-only until focused). It is part of the Tab order but is
 // never the element focused on open, or it would flash into view for every sheet.

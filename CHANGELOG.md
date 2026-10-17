@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, Settings is a list of folds (Appearance, Market Data, Transactions, Backup, Sync, Reminders) with each section's state on the right: the theme name, No Key or Key Active, and Refunds Enabled or Disabled. Appearance opens first. Refunds & Payments is a switch with its explanation behind an info button, and the Google Drive setup text sits behind an info button after Google Client ID. Market Data, API key and client ID labels use Title Case on phone and desktop.
 - On phones, the Add Transaction form puts Amount beside Date, then Category and Description, with a Details switch (Shared Bill, Split, Tags & Note) that opens one card at a time. Add Transaction stays pinned at the bottom, so the title row is gone. Shared bills use Paid for Others and Total Paid, with a tinted Owed to You line, and the Split card shows what is left to allocate.
 - About this tool is now called Tool Overview. On phones, the first visit shows a dismissible "New Here? Read the Tool Overview" banner above the tool with an X to dismiss it, and after that a Tool Overview link sits below the results.
 - On phones, the Tool Overview popup shows the how-to first, then an Inputs list where each input is a row that opens to its description, instead of one long block of name and description lines.

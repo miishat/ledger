@@ -9,6 +9,7 @@ import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSu
 import { Checkbox } from '../ui/Checkbox'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { PHONE_SECONDARY_ACTION } from './actionStyles'
+import { SettingsMobile } from './SettingsMobile'
 import { useBudgetStore } from '../../store/useBudgetStore'
 
 interface SettingsSheetProps {
@@ -124,6 +125,22 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
   const isDesktop = useIsDesktop()
   const refundsAndPaymentsEnabled = useBudgetStore(state => state.refundsAndPaymentsEnabled)
   const setRefundsAndPaymentsEnabled = useBudgetStore(state => state.setRefundsAndPaymentsEnabled)
+  const footer = (
+        <div className={isDesktop ? 'flex items-center justify-between pt-2 border-t border-border' : 'flex flex-wrap items-center justify-between gap-x-4 pt-2 border-t border-border'}>
+      <button
+        onClick={() => { onClose(); onOpenWhatsNew() }}
+        className="text-[12px] text-text-secondary hover:text-accent transition-colors"
+      >
+        v{__APP_VERSION__} · What's New
+      </button>
+      <button
+        onClick={() => { onClose(); onOpenDisclaimer() }}
+        className="text-[12px] text-text-secondary/80 hover:text-accent transition-colors"
+      >
+        Not financial advice
+      </button>
+    </div>
+  )
   return (
   <Sheet
     open={open}
@@ -146,11 +163,12 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       </button>
     </div>
 
+    {isDesktop ? (<>
     <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance" description="Pick a theme for the whole app.">
       <ThemeSwatchGrid />
     </SectionCard>
 
-    <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market data" badge={<MarketDataStatusBadge />} description="Your key is stored only on this device.">
+    <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market Data" badge={<MarketDataStatusBadge />} description="Your key is stored only on this device.">
       <MarketDataSection />
     </SectionCard>
 
@@ -174,22 +192,19 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
       <ReminderSettings />
     </SectionCard>
 
-    {/* Phone: the two links wrap onto separate lines instead of colliding at 320px, and
-        both keep the same text size so their baselines match when they share a line. */}
-    <div className={isDesktop ? 'flex items-center justify-between pt-2 border-t border-border' : 'flex flex-wrap items-center justify-between gap-x-4 pt-2 border-t border-border'}>
-      <button
-        onClick={() => { onClose(); onOpenWhatsNew() }}
-        className="text-[12px] text-text-secondary hover:text-accent transition-colors"
-      >
-        v{__APP_VERSION__} · What's New
-      </button>
-      <button
-        onClick={() => { onClose(); onOpenDisclaimer() }}
-        className="text-[12px] text-text-secondary/80 hover:text-accent transition-colors"
-      >
-        Not financial advice
-      </button>
-    </div>
+    {footer}
+    </>) : (
+      <SettingsMobile
+        marketBadge={<MarketDataStatusBadge />}
+        market={<MarketDataSection />}
+        refundsOn={refundsAndPaymentsEnabled}
+        onRefundsChange={setRefundsAndPaymentsEnabled}
+        backup={<BackupControls />}
+        sync={<DriveSyncControls />}
+        reminders={<ReminderSettings />}
+        footer={footer}
+      />
+    )}
   </Sheet>
   )
 }

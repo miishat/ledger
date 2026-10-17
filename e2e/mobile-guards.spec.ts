@@ -59,6 +59,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
     await page.keyboard.press('Escape')
     await page.getByTestId('mobile-topbar').getByRole('button', { name: 'Settings', exact: true }).tap()
     const toggle = panel.getByLabel('Refunds & Payments', { exact: true })
+    await panel.getByText('Transactions', { exact: true }).click()
     await toggle.focus()
     await toggle.press('Space')
     await expect(toggle).not.toBeChecked()
@@ -72,6 +73,7 @@ test('Refunds & Payments phone entry, cards, import review and Settings stay usa
     await expect(panel).toContainText('This saved payment still counts.')
     await page.keyboard.press('Escape')
     await page.getByTestId('mobile-topbar').getByRole('button', { name: 'Settings', exact: true }).click()
+    await panel.getByText('Transactions', { exact: true }).click()
     await toggle.check()
     await page.keyboard.press('Escape')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -406,7 +408,7 @@ test('settings is reachable and inside the viewport', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible()
 })
 
-// The phone Settings sheet is organized: every section has one anatomy, every action is
+// The phone Settings sheet is organized: every section is a fold, every action is
 // a 44px button, and the Reminders row centres its text and action on each other.
 test('the Settings sheet is organized: 44px actions, centred Reminders row, nothing clipped', async ({ page }) => {
   await page.addInitScript(() => {
@@ -422,10 +424,12 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
   const panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
+  // Every section is a fold; open them all so each action can be measured.
+  await panel.evaluate((el) => el.querySelectorAll('details').forEach((d) => { d.open = true }))
   const row = panel.getByTestId('reminders-row')
   await expect(row).toBeVisible()
 
-  const actions = ['Save client ID', 'Load demo data', 'Enable reminders', 'Export data', 'Import backup', 'Save']
+  const actions = ['Save Client ID', 'Load demo data', 'Enable reminders', 'Export data', 'Import backup', 'Save']
   for (const name of actions) {
     // Import backup is a label wrapping a file input, not a button, and wraps to two lines
     // at 320px, so measure the label's own box like the others.
@@ -449,7 +453,7 @@ test('the Settings sheet is organized: 44px actions, centred Reminders row, noth
 
   const overflow = await panel.evaluate((el) => {
     const p = el.getBoundingClientRect()
-    const clipped = [...el.querySelectorAll('section, section button, section input, section p, footer, h3')]
+    const clipped = [...el.querySelectorAll('details, details button, details input, details p, footer, summary')]
       .filter((n) => {
         const r = n.getBoundingClientRect()
         return r.width > 0 && (r.left < p.left - 0.5 || r.right > p.right + 0.5)

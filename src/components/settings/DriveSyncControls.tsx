@@ -8,6 +8,7 @@ import { isAutoSyncEnabled, setAutoSyncEnabled } from '../../utils/autoSync'
 import { Checkbox } from '../ui/Checkbox'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
 import { PHONE_SECONDARY_ACTION } from './actionStyles'
+import { InfoButton } from '../ui/InfoButton'
 
 type Pending =
   | {
@@ -161,13 +162,26 @@ export const DriveSyncControls: React.FC = () => {
   if (!clientId) {
     return (
       <div className="flex flex-col gap-2 w-full">
-        <p className="text-[12px] text-text-secondary">
-          Sync through your own Google Drive. Create an OAuth client ID in Google Cloud Console, add this
-          site to its authorised JavaScript origins, then paste the ID here.
-        </p>
-        <label className="flex flex-col gap-1 text-[12px] text-text-secondary">
-          Google client ID
+        {isDesktop && (
+          <p className="text-[12px] text-text-secondary">
+            Sync through your own Google Drive. Create an OAuth client ID in Google Cloud Console, add this
+            site to its authorised JavaScript origins, then paste the ID here.
+          </p>
+        )}
+        <div className="flex flex-col gap-1 text-[12px] text-text-secondary">
+          <div className="flex items-center gap-1">
+            <label htmlFor="drive-client-id">Google Client ID</label>
+            {!isDesktop && (
+              <InfoButton label="About Google Client ID" inline>
+                <p>
+                  Sync through your own Google Drive. Create an OAuth client ID in Google Cloud Console, add this
+                  site to its authorised JavaScript origins, then paste the ID here.
+                </p>
+              </InfoButton>
+            )}
+          </div>
           <input
+            id="drive-client-id"
             value={clientIdDraft}
             onChange={(e) => setClientIdDraft(e.target.value)}
             placeholder="xxxxx.apps.googleusercontent.com"
@@ -175,7 +189,7 @@ export const DriveSyncControls: React.FC = () => {
               ? 'px-2 py-1.5 rounded-md border border-border bg-transparent text-[13px] text-text-primary'
               : 'min-h-[44px] px-2 py-2 rounded-md border border-border bg-transparent text-[13px] text-text-primary'}
           />
-        </label>
+        </div>
         <button
           onClick={() => setClientId(clientIdDraft)}
           disabled={!clientIdDraft.trim()}
@@ -183,7 +197,7 @@ export const DriveSyncControls: React.FC = () => {
             ? 'px-3 py-2 rounded-md border border-border text-[13px] text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50'
             : `${PHONE_SECONDARY_ACTION} disabled:opacity-70 disabled:border-dashed disabled:cursor-not-allowed`}
         >
-          Save client ID
+          Save Client ID
         </button>
       </div>
     )
