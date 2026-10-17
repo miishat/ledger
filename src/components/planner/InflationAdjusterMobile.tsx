@@ -45,7 +45,7 @@ export const InflationAdjusterMobile: React.FC<{ s: InflationAdjusterState }> = 
         <div className="h-3 rounded-full bg-bg-primary/60 overflow-hidden" role="progressbar" aria-valuenow={Math.round(left)} aria-valuemin={0} aria-valuemax={100} aria-label="Purchasing power remaining">
           <div className="h-full rounded-full bg-accent" style={{ width: `${left}%` }} />
         </div>
-        <p className="text-[12px] text-text-secondary">A dollar buys about {(left / 100).toFixed(2)} of what it does today.</p>
+        <p className="text-[12px] text-text-secondary">A dollar buys about {(left / 100).toFixed(2)} of what it does today</p>
       </div>
 
       <Field id="inflation-amount" label={toFuture ? 'Amount Today' : 'Future Amount'} prefix="$" value={inputs.amount} onChange={set('amount')} />

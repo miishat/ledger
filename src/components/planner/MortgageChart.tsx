@@ -21,13 +21,13 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
   const secondSeriesLegend =
     frequency === 'monthly' && extras.length > 0
       ? [
-          { name: 'Original schedule', color: 'var(--text-secondary)' },
-          { name: 'With extra payments', color: 'var(--accent)' },
+          { name: 'Original Schedule', color: 'var(--text-secondary)' },
+          { name: 'With Extra Payments', color: 'var(--accent)' },
         ]
       : frequency === 'biweekly'
         ? [
-            { name: 'Monthly schedule', color: 'var(--text-secondary)' },
-            { name: 'Biweekly accelerated', color: 'var(--accent)' },
+            { name: 'Monthly Schedule', color: 'var(--text-secondary)' },
+            { name: 'Biweekly Accelerated', color: 'var(--accent)' },
           ]
         : []
 

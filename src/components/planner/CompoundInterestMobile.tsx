@@ -4,7 +4,7 @@ import { NumberInput } from '../ui/NumberInput'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 import { chartTooltipStyles } from '../../utils/chartTheme'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { COMPOUND_TOOL_ID, type CompoundInterestState } from './useCompoundInterest'
 
 const YEAR_PRESETS = [10, 20, 30, 40]
@@ -69,7 +69,7 @@ export const CompoundInterestMobile: React.FC<{ s: CompoundInterestState }> = ({
             <AreaChart data={chartData} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-              <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={60} />
+              <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={60} tickFormatter={(v: number) => formatMoneyCompact(v)} />
               <Tooltip formatter={(value, name) => [formatMoney(Number(value)), String(name)]} {...chartTooltipStyles} />
               <Area type="monotone" dataKey="contributed" name="Contributed" stackId="1" stroke="var(--text-secondary)" fill="var(--text-secondary)" fillOpacity={0.25} />
               <Area type="monotone" dataKey="growth" name="Growth" stackId="1" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.35} />

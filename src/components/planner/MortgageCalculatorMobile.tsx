@@ -43,13 +43,13 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
 
   const affordability = mode === 'affordability'
   const hero = affordability
-    ? { label: 'Max home price', value: formatMoney(m.affordablePrice) }
-    : { label: frequency === 'biweekly' ? 'Biweekly payment' : 'Monthly payment', value: formatMoney(frequency === 'biweekly' ? m.payment / 2 : m.payment) }
+    ? { label: 'Max Home Price', value: formatMoney(m.affordablePrice) }
+    : { label: frequency === 'biweekly' ? 'Biweekly Payment' : 'Monthly Payment', value: formatMoney(frequency === 'biweekly' ? m.payment / 2 : m.payment) }
   const stats = affordability
-    ? [{ label: 'Max mortgage', value: formatMoney(m.affordablePrincipal) }, { label: 'Housing budget / month', value: formatMoney(Math.max(0, m.housingBudget)) }]
+    ? [{ label: 'Max Mortgage', value: formatMoney(m.affordablePrincipal) }, { label: 'Housing Budget / Month', value: formatMoney(Math.max(0, m.housingBudget)) }]
     : frequency === 'biweekly'
-      ? [{ label: 'New payoff time', value: `${Math.floor(m.biweeklyMonths / 12)}y ${m.biweeklyMonths % 12}m` }, { label: 'Interest saved vs monthly', value: formatMoney(m.biweeklyInterestSaved) }]
-      : [{ label: 'Total interest', value: formatMoney(m.totalInterest) }, { label: 'Down payment', value: formatMoney(m.downPayment) }]
+      ? [{ label: 'New Payoff Time', value: `${Math.floor(m.biweeklyMonths / 12)}y ${m.biweeklyMonths % 12}m` }, { label: 'Interest Saved vs Monthly', value: formatMoney(m.biweeklyInterestSaved) }]
+      : [{ label: 'Total Interest', value: formatMoney(m.totalInterest) }, { label: 'Down Payment', value: formatMoney(m.downPayment) }]
   const fields: FieldSpec[] = affordability
     ? [
         { label: 'Gross Annual Income', prefix: '$', value: inputs.income, onChange: set('income') },
@@ -71,7 +71,7 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
     <div data-testid="mortgage-mobile" className="flex flex-col gap-4">
       <Seg name="Mode" value={mode} onChange={(v) => m.setInput('mode', v)} options={[{ value: 'payment', label: 'Payment' }, { value: 'affordability', label: 'Affordability' }]} />
       {mode === 'payment' && (
-        <Seg name="Frequency" value={frequency} onChange={(v) => m.setInput('frequency', v)} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'biweekly', label: 'Biweekly (Accelerated)' }]} />
+        <Seg name="Frequency" value={frequency} onChange={(v) => m.setInput('frequency', v)} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'biweekly', label: 'Biweekly Accelerated' }]} />
       )}
 
       <div className="rounded-2xl border border-accent/50 bg-accent/10 p-4" role="status" aria-live="polite">
@@ -128,7 +128,7 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
       )}
       {showExtras && extras.length > 0 && (
         <div className="rounded-2xl border border-border bg-bg-secondary grid grid-cols-3 divide-x divide-border">
-          {[['Interest saved', formatMoney(m.interestSaved)], ['Paid off sooner', `${Math.floor(m.monthsSaved / 12)}y ${m.monthsSaved % 12}m`], ['New payoff', `${Math.floor(m.scheduleWithExtras.length / 12)}y ${m.scheduleWithExtras.length % 12}m`]].map(([l, v]) => (
+          {[['Interest Saved', formatMoney(m.interestSaved)], ['Time Saved', `${Math.floor(m.monthsSaved / 12)}y ${m.monthsSaved % 12}m`], ['New Payoff', `${Math.floor(m.scheduleWithExtras.length / 12)}y ${m.scheduleWithExtras.length % 12}m`]].map(([l, v]) => (
             <div key={l} className="p-3 min-w-0"><p className="text-[12px] text-text-secondary">{l}</p><p className="text-[15px] font-semibold tabular-nums break-words">{v}</p></div>
           ))}
         </div>

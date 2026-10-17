@@ -13,7 +13,7 @@ import { CompoundInterestMobile } from './CompoundInterestMobile'
 import { useCompoundInterest } from './useCompoundInterest'
 import { CalculatorField } from './CalculatorField'
 import { ResultCard } from './ResultCard'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
@@ -47,7 +47,7 @@ export const CompoundInterestCalculator: React.FC = () => {
           <AreaChart data={chartData} accessibilityLayer={false}>
             <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
             <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} />
+            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} />
             <Tooltip
               formatter={(value, name) => [formatMoney(Number(value)), String(name)]}
               {...chartTooltipStyles}

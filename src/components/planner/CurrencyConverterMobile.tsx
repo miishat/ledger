@@ -29,7 +29,7 @@ function sourceNote(c: C): string {
   const stamp = new Date(c.fx.data.asOf).toLocaleString(undefined, {
     year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit',
   })
-  return `${c.fx.data.stale ? 'stale, ' : ''}as of ${stamp}`
+  return `${c.fx.data.stale ? 'Stale' : 'Live'}, as of ${stamp}`
 }
 
 // Rate source and manual override sit behind one disclosure so the main screen stays short.

@@ -56,9 +56,19 @@ export const RentVsBuyMobile: React.FC<{ s: RentVsBuyState }> = ({ s }) => {
   return (
     <div data-testid="rent-vs-buy-mobile" className="flex flex-col gap-4">
       <div className="rounded-2xl border border-accent/50 bg-accent/10 p-4 flex flex-col gap-3" role="status" aria-live="polite">
-        <div>
-          <p className="text-[13px] text-text-secondary">Break-even</p>
-          <p className="text-[26px] font-semibold text-accent leading-tight">{verdict}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[13px] text-text-secondary">Break-even</p>
+            <p className="text-[26px] font-semibold text-accent leading-tight">{verdict}</p>
+          </div>
+          <div className="-mt-2 -mr-2">
+            <InfoButton label="How This Is Calculated">
+              <p>Compares only the money you never get back.</p>
+              <p><strong className="text-text-primary">Renting:</strong> the rent you pay.</p>
+              <p><strong className="text-text-primary">Buying:</strong> mortgage interest, property tax, maintenance, and the return your down payment would have earned if invested.</p>
+              <p>Principal you repay is left out because it builds equity.</p>
+            </InfoButton>
+          </div>
         </div>
         <CostBar name={`Renting by Year ${lastYear}`} value={rentCost} max={max} lower={rentCost <= buyCost} />
         <CostBar name={`Buying by Year ${lastYear}`} value={buyCost} max={max} lower={buyCost < rentCost} />
@@ -72,15 +82,6 @@ export const RentVsBuyMobile: React.FC<{ s: RentVsBuyState }> = ({ s }) => {
       </div>
 
       <div className="themed-card rounded-lg p-4 h-[300px] flex flex-col">
-        <div className="flex items-center justify-between -mt-2 -mr-2">
-          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">Cumulative Cost</h3>
-          <InfoButton label="How This Is Calculated">
-            <p>Compares only the money you never get back.</p>
-            <p><strong className="text-text-primary">Renting:</strong> the rent you pay.</p>
-            <p><strong className="text-text-primary">Buying:</strong> mortgage interest, property tax, maintenance, and the return your down payment would have earned if invested.</p>
-            <p>Principal you repay is left out because it builds equity.</p>
-          </InfoButton>
-        </div>
         <ChartFigure
           label={`Cumulative renting versus buying cost by year ${lastYear}: ${formatMoney(rentCost)} renting, ${formatMoney(buyCost)} buying`}
           className="w-full flex-1 min-h-0"

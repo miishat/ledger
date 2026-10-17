@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Settings2 } from 'lucide-react'
+import { Plus, Settings2, Trash2 } from 'lucide-react'
 import { useAccountsStore } from '../../../store/useAccountsStore'
 import { probabilityOfSuccess, runMonteCarlo } from '../../../utils/finance/monteCarlo'
 import { monthsToReach } from '../../../utils/finance/fire'
@@ -9,7 +9,6 @@ import { Sheet } from '../../ui/Sheet'
 import { InfoButton } from '../../ui/InfoButton'
 import { formatMoney } from '../format'
 import { ForecastChart } from './ForecastChart'
-import { ListEditor } from './ListEditor'
 import { MonteCarloSection } from './MonteCarloSection'
 import { buildForecastModel, formatMonthsOut, type ForecasterData } from './forecastModel'
 import type { Goal, LifeEvent } from './useForecasterSettings'
@@ -121,15 +120,15 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
   const forecastTab = (
     <>
       <Hero label={`Projected Net Worth in ${settings.years} Years${settings.showReal ? " (Today's Dollars)" : ''}`} value={formatMoney(finalValue)} />
-      <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
-        {YEAR_PRESETS.map((y) => (
-          <button key={y} aria-pressed={settings.years === y} onClick={() => setSetting('years', y)} className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${settings.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
-        ))}
-      </div>
       {startFields}
       <div className="grid grid-cols-2 gap-3">
         <Field id="fc-return" label="Return" suffix="%" value={settings.annualReturnPct} onChange={(x) => setSetting('annualReturnPct', x)} />
         <Field id="fc-years" label="Years" suffix="yrs" min={1} max={50} value={settings.years} onChange={(x) => setSetting('years', x)} />
+      </div>
+      <div role="group" aria-label="Years presets" className="flex bg-bg-secondary border border-border rounded-xl p-1">
+        {YEAR_PRESETS.map((y) => (
+          <button key={y} aria-pressed={settings.years === y} onClick={() => setSetting('years', y)} className={`flex-1 min-h-[44px] rounded-lg text-[13px] font-medium ${settings.years === y ? 'bg-bg-primary text-accent' : 'text-text-secondary'}`}>{y} yrs</button>
+        ))}
       </div>
       <div className="grid grid-cols-2 gap-2">
         <button aria-pressed={!!settings.showReal} className={chip(!!settings.showReal)} onClick={() => setSetting('showReal', !settings.showReal)}>{settings.showReal ? "Real (Today's $)" : 'Nominal'}</button>
@@ -186,25 +185,70 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
     </>
   )
 
+  const upGoal = (id: string, patch: Partial<Goal>) => saveGoals(goals.map((g) => (g.id === id ? { ...g, ...patch } : g)))
+  const upEvent = (id: string, patch: Partial<LifeEvent>) => saveEvents(events.map((e) => (e.id === id ? { ...e, ...patch } : e)))
+  const addBtn = (onClick: () => void) => (
+    <button type="button" onClick={onClick} className="min-h-11 px-3 rounded-xl border border-border text-[13px] text-accent flex items-center gap-1"><Plus className="w-4 h-4" aria-hidden="true" />Add</button>
+  )
+  const trash = (name: string, onClick: () => void) => (
+    <button type="button" aria-label={name} onClick={onClick} className="h-12 w-12 shrink-0 flex items-center justify-center text-text-secondary"><Trash2 className="w-4 h-4" /></button>
+  )
+  const nameField = (id: string, label: string, value: string, onChange: (v: string) => void) => (
+    <div className="flex-1 min-w-0 flex flex-col gap-1">
+      <label htmlFor={id} className={lab}>{label}</label>
+      <div className={box}>
+        <input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full min-w-0 bg-transparent text-text-primary text-[16px] font-medium outline-none" />
+      </div>
+    </div>
+  )
+  const readout = (label: string, value: string) => (
+    <div className="flex flex-col gap-1 min-w-0"><span className={lab}>{label}</span><span className="min-h-12 flex items-center text-[16px] font-medium text-text-primary">{value}</span></div>
+  )
+
   const planTab = (
     <>
       <Hero label="Goals and Life Events" value={`${goals.length} goals, ${events.length} events`} />
-      <ListEditor<Goal>
-        title="Goals (Net-Worth Targets)"
-        items={goals}
-        columns={[{ key: 'label', label: 'Goal', type: 'text' }, { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 }]}
-        makeNew={() => ({ id: `g${Date.now()}`, label: 'New goal', amount: 100000 })}
-        onChange={saveGoals}
-        renderExtra={(g) => (<><span className={lab}>Projected</span><span className="text-[15px] text-text-primary py-2">{formatMonthsOut(monthsToReach(points, g.amount))}</span></>)}
-      />
-      <ListEditor<LifeEvent>
-        title="Life Events (Negative = Cost, Positive = Windfall)"
-        items={events}
-        columns={[{ key: 'label', label: 'Event', type: 'text' }, { key: 'yearsFromNow', label: 'Years From Now', type: 'number', step: 0.5 }, { key: 'amount', label: 'Amount ($)', type: 'number', step: 1000 }]}
-        makeNew={() => ({ id: `e${Date.now()}`, label: 'House down payment', yearsFromNow: 3, amount: -100000 })}
-        onChange={saveEvents}
-        renderExtra={(e) => (<><span className={lab}>Lands</span><span className="text-[15px] text-text-primary py-2">{formatMonthsOut(Math.max(1, Math.round(e.yearsFromNow * 12)))}</span></>)}
-      />
+      <div className="rounded-2xl border border-border bg-bg-secondary p-3 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex-1"><p className="text-[14px] font-medium">Goals{goals.length > 0 && <span className="text-text-secondary font-normal"> ({goals.length})</span>}</p>
+            <p className="text-[12px] text-text-secondary">Net-Worth Targets</p></div>
+          {addBtn(() => saveGoals([...goals, { id: crypto.randomUUID(), label: 'New Goal', amount: 100000 }]))}
+        </div>
+        {goals.length === 0 && <p className="text-[13px] text-text-secondary">Add a net-worth target to see when you reach it.</p>}
+        {goals.map((g, i) => (
+          <div key={g.id} className="rounded-xl border border-border p-3 flex flex-col gap-3">
+            <div className="flex items-end gap-2">
+              {nameField(`goal-name-${i}`, 'Goal', g.label, (v) => upGoal(g.id, { label: v }))}
+              {trash('Remove goal', () => saveGoals(goals.filter((x) => x.id !== g.id)))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field id={`goal-amount-${i}`} label="Amount" prefix="$" value={g.amount} onChange={(v) => upGoal(g.id, { amount: v })} />
+              {readout('Projected', formatMonthsOut(monthsToReach(points, g.amount)))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-bg-secondary p-3 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex-1"><p className="text-[14px] font-medium">Life Events{events.length > 0 && <span className="text-text-secondary font-normal"> ({events.length})</span>}</p>
+            <p className="text-[12px] text-text-secondary">Negative = Cost, Positive = Windfall</p></div>
+          {addBtn(() => saveEvents([...events, { id: crypto.randomUUID(), label: 'House Down Payment', yearsFromNow: 3, amount: -100000 }]))}
+        </div>
+        {events.length === 0 && <p className="text-[13px] text-text-secondary">Add a cost or windfall to see how it changes the forecast.</p>}
+        {events.map((e, i) => (
+          <div key={e.id} className="rounded-xl border border-border p-3 flex flex-col gap-3">
+            <div className="flex items-end gap-2">
+              {nameField(`event-name-${i}`, 'Event', e.label, (v) => upEvent(e.id, { label: v }))}
+              {trash('Remove event', () => saveEvents(events.filter((x) => x.id !== e.id)))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field id={`event-years-${i}`} label="Years From Now" suffix="yrs" value={e.yearsFromNow} onChange={(v) => upEvent(e.id, { yearsFromNow: v })} />
+              <Field id={`event-amount-${i}`} label="Amount" prefix="$" min={-1_000_000_000} value={e.amount} onChange={(v) => upEvent(e.id, { amount: v })} />
+            </div>
+            {readout('Lands', formatMonthsOut(Math.max(1, Math.round(e.yearsFromNow * 12))))}
+          </div>
+        ))}
+      </div>
     </>
   )
 

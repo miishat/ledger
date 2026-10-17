@@ -28,7 +28,7 @@ it('leads with the answer in sentence case and a rate line', () => {
 it('shows the rate time on one line without seconds', () => {
   render(<CurrencyConverterMobile c={make()} />)
   const toggle = screen.getByRole('button', { name: /Rate Details/ })
-  expect(toggle).toHaveTextContent(/^Rate Details \(as of .*6:42.*\)$/)
+  expect(toggle).toHaveTextContent(/^Rate Details \(Live, as of .*6:42.*\)$/)
   expect(toggle.textContent).not.toMatch(/6:42:41/)
 })
 
