@@ -222,7 +222,7 @@ export const SalaryTaxMobile: React.FC<{ s: SalaryTaxState }> = ({ s }) => {
       <TaxYearNotice />
       <details className="themed-card rounded-2xl">
         <summary className="list-none cursor-pointer min-h-14 px-4 py-2 flex items-center justify-between gap-3">
-          <span><span className="block text-[13px] text-text-secondary">Income And Province</span><span className="block text-[17px] font-semibold">{formatMoney(income)} · {PROVINCIAL_TAX[province].name}</span></span>
+          <span><span className="block text-[13px] text-text-secondary">Income & Province</span><span className="block text-[17px] font-semibold">{formatMoney(income)} · {PROVINCIAL_TAX[province].name}</span></span>
           <span className="text-[13px] text-accent">Edit</span>
         </summary>
         <div className="px-4 pb-4 flex flex-col gap-3">
