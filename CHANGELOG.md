@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the Budgeting Insights tab leads with a Spending Alerts banner (tap it to compare each category with its usual spend) and a Coming Up card that groups the next 30 days of recurring charges by week with a total for each. All Recurring Charges (with the ignore and restore controls), Spending Calendar and Category Trends sit in folds below, each under one title. Desktop is unchanged.
 - In Cash Flow, the Savings flow, bar and label are green in every theme (a new success colour that meets AA contrast), instead of the accent colour income uses.
 - A category can be marked as a Bill. On phones, tap the ... on a category in Setup to open its options: Target Covers (One Month or One Year) and Payment (Auto, Bill or Everyday), with what each means behind an info button after Payment. A bill shows a Bill badge and is judged as Due, Paid or Over Budget instead of by pace, so a rent paid on the 1st no longer reads Over Pace. Auto treats a category as a bill when nearly all of its spending is monthly recurring payments; an annual category is a bill only when you mark it. On desktop the choice sits in the category row. The This Month's Budget pace pill on phones counts bills in full from the start of the month.
 

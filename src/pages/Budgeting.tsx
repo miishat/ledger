@@ -34,6 +34,7 @@ import { BudgetSetupMobile } from '../components/budget/BudgetSetupMobile';
 import { TriageInboxMobile } from '../components/budget/TriageInboxMobile';
 import { ImportSummaryMobile } from '../components/budget/ImportSummaryMobile';
 import { BudgetOverviewMobile } from '../components/budget/BudgetOverviewMobile';
+import { InsightsMobile } from '../components/budget/InsightsMobile';
 import { TimePeriodButton } from '../components/budget/TimePeriodButton';
 import { periodChoices, periodChoiceValue, periodFromChoice, presetLabel } from '../components/budget/periodChoices';
 
@@ -231,6 +232,9 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'insights' && (
         <TabPanel id="insights" className="flex flex-col gap-6">
+          {!isDesktop ? (
+            <InsightsMobile range={range} />
+          ) : (<>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SubscriptionsWidget />
             <AnomalyAlertsWidget range={range} />
@@ -240,6 +244,7 @@ export const Budgeting: React.FC = () => {
             <SpendingHeatmapWidget range={range} />
             <CategoryTrendsWidget range={range} />
           </div>
+          </>)}
         </TabPanel>
       )}
 
