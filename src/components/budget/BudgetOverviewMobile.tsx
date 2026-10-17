@@ -89,7 +89,7 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
           <div id={listId} role="group" aria-label="Category budgets"><Rows rows={list.visible} showPace={d.current} /></div>
           {list.truncates && (
             <button type="button" onClick={list.toggle} aria-expanded={list.expanded} aria-controls={listId}
-              className="mt-2 w-full min-h-11 rounded-xl border border-border text-[14px] font-medium text-accent">
+              className="mt-2 w-full min-h-11 rounded-xl border border-border-strong text-[14px] font-medium text-accent">
               {list.expanded ? 'Show Fewer' : `Show All ${d.rows.length} Categories`}
             </button>
           )}
@@ -145,7 +145,7 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
       </Card>
       <Card label="Net Change">
         <div className="grid grid-cols-3 gap-2">
-          <div><div className="text-[12px] text-text-secondary">In</div><div className="text-[16px] font-semibold tabular-nums text-accent">{formatMoney(d.income)}</div></div>
+          <div data-testid="overview-in"><div className="text-[12px] text-text-secondary">In</div><div className="text-[16px] font-semibold tabular-nums text-accent">{formatMoney(d.income)}</div></div>
           <div><div className="text-[12px] text-text-secondary">Net</div><div data-key-figure className={`text-[16px] font-semibold tabular-nums ${tone(d.net)}`}>{sign(d.net)}</div></div>
           <div><div className="text-[12px] text-text-secondary">Saved</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{d.rate === null ? '-' : `${Math.round(d.rate * 100)}%`}</div></div>
         </div>

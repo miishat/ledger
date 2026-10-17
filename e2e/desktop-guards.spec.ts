@@ -454,6 +454,9 @@ const CHART_ROUTES: { path: string; afterNav?: (page: Page) => Promise<void> }[]
     path: '#/budget',
     afterNav: async (page) => {
       await page.getByRole('tab', { name: 'Insights' }).click()
+      // On phone layouts Category Trends sits in a fold; desktop shows the chart directly.
+      const fold = page.getByRole('button', { name: /^Category Trends/ })
+      if (await fold.count()) await fold.click()
     },
   },
   // CompoundInterestCalculator (Area)

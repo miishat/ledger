@@ -54,7 +54,9 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
       }, creditOnly)
       await page.reload()
       await page.getByRole('tab', { name: 'Overview', exact: true }).click()
-      const incomeCard = page.getByRole('heading', { name: 'Income', exact: true }).locator('xpath=../..')
+      // The phone Overview has no Income card; the In figure of its Net Change card carries the same number.
+      const phone = viewport.width < 768 || viewport.height < 500
+      const incomeCard = phone ? page.getByTestId('overview-in') : page.getByRole('heading', { name: 'Income', exact: true }).locator('xpath=../..')
       await expect(incomeCard).toContainText(creditOnly ? '$0' : '$1,000')
       await expect(incomeCard).not.toContainText('$1,040')
       const flow = page.getByRole('img', { name: /^Cash flow this period:/ })
