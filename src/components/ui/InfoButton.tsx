@@ -25,7 +25,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({ label, children, showLab
         type="button"
         aria-label={label}
         onClick={() => setOpen(true)}
-        className={`shrink-0 inline-flex items-center justify-center gap-1.5 text-text-secondary ${showLabel ? 'min-h-11 px-3 rounded-xl border border-border text-[13px] font-medium' : inline ? 'w-11 h-11 -ml-[11px]' : 'w-11 h-11'}`}
+        className={`shrink-0 inline-flex items-center justify-center gap-1.5 text-accent ${showLabel ? 'min-h-11 px-3 rounded-xl border border-border text-[13px] font-medium' : inline ? 'w-11 h-11 -ml-[11px]' : 'w-11 h-11'}`}
       >
         <Info size={inline ? 13 : 18} aria-hidden="true" />
         {showLabel ? label : null}

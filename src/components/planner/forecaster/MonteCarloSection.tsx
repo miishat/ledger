@@ -53,13 +53,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
   return (
     <div className="flex flex-col gap-4">
       {props.phone ? (
-        <div className="rounded-lg border border-border bg-bg-primary/40 p-4">
-          <div className="flex items-center">
-            <p className="text-[12px] uppercase tracking-wide text-text-secondary">Median Outcome</p>
-            {props.medianInfo ? <span className="-my-3">{props.medianInfo}</span> : null}
-          </div>
-          <p className="text-[18px] font-semibold mt-1 leading-snug text-text-primary">{formatMoney(bands[bands.length - 1]?.p50 ?? 0)}</p>
-        </div>
+        <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
           <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
@@ -97,7 +91,15 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           </p>
         )}
       </div>
-      {props.phone && <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />}
+      {props.phone && (
+        <div className="rounded-lg border border-border bg-bg-primary/40 p-4">
+          <div className="flex items-center">
+            <p className="text-[12px] uppercase tracking-wide text-text-secondary">Median Outcome</p>
+            {props.medianInfo ? <span className="-my-3">{props.medianInfo}</span> : null}
+          </div>
+          <p className="text-[18px] font-semibold mt-1 leading-snug text-text-primary">{formatMoney(bands[bands.length - 1]?.p50 ?? 0)}</p>
+        </div>
+      )}
     </div>
   )
 }
