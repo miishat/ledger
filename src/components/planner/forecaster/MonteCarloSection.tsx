@@ -21,8 +21,10 @@ interface MonteCarloSectionProps {
   lumpSums: LumpSum[]
   target: number
   onStdDevChange: (v: number) => void
-  /** Phone layout: centred legend, no simulation note and no chance card (the phone headline shows both). */
+  /** Phone layout: Median Outcome card with an info button, the chart, then the volatility field; centred legend without amounts, and no chance card (the phone headline shows it). */
   phone?: boolean
+  /** Phone only: an info button shown beside the Median Outcome label. */
+  medianInfo?: React.ReactNode
 }
 
 export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
@@ -50,11 +52,21 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
-        <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
-        {!props.phone && <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />}
-        <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
-      </div>
+      {props.phone ? (
+        <div className="rounded-lg border border-border bg-bg-primary/40 p-4">
+          <div className="flex items-center gap-1">
+            <p className="text-[12px] uppercase tracking-wide text-text-secondary">Median Outcome</p>
+            {props.medianInfo ? <span className="-my-3">{props.medianInfo}</span> : null}
+          </div>
+          <p className="text-[18px] font-semibold mt-1 leading-snug text-text-primary">{formatMoney(bands[bands.length - 1]?.p50 ?? 0)}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-end">
+          <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />
+          <ResultCard label={`Chance of Reaching ${formatMoney(props.target)}`} value={`${Math.round(success * 100)}%`} highlight />
+          <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
+        </div>
+      )}
       <div className="themed-card rounded-lg p-4">
         <ChartFigure
           label={`Monte Carlo outcome fan over ${data.length} years, median outcome ${formatMoneyCompact(data[data.length - 1]?.p50 ?? 0)}, ${Math.round(success * 100)} percent chance of reaching ${formatMoneyCompact(props.target)}`}
@@ -76,7 +88,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           </ResponsiveContainer>
         </ChartFigure>
         <ChartLegend centered={props.phone} items={[
-          { name: 'Median Outcome', color: 'var(--accent)', value: formatMoney(bands[bands.length - 1]?.p50 ?? 0) },
+          { name: 'Median Outcome', color: 'var(--accent)', value: props.phone ? undefined : formatMoney(bands[bands.length - 1]?.p50 ?? 0) },
           { name: '10th-90th Percentile Range', color: 'var(--accent)', opacity: 0.3 },
         ]} />
         {!props.phone && (
@@ -85,6 +97,7 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           </p>
         )}
       </div>
+      {props.phone && <CalculatorField label="Volatility (Std Dev)" suffix="%" step={1} value={props.stdDevPct} onChange={props.onStdDevChange} />}
     </div>
   )
 }

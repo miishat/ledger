@@ -170,18 +170,18 @@ export const ForecasterMobile: React.FC<{ data: ForecasterData }> = ({ data }) =
       <Hero
         label={`Chance of Reaching ${formatMoney(fi)}`}
         value={`${chance}%`}
-        info={(
-          <InfoButton label="About This Simulation">
-            <p>500 seeded simulations of market returns.</p>
-            <p>The shaded band spans the 10th to 90th percentile outcomes. The line is the median.</p>
-          </InfoButton>
-        )}
       />
       <MonteCarloSection
         phone
         startBalance={startBalance} monthlySavings={resolved.monthlySavings} years={settings.years}
         meanReturnPct={settings.annualReturnPct} stdDevPct={stdDev} stepUpPct={settings.stepUpPct}
         lumpSums={lumps} target={fi} onStdDevChange={(x) => setSetting('mcStdDevPct', x)}
+        medianInfo={(
+          <InfoButton label="About This Simulation">
+            <p>500 seeded simulations of market returns.</p>
+            <p>The shaded band spans the 10th to 90th percentile outcomes. The line is the median.</p>
+          </InfoButton>
+        )}
       />
     </>
   )
