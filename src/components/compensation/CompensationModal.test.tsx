@@ -89,22 +89,13 @@ describe('CompensationModal scrim dismissal', () => {
 describe('CompensationModal mobile header (no double close)', () => {
   afterEach(() => resetMatchMedia())
 
-  it('shows no visible sheet close control on mobile and hides its own header there', () => {
+  it('shows no visible sheet close control on mobile and renders no desktop header there', () => {
     setMatchMedia(false)
     render(<CompensationModal isOpen={true} onClose={() => {}} />)
-    // The modal's own header row is desktop-only. Sheet renders via createPortal
-    // to document.body, so query there rather than RTL's pre-portal `container`.
-    const ownHeader = document.body.querySelector('.hidden.desktop\\:flex')
-    expect(ownHeader?.className).toMatch(/\bhidden\b/)
-    expect(ownHeader?.className).toMatch(/desktop:flex/)
-    // jsdom fallback: no stylesheet is loaded in tests, so Tailwind's `hidden`
-    // class has no visibility effect here and both Close buttons render in the
-    // DOM. We already assert the gating class above, so scope the "one close
-    // control" check to buttons outside the desktop-gated header, matching
-    // what a real mobile browser renders.
-    const closeButtons = screen
-      .getAllByRole('button', { name: 'Close' })
-      .filter((btn) => !ownHeader?.contains(btn))
+    // The modal's own header row is desktop-only, so a phone renders it not at all.
+    // Sheet renders via createPortal to document.body.
+    expect(document.body.querySelector('.hidden.desktop\\:flex')).toBeNull()
+    const closeButtons = screen.getAllByRole('button', { name: 'Close' })
     expect(closeButtons).toHaveLength(1)
     expect(closeButtons.every((btn) => btn.hasAttribute('data-sheet-hidden-close'))).toBe(true)
     expect(closeButtons.every((btn) => btn.className.split(' ').includes('sr-only'))).toBe(true)
