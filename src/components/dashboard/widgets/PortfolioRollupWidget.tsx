@@ -1,74 +1,32 @@
-import React, { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import React from 'react'
 import { WidgetWrapper } from '../WidgetWrapper'
-import { accountNames, usePortfolioStore } from '../../../store/usePortfolioStore'
-import { useMarketDataStore } from '../../../store/useMarketDataStore'
-import { quoteKey } from '../../../services/marketData'
-import { useFxRates } from '../../../hooks/useFxRates'
-import { portfolioTotals, quoteCurrencyForHolding, safeHoldingPrice } from '../../../utils/investments/portfolioMetrics'
+import { usePortfolioRollup } from './usePortfolioRollup'
+import { PortfolioRollupMobile } from './PortfolioRollupMobile'
+import { useIsDesktop } from '../../../hooks/useMediaQuery'
 import { formatMoney } from '../../planner/format'
+import { EmptyState } from '../../ui/EmptyState'
+import { InfoButton } from '../../ui/InfoButton'
+import { LineChart } from 'lucide-react'
 import { DataFreshness } from '../../ui/DataFreshness'
 import { timeAgo } from '../../../utils/timeAgo'
 import { isStale } from '../../../services/marketData/marketDataService'
 
 export const PortfolioRollupWidget: React.FC = () => {
-  const holdings = usePortfolioStore((s) => s.holdings)
-  const importedAt = usePortfolioStore((s) => s.importedAt)
-  const quotes = useMarketDataStore((s) => s.quotes)
-  const overrides = useMarketDataStore((s) => s.overrides)
-  // Rates are needed for both a holding's own currency and, when different,
-  // its cached quote's currency, so a genuinely convertible mismatch (a
-  // rate does exist) is not mistaken for an unconvertible one just because
-  // nobody asked for that rate.
-  const currencies = useMemo(
-    () => [
-      ...holdings.map((h) => h.currency),
-      ...holdings.map((h) => quotes[quoteKey(h.ticker, h.exchange)]?.value.currency ?? null),
-    ],
-    [holdings, quotes],
-  )
-  const fx = useFxRates(currencies)
+  const { holdings, importedAt, totals: t, newestFetchedAt, accounts } = usePortfolioRollup()
+  const isDesktop = useIsDesktop()
 
   if (holdings.length === 0) {
     return (
-      <WidgetWrapper title="Portfolio">
-        <p className="text-[13px] text-text-secondary mt-2">
-          {/* Exempt from the mobile tap-target floor: this is an inline link inside a sentence, which WCAG 2.5.8 explicitly excludes from the minimum target size, and forcing it to 44px would break the sentence's flow. */}
-          <Link to="/investments" className="text-accent hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded tap-exempt">Import a broker CSV</Link> to see your portfolio value here.
-        </p>
+      <WidgetWrapper
+        title="Portfolio"
+        titleAdornment={<InfoButton label="About Portfolio" inline><p>Import a broker CSV to see your portfolio value here.</p></InfoButton>}
+      >
+        <EmptyState icon={LineChart} message="No Holdings Available" action={{ label: 'Import a Broker CSV', to: '/investments' }} />
       </WidgetWrapper>
     )
   }
 
-  // Rollup uses override > cached > avgCost prices (the Investments page
-  // fetches live). Source and currency are handed to quoteCurrencyForHolding
-  // rather than decided here: a manual override is entered by the user in
-  // the holding's own currency, so its currency must not be read off the
-  // cached quote, and safeHoldingPrice falls back to cost basis instead of
-  // feeding a wrong-currency number into the total when a cached quote's
-  // currency does not match and no rate bridges them (the same rule
-  // PortfolioView applies to its rows).
-  const rows = holdings.map((h) => {
-    const key = quoteKey(h.ticker, h.exchange)
-    const override = overrides[key]
-    const cached = quotes[key]
-    const source: 'override' | 'cache' | undefined =
-      override !== undefined ? 'override' : cached ? 'cache' : undefined
-    const nativePrice = override ?? cached?.value.price ?? h.avgCost
-    const quoteCurrency = quoteCurrencyForHolding(h, cached?.value.currency, source)
-    return { holding: h, price: safeHoldingPrice(h, nativePrice, quoteCurrency, fx.rates) }
-  })
-  const t = portfolioTotals(rows, fx.rates)
-
-  // The rollup reads whatever quotes happen to be cached rather than calling
-  // useCurrentPrice per holding, so its freshness is the newest fetchedAt
-  // across just the quotes it actually used, not a per-holding live check.
-  const usedFetchedAts = holdings
-    .map((h) => quotes[quoteKey(h.ticker, h.exchange)]?.fetchedAt)
-    .filter((v): v is string => v !== undefined)
-  const newestFetchedAt = usedFetchedAts.length > 0
-    ? usedFetchedAts.reduce((a, b) => (a > b ? a : b))
-    : undefined
+  if (!isDesktop) return <PortfolioRollupMobile />
 
   return (
     <WidgetWrapper title="Portfolio">
@@ -77,7 +35,7 @@ export const PortfolioRollupWidget: React.FC = () => {
         <span className={`text-[13px] ${t.plCad >= 0 ? 'text-accent' : 'text-error'}`}>
           {t.plCad >= 0 ? '+' : ''}{formatMoney(t.plCad)}{t.plPct !== null ? ` (${t.plPct.toFixed(1)}%)` : ''} all-time
         </span>
-        <span className="text-[12px] text-text-secondary">{holdings.length} holdings · {accountNames(holdings).length} account{accountNames(holdings).length === 1 ? '' : 's'} · CAD</span>
+        <span className="text-[13px] text-text-secondary">{holdings.length} holdings · {accounts.length} account{accounts.length === 1 ? '' : 's'} · CAD</span>
         {t.excludedCount > 0 && (
           <span className="text-[13px] text-error">
             {t.excludedCount} holding{t.excludedCount === 1 ? '' : 's'} left out of these totals: no exchange rate for {t.excludedCount === 1 ? 'its' : 'their'} currency.

@@ -28,7 +28,7 @@ const setGoals = (goalsJson: string) => {
 describe('PlannerGoalWidget', () => {
   it('points at the Forecaster when there is no goal', () => {
     renderWidget()
-    expect(screen.getByRole('link', { name: 'Add a goal' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Add a Goal' })).toHaveAttribute(
       'href',
       '/planner/forecaster',
     )
@@ -45,7 +45,7 @@ describe('PlannerGoalWidget', () => {
   it('falls back to the empty state on malformed goal data instead of crashing', () => {
     setGoals('{not json')
     renderWidget()
-    expect(screen.getByRole('link', { name: 'Add a goal' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add a Goal' })).toBeInTheDocument()
   })
 
   it('uses converted CAD net worth to calculate goal progress', () => {

@@ -44,7 +44,7 @@ Guard: `e2e/mobile-guards.spec.ts`, "switching tabs starts the new page at the t
 
 | Page | Key figure | Element |
 | --- | --- | --- |
-| Dashboard | Net worth | `NetWorthWidget` headline |
+| Dashboard | Net worth | `DashboardMobile` net worth card headline |
 | Budgeting | This period's net change | `MonthlySummaryWidget` Net Change |
 | Investments (Portfolio tab) | Portfolio value | `PortfolioSummary` headline |
 | Compensation | Total compensation | `CompensationMobile` figure beside the donut |

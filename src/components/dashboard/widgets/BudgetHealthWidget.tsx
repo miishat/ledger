@@ -4,18 +4,21 @@ import { WidgetWrapper } from '../WidgetWrapper'
 import { useBudgetStore, getMonthlyBudgetStats } from '../../../store/useBudgetStore'
 import { formatMoney } from '../../planner/format'
 import { EmptyState } from '../../ui/EmptyState'
+import { InfoButton } from '../../ui/InfoButton'
 
 export const BudgetHealthWidget: React.FC = () => {
   const budgetState = useBudgetStore()
 
   if (Object.keys(budgetState.transactions).length === 0) {
     return (
-      <WidgetWrapper title="This Month's Budget">
+      <WidgetWrapper
+        title="This Month's Budget"
+        titleAdornment={<InfoButton label="About This Month's Budget" inline><p>Import a CSV or add one by hand, and your monthly health appears here.</p></InfoButton>}
+      >
         <EmptyState
           icon={Wallet}
-          message="No transactions yet"
-          hint="Import a CSV or add one by hand, and your monthly health appears here."
-          action={{ label: 'Add transactions', to: '/budget' }}
+          message="No Transactions Available"
+          action={{ label: 'Add Transactions', to: '/budget' }}
         />
       </WidgetWrapper>
     )

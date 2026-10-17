@@ -10,7 +10,8 @@ describe('UpcomingVestsWidget', () => {
     }))
     render(<UpcomingVestsWidget />)
     expect(screen.getByText('Upcoming Vests')).toBeTruthy()
-    expect(screen.getByText(/Add RSU/i)).toBeTruthy()
+    expect(screen.getByText('No Upcoming Vests Available')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'About Upcoming Vests' })).toBeTruthy()
   })
 
   it('lists future vest events sorted by date with values', () => {

@@ -19,14 +19,14 @@ beforeEach(() => {
 describe('dashboard empty states', () => {
   it('offers a real call to action when there are no transactions', () => {
     wrap(<BudgetHealthWidget />)
-    expect(screen.getByText('No transactions yet')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add transactions' })).toHaveAttribute('href', '/budget')
+    expect(screen.getByText('No Transactions Available')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add Transactions' })).toHaveAttribute('href', '/budget')
   })
 
   it('offers a real call to action when there is no goal', () => {
     wrap(<PlannerGoalWidget />)
-    expect(screen.getByText('No goal set')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add a goal' })).toHaveAttribute('href', '/planner/forecaster')
+    expect(screen.getByText('No Goal Set')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add a Goal' })).toHaveAttribute('href', '/planner/forecaster')
   })
 
   it('offers a real call to action when there is no history', () => {

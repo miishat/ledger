@@ -56,10 +56,11 @@ it('opens the deferred Customize panel from its visible header action', async ()
 describe('Dashboard key figure on a phone', () => {
   it('puts the net worth figure first on a phone, whatever the saved order', () => {
     setMatchMedia(false)
-    useDashboardLayoutStore.setState({ order: [], hidden: [] })
+    useDashboardLayoutStore.setState({ order: ['top-goal', 'trend'], hidden: [] })
     const { container } = render(<MemoryRouter><Dashboard /></MemoryRouter>)
-    const ids = [...container.querySelectorAll('[data-widget-id]')].map((el) => el.getAttribute('data-widget-id'))
-    expect(ids[0]).toBe('trend')
+    const first = container.querySelector('[data-widget-id]')
+    expect(first?.getAttribute('data-widget-id')).toBe('trend')
+    expect(first?.querySelector('[data-key-figure]')).not.toBeNull()
   })
 
   it('keeps the saved order on desktop', () => {

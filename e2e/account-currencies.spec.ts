@@ -53,6 +53,18 @@ async function saved(page: Page) {
 
 const widget = (page: Page, id: string) => page.locator(`[data-widget-id="${id}"]`)
 
+// A phone shows each account group as a fold. This opens one on a phone and is the plain widget on
+// desktop, so one assertion covers both.
+const onPhone = (page: Page) => (page.viewportSize()?.width ?? 1280) < 768
+const group = async (page: Page, id: 'bank' | 'debt') => {
+  const card = widget(page, id)
+  if (onPhone(page) && !(await card.evaluate((el) => (el as HTMLDetailsElement).open))) await card.locator('summary').click()
+  return card
+}
+const addAccount = async (page: Page) => {
+  await (await group(page, 'bank')).getByRole('button', { name: 'Add', exact: true }).click()
+}
+
 for (const width of [1280, 375]) {
   test(`currency popup opens with keyboard focus and restores it at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 812 })
@@ -73,12 +85,13 @@ for (const width of [1280, 375]) {
 test('shows the standard CAD and USD case at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
   await seed(page, [bank('cad', 1000), bank('usd', 1000, 'USD')], { rate: 1.35 })
-  await expect(widget(page, 'bank')).toContainText('$2,350.00')
+  await expect(await group(page, 'bank')).toContainText('$2,350.00')
   await expect(page.getByTestId('account-row-usd')).toContainText('$1,000.00')
   await expect(page.getByTestId('account-row-usd')).toContainText('≈ $1,350.00')
   await page.evaluate(() => document.fonts.ready)
-  await widget(page, 'bank').scrollIntoViewIfNeeded()
-  await widget(page, 'bank').screenshot({ path: '.superpowers/sdd/browser-evidence/account-currencies-native-320.png' })
+  const bankCard = await group(page, 'bank')
+  await bankCard.scrollIntoViewIfNeeded()
+  await bankCard.screenshot({ path: '.superpowers/sdd/browser-evidence/account-currencies-native-320.png' })
 })
 
 test('keeps native USD balances, CAD totals, and long rows readable at four widths', async ({ page }) => {
@@ -90,11 +103,13 @@ test('keeps native USD balances, CAD totals, and long rows readable at four widt
   ], { rate: 1.35 })
   for (const width of [320, 375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
+    await expect(await group(page, 'bank')).toContainText('$1,350,001,000.34')
     await expect(page.getByTestId('account-row-usd')).toContainText('USD')
     await expect(page.getByTestId('account-row-usd')).toContainText('≈ $')
-    await expect(page.getByTestId('account-row-debt')).toContainText('$100.00')
-    await expect(widget(page, 'bank')).toContainText('$1,350,001,000.34')
     await expect(page.getByTestId('account-name-usd')).toContainText(longName)
+    await group(page, 'debt')
+    await expect(page.getByTestId('account-row-debt')).toContainText('$100.00')
+    await group(page, 'bank')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}px horizontal overflow`).toBe(true)
     const keyFigureFits = await widget(page, 'trend').locator('[data-key-figure]').evaluate((figure) => {
       const parent = figure.getBoundingClientRect()
@@ -164,7 +179,7 @@ test('creates USD on desktop and confirms edits only after explicit approval', a
 test('narrow sheet selects USD, keeps its menu visible, and saves an unrounded balance', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
   await seed(page, [bank('cad', 100)], { rate: 1.35 })
-  await widget(page, 'bank').getByRole('button', { name: 'Add', exact: true }).click()
+  await addAccount(page)
   const dialog = page.getByRole('dialog', { name: 'Add Account' })
   await dialog.getByLabel('Name / Description').fill('Foreign Savings')
   await dialog.getByLabel('Balance').fill('987654321.09')

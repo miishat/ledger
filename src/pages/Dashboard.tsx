@@ -17,6 +17,7 @@ import { FirstRunChecklist } from '../components/dashboard/FirstRunChecklist';
 import { AccountCurrencyReview } from '../components/accounts/AccountCurrencyReview';
 import { useAccountsStore } from '../store/useAccountsStore';
 import { useBudgetStore } from '../store/useBudgetStore';
+import { DashboardMobile } from '../components/dashboard/DashboardMobile';
 import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './dashboardWidgets';
 
 // Re-exported so callers (and tests) can import ids/labels from this module too.
@@ -42,6 +43,9 @@ const AccountFxControls = React.lazy(() =>
 const CustomizeDashboard = React.lazy(() =>
   import('../components/dashboard/CustomizeDashboard').then((m) => ({ default: m.CustomizeDashboard }))
 );
+
+/** Widgets the phone Dashboard shows through DashboardMobile's own three cards instead of one card each. */
+const PHONE_CARD_WIDGETS = ['trend', 'income', 'expense', 'monthly-summary', 'bank', 'investment-accounts', 'other', 'receivable', 'debt'];
 
 export const Dashboard: React.FC = () => {
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -105,13 +109,6 @@ export const Dashboard: React.FC = () => {
   // widget's position survives instead of being dropped from saved layout.
   const visibleWidgets = resolvedWidgets.filter((w) => !hidden.includes(w.id));
 
-  // Rule 3 of docs/mobile-layout-rules.md: on a phone the net worth figure
-  // leads, whatever the saved order says. The saved order still decides
-  // everything after it, and desktop is untouched.
-  const placedWidgets = isDesktop
-    ? visibleWidgets
-    : [...visibleWidgets.filter((w) => w.id === 'trend'), ...visibleWidgets.filter((w) => w.id !== 'trend')];
-
   return (
     <div className="min-h-full w-full">
       <PageHeader
@@ -151,8 +148,22 @@ export const Dashboard: React.FC = () => {
       <AccountCurrencyReview />
       <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />
 
-      <BentoGrid>
-        {placedWidgets.map(({ id, element }) => {
+      {!isDesktop && (
+        // The figure, the month and the account groups come first as three cards; every other visible
+        // widget follows in saved order. Customize still controls what the three cards include.
+        <DashboardMobile
+          hidden={hidden}
+          rest={
+            <div className="flex flex-col gap-6">
+              {visibleWidgets
+                .filter((w) => !PHONE_CARD_WIDGETS.includes(w.id))
+                .map((w) => <div key={w.id} data-widget-id={w.id}>{w.element}</div>)}
+            </div>
+          }
+        />
+      )}
+      {isDesktop && <BentoGrid>
+        {visibleWidgets.map(({ id, element }) => {
           return (
             <div
               key={id}
@@ -174,7 +185,7 @@ export const Dashboard: React.FC = () => {
             </div>
           );
         })}
-      </BentoGrid>
+      </BentoGrid>}
 
       {customizeOpenedBefore && <Suspense fallback={null}>
         <CustomizeDashboard open={customizeOpen} onClose={() => setCustomizeOpen(false)} orderedIds={orderedIds} />

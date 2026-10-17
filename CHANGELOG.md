@@ -6,6 +6,16 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- On phones, the Dashboard leads with Net Worth, then one This Month band (Money In, Money Out, Net and the Projected Net), then one fold per account group (Bank, Investment, Others, Receivables, Debts) with its total on the right, opening the first group that has accounts, with Add, Edit and Delete inside, instead of a separate card for each. Customize still applies: switching off Net Worth, the three month widgets together, or an account group removes it.
+- On phones, Upcoming Vests shows the next vest with a countdown and its total, then the three dates after it, with grants that vest the same day combined.
+- On phones, Portfolio shows the value, the all-time gain, and your best and weakest holding. How old the prices are sits behind an info button after the title, worded like "Stale Market Data (Last Updated: 21 Minutes Ago)".
+- On phones, This Month's Budget, Portfolio, Top Goal and Upcoming Vests empty cards read "No Transactions Available", "No Holdings Available", "No Goal Set" and "No Upcoming Vests Available", with the explanation behind an info button after the title and a larger action button. Upcoming Vests rows are bigger.
+- Empty-state action buttons are 44px tall with rounder corners everywhere, and "Edit history" in Net Worth Over Time is "Edit History". The currency support note under that chart is gone.
+
+### Fixed
+- Upcoming Vests on the Dashboard showed $0 for every vest when the stock price comes from live market data. It now uses the same price as the Compensation page.
+
 ## [0.26.3-beta] - 2026-10-17
 
 ### Changed

@@ -5,6 +5,7 @@ import { usePlannerStore } from '../../../store/usePlannerStore'
 import { useAccountValuation } from '../../../hooks/useAccountValuation'
 import { formatMoney } from '../../planner/format'
 import { EmptyState } from '../../ui/EmptyState'
+import { InfoButton } from '../../ui/InfoButton'
 
 interface Goal { id: string; label: string; amount: number }
 
@@ -21,12 +22,14 @@ export const PlannerGoalWidget: React.FC = () => {
   const top = [...goals].sort((a, b) => b.amount - a.amount)[0]
   if (!top) {
     return (
-      <WidgetWrapper title="Top Goal">
+      <WidgetWrapper
+        title="Top Goal"
+        titleAdornment={<InfoButton label="About Top Goal" inline><p>Set a savings target in the Forecaster and its progress shows here.</p></InfoButton>}
+      >
         <EmptyState
           icon={Target}
-          message="No goal set"
-          hint="Set a savings target in the Forecaster and its progress shows here."
-          action={{ label: 'Add a goal', to: '/planner/forecaster' }}
+          message="No Goal Set"
+          action={{ label: 'Add a Goal', to: '/planner/forecaster' }}
         />
       </WidgetWrapper>
     )
@@ -34,8 +37,8 @@ export const PlannerGoalWidget: React.FC = () => {
   if (netWorth === null) return (
     <WidgetWrapper title="Top Goal">
       <div className="flex flex-col gap-2 mt-2">
-        <span className="text-[15px] text-text-primary font-medium">{top.label}</span>
-        <span className="text-[13px] text-text-secondary">Target {formatMoney(top.amount)}</span>
+        <span className="text-[16px] text-text-primary font-medium">{top.label}</span>
+        <span className="text-[14px] text-text-secondary">Target {formatMoney(top.amount)}</span>
         <span className="text-[13px] text-text-secondary">Conversion Needed to show progress</span>
       </div>
     </WidgetWrapper>
@@ -45,8 +48,8 @@ export const PlannerGoalWidget: React.FC = () => {
   return (
     <WidgetWrapper title="Top Goal">
       <div className="flex flex-col gap-2 mt-2">
-        <span className="text-[15px] text-text-primary font-medium">{top.label}</span>
-        <span className="text-[13px] text-text-secondary">{formatMoney(netWorth)} of {formatMoney(top.amount)} ({Math.round(progress * 100)}%)</span>
+        <span className="text-[16px] text-text-primary font-medium">{top.label}</span>
+        <span className="text-[14px] text-text-secondary">{formatMoney(netWorth)} of {formatMoney(top.amount)} ({Math.round(progress * 100)}%)</span>
         <div className="h-2 rounded bg-bg-primary/50 overflow-hidden">
           <div className="h-full bg-accent" style={{ width: `${progress * 100}%` }} />
         </div>
