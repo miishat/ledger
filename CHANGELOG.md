@@ -7,7 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
-- A category can be marked as a Bill (Auto, Bill or Everyday, in Setup). A bill is judged as Due, Paid or Over Budget instead of by pace, so a rent paid on the 1st no longer reads Over Pace. Auto treats a category as a bill when nearly all of its spending is monthly recurring payments; an annual category is a bill only when you mark it. The This Month's Budget pace pill on phones counts bills in full from the start of the month.
+- A category can be marked as a Bill. On phones, tap the ... on a category in Setup to open its options: Target Covers (One Month or One Year) and Payment (Auto, Bill or Everyday), with what each means behind an info button after Payment. A bill shows a Bill badge and is judged as Due, Paid or Over Budget instead of by pace, so a rent paid on the 1st no longer reads Over Pace. Auto treats a category as a bill when nearly all of its spending is monthly recurring payments; an annual category is a bill only when you mark it. On desktop the choice sits in the category row. The This Month's Budget pace pill on phones counts bills in full from the start of the month.
 
 ## [0.26.4-beta] - 2026-10-17
 

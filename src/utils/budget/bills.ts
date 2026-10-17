@@ -43,13 +43,16 @@ export function detectBillCategories(transactions: Record<string, Transaction>, 
   return out
 }
 
+/** Whether a category is a bill: marked Bill, or left on Auto and found by detection. */
+export function isBillCategory(cat: Category, detected: Set<string>): boolean {
+  const setting = billSettingOf(cat)
+  return setting === 'bill' || (setting === 'auto' && detected.has(cat.id))
+}
+
 /** The categories treated as bills: the ones marked Bill, plus the detected ones left on Auto. */
 export function billCategoryIds(transactions: Record<string, Transaction>, categories: Record<string, Category>): Set<string> {
   const detected = detectBillCategories(transactions, categories)
   const out = new Set<string>()
-  for (const cat of Object.values(categories)) {
-    const setting = billSettingOf(cat)
-    if (setting === 'bill' || (setting === 'auto' && detected.has(cat.id))) out.add(cat.id)
-  }
+  for (const cat of Object.values(categories)) if (isBillCategory(cat, detected)) out.add(cat.id)
   return out
 }

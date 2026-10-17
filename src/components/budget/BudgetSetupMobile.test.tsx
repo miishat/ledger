@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { BudgetSetupMobile } from './BudgetSetupMobile'
 import { useBudgetStore } from '../../store/useBudgetStore'
 
@@ -82,8 +82,19 @@ describe('BudgetSetupMobile', () => {
     expect(within(dialog).queryByText(/current/)).not.toBeInTheDocument()
   })
 
+  it('opens a category options sheet with Target Covers and Payment', () => {
+    render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    expect(screen.queryByRole('button', { name: 'Budget Groceries annually' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Groceries options' }))
+    const dialog = screen.getByRole('dialog', { name: 'Groceries options' })
+    expect(within(dialog).getByRole('button', { name: 'Budget Groceries monthly' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Budget Groceries annually' }))
+    expect(useBudgetStore.getState().categories.c1.cadence).toBe('annual')
+  })
+
   it('lets a category be marked as a bill, everyday or auto', () => {
     render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Groceries options' }))
     const group = screen.getByRole('group', { name: 'Groceries payment type' })
     expect(within(group).getByRole('button', { name: 'Groceries payment Auto' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(within(group).getByRole('button', { name: 'Groceries payment Bill' }))
@@ -93,11 +104,21 @@ describe('BudgetSetupMobile', () => {
     expect(useBudgetStore.getState().categories.c1.billing).toBe('everyday')
   })
 
-  it('names what Auto found so the choice is not hidden', () => {
+  it('explains the payment choices behind an info button, including what Auto found', () => {
+    render(<BudgetSetupMobile selectedMonth="2026-10" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Groceries options' }))
+    expect(screen.queryByText(/nearly all of it is monthly recurring payments/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'About Payment' }))
+    expect(screen.getByText(/nearly all of it is monthly recurring payments. Right now it is Everyday./)).toBeInTheDocument()
+  })
+
+  it('badges a category as a Bill when Auto finds one, and hides the badge for Everyday', () => {
     useBudgetStore.setState({
       transactions: Object.fromEntries(['2026-06-01', '2026-07-01', '2026-08-01', '2026-09-01'].map((d, i) => [`t${i}`, { id: `t${i}`, date: d, amount: 300, categoryId: 'c1', description: 'Meal Plan', type: 'expense' as const }])),
     })
     render(<BudgetSetupMobile selectedMonth="2026-10" />)
-    expect(screen.getByRole('button', { name: 'Groceries payment Auto' })).toHaveTextContent('Auto · Bill')
+    expect(screen.getByText('Bill')).toBeInTheDocument()
+    act(() => useBudgetStore.getState().updateCategory('c1', { billing: 'everyday' }))
+    expect(screen.queryByText('Bill')).toBeNull()
   })
 })

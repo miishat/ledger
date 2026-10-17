@@ -7,7 +7,8 @@ import { formatMoney, formatMoneyWithCents } from '../planner/format';
 import { categoryExpenseBreakdown } from '../../utils/budget/categoryStats';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { cadenceOf, monthlyEquivalent } from '../../utils/budget/cadence';
-import { BillToggle } from './BillToggle';
+import { CategoryOptionsButton } from './CategoryOptionsSheet';
+import { isBillCategory } from '../../utils/budget/bills';
 import { useDetectedBillIds } from '../../hooks/useBillIds';
 import { amountForCategory } from '../../utils/budget/splits';
 import { NumberInput } from '../ui/NumberInput';
@@ -197,14 +198,13 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
                     </span>
                   )}
                 </span>
+                {group.kind === 'expense' && isBillCategory(cat, detectedBills) && <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-[12px] font-semibold text-accent">Bill</span>}
                 {targetInput(cat)}
-                {cadenceToggle(cat)}
-                {group.kind === 'expense' && (
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="text-[12px] text-text-secondary">Payment</span>
-                    <BillToggle large category={cat} detected={detectedBills.has(cat.id)} onChange={(billing) => state.updateCategory(cat.id, { billing })} />
-                  </div>
-                )}
+                {group.kind === 'expense' ? (
+                  <>
+                    <CategoryOptionsButton category={cat} detected={detectedBills.has(cat.id)} onPayment={(billing) => state.updateCategory(cat.id, { billing })} onCadence={(cadence) => state.updateCategory(cat.id, { cadence })} />
+                  </>
+                ) : cadenceToggle(cat)}
                 {paradigm === 'Zero-Based' && overspend > 0 && (
                   <button type="button" onClick={() => setCoverTarget({ id: cat.id, overage: overspend })} className="min-h-[44px] px-3 rounded-lg border border-error/60 text-error text-[13px] font-medium">
                     Cover
