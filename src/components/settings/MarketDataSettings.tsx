@@ -34,7 +34,7 @@ export const MarketDataSection: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col ${isDesktop ? 'gap-3' : 'gap-0'}`}>
       <div className="flex gap-2">
         <label htmlFor="market-data-api-key" className="sr-only">
           Alpha Vantage API Key

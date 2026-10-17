@@ -33,7 +33,7 @@ const Fold: React.FC<{ icon: React.ReactNode; title: string; summary?: React.Rea
       {summary && <span className="text-[13px] text-text-secondary">{summary}</span>}
       <ChevronRight className="w-4 h-4 text-text-secondary transition-transform group-open:rotate-90" aria-hidden="true" />
     </summary>
-    <div className="px-4 pb-4 flex flex-col gap-3">{children}</div>
+    <div className="px-4 pt-3 pb-4 flex flex-col gap-3">{children}</div>
   </details>
 )
 
