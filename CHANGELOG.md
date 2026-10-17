@@ -6,7 +6,11 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.11.4-beta] - 2026-10-17
+
 ### Changed
+- On phones, the Emergency Fund budget button reads "Use My Budget Average ($X/mo)" and only looks selected once your expenses match it, the Raise vs Inflation verdict has no trailing full stop, and Forecaster Plan rows show Projected and Lands in a tinted result line.
+- On phones, the Inflation Adjuster year options read N yrs without a title, the Mortgage Monthly or Biweekly Accelerated selector sits under the inputs with the chart above Extra Payments, and the summary strips in Emergency Fund, Debt Payoff and Mortgage are centred.
 - On phones, Compound Interest shows the future value with a contributed and growth bar, quick year options (10, 20, 30, 40), the inputs in a grid, and a chart with its legend centred inside the chart card.
 - On phones, Savings Goal puts the Solve For options in a one-tap row, then only the inputs that apply, then the result.
 - On phones, the chart legends in the Mortgage and Debt Payoff tools are centred inside their chart cards.
