@@ -25,7 +25,7 @@ pre-1.0 beta.
 - On phones, the goal name in the Net Worth Forecaster chart was clipped by the top of the chart and ran under its line. It is now a 12px chip inside the chart beside the line, on the left when the goal is late in the forecast. On desktop the chart has room above it so the label on the line is no longer cut off, and it is 12px.
 - Upcoming Vests on the Dashboard showed $0 for every vest when the stock price comes from live market data. It now uses the same price as the Compensation page.
 
-## [0.26.3-beta] - 2026-10-17
+## [0.26.3-beta] - 2026-10-15
 
 ### Changed
 - On phones, Edit Compensation Package opens straight onto a card with the live total and the stock ticker and price, then Base & Cash, Equity and Benefits as tabs with one labelled card per topic and the Save button always pinned, instead of a title row above long single-column fields.
@@ -59,7 +59,7 @@ pre-1.0 beta.
 - On phones, the Mortgage tool shows the payment (or the maximum home price) first with its two supporting figures, then the inputs in a tidy grid with equal-height fields. Payment and Affordability, and Monthly and Biweekly, are full-width toggles, extra payments are compact cards with a clear Add button, and the affordability note moved behind an Estimation Details row.
 - On phones, the Currency Converter shows the answer first ("100 USD is CAD 141.61") with the rate and a refresh button, then one card for the amount, the From and To currencies with a swap button, and the rate date. Rate Details is a single collapsed line showing when the rate was fetched, with the manual override inside.
 
-## [0.26.1-beta] - 2026-10-15
+## [0.26.1-beta] - 2026-10-13
 
 ### Changed
 - On phones, Budgeting > Transactions has a rebuilt layout with a compact search and category selectors, and the gaps match the Overview and Insights tabs.
