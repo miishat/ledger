@@ -866,7 +866,11 @@ for (const [hash, expected] of LEGEND_ROUTES) {
     await page.goto(`/${hash}`)
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(900)
-    expect(await countLegends(page)).toBeGreaterThanOrEqual(expected)
+    // A phone layout (short-wide) puts the donut's legend in the Breakdown card below it, not beside it, so
+    // only the equity chart carries a legend inside its own scope there.
+    const phoneLayout = test.info().project.name === 'short-wide'
+    const want = phoneLayout && hash === '#/compensation' ? expected - 1 : expected
+    expect(await countLegends(page)).toBeGreaterThanOrEqual(want)
   })
 }
 
