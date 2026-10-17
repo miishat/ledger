@@ -7,6 +7,8 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the Rate & Return Converter has a From and To row with a swap button, then the rate and compounding (or the start value, end value and years), then the result.
+- On phones, the Inflation Adjuster shows the converted amount first, then a purchasing power bar, then year presets (5, 10, 20, 30) with the amount, years and inflation fields.
 - On phones, the Raise vs Inflation tool puts the three inputs first, then a single result card with the Real Raise, the Nominal Raise, the Real Change and the verdict, tinted to match.
 - On phones, the Emergency Fund tool shows how much is funded first, as a percentage with a progress bar and a savings-of-target line, then the Target Fund and Gap to Close, then the months presets and inputs in a tidy grid.
 - On phones, the Debt Payoff tool shows the debt-free time first with Total Interest and the saving against the other strategy, then the strategy toggle and extra payment. Debts are listed in the order they will be paid off, with the first one tagged Pay First, and each opens in place to edit or remove.

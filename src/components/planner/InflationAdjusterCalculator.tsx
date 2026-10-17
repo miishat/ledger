@@ -1,29 +1,18 @@
 import React from 'react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
-import { futureCost, presentValue, purchasingPowerChangePct } from '../../utils/finance/inflation'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { InflationAdjusterMobile } from './InflationAdjusterMobile'
+import { INFLATION_TOOL_ID, useInflationAdjuster } from './useInflationAdjuster'
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 import { formatMoney } from './format'
 
-const TOOL_ID = 'inflation-adjuster'
-const DEFAULTS = {
-  direction: 'future' as string, // 'future' = today's $ -> future cost; 'present' = future $ -> today's value
-  amount: 10000,
-  years: 10,
-  inflationPct: 2.5,
-}
-
 export const InflationAdjusterCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-  const toFuture = inputs.direction !== 'present'
-
-  const converted = toFuture
-    ? futureCost(inputs.amount, inputs.inflationPct, inputs.years)
-    : presentValue(inputs.amount, inputs.inflationPct, inputs.years)
-  const powerChange = purchasingPowerChangePct(inputs.inflationPct, inputs.years)
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useInflationAdjuster()
+  if (isPhone) return <InflationAdjusterMobile s={state} />
+  const { inputs, setInput, set, toFuture, converted, powerChange } = state
+  const TOOL_ID = INFLATION_TOOL_ID
 
   return (
     <div className="flex flex-col gap-6">

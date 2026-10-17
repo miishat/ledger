@@ -1,36 +1,19 @@
 import React from 'react'
-import { usePlannerStore, useToolInputs } from '../../store/usePlannerStore'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { RateConverterMobile } from './RateConverterMobile'
+import { RATE_FREQUENCIES, RATE_TOOL_ID, useRateConverter } from './useRateConverter'
 import { aprToApy, apyToApr, periodicRatePct, cagrPct, totalReturnPct } from '../../utils/finance/rates'
 import { CalculatorField } from './CalculatorField'
 import { SelectField } from './SelectField'
 import { ResultCard } from './ResultCard'
 
-const TOOL_ID = 'rate-converter'
-const DEFAULTS = {
-  mode: 'apr-apy' as string, // 'apr-apy' | 'cagr'
-  direction: 'apr-to-apy' as string,
-  ratePct: 6,
-  periodsPerYear: 12,
-  startValue: 10000,
-  endValue: 14000,
-  years: 3,
-}
-
-const FREQUENCIES = [
-  { value: '1', label: 'Annually' },
-  { value: '2', label: 'Semi-Annually' },
-  { value: '4', label: 'Quarterly' },
-  { value: '12', label: 'Monthly' },
-  { value: '365', label: 'Daily' },
-]
-
 export const RateConverterCalculator: React.FC = () => {
-  const inputs = useToolInputs(TOOL_ID, DEFAULTS)
-  const setInput = usePlannerStore((s) => s.setInput)
-  const set = (field: string) => (v: number) => setInput(TOOL_ID, field, v)
-  const isCagr = inputs.mode === 'cagr'
-  const aprToApyDir = inputs.direction !== 'apy-to-apr'
-  const n = Number(inputs.periodsPerYear) || 1
+  const isPhone = !useMediaQuery('(min-width: 768px)')
+  const state = useRateConverter()
+  if (isPhone) return <RateConverterMobile s={state} />
+  const { inputs, setInput, set, isCagr, aprToApyDir, n } = state
+  const TOOL_ID = RATE_TOOL_ID
+  const FREQUENCIES = RATE_FREQUENCIES
 
   return (
     <div className="flex flex-col gap-6">
