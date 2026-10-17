@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import React from 'react'
 import { render, screen } from '@testing-library/react'
+import { goalChip } from './goalLabel'
 import { ForecastChart } from './ForecastChart'
 import { buildForecast } from '../../../utils/finance/forecast'
 
@@ -33,18 +35,39 @@ describe('ForecastChart legend', () => {
   })
 })
 
-describe('ForecastChart goal names', () => {
-  const goals = [{ label: 'Initial Milestone', month: 6, amount: 106000 }, { label: 'Out of Reach', month: null, amount: 9e9 }]
+type Part = React.ReactElement<{ x: number; y: number; width: number; fontSize: number; children: string }>
+type Chip = React.ReactElement<{ children: Part[] }>
 
-  it('names each reachable goal in the legend on a phone, not on the chart', () => {
-    render(<ForecastChart centered points={points} history={[]} showReal={false} view="line" goalMarkers={goals} />)
-    expect(screen.getByText('Goal: Initial Milestone')).toBeInTheDocument()
-    expect(screen.queryByText('Goal: Out of Reach')).toBeNull()
-    expect(document.querySelector('.recharts-reference-line text')).toBeNull()
+describe('goalChip', () => {
+  const chip = (flip: boolean, x = 100) => {
+    const label = goalChip('Initial Milestone', flip)({ viewBox: { x, y: 8 } }) as Chip
+    return label.props.children
+  }
+
+  it('draws the goal name at 12px on a chip inside the plot, below the top edge', () => {
+    const [rect, text] = chip(false)
+    expect(text.props.children).toBe('Initial Milestone')
+    expect(text.props.fontSize).toBe(12)
+    expect(rect.props.y).toBeGreaterThan(8)
   })
 
-  it('keeps the goal name off the legend on desktop, where it is labelled on the line', () => {
-    render(<ForecastChart points={points} history={[]} showReal={false} view="line" goalMarkers={goals} />)
+  it('sits right of the line by default and left of it when flipped', () => {
+    const [right] = chip(false, 100)
+    const [left] = chip(true, 100)
+    expect(right.props.x).toBeGreaterThan(100)
+    expect(left.props.x + left.props.width).toBeLessThan(100)
+  })
+
+  it('is as wide as its text needs', () => {
+    const [short] = (goalChip('A', false)({ viewBox: { x: 0, y: 0 } }) as Chip).props.children
+    const [long] = chip(false)
+    expect(long.props.width).toBeGreaterThan(short.props.width)
+  })
+})
+
+describe('ForecastChart legend with goals', () => {
+  it('does not add the goal name to the legend; the chart labels it', () => {
+    render(<ForecastChart centered points={points} history={[]} showReal={false} view="line" goalMarkers={[{ label: 'Initial Milestone', month: 6, amount: 106000 }]} />)
     expect(screen.queryByText('Goal: Initial Milestone')).toBeNull()
   })
 })

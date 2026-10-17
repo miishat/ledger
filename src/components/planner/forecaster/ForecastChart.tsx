@@ -9,6 +9,7 @@ import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
 import { ChartLegend } from '../../ui/ChartLegend'
 import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from '../phoneChart'
+import { goalChip } from './goalLabel'
 
 interface GoalMarker {
   label: string
@@ -73,12 +74,8 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
         { name: 'Actual', color: 'var(--text-primary)' },
       ]
 
-  // On a phone the goal name is not drawn on the chart: a 12px label above a line near the left edge was clipped
-  // by the top of the plot and ran under the line. Each reachable goal is named in the legend instead.
   const reachable = goalMarkers.filter((g) => g.month !== null)
-  const legend = centered
-    ? [...legendItems, ...reachable.map((g) => ({ name: `Goal: ${g.label}`, color: 'var(--accent)', opacity: 0.6 }))]
-    : legendItems
+  const lastMonth = Math.max(...data.map((d) => d.month), 1)
 
   return (
     <div className={`themed-card rounded-lg ${centered ? 'p-3' : 'p-4'} h-[380px] flex flex-col`}>
@@ -131,13 +128,15 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
               x={g.month as number}
               stroke="var(--accent)"
               strokeDasharray="2 4"
-              label={centered ? undefined : { value: g.label, fill: 'var(--accent)', fontSize: 12, position: 'top' }}
+              label={centered
+                ? goalChip(g.label, (g.month as number) / lastMonth > 0.55)
+                : { value: g.label, fill: 'var(--accent)', fontSize: 12, position: 'top' }}
             />
           ))}
         </ComposedChart>
       </ResponsiveContainer>
       </ChartFigure>
-      <ChartLegend centered={centered} items={legend} />
+      <ChartLegend centered={centered} items={legendItems} />
     </div>
   )
 }

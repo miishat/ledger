@@ -15,7 +15,7 @@ pre-1.0 beta.
 - Empty-state action buttons are 44px tall with rounder corners everywhere, and "Edit history" in Net Worth Over Time is "Edit History". The currency support note under that chart is gone.
 
 ### Fixed
-- On phones, the goal name in the Net Worth Forecaster chart was clipped by the top of the chart and ran under its line. Each goal is now named in the legend as "Goal: Name". On desktop the chart has room above it so the label on the line is no longer cut off, and it is 12px.
+- On phones, the goal name in the Net Worth Forecaster chart was clipped by the top of the chart and ran under its line. It is now a 12px chip inside the chart beside the line, on the left when the goal is late in the forecast. On desktop the chart has room above it so the label on the line is no longer cut off, and it is 12px.
 - Upcoming Vests on the Dashboard showed $0 for every vest when the stock price comes from live market data. It now uses the same price as the Compensation page.
 
 ## [0.26.3-beta] - 2026-10-17
