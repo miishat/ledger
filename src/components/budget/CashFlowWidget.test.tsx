@@ -83,6 +83,11 @@ describe('CashFlowWidget negative group totals', () => {
     expect(markup(1)).toContain('stroke="var(--accent)"')
     expect(markup(2)).toContain('stroke="var(--error)"')
     expect(markup(3)).toContain('stroke-opacity="0.55"')
+    // The savings flow, its bar and its label are green, not the accent that income uses.
+    expect(markup(3)).toContain('stroke="var(--success)"')
+    const savingsNode = renderToStaticMarkup(chart.node({ x: 100, y: 0, width: 10, height: 20, payload: chart.data.nodes[4] } as never))
+    expect(savingsNode).toContain('fill="var(--success)"')
+    expect(savingsNode).not.toContain('var(--accent)')
     expect(renderToStaticMarkup(chart.node({ x: 100, y: 0, width: 10, height: 20, payload: chart.data.nodes[1] } as never))).toContain('text-anchor="end"')
   })
 

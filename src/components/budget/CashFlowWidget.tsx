@@ -31,7 +31,7 @@ function renderLink(sourceLinkCount: number, savingsIndex: number) {
   return ({ sourceX, sourceY, sourceControlX, targetControlX, targetX, targetY, linkWidth, index }: LinkRenderProps) => {
     const isSource = index < sourceLinkCount
     const isSavings = index === savingsIndex
-    const stroke = isSource || isSavings ? 'var(--accent)' : 'var(--error)'
+    const stroke = isSavings ? 'var(--success)' : isSource ? 'var(--accent)' : 'var(--error)'
     const opacity = isSavings ? 0.55 : 0.28
     return (
       <path
@@ -49,7 +49,7 @@ function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
   const kind = (payload as { kind?: NodeKind }).kind
   const name = String(payload.name)
   const label = name.length > 16 ? `${name.slice(0, 15)}…` : name
-  const fill = kind === 'expense' ? 'var(--error)' : kind === 'pool' ? 'var(--text-secondary)' : 'var(--accent)'
+  const fill = kind === 'expense' ? 'var(--error)' : kind === 'pool' ? 'var(--text-secondary)' : kind === 'savings' ? 'var(--success)' : 'var(--accent)'
   return (
     <g>
       <title>{name}</title>
@@ -64,7 +64,7 @@ function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
           y={y + height / 2}
           textAnchor="start"
           dominantBaseline="middle"
-          fill={kind === 'savings' ? 'var(--accent)' : 'var(--text-primary)'}
+          fill={kind === 'savings' ? 'var(--success)' : 'var(--text-primary)'}
           fontSize={12}
         >
           {label}

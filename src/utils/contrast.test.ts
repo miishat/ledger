@@ -44,6 +44,15 @@ describe('theme token contrast', () => {
   )
 
   it.each(blocks.map((b) => [b.name, b] as const))(
+    '%s meets AA for the success green on the primary and secondary backgrounds',
+    (_name, block) => {
+      expect(contrastRatio(block.tokens.success, block.tokens['bg-primary'])).toBeGreaterThanOrEqual(4.5)
+      // Glass declares its secondary background as a translucent rgba, which this parser skips.
+      if (block.tokens['bg-secondary']) expect(contrastRatio(block.tokens.success, block.tokens['bg-secondary'])).toBeGreaterThanOrEqual(4.5)
+    },
+  )
+
+  it.each(blocks.map((b) => [b.name, b] as const))(
     '%s meets AA for secondary text on the primary background',
     (_name, block) => {
       expect(contrastRatio(block.tokens['text-secondary'], block.tokens['bg-primary'])).toBeGreaterThanOrEqual(4.5)
