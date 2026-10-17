@@ -72,7 +72,10 @@ test('an over-allocated split cannot be saved', async ({ page }) => {
   await page.locator('#tx-amount').fill('100')
   // The split toggle is a checkbox, not a button: its accessible name comes
   // from an aria-label on the input, so it must be queried as a checkbox.
-  await page.getByLabel('Split across categories').click()
+  // A phone-height viewport (short-wide) gets the phone form, where Split is a Details tab.
+  const splitTab = page.getByRole('group', { name: 'Details' }).getByRole('button', { name: 'Split', exact: true })
+  if (await splitTab.count()) await splitTab.click()
+  await page.getByLabel(/^split across categories$/i).click()
   await page.locator('[data-testid=sheet-panel] input[id^=tx-split-amount]').first().fill('150')
   await page.locator('[data-testid=sheet-panel] button[type=submit]').click()
   await expect(page.getByRole('alert')).toHaveText(
@@ -431,7 +434,7 @@ const CHART_ROUTES: { path: string; afterNav?: (page: Page) => Promise<void> }[]
   {
     path: '#/compensation',
     afterNav: async (page) => {
-      await page.getByRole('button', { name: 'Monthly Cash Flow View' }).click()
+      await page.getByRole('button', { name: /^Monthly Cash Flow( View)?$/ }).click()
     },
   },
   // NetWorthTrendWidget (AreaChart). The seeded account history is
@@ -600,10 +603,14 @@ test('state toggles announce their state instead of spelling it in the label', a
   )
   expect(labelled).toEqual([])
 
-  const cad = page.getByRole('button', { name: /convert to cad/i })
-  await expect(cad).toHaveAttribute('aria-pressed', 'false')
+  // The phone page (short-wide is phone height) uses a switch; desktop uses a pressed button.
+  const phoneSwitch = page.getByRole('switch', { name: /convert to cad/i })
+  const onPhone = (await phoneSwitch.count()) > 0
+  const cad = onPhone ? phoneSwitch : page.getByRole('button', { name: /convert to cad/i })
+  const state = onPhone ? 'aria-checked' : 'aria-pressed'
+  await expect(cad).toHaveAttribute(state, 'false')
   await cad.click()
-  await expect(cad).toHaveAttribute('aria-pressed', 'true')
+  await expect(cad).toHaveAttribute(state, 'true')
 })
 
 test('the destructive transaction action says what it destroys', async ({ page }) => {
@@ -622,6 +629,8 @@ test('the Setup tab shows its content without a hunt', async ({ page }) => {
 })
 
 test('the Planner grid keeps one column count down the page', async ({ page }) => {
+  // A phone-height viewport shows the hub as a list, not a grid.
+  test.skip((page.viewportSize()?.height ?? 900) < 500, 'the phone Planner hub is a list')
   await page.goto('/#/planner')
   await page.waitForLoadState('networkidle')
   // Every full row must use the same column count, so every card that is not

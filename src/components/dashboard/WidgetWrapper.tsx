@@ -18,10 +18,14 @@ export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ title, children, c
   return (
     <div className={`themed-card rounded-lg p-4 flex flex-col h-full min-w-0 ${className}`}>
       <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-1 min-w-0">
+        {titleAdornment ? (
+          <div className="flex items-center gap-1 min-w-0">
+            <h2 className="text-[18px] font-semibold text-text-primary">{title}</h2>
+            {titleAdornment}
+          </div>
+        ) : (
           <h2 className="text-[18px] font-semibold text-text-primary">{title}</h2>
-          {titleAdornment}
-        </div>
+        )}
         {action && action}
       </div>
       <div className="flex-1">
