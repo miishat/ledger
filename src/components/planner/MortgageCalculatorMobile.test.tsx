@@ -44,3 +44,10 @@ it('adds and removes an extra payment and shows what it saves', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Remove extra payment' }))
   expect(screen.queryByText('Interest Saved')).not.toBeInTheDocument()
 })
+
+it('keeps the extra payments hint behind an info button', () => {
+  render(<Harness />)
+  expect(screen.queryByText(/Add monthly extras for a range of years/)).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'About Extra Payments' }))
+  expect(screen.getByText(/Add monthly extras for a range of years/)).toBeInTheDocument()
+})

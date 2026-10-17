@@ -8,6 +8,7 @@ import { chartTooltipStyles } from '../../utils/chartTheme'
 import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 import type { MortgageState } from './useMortgageCalculator'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from './phoneChart'
 
 /** Balance-over-time chart card, shared by the desktop and phone mortgage layouts. */
 export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'frequency' | 'extras'> }> = ({ m }) => {
@@ -69,7 +70,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
 
   return (
     <div
-      className="themed-card rounded-lg p-4 h-[240px] desktop:h-[300px] flex flex-col"
+      className="themed-card rounded-lg p-3 desktop:p-4 h-[240px] desktop:h-[300px] flex flex-col"
       onTouchStart={handleChartTouchStart}
       onTouchEnd={handleChartTouchEnd}
     >
@@ -78,7 +79,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
         className="w-full flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 8 }} accessibilityLayer={false}>
+          <AreaChart data={chartData} margin={isDesktop ? { top: 8, right: 8, bottom: 0, left: 8 } : PHONE_CHART_MARGIN} accessibilityLayer={false}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
             <XAxis
               dataKey="year"
@@ -93,7 +94,7 @@ export const MortgageChart: React.FC<{ m: Pick<MortgageState, 'chartData' | 'fre
             <YAxis
               stroke="var(--text-secondary)"
               tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-              width={72}
+              {...(isDesktop ? { width: 72 } : PHONE_Y_AXIS)}
               // Raw "600000" was the only unformatted axis in the app.
               tickFormatter={(v) => formatMoneyCompact(Number(v))}
             />

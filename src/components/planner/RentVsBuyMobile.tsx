@@ -5,8 +5,9 @@ import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 import { InfoButton } from '../ui/InfoButton'
 import { chartTooltipStyles } from '../../utils/chartTheme'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { RENT_BUY_TOOL_ID, type RentVsBuyState } from './useRentVsBuy'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from './phoneChart'
 
 const HORIZON_PRESETS = [5, 10, 15, 25]
 const lab = 'text-[13px] font-medium text-text-secondary'
@@ -81,16 +82,16 @@ export const RentVsBuyMobile: React.FC<{ s: RentVsBuyState }> = ({ s }) => {
         ))}
       </div>
 
-      <div className="themed-card rounded-lg p-4 h-[300px] flex flex-col">
+      <div className="themed-card rounded-lg p-3 h-[300px] flex flex-col">
         <ChartFigure
           label={`Cumulative renting versus buying cost by year ${lastYear}: ${formatMoney(rentCost)} renting, ${formatMoney(buyCost)} buying`}
           className="w-full flex-1 min-h-0"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} accessibilityLayer={false}>
+            <LineChart data={chartData} margin={PHONE_CHART_MARGIN} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-              <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={64} />
+              <YAxis stroke="var(--text-secondary)" {...PHONE_Y_AXIS} tickFormatter={(v: number) => formatMoneyCompact(v)} />
               <Tooltip formatter={(value, name) => [formatMoney(Number(value)), String(name)]} {...chartTooltipStyles} />
               <Line type="monotone" dataKey="Renting" stroke="var(--text-secondary)" dot={false} strokeWidth={2} />
               <Line type="monotone" dataKey="Buying" stroke="var(--accent)" dot={false} strokeWidth={2} />

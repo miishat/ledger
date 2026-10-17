@@ -8,6 +8,7 @@ import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
 import { ChartLegend } from '../../ui/ChartLegend'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from '../phoneChart'
 
 interface GoalMarker {
   label: string
@@ -73,13 +74,13 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
       ]
 
   return (
-    <div className="themed-card rounded-lg p-4 h-[380px] flex flex-col">
+    <div className={`themed-card rounded-lg ${centered ? 'p-3' : 'p-4'} h-[380px] flex flex-col`}>
       <ChartFigure
         label={`Net worth forecast, ${projectedLabel.toLowerCase()} to reach ${formatMoneyCompact(future[future.length - 1]?.projected ?? 0)} by ${(future[future.length - 1]?.month ?? 0) / 12} years out`}
         className="flex-1 min-h-0"
       >
         <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} accessibilityLayer={false}>
+        <ComposedChart data={data} margin={centered ? PHONE_CHART_MARGIN : undefined} accessibilityLayer={false}>
           <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
@@ -88,7 +89,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ points, history, s
             tickFormatter={(m: number) => `${(m / 12).toFixed(0)}y`}
             {...axisProps}
           />
-          <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} {...axisProps} />
+          <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} {...axisProps} {...(centered ? PHONE_Y_AXIS : {})} />
           <Tooltip
             labelFormatter={(m) => {
               const month = Number(m)

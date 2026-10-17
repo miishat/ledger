@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 import type { ExtraPayment } from '../../utils/finance/amortization'
+import { InfoButton } from '../ui/InfoButton'
 import { NumberInput } from '../ui/NumberInput'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { formatMoney } from './format'
@@ -102,11 +103,11 @@ export const MortgageCalculatorMobile: React.FC<{ m: MortgageState }> = ({ m }) 
       {showExtras && (
         <div className="rounded-2xl border border-border bg-bg-secondary p-3 flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <p className="flex-1 text-[14px] font-medium">Extra Payments{extras.length > 0 && <span className="text-text-secondary font-normal"> ({extras.length})</span>}</p>
+            <p className="text-[14px] font-medium">Extra Payments{extras.length > 0 && <span className="text-text-secondary font-normal"> ({extras.length})</span>}</p>
+            <span className="flex-1"><InfoButton label="About Extra Payments" inline><p>Add monthly extras for a range of years, or one-time lump sums, to see the interest saved.</p></InfoButton></span>
             <button type="button" onClick={() => setExtras([...extras, { id: crypto.randomUUID(), kind: 'recurring', amount: 200, fromYear: 1, toYear: inputs.years }])}
               className="min-h-11 px-3 rounded-xl border border-border text-[13px] text-accent flex items-center gap-1"><Plus className="w-4 h-4" aria-hidden="true" />Add</button>
           </div>
-          {extras.length === 0 && <p className="text-[13px] text-text-secondary">Add monthly extras for a range of years, or one-time lump sums, to see the interest saved.</p>}
           {extras.map((e) => (
             <div key={e.id} className="rounded-xl border border-border p-3 flex flex-col gap-3">
               <div className="flex items-end gap-2">

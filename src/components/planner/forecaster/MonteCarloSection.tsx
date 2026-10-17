@@ -10,6 +10,7 @@ import { formatMoney, formatMoneyCompact } from '../format'
 import { chartTooltipStyles } from '../../../utils/chartTheme'
 import { ChartFigure } from '../../ui/ChartFigure'
 import { ChartLegend } from '../../ui/ChartLegend'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from '../phoneChart'
 
 interface MonteCarloSectionProps {
   startBalance: number
@@ -61,16 +62,16 @@ export const MonteCarloSection: React.FC<MonteCarloSectionProps> = (props) => {
           <ResultCard label="Median Outcome" value={formatMoney(bands[bands.length - 1]?.p50 ?? 0)} />
         </div>
       )}
-      <div className="themed-card rounded-lg p-4">
+      <div className={`themed-card rounded-lg ${props.phone ? 'p-3' : 'p-4'}`}>
         <ChartFigure
           label={`Monte Carlo outcome fan over ${data.length} years, median outcome ${formatMoneyCompact(data[data.length - 1]?.p50 ?? 0)}, ${Math.round(success * 100)} percent chance of reaching ${formatMoneyCompact(props.target)}`}
           className="h-[240px] desktop:h-[300px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} accessibilityLayer={false}>
+            <ComposedChart data={data} margin={props.phone ? PHONE_CHART_MARGIN : undefined} accessibilityLayer={false}>
               <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
               <XAxis dataKey="year" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-              <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+              <YAxis width={72} tickFormatter={(v: number) => formatMoneyCompact(v)} stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} {...(props.phone ? PHONE_Y_AXIS : {})} />
               <Tooltip
                 formatter={(value, name) => [formatMoney(Number(value)), String(name) === 'w1090' ? 'P10–P90 width' : String(name).toUpperCase()]}
                 {...chartTooltipStyles}

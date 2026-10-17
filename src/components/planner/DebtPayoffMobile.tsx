@@ -7,8 +7,9 @@ import { ChartFigure } from '../ui/ChartFigure'
 import { ChartLegend } from '../ui/ChartLegend'
 import { chartTooltipStyles } from '../../utils/chartTheme'
 import { minPaymentFor, type Debt, type DebtType } from '../../utils/finance/debtPayoff'
-import { formatMoney } from './format'
+import { formatMoney, formatMoneyCompact } from './format'
 import { formatMonths, type DebtPayoffState } from './useDebtPayoff'
+import { PHONE_CHART_MARGIN, PHONE_Y_AXIS } from './phoneChart'
 
 const TYPE_LABEL: Record<DebtType, string> = { creditCard: 'Credit Card', lineOfCredit: 'Line of Credit', loan: 'Loan' }
 const lab = 'text-[13px] font-medium text-text-secondary'
@@ -131,14 +132,14 @@ export const DebtPayoffMobile: React.FC<{ s: DebtPayoffState }> = ({ s }) => {
         ))}
       </div>
 
-      <div className="themed-card rounded-lg p-4 h-[280px] flex flex-col">
+      <div className="themed-card rounded-lg p-3 h-[280px] flex flex-col">
       <ChartFigure label={`Remaining debt balance by month comparing avalanche and snowball strategies, debt-free in ${formatMonths(chosen.months)} on the chosen (${strategy}) strategy`}
         className="w-full flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} accessibilityLayer={false}>
+          <LineChart data={chartData} margin={PHONE_CHART_MARGIN} accessibilityLayer={false}>
             <CartesianGrid stroke="var(--border-color)" strokeDasharray="3 3" />
             <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
-            <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={60} />
+            <YAxis stroke="var(--text-secondary)" {...PHONE_Y_AXIS} tickFormatter={(v: number) => formatMoneyCompact(v)} />
             <Tooltip formatter={(value, name) => [formatMoney(Number(value)), String(name)]} {...chartTooltipStyles} />
             <Line type="monotone" dataKey="avalanche" stroke="var(--accent)" dot={false} strokeWidth={2} />
             <Line type="monotone" dataKey="snowball" stroke="var(--text-secondary)" dot={false} strokeWidth={2} strokeDasharray="5 3" />
