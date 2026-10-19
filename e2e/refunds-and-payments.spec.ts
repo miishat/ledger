@@ -66,8 +66,8 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
       await flow.scrollIntoViewIfNeeded()
       const svg = flow.locator('svg.recharts-surface')
       await expect(svg).toBeVisible()
-      await expect(svg.locator('text').filter({ hasText: /^Shopping credit$/ })).toBeVisible()
-      await expect(svg.locator('text').filter({ hasText: /^Net remaining$/ })).toBeVisible()
+      await expect(svg.locator('text').filter({ hasText: /^Shopping cr/ })).toBeVisible()
+      await expect(svg.locator('text').filter({ hasText: /^Net remaining/ })).toBeVisible()
       await expect(svg.locator('g title')).toHaveText(creditOnly
         ? ['Shopping credit', 'Available funds', 'Net remaining']
         : ['Salary', 'Shopping credit', 'Available funds', 'Housing', 'Net remaining'])

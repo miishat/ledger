@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { createElement } from 'react'
 import type { ReactNode } from 'react'
 import { CashFlowWidget } from './CashFlowWidget'
 import { useBudgetStore } from '../../store/useBudgetStore'
@@ -8,15 +9,16 @@ import { resetMatchMedia, setMatchMedia } from '../../test-utils/matchMedia'
 // the capture array has to be created with vi.hoisted, and the factory must
 // not use JSX (that would reach for the JSX runtime import before it exists).
 type ChartData = { nodes: { name: string; kind: string }[]; links: { source: number; target: number; value: number }[] }
-const { captured } = vi.hoisted(() => ({ captured: [] as ChartData[] }))
+const { captured, nodeRenderers } = vi.hoisted(() => ({ captured: [] as ChartData[], nodeRenderers: [] as ((props: never) => ReactNode)[] }))
 
 vi.mock('recharts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('recharts')>()
   return {
     ...actual,
     ResponsiveContainer: ({ children }: { children: ReactNode }) => children,
-    Sankey: ({ data }: { data: ChartData }) => {
+    Sankey: ({ data, node }: { data: ChartData; node: (props: never) => ReactNode }) => {
       captured.push(data)
+      nodeRenderers.push(node)
       return null
     },
   }
@@ -43,6 +45,7 @@ function seedEightAndEight() {
 
 beforeEach(() => {
   captured.length = 0
+  nodeRenderers.length = 0
   useBudgetStore.setState(budgetInitial, true)
 })
 afterEach(() => resetMatchMedia())
@@ -101,5 +104,19 @@ describe('CashFlowWidget on a phone', () => {
     expect(links.at(-1)).toEqual({ source: 8, target: 14, value: 7564 })
     expect(links.every((l) => l.value > 0 && l.source < nodes.length && l.target < nodes.length)).toBe(true)
     expect(screen.getByRole('img', { name: /income across 8 sources.*expense credits across 8 groups.*positive net expenses across 8 groups/ })).toBeInTheDocument()
+  })
+
+  it('labels each phone band with its amount and share of what came in', () => {
+    setMatchMedia(false)
+    seedEightAndEight()
+    render(<CashFlowWidget range={range} />)
+    const draw = nodeRenderers.at(-1)!
+    const label = (name: string, kind: string, value: number) =>
+      [...render(createElement('svg', null, draw({ x: 100, y: 10, width: 10, height: 20, payload: { name, kind, value } } as never))).container.querySelectorAll('tspan')].map((t) => t.textContent)
+    // 7,964 of income came in across the eight sources.
+    expect(label('Savings', 'savings', 3982)).toEqual(['Savings', '$3,982 · 50%'])
+    expect(label('Spend 1', 'expense', 1991)).toEqual(['Spend 1', '$1,991 · 25%'])
+    // Sources show the amount alone, since their share is always 100% of themselves.
+    expect(label('Income 1', 'income', 999)).toEqual(['Income 1', '$999'])
   })
 })

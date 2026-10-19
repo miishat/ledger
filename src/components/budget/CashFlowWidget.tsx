@@ -45,33 +45,44 @@ function renderLink(sourceLinkCount: number, savingsIndex: number) {
   }
 }
 
-function renderNode({ x, y, width, height, payload }: SankeyNodeProps) {
-  const kind = (payload as { kind?: NodeKind }).kind
-  const name = String(payload.name)
-  const label = name.length > 16 ? `${name.slice(0, 15)}…` : name
-  const fill = kind === 'expense' ? 'var(--error)' : kind === 'pool' ? 'var(--text-secondary)' : kind === 'savings' ? 'var(--success)' : 'var(--accent)'
-  return (
-    <g>
-      <title>{name}</title>
-      <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--border-color)" />
-      {kind === 'pool' ? null : kind === 'income' || kind === 'credit' ? (
-        <text x={x - 6} y={y + height / 2} textAnchor="end" dominantBaseline="middle" fill="var(--text-primary)" fontSize={12}>
-          {label}
-        </text>
-      ) : (
-        <text
-          x={x + width + 6}
-          y={y + height / 2}
-          textAnchor="start"
-          dominantBaseline="middle"
-          fill={kind === 'savings' ? 'var(--success)' : 'var(--text-primary)'}
-          fontSize={12}
-        >
-          {label}
-        </text>
-      )}
-    </g>
-  )
+// On a phone each label carries its amount on a second line, and spending and
+// savings add their share of what came in. Desktop keeps the one-line label.
+function renderNode(phone: boolean, inflow: number) {
+  return ({ x, y, width, height, payload }: SankeyNodeProps) => {
+    const kind = (payload as { kind?: NodeKind }).kind
+    const name = String(payload.name)
+    const onLeft = kind === 'income' || kind === 'credit'
+    // The left margin is narrower than the right on a phone, so sources truncate sooner.
+    const max = phone ? (onLeft ? 11 : 13) : 16
+    const label = name.length > max ? `${name.slice(0, max - 1)}…` : name
+    const fill = kind === 'expense' ? 'var(--error)' : kind === 'pool' ? 'var(--text-secondary)' : kind === 'savings' ? 'var(--success)' : 'var(--accent)'
+    const tx = onLeft ? x - 6 : x + width + 6
+    const value = Number((payload as { value?: number }).value ?? 0)
+    const share = !onLeft && inflow > 0 ? ` · ${Math.round((value / inflow) * 100)}%` : ''
+    return (
+      <g>
+        <title>{name}</title>
+        <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--border-color)" />
+        {kind === 'pool' ? null : phone ? (
+          <text x={tx} y={y + height / 2} textAnchor={onLeft ? 'end' : 'start'} fill="var(--text-primary)">
+            <tspan x={tx} dy="-0.3em" fontSize={13} fill={kind === 'savings' ? 'var(--success)' : 'var(--text-primary)'}>{label}</tspan>
+            <tspan x={tx} dy="1.3em" fontSize={12} fill="var(--text-secondary)">{`${formatMoney(value)}${share}`}</tspan>
+          </text>
+        ) : (
+          <text
+            x={tx}
+            y={y + height / 2}
+            textAnchor={onLeft ? 'end' : 'start'}
+            dominantBaseline="middle"
+            fill={kind === 'savings' ? 'var(--success)' : 'var(--text-primary)'}
+            fontSize={12}
+          >
+            {label}
+          </text>
+        )}
+      </g>
+    )
+  }
 }
 
 export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
@@ -153,15 +164,15 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
         label={hasCredits
           ? `Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources plus ${formatMoney(totalCredits)} expense credits across ${creditEntries.length} groups into ${formatMoney(totalExpense)} of positive net expenses across ${expenseEntries.length} groups, leaving ${formatMoney(savings)} net remaining`
           : `Cash flow this period: ${formatMoney(totalIncome)} income across ${incomeNames.length} sources into ${formatMoney(totalExpense)} of expenses across ${expenseEntries.length} groups, leaving ${formatMoney(savings)} saved`}
-        className="h-[240px] desktop:h-[300px] mt-2"
+        className="h-[380px] desktop:h-[300px] mt-2"
       >
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             data={{ nodes, links }}
-            nodePadding={24}
-            margin={{ top: 24, right: 110, bottom: 10, left: 100 }}
+            nodePadding={isDesktop ? 24 : 34}
+            margin={isDesktop ? { top: 24, right: 110, bottom: 10, left: 100 } : { top: 18, right: 110, bottom: 12, left: 84 }}
             link={renderLink(sourceLinks.length, savingsIndex)}
-            node={renderNode}
+            node={renderNode(!isDesktop, totalIncome + totalCredits)}
           >
             <Tooltip formatter={(value) => formatMoney(Number(value))} {...chartTooltipStyles} />
           </Sankey>
