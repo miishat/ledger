@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, Budget vs. Actual shows each category as a tile with what you spent, its target and a bar, two across and six before Show All. A category over its pace sits on a red tint instead of a pace label, and bills still read Paid or Due. Desktop is unchanged.
 - On phones, the Budgeting Overview summary card lines up In, Out, Net and Saved in four equal centred columns, with Projected Net centred beneath, and now shows what you spent. Desktop is unchanged.
 - On phones, the Budgeting Cash Flow chart is taller and each band carries its amount and its share of what came in, so the Salary and Savings figures read without tapping. Desktop is unchanged.
 

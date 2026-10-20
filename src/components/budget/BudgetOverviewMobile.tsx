@@ -51,23 +51,28 @@ const Donut: React.FC<{ items: [string, number][]; total: number; top: string; m
   )
 }
 
-const Rows: React.FC<{ rows: CategoryRow[]; showPace: boolean }> = ({ rows, showPace }) => (
-  <>
-    {rows.map((r) => (
-      <div key={r.id} className="py-2">
-        <div className="flex justify-between gap-2 text-[15px]">
-          <span className="text-text-primary truncate">{r.name}</span>
-          <span className={`shrink-0 tabular-nums ${isOverRow(r.pace) ? 'text-error' : 'text-text-secondary'}`}>{formatMoney(r.spent)} / {formatMoney(r.target)}</span>
+/** One category as a tile: name, spent, "of target" and a bar. Over rows sit on an error tint. A bill shows Paid or Due
+ *  beside its target; the pace of a spread category is only said to a screen reader, since the tint and the bar show it. */
+const Tiles: React.FC<{ rows: CategoryRow[]; showPace: boolean; className?: string }> = ({ rows, showPace, className = 'grid grid-cols-2 gap-2' }) => (
+  <div className={className}>
+    {rows.map((r) => {
+      const over = isOverRow(r.pace)
+      const bill = r.pace === 'due' || r.pace === 'paid' || r.pace === 'overBudget'
+      return (
+        <div key={r.id} className={`min-w-0 rounded-xl p-3 ${over ? 'bg-error/10' : 'bg-bg-secondary'}`}>
+          <div className="truncate text-[13px] text-text-secondary">{r.name}</div>
+          <div className={`text-[17px] font-semibold tabular-nums ${over ? 'text-error' : 'text-text-primary'}`}>{formatMoney(r.spent)}</div>
+          <div className="text-meta tabular-nums text-text-secondary">of {formatMoney(r.target)}{showPace && bill ? ` · ${PACE_TEXT[r.pace]}` : ''}</div>
+          {showPace && !bill && <span className="sr-only">{PACE_TEXT[r.pace]}</span>}
+          <div className="mt-2"><Bar frac={share(r.spent, r.target)} bad={over} /></div>
         </div>
-        <div className="mt-1.5"><Bar frac={share(r.spent, r.target)} bad={isOverRow(r.pace)} /></div>
-        {showPace && <div className={`mt-1 text-meta ${isOverRow(r.pace) ? 'text-error' : 'text-text-secondary'}`}>{PACE_TEXT[r.pace]}</div>}
-      </div>
-    ))}
-  </>
+      )
+    })}
+  </div>
 )
 
 const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
-  const list = useShowMore(d.rows, 4)
+  const list = useShowMore(d.rows, 6)
   const listId = useId()
   const hasAnything = d.rows.length > 0 || d.annualRows.length > 0
   return (
@@ -78,15 +83,12 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
       ) : (
         <>
           {d.budgeted > 0 && (
-            <div className="mt-2">
-              <div className="flex justify-between text-[14px]">
-                <span className="text-text-secondary">Total</span>
-                <span className={`tabular-nums font-medium ${d.expense > d.budgeted ? 'text-error' : 'text-text-primary'}`}>{formatMoney(d.expense)} / {formatMoney(d.budgeted)}</span>
-              </div>
-              <div className="mt-1.5"><Bar frac={share(d.expense, d.budgeted)} bad={d.expense > d.budgeted} h="h-3" /></div>
+            <div className="mt-2 flex justify-between text-[14px]">
+              <span className="text-text-secondary">Total</span>
+              <span className={`tabular-nums font-medium ${d.expense > d.budgeted ? 'text-error' : 'text-text-primary'}`}>{formatMoney(d.expense)} / {formatMoney(d.budgeted)}</span>
             </div>
           )}
-          <div id={listId} role="group" aria-label="Category budgets"><Rows rows={list.visible} showPace={d.current} /></div>
+          <div id={listId} role="group" aria-label="Category budgets" className="mt-3"><Tiles rows={list.visible} showPace={d.current} /></div>
           {list.truncates && (
             <button type="button" onClick={list.toggle} aria-expanded={list.expanded} aria-controls={listId}
               className="mt-2 w-full min-h-11 rounded-xl border border-border-strong text-[14px] font-medium text-accent">
@@ -96,7 +98,7 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
           {d.annualRows.length > 0 && (
             <div className="mt-2 border-t border-border pt-2">
               <p className="text-[12px] uppercase tracking-wide text-text-secondary">Annual Budgets</p>
-              <Rows rows={d.annualRows} showPace />
+              <div className="mt-2"><Tiles rows={d.annualRows} showPace /></div>
             </div>
           )}
           {d.unbudgeted > 0 && (

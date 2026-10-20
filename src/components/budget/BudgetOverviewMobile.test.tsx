@@ -66,8 +66,10 @@ describe('BudgetOverviewMobile', () => {
   it('lists each budgeted category against its target', () => {
     renderIt()
     const card = screen.getByRole('region', { name: 'Budget vs. Actual' })
-    expect(within(card).getByText('$1,200 / $1,000')).toBeInTheDocument()
-    expect(within(card).getByText('$300 / $500')).toBeInTheDocument()
+    expect(within(card).getByText('$1,200')).toBeInTheDocument()
+    expect(within(card).getByText('of $1,000')).toBeInTheDocument()
+    expect(within(card).getByText('$300')).toBeInTheDocument()
+    expect(within(card).getByText('of $500')).toBeInTheDocument()
   })
 
   it('has no separate Income section, since the donut covers it', () => {
@@ -86,10 +88,10 @@ describe('BudgetOverviewMobile', () => {
 
   it('caps the budget list and names the button in Title Case', () => {
     const categories: Record<string, unknown> = {}
-    for (let i = 0; i < 6; i++) categories[`c${i}`] = { id: `c${i}`, groupId: 'g1', name: `Cat ${i}`, targetAmount: 100 }
+    for (let i = 0; i < 8; i++) categories[`c${i}`] = { id: `c${i}`, groupId: 'g1', name: `Cat ${i}`, targetAmount: 100 }
     useBudgetStore.setState({ categories } as never)
     renderIt()
-    fireEvent.click(screen.getByRole('button', { name: 'Show All 6 Categories' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show All 8 Categories' }))
     expect(screen.getByRole('button', { name: 'Show Fewer' })).toBeInTheDocument()
   })
 
@@ -104,6 +106,6 @@ describe('BudgetOverviewMobile', () => {
     vi.useRealTimers()
     const card = screen.getByRole('region', { name: 'Budget vs. Actual' })
     expect(within(card).queryByText(/Pace/)).toBeNull()
-    expect(within(card).getByText('Paid')).toBeInTheDocument()
+    expect(within(card).getByText(/· Paid/)).toBeInTheDocument()
   })
 })
