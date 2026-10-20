@@ -23,6 +23,20 @@ describe('processIBKR', () => {
   })
 })
 
+describe('processIBKR currency', () => {
+  it('reads each tickers currency from the Currency column', () => {
+    const krw: RawRow = ['Open Positions', 'Data', 'Summary', 'Stocks', 'KRW', '005930', 25, '', '', 7141000, 261500, 6537500]
+    const usd: RawRow = ['Open Positions', 'Data', 'Summary', 'Stocks', 'USD', 'AAPL', 100, '', '', 15001, 155, 15500]
+    const map = processIBKR([krw, usd])
+    expect(map['005930'].currency).toBe('KRW')
+    expect(map['AAPL'].currency).toBe('USD')
+  })
+
+  it('leaves currency unset when the column is blank', () => {
+    expect(processIBKR([stockBuy])['AAPL'].currency).toBeUndefined()
+  })
+})
+
 describe('mergeActivityRows', () => {
   it('dedupes identical trade rows across uploads', () => {
     const merged = mergeActivityRows([optionTrade, stockBuy], [optionTrade, stockBuy])

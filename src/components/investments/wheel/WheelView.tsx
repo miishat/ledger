@@ -10,6 +10,8 @@ import { WheelLedgerSheet } from './WheelLedgerSheet'
 import { EmptyState } from '../../ui/EmptyState'
 import { SelectField } from '../../planner/SelectField'
 import { ConfirmDialog } from '../../ui/ConfirmDialog'
+import { useIsDesktop } from '../../../hooks/useMediaQuery'
+import { WheelMobile } from './WheelMobile'
 
 type SortMode = 'alpha' | 'plHighToLow' | 'plLowToHigh'
 
@@ -21,6 +23,7 @@ export const WheelView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('alpha')
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
+  const phone = !useIsDesktop()
 
   const tickers = useMemo(
     () => Object.values(processIBKR(rawRows)).sort((a, b) => a.ticker.localeCompare(b.ticker)),
@@ -126,6 +129,12 @@ export const WheelView: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {phone ? (
+        <>
+          <WheelMobile tickers={tickers} fileCount={fileCount} status={status} onUpload={handleFileUpload} onClear={handleClear} onViewDetails={setSelectedTicker} />
+        </>
+      ) : (
+        <>
       <div className="themed-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-[13px] text-text-secondary">
           {fileCount} statement{fileCount === 1 ? '' : 's'} aggregated · {tickers.length} tickers
@@ -199,6 +208,9 @@ export const WheelView: React.FC = () => {
           {closedWheels.length === 0 && (
             <p className="text-[13px] text-text-secondary text-center">No matching closed positions found.</p>
           )}
+        </>
+      )}
+
         </>
       )}
 

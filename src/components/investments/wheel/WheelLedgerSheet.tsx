@@ -1,7 +1,7 @@
 import React from 'react'
 import { X } from 'lucide-react'
 import type { TickerState } from '../../../utils/investments/wheel/types'
-import { formatCurr } from '../../../utils/investments/wheel/calculations'
+import { formatWheelMoney } from '../../../utils/investments/wheel/calculations'
 import { Sheet } from '../../ui/Sheet'
 
 interface WheelLedgerSheetProps {
@@ -11,6 +11,7 @@ interface WheelLedgerSheetProps {
 
 export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClose }) => {
   const sortedHistory = data ? [...data.history].sort((a, b) => a.date.localeCompare(b.date)) : []
+  const money = (v: number) => formatWheelMoney(v, data?.currency)
   const totalCashFlow = sortedHistory.reduce((s, h) => s + h.proceeds + h.commFee, 0)
 
   // The panel is capped at 85dvh, but a cap alone does nothing: with the
@@ -51,7 +52,7 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
               <th className="py-2 pr-3 font-medium">Instrument</th>
               <th className="py-2 pr-3 font-medium text-right">Qty</th>
               <th className="py-2 pr-3 font-medium text-right">Price</th>
-              <th className="py-2 font-medium text-right">Net Cash Flow</th>
+              <th className="py-2 font-medium text-right">Net</th>
             </tr>
           </thead>
           <tbody>
@@ -62,15 +63,15 @@ export const WheelLedgerSheet: React.FC<WheelLedgerSheetProps> = ({ data, onClos
                   <td className="py-2 pr-3 whitespace-nowrap">{h.date}</td>
                   <td className="py-2 pr-3">{h.description}</td>
                   <td className={`py-2 pr-3 text-right ${h.quantity > 0 ? 'text-accent' : h.quantity < 0 ? 'text-error' : ''}`}>{h.quantity}</td>
-                  <td className="py-2 pr-3 text-right">{formatCurr(h.price)}</td>
-                  <td className={`py-2 text-right ${cashflow > 0 ? 'text-accent' : cashflow < 0 ? 'text-error' : ''}`}>{formatCurr(cashflow)}</td>
+                  <td className="py-2 pr-3 text-right">{money(h.price)}</td>
+                  <td className={`py-2 text-right ${cashflow > 0 ? 'text-accent' : cashflow < 0 ? 'text-error' : ''}`}>{money(cashflow)}</td>
                 </tr>
               )
             })}
             <tr>
-              <td colSpan={4} className="py-2 pr-3 text-right font-semibold text-text-primary">Account Ledger Net Cash Flow:</td>
+              <td colSpan={4} className="py-2 pr-3 text-right font-semibold text-text-primary">Net Cash Flow:</td>
               <td className={`py-2 text-right font-semibold ${totalCashFlow > 0 ? 'text-accent' : totalCashFlow < 0 ? 'text-error' : 'text-text-primary'}`}>
-                {formatCurr(totalCashFlow)}
+                {money(totalCashFlow)}
               </td>
             </tr>
           </tbody>

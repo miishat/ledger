@@ -16,6 +16,9 @@ import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { EmptyState } from '../ui/EmptyState'
 import { DataFreshness } from '../ui/DataFreshness'
 import { Sheet } from '../ui/Sheet'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { PortfolioTopMobile } from './PortfolioTopMobile'
+import { PortfolioHoldingsMobile } from './PortfolioHoldingsMobile'
 
 interface PortfolioViewProps {
   /** The import sheet is controlled by the page, because its trigger lives in
@@ -31,6 +34,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
   importOpen: importOpenProp,
   onImportOpenChange,
 }) => {
+  const phone = !useIsDesktop()
   const holdings = usePortfolioStore((s) => s.holdings)
   const importedAt = usePortfolioStore((s) => s.importedAt)
   const clearHoldings = usePortfolioStore((s) => s.clearHoldings)
@@ -160,10 +164,32 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             </div>
           )}
 
-          <PortfolioSummary rows={rows} rates={rates} nav={nav} onRetryRates={() => fx.refresh()} />
+          {phone ? (
+            <>
+              <PortfolioTopMobile rows={rows} rates={rates} onRetryRates={() => fx.refresh()} />
+            </>
+          ) : (
+            <>
+              <PortfolioSummary rows={rows} rates={rates} nav={nav} onRetryRates={() => fx.refresh()} />
+              <AllocationBars rows={rows} rates={rates} />
+            </>
+          )}
 
-          <AllocationBars rows={rows} rates={rates} />
-
+          {phone && (
+            <PortfolioHoldingsMobile
+              accounts={accountNames(holdings).map((account) => ({ account, holdings: holdings.filter((h) => h.account === account) }))}
+              priceFor={priceFor}
+              valueCadOf={valueCadOf}
+              plCadOf={plCadOf}
+              totalValueCad={totals.valueCad}
+              importedAt={importedAt}
+              rates={rates}
+              fx={fx}
+              clearHoldings={clearHoldings}
+            />
+          )}
+          {/* Kept mounted but hidden so every row still reports its live price. */}
+          <div className={phone ? 'hidden' : 'contents'}>
           {accountNames(holdings).map((account) => {
             const accountHoldings = sortRows(holdings.filter((h) => h.account === account))
             const subtotalValue = accountHoldings.reduce((s, h) => s + valueCadOf(h), 0)
@@ -235,6 +261,8 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
               </div>
             )
           })}
+          </div>
+          {!phone && (
           <div className="flex items-center justify-between">
             <p className="text-[12px] text-text-secondary">
               Imported {importedAt ? new Date(importedAt).toLocaleString() : 'never'}
@@ -254,6 +282,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
               <Trash2 className="w-3.5 h-3.5" /> Clear portfolio
             </button>
           </div>
+          )}
         </>
       )}
 

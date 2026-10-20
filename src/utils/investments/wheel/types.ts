@@ -17,6 +17,9 @@ export interface TradeRecord {
 export interface TickerState {
   ticker: string
 
+  /** ISO currency code from the statement's Currency column, when the rows carry one. */
+  currency?: string
+
   // Stock tracking
   opSharesHeld: number
   displayCost: number // Raw equity cost, or IBKR cost-basis fallback

@@ -7,9 +7,16 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the Investments Portfolio tab leads with one card: the holdings value and all-time gain, Invested and Holdings, and an allocation bar you switch between Holding, Account and Currency, with the top five named and Show All Holdings for the rest. Holdings are one-line rows under an All, Gainers and Losers filter and a Sort button (Value, P/L, A to Z), each with its return as a pill and Price, Avg Cost, Book and P/L when tapped. The import time, exchange rates and Clear Portfolio sit in a closed fold at the bottom, and Clear Portfolio takes a second tap to confirm. Desktop is unchanged.
+- On phones, the Investments Options tab shows Net P/L and Premium across open wheels in CAD, the three biggest premium earners, and a Stock Wheels, Puts and Closed switch with search and sort. Each ticker is one row; tap it for cost, premium, breakeven, an editable stock price, View Details and Copy. Add CSVs and Clear Data sit in a closed Manage fold. Desktop is unchanged.
+- On phones, the Investments Trades tab leads with Realized, All Time and this year's figure, keeps Record a Trade in a closed fold with Buy and Sell as a switch, then lists Positions (with the Holding Says flag when a position disagrees with your holding) and the Trade Log grouped by month with Show All Trades. Desktop is unchanged.
+- In the Options detailed ledger, the last column is headed Net and the total reads Net Cash Flow.
 - On phones, Budget vs. Actual shows each category as a tile with what you spent, its target and a bar, two across and six before Show All. A category over its pace sits on a red tint instead of a pace label, and bills still read Paid or Due. Desktop is unchanged.
 - On phones, the Budgeting Overview summary card lines up In, Out, Net and Saved in four equal centred columns, with Projected Net centred beneath, and now shows what you spent. Desktop is unchanged.
 - On phones, the Budgeting Cash Flow chart is taller and each band carries its amount and its share of what came in, so the Salary and Savings figures read without tapping. Desktop is unchanged.
+
+### Fixed
+- Options tickers are shown in their own statement currency instead of a bare $: 005930.KS reads KRW and ₩ on the phone rows and in the detailed ledger, on desktop as well. Phone totals convert each ticker to CAD. The desktop Options cards still show $.
 
 ## [0.26.4-beta] - 2026-10-17
 

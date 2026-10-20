@@ -38,6 +38,13 @@ export function mergeActivityRows(existingRows: RawRow[], newRows: RawRow[]): Ra
 
 /** Rebuild per-ticker wheel state from raw activity rows. Faithful port of
  *  the standalone wheel tracker's csvParser. */
+/** Rows from the Trades and Open Positions sections carry the instrument's
+ *  currency in column 4. The first one seen for a ticker wins. */
+function noteCurrency(state: { currency?: string }, row: RawRow) {
+  const code = String(row[4] ?? '').trim()
+  if (!state.currency && /^[A-Z]{3}$/.test(code)) state.currency = code
+}
+
 export function processIBKR(rows: RawRow[]): TickerMap {
   const stateTickers: TickerMap = {}
 
@@ -73,6 +80,7 @@ export function processIBKR(rows: RawRow[]): TickerMap {
 
       const baseTicker = optionString.split(' ')[0]
       initTicker(baseTicker)
+      noteCurrency(stateTickers[baseTicker], row)
 
       const proceeds = normalizeNumber(row[10])
       const commFee = normalizeNumber(row[11])
@@ -97,6 +105,7 @@ export function processIBKR(rows: RawRow[]): TickerMap {
       if (!baseTicker) return
 
       initTicker(baseTicker)
+      noteCurrency(stateTickers[baseTicker], row)
       if (!stockTrades[baseTicker]) stockTrades[baseTicker] = []
 
       const qty = normalizeNumber(row[7])
@@ -124,6 +133,7 @@ export function processIBKR(rows: RawRow[]): TickerMap {
       if (!baseTicker) return
 
       initTicker(baseTicker)
+      noteCurrency(stateTickers[baseTicker], row)
       stateTickers[baseTicker].opSharesHeld = normalizeNumber(row[6])
       opCostBasisMap[baseTicker] = normalizeNumber(row[9])
       stateTickers[baseTicker].currentPrice = normalizeNumber(row[10])
@@ -151,6 +161,7 @@ export function processIBKR(rows: RawRow[]): TickerMap {
 
       const baseTicker = optionString.split(' ')[0]
       initTicker(baseTicker)
+      noteCurrency(stateTickers[baseTicker], row)
 
       const qty = normalizeNumber(row[6])
       if (qty !== 0) stateTickers[baseTicker].hasOpenPosition = true

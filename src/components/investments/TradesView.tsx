@@ -9,8 +9,11 @@ import { EmptyState } from '../ui/EmptyState'
 import { NumberInput } from '../ui/NumberInput'
 import { ThemedSelect } from '../ui/ThemedSelect'
 import { ThemedDatePicker } from '../ui/ThemedDatePicker'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { TradesMobile } from './TradesMobile'
 
-export const TradesView: React.FC = () => {
+/** Phones get TradesMobile; this is the desktop layout. */
+const TradesDesktop: React.FC = () => {
   const trades = useTradesStore((s) => s.trades)
   const addTrade = useTradesStore((s) => s.addTrade)
   const removeTrade = useTradesStore((s) => s.removeTrade)
@@ -194,3 +197,5 @@ export const TradesView: React.FC = () => {
     </div>
   )
 }
+
+export const TradesView: React.FC = () => (useIsDesktop() ? <TradesDesktop /> : <TradesMobile />)
