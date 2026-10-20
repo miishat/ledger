@@ -6,6 +6,8 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.26.5-beta] - 2026-10-19
+
 ### Changed
 - On phones, the Import Holdings popup walks through three steps: pick the account, choose Replace, Update or Add (each with a line on what it does), then choose the file, with the supported brokers listed under the button. The name is now Title Case everywhere. Desktop is unchanged.
 - On phones, the Dashboard This Month card shows the net beside its title, a bar of how much of the money in has gone out, then In and Out and the Projected Net. Desktop is unchanged.
