@@ -120,12 +120,12 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
         open={importOpen}
         onClose={() => setImportOpen(false)}
         desktop="modal"
-        ariaLabel="Import holdings"
-        title="Import holdings"
+        ariaLabel="Import Holdings"
+        title="Import Holdings"
         panelClassName="themed-menu desktop:rounded-lg desktop:overflow-hidden w-full max-w-lg"
       >
         <div className="hidden desktop:flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-text-primary">Import holdings</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Import Holdings</h2>
           <button
             onClick={() => setImportOpen(false)}
             aria-label="Close"
@@ -145,7 +145,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             icon={Landmark}
             message="No holdings yet"
             hint="Import a broker CSV to see your portfolio with live values."
-            action={{ label: 'Import holdings', onClick: () => setImportOpen(true) }}
+            action={{ label: 'Import Holdings', onClick: () => setImportOpen(true) }}
           />
         </div>
       ) : (

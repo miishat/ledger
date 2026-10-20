@@ -11,6 +11,7 @@ import { isPortfolioAnalystCsv, parsePortfolioAnalyst } from '../../utils/invest
 import { usePortfolioReportStore } from '../../store/usePortfolioReportStore'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { holdingsFromReport } from './holdingsFromReport'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
 
 const selectCls =
   'bg-bg-primary/50 border control-border rounded-lg px-3 py-2 text-text-primary text-[14px] outline-none focus:border-accent'
@@ -21,6 +22,21 @@ const MODE_LABELS: Record<ImportMode, string> = {
   add: 'Add as new rows',
 }
 
+/** What each mode does, as the phone steps show it. */
+const MODE_BLURBS: { id: ImportMode; label: string; blurb: string }[] = [
+  { id: 'replace', label: 'Replace', blurb: 'Clears this account, then loads the file.' },
+  { id: 'update', label: 'Update', blurb: 'Merges by ticker. Other rows stay as they are.' },
+  { id: 'add', label: 'Add', blurb: 'Keeps everything and adds the file as new rows.' },
+]
+const SUPPORTED = ['Interactive Brokers', 'Wealthsimple', 'PortfolioAnalyst']
+
+const Step: React.FC<{ n: number; title: string; children: React.ReactNode }> = ({ n, title, children }) => (
+  <div className="flex gap-3">
+    <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[13px] font-semibold text-accent">{n}</span>
+    <div className="flex min-w-0 flex-1 flex-col gap-2"><div className="pt-0.5 text-[15px] font-semibold text-text-primary">{title}</div>{children}</div>
+  </div>
+)
+
 export const PortfolioImport: React.FC = () => {
   const importHoldings = usePortfolioStore((s) => s.importHoldings)
   const setReport = usePortfolioReportStore((s) => s.setReport)
@@ -30,6 +46,7 @@ export const PortfolioImport: React.FC = () => {
   const [pending, setPending] = useState<UnrecognizedPortfolioCSV | null>(null)
   const [mapping, setMapping] = useState<ColumnMapping>({ ticker: '', quantity: '', totalCost: '', currency: '' })
   const [message, setMessage] = useState('')
+  const phone = !useIsDesktop()
   const [holdingsPrompt, setHoldingsPrompt] = useState<Omit<Holding, 'id' | 'account'>[] | null>(null)
 
   const doImport = (rows: Omit<Holding, 'id' | 'account'>[], via: string) => {
@@ -85,6 +102,49 @@ export const PortfolioImport: React.FC = () => {
           e.target.value = ''
         }}
       />
+      {phone ? (
+        <div className="flex flex-col gap-5">
+          <Step n={1} title="Pick the Account">
+            <input
+              className="min-h-11 w-full rounded-xl border control-border bg-bg-primary/50 px-3 text-[15px] text-text-primary outline-none focus:border-accent"
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+              placeholder="e.g. IBKR Margin"
+              aria-label="Account"
+            />
+          </Step>
+          <Step n={2} title="Choose What Happens">
+            <div role="radiogroup" aria-label="Import mode" className="flex flex-col gap-2">
+              {MODE_BLURBS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`min-h-11 rounded-xl border px-3 py-2 text-left ${mode === m.id ? 'border-accent bg-accent/10' : 'border-border bg-bg-secondary'}`}
+                >
+                  <div className={`text-[14px] font-medium ${mode === m.id ? 'text-accent' : 'text-text-primary'}`}>{m.label}</div>
+                  <div className="text-[13px] text-text-secondary">{m.blurb}</div>
+                </button>
+              ))}
+            </div>
+          </Step>
+          <Step n={3} title="Choose the File">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-[15px] font-semibold text-bg-primary"
+            >
+              <Upload className="w-[18px] h-[18px]" aria-hidden="true" /> Import Broker CSV
+            </button>
+            {message && <p className="text-[13px] text-text-secondary">{message}</p>}
+            <div className="flex flex-wrap gap-1.5">
+              {SUPPORTED.map((s) => <span key={s} className="rounded-full border border-border bg-bg-secondary px-2.5 py-1 text-meta text-text-secondary">{s}</span>)}
+            </div>
+          </Step>
+        </div>
+      ) : (<>
       <div className="flex items-end gap-3 flex-wrap">
         <label className="flex flex-col gap-1">
           <span className="text-[13px] text-text-secondary">Account</span>
@@ -115,6 +175,7 @@ export const PortfolioImport: React.FC = () => {
         Interactive Brokers holdings, Wealthsimple, and IBKR PortfolioAnalyst reports are detected automatically; anything else opens the column mapper.
         "Replace" clears only the selected account; other accounts are untouched.
       </p>
+      </>)}
 
       {pending && (
         <div className="themed-card rounded-lg p-4 flex flex-col gap-3">

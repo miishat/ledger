@@ -68,9 +68,9 @@ describe('Investments header on a phone', () => {
     // The header's phone action plus the empty state's own button.
     expect(screen.getAllByRole('button', { name: 'New Analysis' })).toHaveLength(2)
     fireEvent.click(screen.getByRole('tab', { name: 'Portfolio' }))
-    expect(screen.getAllByRole('button', { name: 'Import holdings' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Import Holdings' }).length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('tab', { name: 'Trades' }))
-    expect(screen.queryByRole('button', { name: 'Import holdings' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Import Holdings' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'New Analysis' })).toBeNull()
   })
 })

@@ -97,14 +97,14 @@ export const Investments: React.FC = () => {
         onClick={() => setImportOpen(true)}
         className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg-primary)] rounded-md text-[14px] font-medium hover:opacity-90 transition-opacity"
       >
-        <Upload className="w-4 h-4" aria-hidden="true" /> Import holdings
+        <Upload className="w-4 h-4" aria-hidden="true" /> Import Holdings
       </button>
     ) : null
   const phoneAction =
     tab === 'journal' ? (
       <TopBarAction icon={Plus} label="New Analysis" onClick={() => setIsModalOpen(true)} />
     ) : tab === 'portfolio' ? (
-      <TopBarAction icon={Upload} label="Import holdings" onClick={() => setImportOpen(true)} />
+      <TopBarAction icon={Upload} label="Import Holdings" onClick={() => setImportOpen(true)} />
     ) : undefined
 
   return (
