@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Changed
+- On phones, the Budgeting Overview summary card lines up In, Out, Net and Saved in four equal centred columns, with Projected Net centred beneath, and now shows what you spent. Desktop is unchanged.
 - On phones, the Budgeting Cash Flow chart is taller and each band carries its amount and its share of what came in, so the Salary and Savings figures read without tapping. Desktop is unchanged.
 
 ## [0.26.4-beta] - 2026-10-17

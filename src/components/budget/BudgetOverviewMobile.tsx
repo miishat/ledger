@@ -109,7 +109,7 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
 }
 
 /** Phone Budgeting Overview: a donut that switches between Expense and Income (the switch sits under it), then
- *  In, Net and Saved, the budget, the income sources, and the cash flow, savings rate and who owes you. */
+ *  In, Out, Net and Saved, the budget, the income sources, and the cash flow, savings rate and who owes you. */
 export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range }) => {
   const d = useBudgetOverview(range)
   const [view, setView] = useState<'out' | 'in'>('out')
@@ -144,15 +144,15 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
         </div>
       </Card>
       <Card label="Net Change">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-1 text-center">
           <div data-testid="overview-in"><div className="text-[12px] text-text-secondary">In</div><div className="text-[16px] font-semibold tabular-nums text-accent">{formatMoney(d.income)}</div></div>
+          <div><div className="text-[12px] text-text-secondary">Out</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{formatMoney(d.expense)}</div></div>
           <div><div className="text-[12px] text-text-secondary">Net</div><div data-key-figure className={`text-[16px] font-semibold tabular-nums ${tone(d.net)}`}>{sign(d.net)}</div></div>
           <div><div className="text-[12px] text-text-secondary">Saved</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{d.rate === null ? '-' : `${Math.round(d.rate * 100)}%`}</div></div>
         </div>
         {d.projected !== null && (
-          <div className="mt-3 flex justify-between border-t border-border pt-3 text-[14px]">
-            <span className="text-text-secondary">Projected Net</span>
-            <span className={`font-medium tabular-nums ${tone(d.projected)}`}>{sign(d.projected)}</span>
+          <div className="mt-3 border-t border-border pt-3 text-center text-[14px] text-text-secondary">
+            Projected Net <span className={`font-medium tabular-nums ${tone(d.projected)}`}>{sign(d.projected)}</span>
           </div>
         )}
       </Card>

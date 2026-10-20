@@ -54,10 +54,11 @@ describe('BudgetOverviewMobile', () => {
     expect(within(income).getByText('100%')).toBeInTheDocument()
   })
 
-  it('shows In, Net and Saved', () => {
+  it('shows In, Out, Net and Saved', () => {
     renderIt()
     const card = screen.getByRole('region', { name: 'Net Change' })
     expect(within(card).getByText('$4,000')).toBeInTheDocument()
+    expect(within(card).getByText('$1,500')).toBeInTheDocument()
     expect(within(card).getByText('+$2,500')).toBeInTheDocument()
     expect(within(card).getByText('63%')).toBeInTheDocument()
   })
