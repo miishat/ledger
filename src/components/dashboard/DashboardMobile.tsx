@@ -84,20 +84,27 @@ const MonthCard: React.FC<{ projected: boolean; range: { from: string; to: strin
   const today = new Date().toISOString().slice(0, 10)
   const forecast = projected ? forecastMonthEnd(transactions, detectRecurring(transactions), range.to, today) : null
 
+  const used = income > 0 ? Math.min(1, expense / income) : expense > 0 ? 1 : 0
+  const tone = (n: number) => (n >= 0 ? 'text-text-primary' : 'text-error')
+  const signed = (n: number) => `${n >= 0 ? '+' : '-'}${formatMoney(Math.abs(n))}`
+
   return (
-    <section className="themed-card rounded-2xl" aria-label="This Month">
-      <h2 className="px-4 pt-3 text-[15px] font-semibold text-text-secondary">This Month</h2>
-      <div className="grid grid-cols-3 divide-x divide-border py-3">
-        <div className="px-4"><div className="text-[13px] text-text-secondary">Money In</div><div className="text-[18px] font-bold text-accent tabular-nums">{formatMoney(income)}</div></div>
-        <div className="px-4"><div className="text-[13px] text-text-secondary">Money Out</div><div className="text-[18px] font-bold text-error tabular-nums">{formatMoney(expense)}</div></div>
-        <div className="px-4"><div className="text-[13px] text-text-secondary">Net</div><div data-key-figure className={`text-[18px] font-bold tabular-nums ${net >= 0 ? 'text-text-primary' : 'text-error'}`}>{net >= 0 ? '+' : '-'}{formatMoney(Math.abs(net))}</div></div>
+    <section className="themed-card rounded-2xl p-4" aria-label="This Month">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-[18px] font-semibold text-text-primary">This Month</h2>
+        <span data-key-figure className={`text-[18px] font-bold tabular-nums ${tone(net)}`}>{signed(net)}</span>
+      </div>
+      <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-bg-tertiary" role="img" aria-label={`${Math.round(used * 100)} percent of money in has gone out`}>
+        <div className={expense > income ? 'bg-error' : 'bg-accent'} style={{ width: `${used * 100}%` }} />
+      </div>
+      <div className="mt-2 flex justify-between text-[14px]">
+        <span><span className="text-text-secondary">In </span><span className="font-semibold tabular-nums text-accent">{formatMoney(income)}</span></span>
+        <span><span className="text-text-secondary">Out </span><span className="font-semibold tabular-nums text-error">{formatMoney(expense)}</span></span>
       </div>
       {forecast && (
-        <div className="flex items-center justify-between border-t border-border px-4 py-2.5 text-[14px]">
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[14px]">
           <span className="text-text-secondary">Projected Net</span>
-          <span className={`font-medium tabular-nums ${forecast.projectedNet >= 0 ? 'text-text-primary' : 'text-error'}`}>
-            {forecast.projectedNet >= 0 ? '+' : '-'}{formatMoney(Math.abs(forecast.projectedNet))}
-          </span>
+          <span className={`font-medium tabular-nums ${tone(forecast.projectedNet)}`}>{signed(forecast.projectedNet)}</span>
         </div>
       )}
     </section>

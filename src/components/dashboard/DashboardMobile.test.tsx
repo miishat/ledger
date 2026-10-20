@@ -4,6 +4,7 @@ import { vi } from 'vitest'
 import { DashboardMobile } from './DashboardMobile'
 import { useAccountsStore } from '../../store/useAccountsStore'
 import type { Account } from '../../store/useAccountsStore'
+import { useBudgetStore } from '../../store/useBudgetStore'
 import { useUndoStore } from '../../store/useUndoStore'
 import { useAccountFxStore } from '../../store/useAccountFxStore'
 import { setMatchMedia, resetMatchMedia } from '../../test-utils/matchMedia'
@@ -27,6 +28,21 @@ beforeEach(() => {
 afterEach(() => resetMatchMedia())
 
 describe('DashboardMobile', () => {
+  it('shows the month net beside the title, a bar of money out against money in, and In and Out under it', () => {
+    const ym = new Date().toISOString().slice(0, 7)
+    const t = (id: string, day: string, amount: number, type: 'income' | 'expense') => ({ id, date: `${ym}-${day}`, amount, description: id, type, categoryId: '' })
+    useBudgetStore.setState({ transactions: Object.fromEntries([t('i', '01', 4000, 'income'), t('e', '02', 1000, 'expense')].map((x) => [x.id, x])) as never })
+    seed([acc('b1', 'Chequing', 'bank', 10)])
+    renderCards()
+    const card = screen.getByRole('region', { name: 'This Month' })
+    expect(card.querySelector('[data-key-figure]')).toHaveTextContent('+$3,000')
+    expect(within(card).getByText('Projected Net')).toBeInTheDocument()
+    expect(within(card).getByText('$4,000')).toBeInTheDocument()
+    expect(within(card).getByText('$1,000')).toBeInTheDocument()
+    expect(within(card).getByRole('img', { name: '25 percent of money in has gone out' })).toBeInTheDocument()
+    useBudgetStore.setState({ transactions: {} })
+  })
+
   it('shows the net worth, the month band and one fold per account group, then the other widgets', () => {
     seed([acc('b1', 'Chequing', 'bank', 1200), acc('d1', 'Visa', 'debt', 200)])
     const { container } = renderCards()
