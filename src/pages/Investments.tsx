@@ -17,6 +17,8 @@ import { Stat } from '../components/ui/Stat'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs, type TabItem } from '../components/ui/Tabs'
 import { TabPanel } from '../components/ui/TabPanel'
+import { useIsDesktop } from '../hooks/useMediaQuery'
+import { JournalMobile } from '../components/investments/JournalMobile'
 
 type InvestTab = 'journal' | 'portfolio' | 'trades' | 'wheel'
 
@@ -48,6 +50,7 @@ export const Investments: React.FC = () => {
   // page's header, in the slot the other tabs use for their action.
   const [importOpen, setImportOpen] = useState(false)
   const holdings = usePortfolioStore((s) => s.holdings)
+  const phone = !useIsDesktop()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   // Landing on an empty "Plan vs Actual" while the Portfolio tab holds data
@@ -117,6 +120,9 @@ export const Investments: React.FC = () => {
 
       {tab === 'journal' && (
         <TabPanel id="journal" className="flex flex-col gap-6">
+          {phone && analyses.length > 0 ? (
+            <JournalMobile analyses={analyses} planned={plannedAll} invested={investedAll} current={currentAll} />
+          ) : (<>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="themed-card rounded-lg p-4">
               <Stat label="Total Planned" value={formatMoney(plannedAll)} />
@@ -145,6 +151,7 @@ export const Investments: React.FC = () => {
               ))}
             </div>
           )}
+          </>)}
 
           <AnalysisModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </TabPanel>

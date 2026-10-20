@@ -6,6 +6,8 @@ import { ThemedDatePicker } from '../ui/ThemedDatePicker'
 import { NumberInput } from '../ui/NumberInput'
 import { TickerRowEditor, type DraftRow } from './TickerRowEditor'
 import { Sheet } from '../ui/Sheet'
+import { useIsDesktop } from '../../hooks/useMediaQuery'
+import { NewAnalysisMobile } from './NewAnalysisMobile'
 
 interface AnalysisModalProps {
   isOpen: boolean
@@ -169,7 +171,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="text-[13px] text-text-secondary">Analysis Name (Defaults to Ticker)</span>
+        <span className="text-[13px] text-text-secondary">New Analysis Name (Defaults to Ticker)</span>
         <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Big Tech 2026" />
       </label>
 
@@ -230,6 +232,7 @@ const NewAnalysisModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 }
 
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, analysisId }) => {
+  const phone = !useIsDesktop()
   const existingName = useAnalysisStore((s) => (analysisId ? s.analyses.find((a) => a.id === analysisId)?.name : undefined))
 
   return (
@@ -238,13 +241,13 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ isOpen, onClose, a
       onClose={onClose}
       desktop="modal"
       ariaLabel={analysisId ? 'Add position' : 'New analysis'}
-      title={analysisId ? <>Add Position: {existingName ?? ''}</> : 'New Analysis'}
+      title={analysisId ? <>Add Position: {existingName ?? ''}</> : phone ? undefined : 'New Analysis'}
       panelClassName="w-full max-w-lg"
     >
       {analysisId ? (
         <AddPositionModal analysisId={analysisId} onClose={onClose} />
       ) : (
-        <NewAnalysisModal onClose={onClose} />
+        phone ? <NewAnalysisMobile onClose={onClose} /> : <NewAnalysisModal onClose={onClose} />
       )}
     </Sheet>
   )
