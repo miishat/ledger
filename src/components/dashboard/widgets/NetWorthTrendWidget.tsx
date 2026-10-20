@@ -29,9 +29,8 @@ export const NetWorthTrendWidget: React.FC = () => {
       <WidgetWrapper title="Net Worth Over Time" className="desktop:col-span-2" action={editHistoryAction}>
         <EmptyState
           icon={LineChart}
-          message="Not enough history yet"
-          hint="Add a couple of dated figures, or update your accounts over time, and the trend draws itself."
-          action={{ label: 'Add history', onClick: () => setHistoryOpen(true) }}
+          message="Not Enough History Yet"
+          action={{ label: 'Add History', onClick: () => setHistoryOpen(true) }}
         />
         <NetWorthHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
       </WidgetWrapper>

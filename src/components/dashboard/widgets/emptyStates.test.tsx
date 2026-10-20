@@ -31,7 +31,7 @@ describe('dashboard empty states', () => {
 
   it('offers a real call to action when there is no history', () => {
     wrap(<NetWorthTrendWidget />)
-    expect(screen.getByText('Not enough history yet')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Add history' })).toBeInTheDocument()
+    expect(screen.getByText('Not Enough History Yet')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add History' })).toBeInTheDocument()
   })
 })

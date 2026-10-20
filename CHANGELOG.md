@@ -9,6 +9,7 @@ pre-1.0 beta.
 ## [0.26.5-beta] - 2026-10-19
 
 ### Changed
+- The Dashboard Net Worth Over Time empty state reads Not Enough History Yet with an Add History button, and drops its description line to match the other empty cards.
 - On phones, the Import Holdings popup walks through three steps: pick the account, choose Replace, Update or Add (each with a line on what it does), then choose the file, with the supported brokers listed under the button. The name is now Title Case everywhere. Desktop is unchanged.
 - On phones, the Dashboard This Month card shows the net beside its title, a bar of how much of the money in has gone out, then In and Out and the Projected Net. Desktop is unchanged.
 - On phones, the Investments Portfolio tab leads with one card: the holdings value and all-time gain, Invested and Holdings, and an allocation bar you switch between Holding, Account and Currency, with the top five named and Show All Holdings for the rest. Holdings are one-line rows under an All, Gainers and Losers filter and a Sort button (Value, P/L, A to Z), each with its return as a pill and Price, Avg Cost, Book and P/L when tapped. The import time, exchange rates and Clear Portfolio sit in a closed fold at the bottom, and Clear Portfolio takes a second tap to confirm. Desktop is unchanged.
