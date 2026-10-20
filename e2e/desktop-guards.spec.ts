@@ -888,6 +888,12 @@ test('the savings split chart on #/budget, once selected, name their series in t
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Split' }).click()
   await page.waitForTimeout(900)
+  // A phone layout draws Split as plain bars rather than a recharts chart, so its legend is checked in place.
+  if (test.info().project.name === 'short-wide') {
+    const legend = page.getByRole('region', { name: 'Savings Rate' }).locator('ul li span[aria-hidden="true"]')
+    expect(await legend.count()).toBeGreaterThanOrEqual(2)
+    return
+  }
   expect(await countLegends(page)).toBeGreaterThanOrEqual(1)
 })
 

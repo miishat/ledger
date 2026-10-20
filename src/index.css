@@ -15,6 +15,7 @@
   --color-border: var(--border-color);
   --color-border-strong: var(--border-strong);
   --color-error: var(--error);
+  --color-success: var(--success);
 
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

@@ -6,7 +6,7 @@ import type { MonthRange } from '../../utils/budget/period'
 import { useBudgetOverview, type BudgetOverview, type CategoryRow } from './useBudgetOverview'
 import { isOverRow, type RowPace } from '../../utils/budget/pace'
 import { CashFlowWidget } from './CashFlowWidget'
-import { SavingsRateWidget } from './SavingsRateWidget'
+import { SavingsRateMobile } from './SavingsRateMobile'
 import { OwedToMeWidget } from './OwedToMeWidget'
 
 const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5, var(--error))']
@@ -160,7 +160,7 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
       </Card>
       <BudgetCard d={d} />
       <CashFlowWidget range={range} />
-      <SavingsRateWidget range={range} />
+      <SavingsRateMobile range={range} />
       <OwedToMeWidget />
     </div>
   )
