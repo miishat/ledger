@@ -997,8 +997,12 @@ test('budgeting phone controls stay inside the page after stepping to another mo
 
 // The controls row is chrome, not content: no card around the stepper and an
 // icon-only import button, so the row is one 44px tap-target line tall. The
-// visible chrome is small but every button keeps a 44x44 hit area.
+// visible chrome is small but every button keeps a 44x44 hit area. The clock
+// is pinned to September, the widest month label, because the stepper shows
+// the current month: unpinned, this guard passed all October and failed on
+// November 1st.
 test('budgeting phone controls row is compact and keeps 44px tap targets', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-15T12:00:00'))
   await seedApp(page)
   await page.goto('/#/budget')
   await page.waitForLoadState('networkidle')

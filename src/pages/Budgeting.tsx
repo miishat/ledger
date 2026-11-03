@@ -83,6 +83,11 @@ export const Budgeting: React.FC = () => {
   const formattedMonth = period.kind === 'month'
     ? new Date(`${period.month}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : `${range.from} to ${range.to}`;
+  // At 320px the phone controls row leaves about 104px for this label, and
+  // "September 2026" needs 110px, so the row wrapped every Sep, Nov and Dec.
+  const phoneMonthLabel = period.kind === 'month'
+    ? new Date(`${period.month}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : formattedMonth;
 
   const choices = periodChoices(period, currentMonth, formattedMonth);
   const choiceValue = periodChoiceValue(period, currentMonth);
@@ -108,7 +113,7 @@ export const Budgeting: React.FC = () => {
       >
         <ChevronLeft size={20} />
       </button>
-      <span className="text-[15px] font-medium tabular-nums text-center">{formattedMonth}</span>
+      <span className="text-[15px] font-medium tabular-nums text-center">{phoneMonthLabel}</span>
       <button
         onClick={() => shiftMonth(1)}
         className="h-11 w-11 flex items-center justify-center rounded-md text-text-secondary hover:text-accent transition-colors duration-200"
