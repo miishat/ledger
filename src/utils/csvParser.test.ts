@@ -158,3 +158,81 @@ describe('Chase Credit Card parser rows', () => {
     expect(chase().parse(row({ Amount: '' }))).toBeNull()
   })
 })
+
+const amex = () => {
+  const p = PARSERS.find((x) => x.name === 'Amex Credit Card')
+  if (!p) throw new Error('Amex parser not registered')
+  return p
+}
+
+const AMEX_HEADERS = ['Date', 'Date Processed', 'Description', 'Amount']
+const amexRow = (over: Record<string, string> = {}): Record<string, string> => ({
+  Date: '22 Oct 2026',
+  'Date Processed': '23 Oct 2026',
+  Description: 'SUSHI EKI KANATA        KANATA',
+  Amount: '30.50',
+  ...over,
+})
+
+describe('Amex Credit Card parser detection', () => {
+  it('detects the Amex header shape', () => {
+    expect(amex().detect(AMEX_HEADERS, amexRow())).toBe(true)
+  })
+
+  it('does not claim a plain Standard Ledger file', () => {
+    expect(amex().detect(['Date', 'Description', 'Amount'], undefined)).toBe(false)
+  })
+
+  it('is registered ahead of Standard Ledger CSV', () => {
+    const amexIdx = PARSERS.findIndex((p) => p.name === 'Amex Credit Card')
+    const stdIdx = PARSERS.findIndex((p) => p.name === 'Standard Ledger CSV')
+    expect(amexIdx).toBeGreaterThanOrEqual(0)
+    expect(amexIdx).toBeLessThan(stdIdx)
+  })
+})
+
+describe('Amex Credit Card parser rows', () => {
+  it('converts the transaction date and ignores the processed date', () => {
+    expect(amex().parse(amexRow())?.date).toBe('2026-10-22')
+    expect(amex().parse(amexRow({ Date: '5 Sep 2026' }))?.date).toBe('2026-09-05')
+  })
+
+  it('reads a positive amount as a charge', () => {
+    expect(amex().parse(amexRow())).toMatchObject({ amount: 30.5, type: 'expense' })
+  })
+
+  it('reads a thousands separator', () => {
+    expect(amex().parse(amexRow({ Amount: '1,250.00' }))?.amount).toBe(1250)
+  })
+
+  it('reads a negative merchant credit as a negative expense', () => {
+    const r = amex().parse(amexRow({ Description: 'AMAZON.CA REFUND', Amount: '-39.99' }))
+    expect(r).toMatchObject({ amount: -39.99, type: 'expense' })
+    expect(r?.flag).toBeUndefined()
+  })
+
+  it('flags a card payment instead of importing it as a refund', () => {
+    expect(amex().parse(amexRow({ Description: 'PAYMENT RECEIVED - THANK YOU', Amount: '-750.00' })))
+      .toMatchObject({ amount: 750, type: 'income', flag: 'card-payment' })
+  })
+
+  it('rejects a date it cannot read', () => {
+    expect(() => amex().parse(amexRow({ Date: '31 Foo 2026' }))).toThrow('Invalid date')
+    expect(() => amex().parse(amexRow({ Date: '31 Feb 2026' }))).toThrow('Invalid date')
+  })
+
+  it('returns null when the amount is not a number', () => {
+    expect(amex().parse(amexRow({ Amount: '' }))).toBeNull()
+  })
+
+  it('imports a whole Amex export end to end', async () => {
+    const text = 'Date,Date Processed,Description,Amount\r\n' +
+      '25 Oct 2026,25 Oct 2026,SAUNDERS FARM INC       Ottawa,7.15\r\n' +
+      '22 Oct 2026,23 Oct 2026,AUDI WEST OTTAWA- VV AU NEPEAN,750.00\r\n'
+    const result = await parseCSV(new File([text], 'amex.csv'))
+    expect(result).toMatchObject([
+      { date: '2026-10-25', amount: 7.15, type: 'expense' },
+      { date: '2026-10-22', amount: 750, type: 'expense' },
+    ])
+  })
+})

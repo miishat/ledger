@@ -16,6 +16,8 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
 export type CsvRow = Record<string, string>
 export type CsvHeaderlessRow = string[]
 
@@ -188,6 +190,33 @@ export const PARSERS: BankParserConfig[] = [
         type: amountRaw > 0 ? ('income' as const) : ('expense' as const),
         originalRowData: row,
       };
+    }
+  },
+  {
+    name: 'Amex Credit Card',
+    // Headers: Date,Date Processed,Description,Amount. Dates read like
+    // `25 Oct 2026`, and a charge is positive.
+    detect: (headers) => headers.includes('Date') && headers.includes('Date Processed') && headers.includes('Amount'),
+    parse: (row) => {
+      if (Array.isArray(row)) return null;
+      const amountRaw = parseFloat((row['Amount'] ?? '').replace(/,/g, ''));
+      if (isNaN(amountRaw)) return null;
+
+      const match = /^(\d{1,2}) ([A-Za-z]{3}) (\d{4})$/.exec(row['Date']?.trim() ?? '');
+      const month = match ? MONTHS.indexOf(match[2].toLowerCase()) + 1 : 0;
+      const date = match && month ? `${match[3]}-${String(month).padStart(2, '0')}-${match[1].padStart(2, '0')}` : '';
+      const parsedDate = new Date(`${date}T00:00:00Z`);
+      if (!date || !Number.isFinite(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) {
+        throw new Error('Invalid date');
+      }
+
+      const description = row['Description']?.trim() || 'Unknown';
+      // As with the other cards, a bill payment is a transfer and a merchant
+      // credit returns money to spending.
+      if (amountRaw < 0 && /^PAYMENT RECEIVED/i.test(description)) {
+        return { date, amount: -amountRaw, description, type: 'income' as const, flag: 'card-payment' as const, originalRowData: row };
+      }
+      return { date, amount: amountRaw, description, type: 'expense' as const, originalRowData: row };
     }
   },
   {
