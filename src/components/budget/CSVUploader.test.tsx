@@ -39,7 +39,7 @@ it('aggregates exclusions separately from skips across multiple import sources',
 async function chooseNewSource() {
   await screen.findByRole('dialog', { name: 'Choose Import Source' })
   fireEvent.change(screen.getByLabelText('Card or account name'), { target: { value: 'My card' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Import Transactions' }))
 }
 
 vi.mock('../../utils/csvParser', async () => {
@@ -217,7 +217,7 @@ it('lets a newly recognized CIBC card reuse a previously named source', async ()
   await screen.findByRole('dialog', { name: 'Choose Import Source' })
   fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
   fireEvent.click(screen.getByRole('option', { name: 'My card' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Import Transactions' }))
   expect(useTriageStore.getState().importSources[sourceId].bankKey).toBe('cibc:1234:5678')
   expect(useTriageStore.getState().pendingTransactions).toEqual({})
   expect(useTriageStore.getState().lastImport?.skippedIds).toHaveLength(1)
@@ -233,18 +233,18 @@ it('reserves a manual source for one card while planning a multi-card file and c
     await screen.findByRole('dialog', { name: 'Choose Import Source' })
     fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
     fireEvent.click(screen.getByRole('option', { name: 'My card' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import Transactions' }))
   }
   await selectFirst()
   expect(useTriageStore.getState().importRecords).toEqual({})
   fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
   expect(screen.queryByRole('option', { name: 'My card' })).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('option', { name: 'New card or account' }))
+  fireEvent.click(screen.getByRole('option', { name: 'New Card or Account' }))
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(useTriageStore.getState().importSources[sourceId].bankKey).toBeUndefined()
   expect(useTriageStore.getState().importRecords).toEqual({})
   await selectFirst()
-  fireEvent.click(screen.getByRole('button', { name: 'Import transactions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Import Transactions' }))
   expect(Object.keys(useTriageStore.getState().importSources)).toHaveLength(2)
   expect(Object.keys(useTriageStore.getState().pendingTransactions)).toHaveLength(2)
   expect(useTriageStore.getState().lastImport?.addedIds).toHaveLength(2)
@@ -263,7 +263,7 @@ it('rejects incompatible learned and heuristic category guesses without changing
   fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [new File(['Date,Amount,Description\n2026-06-11,40,Transfer'], 'incoming.csv')] } })
   await screen.findByRole('dialog', { name: 'Choose Import Source' })
   fireEvent.click(screen.getByRole('button', { name: 'Import source' }))
-  fireEvent.click(screen.getByRole('option', { name: 'New card or account' }))
+  fireEvent.click(screen.getByRole('option', { name: 'New Card or Account' }))
   await chooseNewSource()
   const incoming = Object.values(useTriageStore.getState().pendingTransactions).find(tx => tx.type === 'income')!
   expect(incoming.categoryId).toBeUndefined()

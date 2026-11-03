@@ -23,9 +23,9 @@ export function ImportSourceSheet({ onImport, onClose, bankSource, reservedBindi
       <h2 className="hidden desktop:block text-[18px] font-semibold">Choose Import Source</h2>
       <p className="text-[14px] text-text-secondary">{bankSource ? `${bankSource.name} recognized. Choose its existing source or create a new one.` : 'Which card or account is this file from? Use the same source for future statements.'}</p>
       <ThemedSelect value={selected} onChange={setSelected} ariaLabel="Import source" options={[
-        { value: '', label: 'Choose a card or account' },
+        { value: '', label: 'Choose a Card or Account' },
         ...eligible.map(source => ({ value: source.id, label: source.name })),
-        { value: 'new', label: 'New card or account' },
+        { value: 'new', label: 'New Card or Account' },
       ]} />
       {selected === 'new' && <div className="flex flex-col gap-1">
         <label htmlFor={nameId} className="text-[13px]">Card or account name</label>
@@ -36,7 +36,7 @@ export function ImportSourceSheet({ onImport, onClose, bankSource, reservedBindi
         <button onClick={onClose} className="min-h-11 px-3 rounded-md border border-border text-[14px]">Cancel</button>
         <button disabled={!selected || (selected === 'new' && !name.trim())}
           onClick={() => onImport(selected === 'new' ? { name: name.trim() } : { sourceId: selected })}
-          className="min-h-11 px-3 rounded-md bg-accent text-bg-primary text-[14px] disabled:opacity-50">Import transactions</button>
+          className="min-h-11 px-3 rounded-md bg-accent text-bg-primary text-[14px] disabled:opacity-50">Import Transactions</button>
       </div>
     </Sheet>
   )
