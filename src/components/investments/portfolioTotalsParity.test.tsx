@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { PortfolioView } from './PortfolioView'
 import { PortfolioRollupWidget } from '../dashboard/widgets/PortfolioRollupWidget'
@@ -112,14 +112,22 @@ describe('portfolio totals parity: manual override', () => {
     render(<MemoryRouter><PortfolioView /></MemoryRouter>)
     expect(await screen.findByText('Holdings Value (CAD)')).toBeInTheDocument()
 
+    // Each row and card resolves its price through useCurrentPrice, a promise,
+    // so its first render reads the $1,000 cost basis. The heading above is
+    // there from that first render, so awaiting it does not wait for the
+    // price; on a loaded CI runner the bare assertion lost that race.
     const table = document.querySelector('table')
     expect(table, 'expected exactly one desktop table to be rendered').not.toBeNull()
-    const tableValues = within(table as HTMLElement).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
-    expect(tableValues, 'desktop table did not show the converted override price').toContain('$1,489')
+    await waitFor(() => {
+      const tableValues = within(table as HTMLElement).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
+      expect(tableValues, 'desktop table did not show the converted override price').toContain('$1,489')
+    })
 
     const cards = screen.getByTestId('portfolio-cards-TFSA')
-    const cardValues = within(cards).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
-    expect(cardValues, 'mobile card did not show the converted override price').toContain('$1,489')
+    await waitFor(() => {
+      const cardValues = within(cards).getAllByText(/^\$[\d,]+/).map((el) => el.textContent!.trim())
+      expect(cardValues, 'mobile card did not show the converted override price').toContain('$1,489')
+    })
   })
 })
 
