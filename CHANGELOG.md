@@ -6,6 +6,14 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+## [0.26.6-beta] - 2026-11-02
+
+### Changed
+- The Choose Import Source sheet uses Title Case for its options and button: Choose a Card or Account, New Card or Account, and Import Transactions.
+
+### Fixed
+- Amex credit card CSVs import correctly. Every charge used to arrive as income with its date left as "25 Oct 2026"; charges now import as spending with a normal date, credits as refunds, and a PAYMENT RECEIVED row is flagged as a card payment.
+
 ## [0.26.5-beta] - 2026-10-19
 
 ### Changed
